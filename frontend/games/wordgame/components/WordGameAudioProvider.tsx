@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { lolAudio } from '@/lib/wordgame/lol-audio';
+import { invalidateChampionVoicePlayback } from '@/lib/wordgame/lol-champion-vo';
 import { useLolAudioActions } from '../hooks/useWordGameAudio';
 
 export interface WordGameAudioContextValue {
@@ -19,7 +20,7 @@ export interface WordGameAudioContextValue {
   setVolume: (scale: number) => void;
   toggleMuted: () => boolean;
   unlock: () => void;
-  /** Short UI click so volume changes are audible while adjusting the slider. */
+  /** Short UI click (volume control debounces before calling). */
   previewVolume: () => void;
   playSfx: ReturnType<typeof useLolAudioActions>['playSfx'];
   playChampionVoice: ReturnType<typeof useLolAudioActions>['playChampionVoice'];
@@ -59,6 +60,7 @@ export default function WordGameAudioProvider({
 
   useEffect(() => {
     if (!enabled) {
+      invalidateChampionVoicePlayback();
       lolAudio.stopAll();
       return;
     }
@@ -67,6 +69,7 @@ export default function WordGameAudioProvider({
 
   const toggleMuted = useCallback(() => {
     const next = lolAudio.toggleMuted();
+    if (next) invalidateChampionVoicePlayback();
     setMuted(next);
     return next;
   }, []);

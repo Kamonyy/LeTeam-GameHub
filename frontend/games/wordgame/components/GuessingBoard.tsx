@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Eye, Trophy, CheckCircle, Crown, Sparkles, RotateCcw, DoorOpen } from 'lucide-react';
+import { Eye, Trophy, CheckCircle, Sparkles } from 'lucide-react';
 import WordPanelFrame from './WordPanelFrame';
 import ChampionPortrait from './ChampionPortrait';
 import clsx from 'clsx';
@@ -17,14 +17,8 @@ interface GuessingBoardProps {
   phase: 'playing' | 'round_end' | 'match_over';
   opponentName: string;
   guesserName: string;
-  winnerName?: string;
-  pointsToWin: number;
   canConfirmGuessed: boolean;
   onConfirmGuessed: () => Promise<boolean>;
-  isHost?: boolean;
-  postMatchBusy?: boolean;
-  onHostPlayAgain?: () => void;
-  onHostReturnToLobby?: () => void;
 }
 
 function RevealContent({
@@ -69,14 +63,8 @@ export default function GuessingBoard({
   phase,
   opponentName,
   guesserName,
-  winnerName,
-  pointsToWin,
   canConfirmGuessed,
   onConfirmGuessed,
-  isHost = false,
-  postMatchBusy = false,
-  onHostPlayAgain,
-  onHostReturnToLobby,
 }: GuessingBoardProps) {
   const [confirming, setConfirming] = useState(false);
   const isLol = wordCategory === 'lol-champions';
@@ -94,56 +82,8 @@ export default function GuessingBoard({
     setConfirming(false);
   };
 
-  if (phase === 'match_over' && winnerName) {
-    return (
-      <WordPanelFrame className="p-8 sm:p-12 text-center sw-animate-victory">
-        <div className="sw-victory-icon mx-auto mb-5">
-          <Crown className="w-9 h-9" strokeWidth={1.5} />
-        </div>
-        <h3 className="sw-heading-lg mb-3 sw-animate-ascend">Victory Claimed</h3>
-        <p className="sw-muted text-sm mb-6">
-          <span className="sw-text-accent font-semibold">{winnerName}</span> reached{' '}
-          {pointsToWin} points first
-        </p>
-        {revealedWord && (
-          <RevealContent
-            wordCategory={wordCategory}
-            revealedWord={revealedWord}
-            revealedChampionId={revealedChampionId}
-            label={isLol ? 'Final champion' : 'Final word'}
-          />
-        )}
-
-        <div className="sw-match-over-actions">
-          {isHost ?
-            <div className="sw-match-over-actions__buttons">
-              <button
-                type="button"
-                className="sw-btn-primary sw-match-over-actions__btn"
-                disabled={postMatchBusy}
-                onClick={() => onHostPlayAgain?.()}
-              >
-                <RotateCcw className="w-4 h-4 shrink-0" aria-hidden />
-                {postMatchBusy ? 'Starting…' : 'Play again'}
-              </button>
-              <button
-                type="button"
-                className="sw-btn-secondary sw-match-over-actions__btn"
-                disabled={postMatchBusy}
-                onClick={() => onHostReturnToLobby?.()}
-              >
-                <DoorOpen className="w-4 h-4 shrink-0" aria-hidden />
-                Return to lobby
-              </button>
-            </div>
-          :	<p className="text-xs sw-muted flex items-center justify-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-[#c9a227]" />
-              Waiting for the host to continue…
-            </p>
-          }
-        </div>
-      </WordPanelFrame>
-    );
+  if (phase === 'match_over') {
+    return null;
   }
 
   if (phase === 'round_end' && revealedWord) {

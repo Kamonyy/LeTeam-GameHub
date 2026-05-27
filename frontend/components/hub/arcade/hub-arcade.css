@@ -168,10 +168,9 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-	.hub-arcade a,
-	.hub-arcade button,
-	.hub-arcade [role='button'] {
-		cursor: none;
+	.hub-arcade--custom-cursor,
+	.hub-arcade--custom-cursor * {
+		cursor: none !important;
 	}
 }
 
@@ -348,6 +347,100 @@
 }
 
 /* Game cards */
+.hub-game-card--navigating {
+	pointer-events: none;
+}
+
+.hub-game-card__loading {
+	position: absolute;
+	inset: 0;
+	z-index: 20;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.75rem;
+	border-radius: inherit;
+	background: rgba(8, 10, 18, 0.82);
+	backdrop-filter: blur(6px);
+	animation: hub-card-loading-in 0.2s ease both;
+}
+
+.hub-game-card__loading-icon {
+	color: var(--hub-accent, #3b82f6);
+	filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.45));
+}
+
+.hub-game-card--wordgame .hub-game-card__loading-icon {
+	color: #38bdf8;
+	filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.45));
+}
+
+.hub-game-card--bara-alsalafa .hub-game-card__loading-icon {
+	color: #f43f5e;
+	filter: drop-shadow(0 0 12px rgba(244, 63, 94, 0.45));
+}
+
+.hub-game-card--dominoes .hub-game-card__loading-icon {
+	color: #34d399;
+	filter: drop-shadow(0 0 12px rgba(52, 211, 153, 0.45));
+}
+
+.hub-game-card__loading-text {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.9);
+}
+
+@keyframes hub-card-loading-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.hub-game-loading__spinner {
+	color: #3b82f6;
+	filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.35));
+}
+
+.hub-game-loading--wordgame .hub-game-loading__spinner {
+	color: #38bdf8;
+	filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.35));
+}
+
+.hub-game-loading--bara-alsalafa .hub-game-loading__spinner {
+	color: #f43f5e;
+	filter: drop-shadow(0 0 16px rgba(244, 63, 94, 0.35));
+}
+
+.hub-game-loading--dominoes .hub-game-loading__spinner {
+	color: #34d399;
+	filter: drop-shadow(0 0 16px rgba(52, 211, 153, 0.35));
+}
+
+.hub-game-loading__dots {
+	display: inline-block;
+	animation: hub-loading-dots 1.2s steps(4, end) infinite;
+}
+
+@keyframes hub-loading-dots {
+	0%,
+	20% {
+		opacity: 0.2;
+	}
+	40% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0.2;
+	}
+}
+
 .hub-game-card {
 	position: relative;
 	transform-style: preserve-3d;
@@ -363,7 +456,7 @@
 	.hub-game-card--active:hover,
 	.hub-game-card--active.hub-game-card--hovered,
 	.hub-game-card--active:focus-visible {
-		transform: translateY(-3px) translateZ(0);
+		transform: translateY(-2px) translateZ(0);
 	}
 }
 
@@ -399,7 +492,7 @@
 	.hub-game-card--active:hover .hub-game-card__glow,
 	.hub-game-card--active.hub-game-card--hovered .hub-game-card__glow,
 	.hub-game-card--active:focus-visible .hub-game-card__glow {
-		opacity: 1;
+		opacity: 0.55;
 	}
 }
 
@@ -426,8 +519,8 @@
 @media (hover: hover) and (pointer: fine) {
 	.hub-game-card--active:hover .hub-game-card__shine,
 	.hub-game-card--active.hub-game-card--hovered .hub-game-card__shine {
-		opacity: 0.7;
-		animation: hub-card-shine 1.1s var(--hub-smooth) forwards;
+		opacity: 0.35;
+		animation: hub-card-shine 1.4s var(--hub-smooth) forwards;
 	}
 }
 
@@ -447,25 +540,25 @@
 @media (hover: hover) and (pointer: fine) {
 	.hub-game-card--active:hover .hub-game-card__icon,
 	.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
-		transform: scale(1.04) translateZ(0);
+		transform: scale(1.02) translateZ(0);
 	}
 
 	.hub-game-card--dominoes.hub-game-card--active:hover .hub-game-card__icon,
 	.hub-game-card--dominoes.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
-		border-color: rgba(52, 211, 153, 0.4);
-		box-shadow: 0 0 14px rgba(52, 211, 153, 0.22);
+		border-color: rgba(52, 211, 153, 0.32);
+		box-shadow: 0 0 10px rgba(52, 211, 153, 0.15);
 	}
 
 	.hub-game-card--wordgame.hub-game-card--active:hover .hub-game-card__icon,
 	.hub-game-card--wordgame.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
-		border-color: rgba(56, 189, 248, 0.4);
-		box-shadow: 0 0 14px rgba(56, 189, 248, 0.22);
+		border-color: rgba(56, 189, 248, 0.32);
+		box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
 	}
 
 	.hub-game-card--bara-alsalafa.hub-game-card--active:hover .hub-game-card__icon,
 	.hub-game-card--bara-alsalafa.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
-		border-color: rgba(244, 63, 94, 0.42);
-		box-shadow: 0 0 14px rgba(244, 63, 94, 0.24);
+		border-color: rgba(244, 63, 94, 0.34);
+		box-shadow: 0 0 10px rgba(244, 63, 94, 0.16);
 	}
 }
 
@@ -500,7 +593,7 @@
 	.hub-game-card--active:hover .hub-game-card__play-arrow,
 	.hub-game-card--active.hub-game-card--hovered .hub-game-card__play-arrow,
 	.hub-game-card--active:focus-visible .hub-game-card__play-arrow {
-		transform: translateX(3px);
+		transform: translateX(2px);
 	}
 }
 
@@ -548,42 +641,42 @@
 	.hub-game-card--active:hover::after,
 	.hub-game-card--active.hub-game-card--hovered::after,
 	.hub-game-card--active:focus-visible::after {
-		opacity: 1;
+		opacity: 0.75;
 	}
 
 	.hub-game-card--active:hover,
 	.hub-game-card--active.hub-game-card--hovered,
 	.hub-game-card--active:focus-visible {
 		box-shadow:
-			0 16px 36px rgba(0, 0, 0, 0.45),
-			0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+			0 12px 28px rgba(0, 0, 0, 0.38),
+			0 0 0 1px rgba(255, 255, 255, 0.03) inset;
 	}
 
 	.hub-game-card--dominoes.hub-game-card--active:hover,
 	.hub-game-card--dominoes.hub-game-card--active.hub-game-card--hovered,
 	.hub-game-card--dominoes.hub-game-card--active:focus-visible {
-		border-color: rgba(52, 211, 153, 0.38);
+		border-color: rgba(52, 211, 153, 0.3);
 		box-shadow:
-			0 16px 36px rgba(0, 0, 0, 0.45),
-			0 0 16px rgba(52, 211, 153, 0.12);
+			0 12px 28px rgba(0, 0, 0, 0.38),
+			0 0 12px rgba(52, 211, 153, 0.08);
 	}
 
 	.hub-game-card--wordgame.hub-game-card--active:hover,
 	.hub-game-card--wordgame.hub-game-card--active.hub-game-card--hovered,
 	.hub-game-card--wordgame.hub-game-card--active:focus-visible {
-		border-color: rgba(56, 189, 248, 0.38);
+		border-color: rgba(56, 189, 248, 0.3);
 		box-shadow:
-			0 16px 36px rgba(0, 0, 0, 0.45),
-			0 0 16px rgba(56, 189, 248, 0.14);
+			0 12px 28px rgba(0, 0, 0, 0.38),
+			0 0 12px rgba(56, 189, 248, 0.09);
 	}
 
 	.hub-game-card--bara-alsalafa.hub-game-card--active:hover,
 	.hub-game-card--bara-alsalafa.hub-game-card--active.hub-game-card--hovered,
 	.hub-game-card--bara-alsalafa.hub-game-card--active:focus-visible {
-		border-color: rgba(244, 63, 94, 0.42);
+		border-color: rgba(244, 63, 94, 0.34);
 		box-shadow:
-			0 16px 36px rgba(0, 0, 0, 0.45),
-			0 0 16px rgba(244, 63, 94, 0.14);
+			0 12px 28px rgba(0, 0, 0, 0.38),
+			0 0 12px rgba(244, 63, 94, 0.09);
 	}
 }
 
@@ -666,11 +759,11 @@
 
 .hub-game-card--hovered .hub-domino-tile {
 	opacity: 1;
-	transform: translateY(-12px) rotate(-14deg);
+	transform: translateY(-8px) rotate(-10deg);
 }
 
 .hub-game-card--hovered .hub-domino-tile--b {
-	transform: translateY(-18px) rotate(10deg);
+	transform: translateY(-12px) rotate(8deg);
 }
 
 .hub-domino-spark {
@@ -788,16 +881,20 @@
 	height: 14px;
 	margin: -7px 0 0 -7px;
 	border-radius: 50%;
-	background: rgba(59, 130, 246, 0.85);
-	box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+	background: rgba(59, 130, 246, 0.92);
+	box-shadow:
+		0 0 10px rgba(59, 130, 246, 0.65),
+		0 0 20px rgba(59, 130, 246, 0.25);
 	pointer-events: none !important;
 	z-index: 9999;
 	transition:
+		opacity 0.15s ease,
 		width 0.2s var(--hub-smooth),
 		height 0.2s var(--hub-smooth),
 		margin 0.2s var(--hub-smooth),
 		background 0.2s ease,
-		border-radius 0.2s ease;
+		border-radius 0.2s ease,
+		box-shadow 0.2s ease;
 	mix-blend-mode: screen;
 }
 

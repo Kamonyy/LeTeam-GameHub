@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, Clock } from 'lucide-react';
+import { ArrowRight, Clock, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
 import type { GameCatalogEntry } from '@/lib/hub/games-registry';
 import HubDominoTile from './HubDominoTile';
+import { markHubGameNavigation } from './hubGameNavigation';
 
 const SPARKS = [
   { sx: '6px', sy: '-18px', delay: '0s' },
@@ -73,7 +74,7 @@ function WordPreview({ active }: { active: boolean }) {
 function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
   const cardRef = useRef<HTMLAnchorElement | HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
-  const [transform, setTransform] = useState('');
+  const [isNavigating, setIsNavigating] = useState(false);
   const canTiltRef = useRef(false);
 
   useEffect(() => {
@@ -94,28 +95,34 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
       const rect = el.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width - 0.5;
       const y = (e.clientY - rect.top) / rect.height - 0.5;
-      const rotateX = y * -10;
-      const rotateY = x * 10;
-      setTransform(
-        `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02) translateY(-3px) translateZ(0)`
-      );
+      const rotateX = y * -5;
+      const rotateY = x * 5;
+      el.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01) translateY(-2px) translateZ(0)`;
     },
     [game.active]
   );
 
   const handleLeave = useCallback(() => {
     setHovered(false);
-    setTransform('');
+    const el = cardRef.current;
+    if (el) el.style.transform = '';
   }, []);
 
   const handleEnter = useCallback(() => setHovered(true), []);
+
+  const handleNavigate = useCallback(() => {
+    if (isNavigating) return;
+    setIsNavigating(true);
+    markHubGameNavigation(game.id);
+  }, [game.id, isNavigating]);
 
   const cardClass = clsx(
     'hub-game-card hub-enter-card group block rounded-2xl border border-hub-border bg-hub-card p-6 overflow-hidden min-h-[220px]',
     `hub-game-card--${game.id}`,
     game.active && 'hub-game-card--active',
     !game.active && 'hub-game-card--inactive opacity-70 cursor-not-allowed',
-    game.active && hovered && 'hub-game-card--hovered'
+    game.active && hovered && 'hub-game-card--hovered',
+    isNavigating && 'hub-game-card--navigating'
   );
 
   const inner = (
@@ -150,6 +157,13 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
 
       {game.id === 'bara-alsalafa' && (
         <span className="hub-bara-spotlight rounded-2xl" aria-hidden />
+      )}
+
+      {isNavigating && (
+        <div className="hub-game-card__loading" aria-hidden>
+          <Loader2 className="hub-game-card__loading-icon w-8 h-8 animate-spin" />
+          <span className="hub-game-card__loading-text">Opening…</span>
+        </div>
       )}
 
       <div className="hub-game-card__surface relative">
@@ -203,7 +217,6 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
 
   const style = {
     ['--hub-stagger' as string]: staggerIndex,
-    transform: hovered && transform ? transform : undefined,
   } as React.CSSProperties;
 
   const interactionProps = game.active
@@ -222,6 +235,8 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
         href={game.href}
         className={clsx(cardClass, 'outline-none focus-visible:ring-2 focus-visible:ring-hub-accent')}
         style={style}
+        aria-busy={isNavigating}
+        onClick={handleNavigate}
         {...interactionProps}
       >
         {inner}

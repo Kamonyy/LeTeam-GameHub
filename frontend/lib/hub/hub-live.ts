@@ -10,14 +10,42 @@ export function hubPresenceEqual(
   const ap = a.players ?? [];
   const bp = b.players ?? [];
   if (ap.length !== bp.length) return false;
-  for (let i = 0; i < ap.length; i++) {
-    if (
-      ap[i].id !== bp[i].id ||
-      ap[i].displayName !== bp[i].displayName ||
-      !!ap[i].isYou !== !!bp[i].isYou
-    ) {
+  const bById = new Map(bp.map((p) => [p.id, p]));
+  for (const p of ap) {
+    const q = bById.get(p.id);
+    if (!q || p.displayName !== q.displayName || !!p.isYou !== !!q.isYou) {
       return false;
     }
+  }
+  return true;
+}
+
+function settingsEqual(
+  a: LobbyState['settings'],
+  b: LobbyState['settings']
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return !a && !b;
+
+  const ar = a as unknown as Record<string, unknown>;
+  const br = b as unknown as Record<string, unknown>;
+
+  const aIds = ar.categoryPackageIds;
+  const bIds = br.categoryPackageIds;
+  if (Array.isArray(aIds) || Array.isArray(bIds)) {
+    if (!Array.isArray(aIds) || !Array.isArray(bIds)) return false;
+    if (aIds.length !== bIds.length) return false;
+    for (let i = 0; i < aIds.length; i++) {
+      if (aIds[i] !== bIds[i]) return false;
+    }
+  } else if (ar.categoryPackageId !== br.categoryPackageId) {
+    return false;
+  }
+
+  const keys = new Set([...Object.keys(ar), ...Object.keys(br)]);
+  for (const k of keys) {
+    if (k === 'categoryPackageIds' || k === 'categoryPackageId') continue;
+    if (ar[k] !== br[k]) return false;
   }
   return true;
 }
@@ -31,7 +59,8 @@ export function lobbyStateEqual(a: LobbyState | null, b: LobbyState | null): boo
     a.hostId !== b.hostId ||
     a.status !== b.status ||
     a.gameType !== b.gameType ||
-    !!a.isSpectator !== !!b.isSpectator
+    a.minPlayers !== b.minPlayers ||
+    a.maxPlayers !== b.maxPlayers
   ) {
     return false;
   }
@@ -63,5 +92,5 @@ export function lobbyStateEqual(a: LobbyState | null, b: LobbyState | null): boo
       return false;
     }
   }
-  return JSON.stringify(a.settings) === JSON.stringify(b.settings);
+  return settingsEqual(a.settings, b.settings);
 }

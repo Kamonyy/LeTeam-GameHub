@@ -1,25 +1,43 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import type { WordGameAudioContextValue } from './WordGameAudioProvider';
+
+const VOLUME_PREVIEW_DELAY_MS = 320;
 
 type WordGameVolumeControlProps = {
   audio: WordGameAudioContextValue;
 };
 
 export default function WordGameVolumeControl({ audio }: WordGameVolumeControlProps) {
-  const lastPreviewAt = useRef(0);
+  const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const volumePercent = Math.round(audio.volume * 100);
 
-  const handleVolumeChange = (percent: number) => {
-    const scale = percent / 100;
+  useEffect(() => {
+    return () => {
+      if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+    };
+  }, []);
+
+  const applyVolume = (percent: number) => {
     audio.unlock();
-    audio.setVolume(scale);
-    const now = Date.now();
-    if (now - lastPreviewAt.current > 120) {
-      lastPreviewAt.current = now;
+    audio.setVolume(percent / 100);
+  };
+
+  const scheduleVolumePreview = () => {
+    if (audio.muted) return;
+    if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+    previewTimerRef.current = setTimeout(() => {
+      previewTimerRef.current = null;
       audio.previewVolume();
+    }, VOLUME_PREVIEW_DELAY_MS);
+  };
+
+  const cancelVolumePreview = () => {
+    if (previewTimerRef.current) {
+      clearTimeout(previewTimerRef.current);
+      previewTimerRef.current = null;
     }
   };
 
@@ -49,7 +67,21 @@ export default function WordGameVolumeControl({ audio }: WordGameVolumeControlPr
         step={1}
         value={volumePercent}
         disabled={audio.muted}
-        onInput={(e) => handleVolumeChange(Number(e.currentTarget.value))}
+        onPointerDown={cancelVolumePreview}
+        onInput={(e) => applyVolume(Number(e.currentTarget.value))}
+        onPointerUp={scheduleVolumePreview}
+        onKeyUp={(e) => {
+          if (
+            e.key === 'ArrowLeft' ||
+            e.key === 'ArrowRight' ||
+            e.key === 'ArrowUp' ||
+            e.key === 'ArrowDown' ||
+            e.key === 'Home' ||
+            e.key === 'End'
+          ) {
+            scheduleVolumePreview();
+          }
+        }}
         className="sw-audio-volume__slider"
         aria-label="Game sound volume"
         aria-valuemin={0}

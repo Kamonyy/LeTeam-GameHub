@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { ChevronDown, User, Check } from 'lucide-react';
 import { getDisplayName, setDisplayName } from '@/lib/player';
-import { useSocket } from '@/hooks/useSocket';
+import { useHubLive } from '@/lib/hub/HubLiveContext';
 
 type PlayerNameControlProps = {
   disabled?: boolean;
@@ -15,7 +15,7 @@ export default function PlayerNameControl({
   disabled = false,
   disabledReason = 'Name is locked during a match',
 }: PlayerNameControlProps) {
-  const { connected, refreshDisplayName } = useSocket();
+  const { connected, refreshDisplayName } = useHubLive();
   const [name, setName] = useState('');
   const [savedName, setSavedName] = useState('');
   const [open, setOpen] = useState(false);

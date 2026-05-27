@@ -28,9 +28,10 @@ export function getCategoryPackages(ids) {
  */
 export function normalizeCategoryPackageIds(settings = {}) {
   if (Array.isArray(settings.categoryPackageIds)) {
-    const valid = settings.categoryPackageIds.filter((id) =>
-      CATEGORY_PACKAGE_IDS.includes(id),
-    );
+    const raw = settings.categoryPackageIds
+      .slice(0, CATEGORY_PACKAGE_IDS.length)
+      .filter((id) => typeof id === "string");
+    const valid = raw.filter((id) => PACK_BY_ID.has(id));
     if (valid.length > 0) return [...new Set(valid)];
   }
   if (

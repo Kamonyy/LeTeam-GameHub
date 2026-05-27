@@ -1,25 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useSocket } from '@/hooks/useSocket';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
-
-const GAME_ROOTS = ['/wordgame', '/dominoes', '/bara-alsalafa'] as const;
 
 export default function StuckResetButton() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { hardResetPlayer } = useSocket();
   const router = useRouter();
-  const pathname = usePathname();
 
   const handleConfirm = async () => {
     setLoading(true);
     try {
       await hardResetPlayer();
-      const gameRoot = GAME_ROOTS.find((p) => pathname.startsWith(p));
-      router.replace(gameRoot ?? '/');
+      router.replace('/');
       setOpen(false);
     } finally {
       setLoading(false);

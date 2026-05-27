@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX } from 'lucide-react';
+import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX, Loader2 } from 'lucide-react';
 import { useSocket } from '@/hooks/useSocket';
 import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
@@ -18,6 +18,7 @@ import WordGameAtmosphere from '@/games/wordgame/components/WordGameAtmosphere';
 import WordConnectionBadge from '@/games/wordgame/components/WordConnectionBadge';
 import WordPanelFrame from '@/games/wordgame/components/WordPanelFrame';
 import WordGameAudioProvider from '@/games/wordgame/components/WordGameAudioProvider';
+import GameLobbyPendingOverlay from '@/components/hub/GameLobbyPendingOverlay';
 import '@/games/wordgame/wordgame.css';
 
 export default function WordGameClient() {
@@ -37,6 +38,7 @@ export default function WordGameClient() {
     leaveRoom,
     updateRoomSettings,
     startGame,
+    requestRematch,
     kickPlayer,
     cancelMatch,
     submitSecretWord,
@@ -72,22 +74,35 @@ export default function WordGameClient() {
   }, []);
 
   useEffect(() => {
-    if (!wordgameEnabled || !connected || !roomParam || lobby || autoJoined || inviteJoin)
+    if (
+      !wordgameEnabled ||
+      !connected ||
+      !roomParam ||
+      lobby?.gameType === 'wordgame' ||
+      autoJoined ||
+      inviteJoin
+    )
       return;
+    if (lobby && lobby.gameType !== 'wordgame') return;
     const code = normalizeRoomCode(roomParam);
     if (!code) return;
+
+    let cancelled = false;
 
     const attemptJoin = async () => {
       setLoading(true);
       const ok = await joinRoom(code, getDisplayName());
-      if (ok) {
-        router.replace(`/wordgame?room=${code}`, { scroll: false });
+      if (!cancelled) {
+        if (ok) router.replace(`/wordgame?room=${code}`, { scroll: false });
+        setAutoJoined(true);
+        setLoading(false);
       }
-      setAutoJoined(true);
-      setLoading(false);
     };
 
     attemptJoin();
+    return () => {
+      cancelled = true;
+    };
   }, [
     wordgameEnabled,
     connected,
@@ -138,21 +153,26 @@ export default function WordGameClient() {
     setCancelConfirmOpen(false);
   };
 
-  const isHost = lobby?.hostId === playerId;
+  const wordLobby = lobby?.gameType === 'wordgame' ? lobby : null;
+  const isHost = wordLobby?.hostId === playerId;
   const wordGameMeta = getGameEntry('wordgame');
-  const inLobby = lobby && lobby.status === 'lobby';
+  const inLobby = wordLobby?.status === 'lobby';
   const matchFinished = wordState?.phase === 'match_over';
   const inGame =
-    lobby &&
+    wordLobby &&
     wordState &&
-    (lobby.status === 'playing' ||
-      lobby.status === 'finished' ||
+    (wordLobby.status === 'playing' ||
+      wordLobby.status === 'finished' ||
       matchFinished);
 
   const handlePlayAgain = async () => {
     setPostMatchBusy(true);
-    await startGame();
-    setPostMatchBusy(false);
+    clearError();
+    try {
+      await requestRematch();
+    } finally {
+      setPostMatchBusy(false);
+    }
   };
 
   const handleReturnToLobby = async () => {
@@ -162,8 +182,8 @@ export default function WordGameClient() {
   };
 
   const lobbyWordCategory =
-    lobby?.settings && 'wordCategory' in lobby.settings ?
-      (lobby.settings.wordCategory as string)
+    wordLobby?.settings && 'wordCategory' in wordLobby.settings ?
+      (wordLobby.settings.wordCategory as string)
     : undefined;
 
   const isLolAudioEnabled =
@@ -212,9 +232,9 @@ export default function WordGameClient() {
       </header>
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        {!lobby && !wordgameEnabled && <InactiveGameScreen gameId="wordgame" />}
+        {!wordLobby && !wordgameEnabled && <InactiveGameScreen gameId="wordgame" />}
 
-        {!lobby && wordgameEnabled && inviteJoin && (
+        {!wordLobby && wordgameEnabled && inviteJoin && (
           <div className="max-w-md mx-auto sw-animate-ascend">
             <WordPanelFrame className="p-6 sm:p-8">
               <div className="flex items-center gap-2 mb-4">
@@ -254,12 +274,25 @@ export default function WordGameClient() {
           </div>
         )}
 
-        {!lobby && wordgameEnabled && !inviteJoin && (
-          <div className="max-w-md w-full mx-auto sw-animate-ascend-slow">
+        {!wordLobby && wordgameEnabled && !inviteJoin && (
+          <div className="relative max-w-md w-full mx-auto sw-animate-ascend-slow">
+            {!connected && (
+              <p
+                className="flex items-center justify-center gap-2 text-sm sw-muted mb-4"
+                role="status"
+                aria-live="polite"
+              >
+                <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden />
+                Connecting to server…
+              </p>
+            )}
             {roomParam && loading && !autoJoined && (
               <p className="text-center text-sm sw-muted mb-4 animate-pulse-soft">
                 Crossing into room {roomParam}…
               </p>
+            )}
+            {loading && (
+              <GameLobbyPendingOverlay message="Creating your lobby…" />
             )}
             <WordPanelFrame className="p-6 sm:p-8">
               <label className="block text-[10px] sw-muted mb-2 uppercase tracking-widest">
@@ -306,10 +339,10 @@ export default function WordGameClient() {
           </div>
         )}
 
-        {inLobby && (
+        {inLobby && wordLobby && (
           <div key="word-lobby" className="sw-view-mount">
             <WordLobby
-              lobby={lobby}
+              lobby={wordLobby}
               playerId={playerId}
               onKickPlayer={kickPlayer}
               onSettingsChange={updateRoomSettings}
@@ -327,11 +360,11 @@ export default function WordGameClient() {
           </div>
         )}
 
-        {inGame && wordState && (
+        {inGame && wordState && wordLobby && (
           <div key="word-game" className="sw-view-mount">
             <WordGameBoard
               gameState={wordState}
-              lobby={lobby}
+              lobby={wordLobby}
               playerId={playerId}
               isHost={isHost}
               postMatchBusy={postMatchBusy}

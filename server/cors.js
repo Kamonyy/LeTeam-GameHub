@@ -5,6 +5,25 @@ export function parseAllowedOrigins(raw) {
   return raw.split(',').map((o) => o.trim()).filter(Boolean);
 }
 
+/** Allow phone/tablet access via http://192.168.x.x:3000 during local dev. */
+function isPrivateNetworkDevOrigin(origin) {
+  try {
+    const u = new URL(origin);
+    if (u.protocol !== 'http:') return false;
+    const port = u.port || (u.protocol === 'http:' ? '80' : '443');
+    if (port !== '3000') return false;
+
+    const h = u.hostname;
+    if (h === 'localhost' || h === '127.0.0.1') return true;
+    if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
+    if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
+    if (/^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 export function createCorsOriginChecker(allowedOrigins) {
   const allowAny = allowedOrigins.includes('*');
 
@@ -14,10 +33,14 @@ export function createCorsOriginChecker(allowedOrigins) {
       return;
     }
     if (!origin) {
-      callback(new Error('Origin header required'));
+      callback(null, true);
       return;
     }
     if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+    if (isPrivateNetworkDevOrigin(origin)) {
       callback(null, true);
       return;
     }

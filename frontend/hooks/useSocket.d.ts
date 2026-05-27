@@ -14,6 +14,7 @@ export type HubGameState = GameState | WordGameState | BaraGameState;
 export interface WordGuessedCelebrationEvent {
   wordCategory: string;
   championId: string | null;
+  stateVersion: number | null;
   at: number;
 }
 

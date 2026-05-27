@@ -33,9 +33,35 @@ function mergeWordGameState(prev, next) {
   if (!prev || prev.gameType !== 'wordgame') return next;
   const prevVer = typeof prev.stateVersion === 'number' ? prev.stateVersion : 0;
   const nextVer = typeof next.stateVersion === 'number' ? next.stateVersion : 0;
+  // Rematch creates a new engine with stateVersion 0; always accept leaving match_over.
+  if (prev.phase === 'match_over' && next.phase !== 'match_over') return next;
   if (nextVer < prevVer) return prev;
   return next;
 }
+
+function createUnsettledRegistration() {
+  return new Promise(() => {});
+}
+
+function waitForSocketEvent(socket, event, timeoutMs = 8000) {
+  return new Promise((resolve, reject) => {
+    if (!socket) {
+      reject(new Error('No socket'));
+      return;
+    }
+    const timer = setTimeout(() => {
+      socket.off(event, onEvent);
+      reject(new Error(`Timed out waiting for ${event}`));
+    }, timeoutMs);
+    const onEvent = () => {
+      clearTimeout(timer);
+      resolve();
+    };
+    socket.once(event, onEvent);
+  });
+}
+
+const WORD_ACTION_TIMEOUT_MS = 12000;
 
 const BENIGN_WORD_GAME_ERRORS = new Set([
   'You already chose a champion',
@@ -50,7 +76,7 @@ export function SocketProvider({ children }) {
   const socketRef = useRef(null);
   const socketInstRef = useRef(null);
   const playerIdRef = useRef('');
-  const registerReadyRef = useRef(Promise.resolve(true));
+  const registerReadyRef = useRef(createUnsettledRegistration());
   const [connected, setConnected] = useState(false);
   const [playerId, setPlayerId] = useState('');
   const [lobby, setLobby] = useState(null);
@@ -149,7 +175,11 @@ export function SocketProvider({ children }) {
         );
       });
 
-      socket.on('disconnect', () => setConnected(false));
+      socket.on('disconnect', () => {
+        setConnected(false);
+        registerReadyRef.current = createUnsettledRegistration();
+        wordActionInFlightRef.current = false;
+      });
       socket.on('connect_error', () => setConnected(false));
       socket.on('hub:presence', (payload) => {
         if (!Array.isArray(payload?.players)) return;
@@ -158,16 +188,23 @@ export function SocketProvider({ children }) {
         );
       });
       socket.on('lobby:state', (state) => {
-        setLobby((prev) => (lobbyStateEqual(prev, state) ? prev : state));
-        if (state?.isSpectator !== undefined) {
-          setIsSpectator(!!state.isSpectator);
-        } else if (state?.spectators && playerIdRef.current) {
-          setIsSpectator(state.spectators.some((s) => s.id === playerIdRef.current));
-        }
-        if (state?.status === 'lobby') {
-          setGameState(null);
-          setWordGuessedCelebration(null);
-        }
+        setLobby((prev) => {
+          if (lobbyStateEqual(prev, state)) return prev;
+          if (state?.status === 'lobby') {
+            setGameState(null);
+            setWordGuessedCelebration(null);
+          }
+          const nextSpectator =
+            state?.isSpectator !== undefined ?
+              !!state.isSpectator
+            :	!!(
+                state?.spectators &&
+                playerIdRef.current &&
+                state.spectators.some((s) => s.id === playerIdRef.current)
+              );
+          setIsSpectator((was) => (was === nextSpectator ? was : nextSpectator));
+          return state;
+        });
       });
       socket.on('game:state:update', (state) => {
         if (state?.gameType === 'wordgame') {
@@ -200,6 +237,8 @@ export function SocketProvider({ children }) {
         setWordGuessedCelebration({
           wordCategory: payload.wordCategory ?? 'custom',
           championId: payload.championId ?? null,
+          stateVersion:
+            typeof payload.stateVersion === 'number' ? payload.stateVersion : null,
           at: Date.now(),
         });
       });
@@ -210,7 +249,13 @@ export function SocketProvider({ children }) {
         setIsSpectator(false);
         setError(payload?.message || 'You were removed from the room');
       });
-      socket.on('game:error', (err) => setError(err.message));
+      socket.on('game:error', (err) => {
+        const message =
+          typeof err === 'string' ? err
+          : err?.message ? err.message
+          : 'Unknown game error';
+        setError(message);
+      });
       socket.on('chat:message', (msg) => {
         if (!msg?.message || !msg?.playerId) return;
         setChatMessages((prev) => {
@@ -367,19 +412,19 @@ export function SocketProvider({ children }) {
   const hardResetPlayer = useCallback(async () => {
     const socket = socketRef.current;
 
+    registerReadyRef.current = createUnsettledRegistration();
+
     if (socket?.connected) {
       await new Promise((resolve) => {
         socket.emit('room:leave', {}, () => resolve());
       });
 
-      await new Promise((resolve) => {
-        const onDisconnect = () => {
-          socket.off('disconnect', onDisconnect);
-          resolve();
-        };
-        socket.once('disconnect', onDisconnect);
-        socket.disconnect();
-      });
+      socket.disconnect();
+      try {
+        await waitForSocketEvent(socket, 'disconnect', 8000);
+      } catch {
+        /* proceed — local state reset still runs */
+      }
     }
 
     setLobby(null);
@@ -399,14 +444,12 @@ export function SocketProvider({ children }) {
     skipNextConnectRegisterRef.current = true;
 
     if (!socket.connected) {
-      await new Promise((resolve) => {
-        const onConnect = () => {
-          socket.off('connect', onConnect);
-          resolve();
-        };
-        socket.once('connect', onConnect);
-        socket.connect();
-      });
+      socket.connect();
+      try {
+        await waitForSocketEvent(socket, 'connect', 8000);
+      } catch {
+        return;
+      }
     }
 
     try {
@@ -498,19 +541,6 @@ export function SocketProvider({ children }) {
     });
   }, []);
 
-  const requestRematch = useCallback(() => {
-    return new Promise((resolve) => {
-      socketRef.current?.emit('game:rematch:request', {}, (res) => {
-        if (res?.error) {
-          setError(res.error);
-          resolve(false);
-        } else {
-          resolve(true);
-        }
-      });
-    });
-  }, []);
-
   const requestGameStateSync = useCallback(() => {
     return new Promise((resolve) => {
       const socket = socketRef.current;
@@ -533,6 +563,26 @@ export function SocketProvider({ children }) {
       });
     });
   }, []);
+
+  const requestRematch = useCallback(() => {
+    return new Promise((resolve) => {
+      const socket = socketRef.current;
+      if (!socket?.connected) {
+        setError('Not connected to server');
+        resolve(false);
+        return;
+      }
+      socket.emit('game:rematch:request', {}, async (res) => {
+        if (res?.error) {
+          setError(res.error);
+          resolve(false);
+          return;
+        }
+        await requestGameStateSync();
+        resolve(true);
+      });
+    });
+  }, [requestGameStateSync]);
 
   const finishWordSubmitAck = useCallback(
     async (res, resolve) => {
@@ -599,9 +649,13 @@ export function SocketProvider({ children }) {
           return;
         }
         wordActionInFlightRef.current = true;
-        socket.emit('word:submit', { word }, (res) => {
+        const release = () => {
           wordActionInFlightRef.current = false;
-          void finishWordSubmitAck(res, resolve);
+        };
+        const timer = setTimeout(release, WORD_ACTION_TIMEOUT_MS);
+        socket.emit('word:submit', { word }, (res) => {
+          clearTimeout(timer);
+          void finishWordSubmitAck(res, resolve).finally(release);
         });
       })();
     });
@@ -621,9 +675,13 @@ export function SocketProvider({ children }) {
           return;
         }
         wordActionInFlightRef.current = true;
-        socket.emit('word:champion:submit', { championId }, (res) => {
+        const release = () => {
           wordActionInFlightRef.current = false;
-          void finishWordSubmitAck(res, resolve);
+        };
+        const timer = setTimeout(release, WORD_ACTION_TIMEOUT_MS);
+        socket.emit('word:champion:submit', { championId }, (res) => {
+          clearTimeout(timer);
+          void finishWordSubmitAck(res, resolve).finally(release);
         });
       })();
     });
@@ -634,7 +692,9 @@ export function SocketProvider({ children }) {
     if (!trimmed || trimmed.length > 200) return;
     (async () => {
       await ensureRegistered();
-      socketRef.current?.emit('chat:send', { message: trimmed }, (res) => {
+      const socket = socketRef.current;
+      if (!socket?.connected) return;
+      socket.emit('chat:send', { message: trimmed }, (res) => {
         if (res?.error) setError(res.error);
       });
     })();
@@ -654,9 +714,13 @@ export function SocketProvider({ children }) {
           return;
         }
         wordActionInFlightRef.current = true;
-        socket.emit('word:guessed', {}, (res) => {
+        const release = () => {
           wordActionInFlightRef.current = false;
-          void finishWordGuessedAck(res, resolve);
+        };
+        const timer = setTimeout(release, WORD_ACTION_TIMEOUT_MS);
+        socket.emit('word:guessed', {}, (res) => {
+          clearTimeout(timer);
+          void finishWordGuessedAck(res, resolve).finally(release);
         });
       })();
     });

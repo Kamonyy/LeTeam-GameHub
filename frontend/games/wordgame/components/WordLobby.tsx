@@ -54,6 +54,10 @@ export default function WordLobby({
       :	'custom',
   };
 
+  const isPresetPoints = WORD_POINTS_OPTIONS.includes(
+    settings.pointsToWin as (typeof WORD_POINTS_OPTIONS)[number]
+  );
+
   const categoryOptions: { id: WordCategory; label: string; hint: string }[] = [
     { id: 'custom', label: 'Custom', hint: 'Any secret word you choose' },
     {
@@ -149,7 +153,29 @@ export default function WordLobby({
         <label className="block text-[10px] sw-muted mb-2 uppercase tracking-[0.2em]">
           Points to win
         </label>
-        <div className="grid grid-cols-3 gap-2 mb-3">
+        <p
+          className="mb-3 px-3 py-2.5 rounded-lg border border-[rgba(201,162,39,0.35)] bg-[rgba(201,162,39,0.12)] text-center"
+          aria-live="polite"
+        >
+          <span className="text-[10px] sw-muted uppercase tracking-[0.2em] block mb-1">
+            Match target
+          </span>
+          <span className="text-2xl font-bold tabular-nums text-[#fff8e7]">
+            {settings.pointsToWin}
+          </span>
+          <span className="text-sm sw-muted ml-1">points</span>
+          {!isPresetPoints && (
+            <span className="block text-[10px] sw-text-accent mt-1 uppercase tracking-wider">
+              Custom target
+            </span>
+          )}
+        </p>
+        <div
+          className={clsx(
+            'grid gap-2 mb-3',
+            isPresetPoints ? 'grid-cols-3' : 'grid-cols-3 sm:grid-cols-4'
+          )}
+        >
           {WORD_POINTS_OPTIONS.map((pts) => (
             <button
               key={pts}
@@ -167,30 +193,50 @@ export default function WordLobby({
               {pts}
             </button>
           ))}
-        </div>
-        {isHost && (
-          <div className="flex gap-2">
-            <input
-              type="number"
-              min={1}
-              max={99}
-              value={customPoints}
-              onChange={(e) => setCustomPoints(e.target.value)}
-              placeholder="Custom"
-              className="sw-input flex-1 py-2 text-sm normal-case tracking-normal"
-            />
+          {!isPresetPoints && (
             <button
               type="button"
-              onClick={applyCustomPoints}
-              disabled={!customPoints.trim()}
-              className="sw-btn-secondary py-2 text-sm px-4"
+              disabled
+              className="py-2 rounded-lg text-sm font-semibold border border-[rgba(201,162,39,0.55)] bg-[rgba(201,162,39,0.18)] text-[#fff8e7] shadow-[0_0_16px_rgba(201,162,39,0.12)] col-span-3 sm:col-span-1"
+              aria-current="true"
             >
-              Set
+              {settings.pointsToWin}
             </button>
+          )}
+        </div>
+        {isHost && (
+          <div className="space-y-2">
+            <p className="text-[10px] sw-muted uppercase tracking-[0.15em]">
+              Or set a custom target (1–99 points)
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min={1}
+                max={99}
+                value={customPoints}
+                onChange={(e) => setCustomPoints(e.target.value)}
+                placeholder={`e.g. ${settings.pointsToWin}`}
+                className="sw-input flex-1 py-2 text-sm normal-case tracking-normal"
+                aria-label="Custom points to win"
+              />
+              <button
+                type="button"
+                onClick={applyCustomPoints}
+                disabled={!customPoints.trim()}
+                className="sw-btn-secondary py-2 text-sm px-4 shrink-0"
+              >
+                Apply
+              </button>
+            </div>
           </div>
         )}
-        {!isHost && !WORD_POINTS_OPTIONS.includes(settings.pointsToWin as 3 | 5 | 10) && (
-          <p className="text-xs sw-muted mt-2">Custom target: {settings.pointsToWin} points</p>
+        {!isHost && (
+          <p className="text-xs sw-muted mt-2 text-center">
+            {isPresetPoints ?
+              `First player to ${settings.pointsToWin} points wins the match.`
+            :	`Custom match — first to ${settings.pointsToWin} points wins.`}
+          </p>
         )}
       </div>
 

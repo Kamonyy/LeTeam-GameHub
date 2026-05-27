@@ -14,7 +14,8 @@ import {
 } from './cors.js';
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
-const HOST = process.env.HOST || '127.0.0.1';
+/** 0.0.0.0 so phones on the same Wi‑Fi can reach the hub (port 3001). */
+const HOST = process.env.HOST || '0.0.0.0';
 const allowedOrigins = parseAllowedOrigins(process.env.CLIENT_URL);
 const corsOrigin = createCorsOriginChecker(allowedOrigins);
 

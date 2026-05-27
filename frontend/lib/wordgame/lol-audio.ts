@@ -16,11 +16,13 @@ export const LOL_UI_SFX = {
 
 export type LolUiSfxKey = keyof typeof LOL_UI_SFX;
 
-type Channel = 'sfx' | 'voice';
+type Channel = 'voice';
 
 const STORAGE_KEY = 'sw-lol-audio-muted';
 export const LOL_AUDIO_VOLUME_STORAGE_KEY = 'sw-lol-audio-volume';
 const DEFAULT_VOLUME = 0.5;
+const SFX_POOL_SIZE = 8;
+const WARM_CACHE_MAX = 96;
 
 function clampVolume(value: number): number {
   return Math.min(1, Math.max(0, value));
@@ -31,16 +33,16 @@ class LolAudioEngine {
   private muted = false;
   private volumeScale = DEFAULT_VOLUME;
   private uiSfxPreloaded = false;
+  private persistVolumeTimer: ReturnType<typeof setTimeout> | null = null;
+  private sfxPoolIndex = 0;
+  private voicePlayGeneration = 0;
+  private readonly sfxPool: HTMLAudioElement[] = [];
+  private readonly activeSfx = new Set<HTMLAudioElement>();
+  private readonly sfxRelativeGain = new WeakMap<HTMLAudioElement, number>();
   private readonly warmed = new Map<string, HTMLAudioElement>();
-  private readonly channels: Record<Channel, HTMLAudioElement | null> = {
-    sfx: null,
-    voice: null,
-  };
-  /** Per-channel gain passed to playUrl (before master volume). */
-  private readonly channelGain: Record<Channel, number> = {
-    sfx: 0.55,
-    voice: 0.88,
-  };
+  private readonly warmOrder: string[] = [];
+  private voiceEl: HTMLAudioElement | null = null;
+  private voiceRelativeGain = 0.88;
 
   constructor() {
     if (typeof window === 'undefined') return;
@@ -64,13 +66,17 @@ class LolAudioEngine {
 
   setVolume(scale: number): void {
     this.volumeScale = clampVolume(scale);
+    this.applyMasterVolume();
     if (typeof window === 'undefined') return;
-    try {
-      localStorage.setItem(LOL_AUDIO_VOLUME_STORAGE_KEY, String(this.volumeScale));
-    } catch {
-      /* ignore */
-    }
-    this.applyMasterVolumeToChannels();
+    if (this.persistVolumeTimer) clearTimeout(this.persistVolumeTimer);
+    this.persistVolumeTimer = setTimeout(() => {
+      this.persistVolumeTimer = null;
+      try {
+        localStorage.setItem(LOL_AUDIO_VOLUME_STORAGE_KEY, String(this.volumeScale));
+      } catch {
+        /* ignore */
+      }
+    }, 300);
   }
 
   private effectiveVolume(relative: number): number {
@@ -78,17 +84,24 @@ class LolAudioEngine {
     return clampVolume(relative * this.volumeScale);
   }
 
-  private applyMasterVolumeToChannels(): void {
+  private applyMasterVolume(): void {
     if (typeof window === 'undefined') return;
-    for (const channel of Object.keys(this.channels) as Channel[]) {
-      const el = this.channels[channel];
-      if (!el || el.paused) continue;
-      el.volume = this.effectiveVolume(this.channelGain[channel]);
+    for (const el of this.activeSfx) {
+      if (el.paused && el.ended) continue;
+      const rel = this.sfxRelativeGain.get(el) ?? 0.55;
+      el.volume = this.effectiveVolume(rel);
+    }
+    if (this.voiceEl && !this.voiceEl.paused) {
+      this.voiceEl.volume = this.effectiveVolume(this.voiceRelativeGain);
     }
   }
 
   isMuted(): boolean {
     return this.muted;
+  }
+
+  canPlay(): boolean {
+    return this.unlocked && !this.muted;
   }
 
   setMuted(muted: boolean): void {
@@ -103,7 +116,7 @@ class LolAudioEngine {
       this.stopAll();
       return;
     }
-    this.applyMasterVolumeToChannels();
+    this.applyMasterVolume();
   }
 
   toggleMuted(): boolean {
@@ -133,76 +146,115 @@ class LolAudioEngine {
   /** Decode a clip ahead of time so play() can start on the next frame. */
   warmUrl(url: string): void {
     if (typeof window === 'undefined' || !url || this.warmed.has(url)) return;
+
+    if (this.warmOrder.length >= WARM_CACHE_MAX) {
+      const evict = this.warmOrder.shift();
+      if (evict) this.warmed.delete(evict);
+    }
+
     const el = new Audio();
     el.preload = 'auto';
     el.src = url;
     el.load();
     this.warmed.set(url, el);
+    this.warmOrder.push(url);
   }
 
   stopAll(): void {
-    for (const ch of Object.keys(this.channels) as Channel[]) {
-      const el = this.channels[ch];
-      if (!el) continue;
+    this.voicePlayGeneration += 1;
+    for (const el of this.activeSfx) {
       el.pause();
       el.currentTime = 0;
+    }
+    this.activeSfx.clear();
+    if (this.voiceEl) {
+      this.voiceEl.pause();
+      this.voiceEl.currentTime = 0;
     }
   }
 
   stopVoice(): void {
-    const el = this.channels.voice;
-    if (!el) return;
-    el.pause();
-    el.currentTime = 0;
+    this.voicePlayGeneration += 1;
+    if (this.voiceEl) {
+      this.voiceEl.pause();
+      this.voiceEl.currentTime = 0;
+    }
   }
 
   playUiSfx(key: LolUiSfxKey, volume = 0.55): void {
     this.playUrl(LOL_UI_SFX[key], 'sfx', volume);
   }
 
-  playUrl(url: string, channel: Channel, volume: number): void {
+  playUrl(url: string, channel: 'sfx' | 'voice', volume: number): void {
     if (typeof window === 'undefined' || this.muted || !url || !this.unlocked) {
       return;
     }
 
     this.warmUrl(url);
-
-    this.channelGain[channel] = volume;
     const vol = this.effectiveVolume(volume);
-    const warmed = this.warmed.get(url);
 
     if (channel === 'voice') {
-      const el = this.getChannel('voice');
-      el.volume = vol;
-      el.src = url;
-      el.pause();
-      el.currentTime = 0;
-      void el.play().catch(() => undefined);
+      this.playVoice(url, vol, volume);
       return;
     }
 
-    if (warmed && warmed.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-      const clone = warmed.cloneNode() as HTMLAudioElement;
-      clone.volume = vol;
-      void clone.play().catch(() => undefined);
-      return;
+    this.playSfxFromPool(url, vol, volume);
+  }
+
+  private playVoice(url: string, vol: number, relativeGain: number): void {
+    const playId = ++this.voicePlayGeneration;
+    this.voiceRelativeGain = relativeGain;
+
+    if (!this.voiceEl) {
+      this.voiceEl = new Audio();
+      this.voiceEl.preload = 'auto';
     }
 
-    const el = this.getChannel('sfx');
+    const el = this.voiceEl;
     el.volume = vol;
-    if (el.src !== url) el.src = url;
+    el.src = url;
+    el.pause();
     el.currentTime = 0;
+
+    const cleanup = () => {
+      if (playId === this.voicePlayGeneration) {
+        el.removeEventListener('ended', cleanup);
+      }
+    };
+    el.addEventListener('ended', cleanup, { once: true });
+
     void el.play().catch(() => undefined);
   }
 
-  private getChannel(channel: Channel): HTMLAudioElement {
-    let el = this.channels[channel];
+  private playSfxFromPool(url: string, vol: number, relativeGain: number): void {
+    let el = this.sfxPool.find((candidate) => candidate.paused || candidate.ended);
+
     if (!el) {
-      el = new Audio();
-      el.preload = 'auto';
-      this.channels[channel] = el;
+      if (this.sfxPool.length < SFX_POOL_SIZE) {
+        el = new Audio();
+        el.preload = 'auto';
+        this.sfxPool.push(el);
+      } else {
+        el = this.sfxPool[this.sfxPoolIndex % this.sfxPool.length];
+        this.sfxPoolIndex += 1;
+        el.pause();
+        this.activeSfx.delete(el);
+      }
     }
-    return el;
+
+    if (el.src !== url) el.src = url;
+    el.volume = vol;
+    el.currentTime = 0;
+    this.sfxRelativeGain.set(el, relativeGain);
+    this.activeSfx.add(el);
+
+    const onEnd = () => {
+      this.activeSfx.delete(el);
+      el.removeEventListener('ended', onEnd);
+    };
+    el.addEventListener('ended', onEnd, { once: true });
+
+    void el.play().catch(() => undefined);
   }
 }
 

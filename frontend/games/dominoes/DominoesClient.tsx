@@ -71,29 +71,46 @@ export default function DominoesClient() {
   }, []);
 
   useEffect(() => {
-    if (!dominoesEnabled || !connected || !roomParam || lobby || autoJoined || inviteJoin)
+    if (
+      !dominoesEnabled ||
+      !connected ||
+      !roomParam ||
+      lobby?.gameType === 'dominoes' ||
+      autoJoined ||
+      inviteJoin
+    )
       return;
+    if (lobby && lobby.gameType !== 'dominoes') return;
     const code = normalizeRoomCode(roomParam);
     if (!code) return;
+
+    let cancelled = false;
 
     const attemptJoin = async () => {
       setLoading(true);
       const name = getDisplayName();
       if (spectateParam) {
         const ok = await spectateRoom(code, name);
-        if (ok) router.replace(`/dominoes?room=${code}&spectate=1`, { scroll: false });
+        if (!cancelled && ok) {
+          router.replace(`/dominoes?room=${code}&spectate=1`, { scroll: false });
+        }
       } else {
         const result = await joinRoomOrSpectate(code, name);
-        if (result.ok) {
+        if (!cancelled && result.ok) {
           const query = result.spectating ? `?room=${code}&spectate=1` : `?room=${code}`;
           router.replace(`/dominoes${query}`, { scroll: false });
         }
       }
-      setAutoJoined(true);
-      setLoading(false);
+      if (!cancelled) {
+        setAutoJoined(true);
+        setLoading(false);
+      }
     };
 
     attemptJoin();
+    return () => {
+      cancelled = true;
+    };
   }, [
     connected,
     roomParam,
@@ -166,22 +183,21 @@ export default function DominoesClient() {
     setCancelConfirmOpen(false);
   };
 
-  const isHost = lobby?.hostId === playerId;
+  const dominoLobby = lobby?.gameType === 'dominoes' ? lobby : null;
+  const isHost = dominoLobby?.hostId === playerId;
   const dominoesState =
-    gameState && 'board' in gameState ? (gameState as GameState) : null;
-  const inLobby = lobby && lobby.status === 'lobby' && !isSpectator;
+    dominoLobby && gameState && 'board' in gameState ? (gameState as GameState) : null;
+  const inLobby = dominoLobby?.status === 'lobby' && !isSpectator;
   const spectatorWaiting =
-    isSpectator && lobby && lobby.status === 'lobby';
+    isSpectator && dominoLobby && dominoLobby.status === 'lobby';
   const showGameBoard =
-    !!dominoesState && !!lobby && lobby.status !== 'lobby';
+    !!dominoesState && !!dominoLobby && dominoLobby.status !== 'lobby';
   const waitingForGame =
-    lobby?.gameType === 'dominoes' &&
-    lobby?.status === 'playing' &&
-    !dominoesState;
+    dominoLobby?.status === 'playing' && !dominoesState;
   const inActiveMatch =
-    lobby?.status === 'playing' && (showGameBoard || waitingForGame);
+    dominoLobby?.status === 'playing' && (showGameBoard || waitingForGame);
 
-  const showChatSidebar = lobby?.status === 'playing';
+  const showChatSidebar = dominoLobby?.status === 'playing';
 
   return (
     <main
@@ -234,9 +250,9 @@ export default function DominoesClient() {
           showGameBoard ? 'max-w-none' : 'max-w-6xl',
         )}
       >
-        {!lobby && !dominoesEnabled && <InactiveGameScreen gameId="dominoes" />}
+        {!dominoLobby && !dominoesEnabled && <InactiveGameScreen gameId="dominoes" />}
 
-        {!lobby && dominoesEnabled && inviteJoin && (
+        {!dominoLobby && dominoesEnabled && inviteJoin && (
           <div className="max-w-md mx-auto animate-fade-in">
             <div className="card mb-6">
               <div className="flex items-center gap-2 text-hub-accent mb-4">
@@ -283,7 +299,7 @@ export default function DominoesClient() {
           </div>
         )}
 
-        {!lobby && dominoesEnabled && !inviteJoin && (
+        {!dominoLobby && dominoesEnabled && !inviteJoin && (
           <div className="max-w-md mx-auto animate-fade-in space-y-6">
             <GameAboutPanel gameId="dominoes" />
             {roomParam && loading && !autoJoined && (
@@ -346,10 +362,10 @@ export default function DominoesClient() {
           </div>
         )}
 
-        {spectatorWaiting && (
+        {spectatorWaiting && dominoLobby && (
           <div className="max-w-md mx-auto text-center animate-fade-in py-16">
             <SpectatorBanner
-              roomId={lobby!.roomId}
+              roomId={dominoLobby.roomId}
               onLeave={() => {
                 leaveRoom();
                 router.push('/dominoes');
@@ -361,9 +377,9 @@ export default function DominoesClient() {
           </div>
         )}
 
-        {inLobby && (
+        {inLobby && dominoLobby && (
           <Lobby
-            lobby={lobby}
+            lobby={dominoLobby}
             playerId={playerId}
             onSettingsChange={updateRoomSettings}
             onKickPlayer={kickPlayer}
@@ -387,11 +403,11 @@ export default function DominoesClient() {
           </div>
         )}
 
-        {showGameBoard && (
+        {showGameBoard && dominoLobby && (
           <>
             {isSpectator && (
               <SpectatorBanner
-                roomId={lobby!.roomId}
+                roomId={dominoLobby.roomId}
                 onLeave={() => {
                   leaveRoom();
                   router.push('/dominoes');
@@ -400,7 +416,7 @@ export default function DominoesClient() {
             )}
             <GameBoard
               gameState={dominoesState!}
-              lobby={lobby!}
+              lobby={dominoLobby}
               playerId={playerId}
               isHost={isHost}
               isSpectator={isSpectator}

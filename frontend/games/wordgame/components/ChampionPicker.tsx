@@ -304,7 +304,6 @@ export default function ChampionPicker({
           >
             {filtered.length > 0 ? (
               <ul
-                key={filterSignature}
                 className="sw-champ-grid sw-champ-grid--cascade"
                 role="listbox"
                 aria-label="Champion list"

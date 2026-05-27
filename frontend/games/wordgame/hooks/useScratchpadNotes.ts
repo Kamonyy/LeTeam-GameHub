@@ -55,10 +55,17 @@ export function useScratchpadNotes(
 
   useEffect(() => {
     if (!loaded || !roomId || !playerId) return;
-    localStorage.setItem(
-      storageKey(roomId, playerId, round),
-      JSON.stringify(notes)
-    );
+    const timer = window.setTimeout(() => {
+      try {
+        localStorage.setItem(
+          storageKey(roomId, playerId, round),
+          JSON.stringify(notes)
+        );
+      } catch {
+        /* ignore quota / private mode */
+      }
+    }, 300);
+    return () => window.clearTimeout(timer);
   }, [notes, loaded, roomId, playerId, round]);
 
   const addNote = useCallback((text: string) => {

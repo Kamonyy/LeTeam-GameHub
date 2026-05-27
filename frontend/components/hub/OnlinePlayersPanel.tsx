@@ -34,7 +34,14 @@ function OnlinePlayersPanelInner() {
       });
     }, 500);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      setEnteringIds((current) => {
+        const merged = new Set(current);
+        joined.forEach((id) => merged.delete(id));
+        return merged;
+      });
+    };
   }, [players]);
 
   return (

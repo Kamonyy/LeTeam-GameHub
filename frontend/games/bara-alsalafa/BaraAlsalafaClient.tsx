@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX } from 'lucide-react';
+import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX, Loader2 } from 'lucide-react';
 import { useSocket } from '@/hooks/useSocket';
 import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
@@ -11,12 +11,14 @@ import ConnectionStatus from '@/components/hub/ConnectionStatus';
 import PlayerNameControl from '@/components/hub/PlayerNameControl';
 import ErrorToast from '@/components/shared/ErrorToast';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
-import GameAboutPanel from '@/components/hub/GameAboutPanel';
 import InactiveGameScreen from '@/components/hub/InactiveGameScreen';
 import { getGameEntry, isGameActive } from '@/lib/hub/games-registry';
+import BaraAtmosphere from '@/games/bara-alsalafa/components/BaraAtmosphere';
 import BaraLobby from '@/games/bara-alsalafa/components/BaraLobby';
 import BaraGameBoard from '@/games/bara-alsalafa/components/BaraGameBoard';
 import type { BaraGameState } from '@/games/bara-alsalafa/types';
+import GameLobbyPendingOverlay from '@/components/hub/GameLobbyPendingOverlay';
+import '@/games/bara-alsalafa/bara-alsalafa.css';
 
 export default function BaraAlsalafaClient() {
   const searchParams = useSearchParams();
@@ -55,9 +57,11 @@ export default function BaraAlsalafaClient() {
   useEffect(() => {
     setInviteJoin(!!roomParam && !hasDisplayName());
   }, [roomParam]);
+
   const baraEnabled = isGameActive('bara-alsalafa');
+  const baraLobby = lobby?.gameType === 'bara-alsalafa' ? lobby : null;
   const baraState: BaraGameState | null =
-    lobby?.gameType === 'bara-alsalafa' &&
+    baraLobby &&
     gameState &&
     'gameType' in gameState &&
     gameState.gameType === 'bara-alsalafa' ?
@@ -69,20 +73,35 @@ export default function BaraAlsalafaClient() {
   }, []);
 
   useEffect(() => {
-    if (!baraEnabled || !connected || !roomParam || lobby || autoJoined || inviteJoin)
+    if (
+      !baraEnabled ||
+      !connected ||
+      !roomParam ||
+      lobby?.gameType === 'bara-alsalafa' ||
+      autoJoined ||
+      inviteJoin
+    )
       return;
+    if (lobby && lobby.gameType !== 'bara-alsalafa') return;
     const code = normalizeRoomCode(roomParam);
     if (!code) return;
+
+    let cancelled = false;
 
     const attemptJoin = async () => {
       setLoading(true);
       const ok = await joinRoom(code, getDisplayName());
-      if (ok) router.replace(`/bara-alsalafa?room=${code}`, { scroll: false });
-      setAutoJoined(true);
-      setLoading(false);
+      if (!cancelled) {
+        if (ok) router.replace(`/bara-alsalafa?room=${code}`, { scroll: false });
+        setAutoJoined(true);
+        setLoading(false);
+      }
     };
 
     attemptJoin();
+    return () => {
+      cancelled = true;
+    };
   }, [
     baraEnabled,
     connected,
@@ -131,39 +150,38 @@ export default function BaraAlsalafaClient() {
     setCancelConfirmOpen(false);
   };
 
-  const isHost = lobby?.hostId === playerId;
+  const isHost = baraLobby?.hostId === playerId;
   const gameMeta = getGameEntry('bara-alsalafa');
-  const inLobby = lobby && lobby.status === 'lobby';
+  const inLobby = baraLobby?.status === 'lobby';
   const inGame =
-    lobby &&
+    baraLobby &&
     baraState &&
-    (lobby.status === 'playing' ||
-      lobby.status === 'finished' ||
+    (baraLobby.status === 'playing' ||
+      baraLobby.status === 'finished' ||
       baraState.phase === 'match_over');
 
   return (
-    <main className="min-h-screen">
-      <header className="border-b border-hub-border bg-hub-surface/50 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <main className="bara-shell">
+      <BaraAtmosphere />
+
+      <header className="bara-header">
+        <div className="bara-header__inner">
           <div className="flex items-center gap-4">
-            <Link href="/" className="text-hub-muted hover:text-white transition-colors">
+            <Link href="/" className="bara-header__back" aria-label="العودة للرئيسية">
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div dir="rtl">
-              <h1 className="text-lg font-semibold">برا السالفة</h1>
-              {gameMeta && (
-                <p className="text-xs text-hub-muted truncate max-w-[240px] sm:max-w-none">
-                  {gameMeta.tagline}
-                </p>
-              )}
+              <h1 className="bara-header__title">برا السالفة</h1>
+              {gameMeta && <p className="bara-header__tagline">{gameMeta.tagline}</p>}
             </div>
           </div>
           <div className="flex items-center gap-3">
             {isHost && inGame && (
               <button
+                type="button"
                 onClick={() => setCancelConfirmOpen(true)}
                 disabled={cancelling}
-                className="btn-secondary flex items-center gap-2 text-sm py-2 text-hub-danger border-hub-danger/30 hover:bg-hub-danger/10"
+                className="bara-btn-secondary text-sm py-2 text-red-300 border-red-500/30 hover:bg-red-500/10"
               >
                 <OctagonX className="w-4 h-4" />
                 {cancelling ? 'جاري الإلغاء…' : 'إلغاء الجولة'}
@@ -175,36 +193,35 @@ export default function BaraAlsalafaClient() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {!lobby && !baraEnabled && <InactiveGameScreen gameId="bara-alsalafa" />}
+      <div className="bara-content">
+        {!baraLobby && !baraEnabled && <InactiveGameScreen gameId="bara-alsalafa" />}
 
-        {!lobby && baraEnabled && inviteJoin && (
-          <div className="max-w-md mx-auto animate-fade-in" dir="rtl">
-            <div className="card mb-6">
-              <div className="flex items-center gap-2 text-hub-accent mb-4">
+        {!baraLobby && baraEnabled && inviteJoin && (
+          <div className="max-w-md mx-auto bara-view-mount" dir="rtl">
+            <div className="bara-card">
+              <div className="flex items-center gap-2 bara-accent mb-4">
                 <UserPlus className="w-5 h-5" />
                 <h2 className="text-lg font-semibold">انضم لبرا السالفة</h2>
               </div>
-              <p className="text-sm text-hub-muted mb-4">
+              <p className="text-sm bara-muted mb-4">
                 دعوة للغرفة{' '}
-                <span className="font-mono font-bold text-white tracking-widest">
-                  {roomParam}
-                </span>
+                <span className="font-mono font-bold text-white tracking-widest">{roomParam}</span>
               </p>
-              <label className="block text-sm text-hub-muted mb-2">اسم العرض</label>
+              <label className="block text-sm bara-muted mb-2">اسم العرض</label>
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayNameState(e.target.value)}
-                className="input-field normal-case tracking-normal text-right mb-6"
+                className="bara-input normal-case tracking-normal text-right mb-6"
                 placeholder="اسمك"
                 maxLength={20}
                 autoFocus
               />
               <button
+                type="button"
                 onClick={handleInviteJoin}
                 disabled={!connected || loading || !displayName.trim()}
-                className="btn-primary w-full flex items-center justify-center gap-2"
+                className="bara-btn-primary w-full"
               >
                 <LogIn className="w-4 h-4" />
                 {loading ? 'جاري الانضمام…' : 'انضم'}
@@ -213,30 +230,44 @@ export default function BaraAlsalafaClient() {
           </div>
         )}
 
-        {!lobby && baraEnabled && !inviteJoin && (
-          <div className="max-w-md mx-auto animate-fade-in space-y-6" dir="rtl">
-            <GameAboutPanel gameId="bara-alsalafa" />
+        {!baraLobby && baraEnabled && !inviteJoin && (
+          <div className="relative max-w-md mx-auto bara-view-mount space-y-6" dir="rtl">
+            {!connected && (
+              <p
+                className="flex items-center justify-center gap-2 text-sm bara-muted"
+                role="status"
+                aria-live="polite"
+              >
+                <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden />
+                جاري الاتصال بالسيرفر…
+              </p>
+            )}
             {roomParam && loading && !autoJoined && (
-              <p className="text-center text-sm text-hub-muted animate-pulse-soft">
+              <p className="text-center text-sm bara-muted animate-pulse-soft">
                 جاري الانضمام {roomParam}…
               </p>
             )}
-            <div className="card">
-              <label className="block text-sm text-hub-muted mb-2">اسم العرض</label>
+            <div className="relative">
+              {loading && (
+                <GameLobbyPendingOverlay message="جاري إنشاء اللوبي…" />
+              )}
+              <div className="bara-card">
+              <label className="block text-sm bara-muted mb-2">اسم العرض</label>
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayNameState(e.target.value)}
                 onBlur={() => displayName.trim() && setDisplayName(displayName)}
-                className="input-field normal-case tracking-normal text-right mb-6"
+                className="bara-input normal-case tracking-normal text-right mb-6"
                 placeholder="اسمك"
                 maxLength={20}
               />
               <div className="space-y-4">
                 <button
+                  type="button"
                   onClick={handleCreate}
                   disabled={!connected || loading || !displayName.trim()}
-                  className="btn-primary w-full flex items-center justify-center gap-2"
+                  className="bara-btn-primary w-full"
                 >
                   <Plus className="w-4 h-4" />
                   {loading ? 'جاري الإنشاء…' : 'إنشاء غرفة'}
@@ -245,26 +276,28 @@ export default function BaraAlsalafaClient() {
                   type="text"
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  className="input-field"
+                  className="bara-input font-mono tracking-widest uppercase"
                   placeholder="رمز الغرفة"
                   maxLength={8}
                 />
                 <button
+                  type="button"
                   onClick={handleJoin}
                   disabled={!connected || loading || !joinCode.trim() || !displayName.trim()}
-                  className="btn-secondary w-full flex items-center justify-center gap-2"
+                  className="bara-btn-secondary w-full"
                 >
                   <LogIn className="w-4 h-4" />
                   {loading ? 'جاري الانضمام…' : 'انضم لغرفة'}
                 </button>
               </div>
             </div>
+            </div>
           </div>
         )}
 
-        {inLobby && (
+        {inLobby && baraLobby && (
           <BaraLobby
-            lobby={lobby}
+            lobby={baraLobby}
             playerId={playerId}
             onKickPlayer={kickPlayer}
             onSettingsChange={updateRoomSettings}
@@ -281,10 +314,10 @@ export default function BaraAlsalafaClient() {
           />
         )}
 
-        {inGame && baraState && (
+        {inGame && baraState && baraLobby && (
           <BaraGameBoard
             gameState={baraState}
-            lobby={lobby}
+            lobby={baraLobby}
             playerId={playerId}
             isHost={isHost}
             onReveal={baraReveal}

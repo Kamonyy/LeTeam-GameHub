@@ -18,6 +18,9 @@ export default function HubCustomCursor() {
     const root = rootRef.current;
     if (!root) return;
 
+    const hubRoot = document.querySelector('.hub-arcade');
+    hubRoot?.classList.add('hub-arcade--custom-cursor');
+
     const applyModeClass = (mode: CursorMode) => {
       root.classList.toggle('hub-cursor--grab', mode === 'grab');
       root.classList.toggle('hub-cursor--crosshair', mode === 'crosshair');
@@ -55,6 +58,7 @@ export default function HubCustomCursor() {
     document.documentElement.addEventListener('mouseenter', onEnter);
 
     return () => {
+      hubRoot?.classList.remove('hub-arcade--custom-cursor');
       window.removeEventListener('mousemove', onMove);
       document.documentElement.removeEventListener('mouseleave', onLeave);
       document.documentElement.removeEventListener('mouseenter', onEnter);

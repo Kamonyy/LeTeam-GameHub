@@ -5,12 +5,12 @@ import type { LobbyState } from '@/lib/hub/types';
 import ScoreCard from './ScoreCard';
 import WordSetup from './WordSetup';
 import GuessingBoard from './GuessingBoard';
+import WordMatchOverModal from './WordMatchOverModal';
 import Scratchpad from './Scratchpad';
 import RoundCeremony from './RoundCeremony';
 import { useScratchpadNotes } from '../hooks/useScratchpadNotes';
 import clsx from 'clsx';
 import { useEffect, useRef } from 'react';
-import { useSocket } from '@/hooks/useSocket';
 import { useWordGameAudioOptional } from '../hooks/useWordGameAudio';
 
 interface WordGameBoardProps {
@@ -66,21 +66,52 @@ export default function WordGameBoard({
   const wordCategory = gameState.wordCategory ?? 'custom';
   const isLol = wordCategory === 'lol-champions';
   const audio = useWordGameAudioOptional();
-  const { wordGuessedCelebration } = useSocket();
   const prevPhase = useRef(gameState.phase);
+  /** Dedupe guess celebration per server state revision (both players get the same update). */
+  const lastGuessCelebrationVersion = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!wordGuessedCelebration) return;
-    const isLolCelebration =
-      wordGuessedCelebration.wordCategory === 'lol-champions';
+    lastGuessCelebrationVersion.current = gameState.stateVersion ?? null;
+  }, [lobby.roomId]);
+
+  useEffect(() => {
+    if (isLol && gameState.revealedChampionId) {
+      audio?.preloadChampion(gameState.revealedChampionId);
+    }
+  }, [isLol, gameState.revealedChampionId, audio]);
+
+  useEffect(() => {
+    const version = gameState.stateVersion;
+    if (version == null) return;
+
+    const action = gameState.lastAction;
+    const isGuessCelebration =
+      (action?.type === 'word_guessed' || action?.type === 'match_won') &&
+      (gameState.phase === 'round_end' || gameState.phase === 'match_over');
+
+    if (!isGuessCelebration) return;
+    if (lastGuessCelebrationVersion.current === version) return;
+    lastGuessCelebrationVersion.current = version;
+
+    const championId =
+      action?.championId ?? gameState.revealedChampionId ?? null;
+    const category = gameState.wordCategory ?? 'custom';
+
     audio?.unlock();
-    if (isLolCelebration && wordGuessedCelebration.championId) {
+    if (category === 'lol-champions' && championId) {
       audio?.playSfx('pickConfirm', 0.7);
-      void audio?.playChampionVoice(wordGuessedCelebration.championId);
+      void audio?.playChampionVoice(championId);
     } else {
       audio?.playSfx('pickConfirm', 0.65);
     }
-  }, [wordGuessedCelebration, audio]);
+  }, [
+    gameState.stateVersion,
+    gameState.phase,
+    gameState.lastAction,
+    gameState.revealedChampionId,
+    gameState.wordCategory,
+    audio,
+  ]);
 
   useEffect(() => {
     const phase = gameState.phase;
@@ -113,8 +144,11 @@ export default function WordGameBoard({
     clearNotes,
   ]);
 
+  const showMatchOverModal =
+    gameState.phase === 'match_over' && winnerName != null;
+
   return (
-    <div className="sw-animate-ascend-slow space-y-8">
+    <div className="sw-animate-ascend-slow space-y-8 relative">
       <ScoreCard
         playerNames={playerNames}
         playerIds={gameState.playerIds}
@@ -162,14 +196,8 @@ export default function WordGameBoard({
               phase={gameState.phase}
               opponentName={opponentName}
               guesserName={guesserName}
-              winnerName={winnerName}
-              pointsToWin={gameState.pointsToWin}
               canConfirmGuessed={gameState.canConfirmGuessed}
               onConfirmGuessed={onConfirmGuessed}
-              isHost={isHost}
-              postMatchBusy={postMatchBusy}
-              onHostPlayAgain={onHostPlayAgain}
-              onHostReturnToLobby={onHostReturnToLobby}
             />
           )}
         </div>
@@ -187,6 +215,25 @@ export default function WordGameBoard({
           </aside>
         )}
       </div>
+
+      {showMatchOverModal && (
+        <WordMatchOverModal
+          wordCategory={wordCategory}
+          revealedWord={gameState.revealedWord}
+          revealedChampionId={gameState.revealedChampionId}
+          winnerName={winnerName!}
+          winnerId={gameState.winnerId}
+          myPlayerId={playerId}
+          pointsToWin={gameState.pointsToWin}
+          scores={gameState.scores}
+          playerNames={playerNames}
+          playerIds={gameState.playerIds}
+          isHost={isHost}
+          postMatchBusy={postMatchBusy}
+          onHostPlayAgain={onHostPlayAgain}
+          onHostReturnToLobby={onHostReturnToLobby}
+        />
+      )}
     </div>
   );
 }

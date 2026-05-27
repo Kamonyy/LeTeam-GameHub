@@ -6,6 +6,7 @@ import {
   playRandomChampionVoiceLine,
   preloadChampionVoice,
   getChampionStingerUrl,
+  getChampionVoiceManifest,
 } from '@/lib/wordgame/lol-champion-vo';
 import { WordGameAudioContext } from '../components/WordGameAudioProvider';
 
@@ -30,6 +31,7 @@ export function useLolAudioActions(enabled: boolean) {
   const playSfx = useCallback(
     (key: LolUiSfxKey, volume?: number) => {
       if (!enabled || lolAudio.isMuted()) return;
+      lolAudio.unlock();
       lolAudio.playUiSfx(key, volume);
     },
     [enabled]
@@ -47,8 +49,17 @@ export function useLolAudioActions(enabled: boolean) {
   const playChampionStinger = useCallback(
     (championId: string, volume = 0.45) => {
       if (!enabled || lolAudio.isMuted() || !championId) return;
+      lolAudio.unlock();
       const url = getChampionStingerUrl(championId);
-      if (url) void lolAudio.playUrl(url, 'sfx', volume);
+      if (url) {
+        lolAudio.playUrl(url, 'sfx', volume);
+        return;
+      }
+      void getChampionVoiceManifest(championId).then(() => {
+        if (!enabled || lolAudio.isMuted()) return;
+        const resolved = getChampionStingerUrl(championId);
+        if (resolved) lolAudio.playUrl(resolved, 'sfx', volume);
+      });
     },
     [enabled]
   );

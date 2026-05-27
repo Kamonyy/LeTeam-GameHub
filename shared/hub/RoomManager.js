@@ -253,6 +253,14 @@ export class RoomManager {
 		if (session.error) return { error: session.error };
 
 		const safeName = sanitizeDisplayName(displayName);
+		const prevSocketId = this.playerToSocket.get(playerId);
+		if (prevSocketId && prevSocketId !== socket.id) {
+			const prevSocket = this.io.sockets.sockets.get(prevSocketId);
+			if (prevSocket) {
+				prevSocket.emit("session:superseded", {});
+				prevSocket.disconnect(true);
+			}
+		}
 		this.socketToPlayer.set(socket.id, playerId);
 		this.playerToSocket.set(playerId, socket.id);
 
@@ -578,11 +586,7 @@ export class RoomManager {
 		const room = this.rooms.get(roomId);
 		if (!room) return { error: "Room not found" };
 		if (room.hostId !== playerId) return { error: "Only the host can start" };
-		if (
-			room.gameType === "wordgame" &&
-			room.status === "finished" &&
-			isWordGameWon(room)
-		) {
+		if (room.gameType === "wordgame" && isWordGameWon(room)) {
 			this._clearNextRoundTimer(room);
 			room.game = null;
 			room.status = "lobby";
@@ -743,6 +747,7 @@ export class RoomManager {
 		}
 
 		this._clearNextRoundTimer(room);
+		this._clearAutoPlayTimer(room);
 		room.game = null;
 		room.status = "lobby";
 
@@ -853,21 +858,30 @@ export class RoomManager {
 		}
 
 		const connectedPlayers = room.players.filter((p) => p.connected);
-		if (connectedPlayers.length < gameDef.minPlayers) {
+		let playersToStart = connectedPlayers;
+
+		if (room.gameType === "wordgame") {
+			const matchIds = room.game.playerIds ?? [];
+			const matchPlayers = room.players.filter((p) =>
+				matchIds.includes(p.id),
+			);
+			if (matchPlayers.length !== 2) {
+				return { error: "Secret Word requires exactly 2 players" };
+			}
+			playersToStart = matchPlayers;
+		}
+
+		if (playersToStart.length < gameDef.minPlayers) {
 			return { error: `Need at least ${gameDef.minPlayers} players` };
 		}
 
 		if (room.gameType === "dominoes") {
 			if (
 				room.settings.mode === "2v2" &&
-				connectedPlayers.length !== 4
+				playersToStart.length !== 4
 			) {
 				return { error: "2v2 Team Mode requires exactly 4 players" };
 			}
-		}
-
-		if (room.gameType === "wordgame" && connectedPlayers.length !== 2) {
-			return { error: "Secret Word requires exactly 2 players" };
 		}
 
 		if (room.gameType === "bara-alsalafa") {
@@ -882,7 +896,7 @@ export class RoomManager {
 		this._clearNextRoundTimer(room);
 		this._clearAutoPlayTimer(room);
 		room.game = gameDef.createEngine(
-			connectedPlayers.map((p) => p.id),
+			playersToStart.map((p) => p.id),
 			room.settings,
 		);
 		room.status = "playing";
@@ -1030,6 +1044,7 @@ export class RoomManager {
 			this._emitToRoom(room, "word:guessed:celebration", {
 				wordCategory: room.game.wordCategory,
 				championId: action.championId ?? null,
+				stateVersion: room.game.stateVersion,
 			});
 		}
 
@@ -1162,7 +1177,9 @@ export class RoomManager {
 		const roomId = this.playerToRoom.get(playerId);
 		const room = roomId ? this.rooms.get(roomId) : null;
 		if (!isActiveWordGameSession(room)) {
-			this.playerToSocket.delete(playerId);
+			if (this.playerToSocket.get(playerId) === socket.id) {
+				this.playerToSocket.delete(playerId);
+			}
 		}
 		this._scheduleBroadcastHubPresence();
 
