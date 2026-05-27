@@ -1,7 +1,11 @@
 name = "leteam-gamehub"
 compatibility_date = "2024-01-01"
 
-# Static Next.js export — built to frontend/out before deploy
+# Runs automatically before `wrangler deploy` (even if dashboard build step is empty)
+[build]
+command = "npm run build"
+
+# Static Next.js export output
 [assets]
 directory = "frontend/out"
 not_found_handling = "single-page-application"

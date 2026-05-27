@@ -34,8 +34,11 @@ In Cloudflare → your project → **Settings** → **Build**:
 
 | Setting | Value |
 |---------|-------|
-| **Build command** | `npm run build` |
+| **Build command** | `npm run build` *(or leave empty — `wrangler.toml` runs it)* |
 | **Deploy command** | `npx wrangler deploy` |
+
+> If **Building application** shows `—` in the log, the dashboard build step is empty.  
+> That is OK: `wrangler.toml` `[build]` runs `npm run build` during deploy.
 
 Add environment variable (Production + Preview):
 
