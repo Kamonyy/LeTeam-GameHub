@@ -1,4 +1,5 @@
-export const DISCONNECT_GRACE_MS = 60_000;
+export const DISCONNECT_GRACE_MS = 86_400_000;
+export const ROOM_IDLE_CLEANUP_MS = 86_400_000 * 7;
 export const TURN_TIMER_TICK_MS = 1000;
 export const DEFAULT_MIN_PLAYERS = 2;
 export const DEFAULT_MAX_PLAYERS = 4;
@@ -9,9 +10,14 @@ export const ROUND_RESTART_DELAY_MS = 4000;
 export const WORD_ROUND_RESET_DELAY_MS = 3500;
 export const WORD_GAME_MIN_PLAYERS = 2;
 export const WORD_GAME_MAX_PLAYERS = 2;
+export const WORD_POINTS_OPTIONS = [3, 5, 10];
 
 export const DEFAULT_MATCH_SETTINGS = {
   scoreCap: DEFAULT_SCORE_CAP,
   mode: 'ffa',
   handSize: DEFAULT_HAND_SIZE,
+};
+
+export const DEFAULT_WORD_GAME_SETTINGS = {
+  pointsToWin: 5,
 };

@@ -9,14 +9,19 @@ const WORD_PATTERN = /^[\p{L}\p{N}\s'-]+$/u;
 export class WordGameEngine {
   /**
    * @param {string[]} playerIds — exactly 2
+   * @param {{ pointsToWin?: number }} [settings]
    */
-  constructor(playerIds) {
+  constructor(playerIds, settings = {}) {
     if (playerIds.length !== 2) {
       throw new Error('Secret Word requires exactly 2 players');
     }
 
+    const cap = Number(settings.pointsToWin);
+    this.pointsToWin =
+      Number.isInteger(cap) && cap >= 1 && cap <= 99 ? cap : 5;
+
     this.playerIds = [...playerIds];
-    /** @type {'setup' | 'playing' | 'round_end'} */
+    /** @type {'setup' | 'playing' | 'round_end' | 'match_over'} */
     this.phase = 'setup';
     /** Words each player must guess: keyed by guesser id */
     this.wordsForGuesser = /** @type {Record<string, string>} */ ({});
@@ -26,6 +31,7 @@ export class WordGameEngine {
     this.scores = {};
     this.roundNumber = 1;
     this.lastAction = null;
+    this.winnerId = null;
 
     for (const id of playerIds) {
       this.scores[id] = 0;
@@ -112,14 +118,26 @@ export class WordGameEngine {
     }
 
     this.scores[guesserId] = (this.scores[guesserId] || 0) + 1;
-    this.phase = 'round_end';
-    this.lastAction = {
-      type: 'word_guessed',
-      guesserId,
-      creatorId,
-      word: revealedWord,
-      roundNumber: this.roundNumber,
-    };
+
+    if (this.scores[guesserId] >= this.pointsToWin) {
+      this.winnerId = guesserId;
+      this.phase = 'match_over';
+      this.lastAction = {
+        type: 'match_won',
+        winnerId: guesserId,
+        word: revealedWord,
+        roundNumber: this.roundNumber,
+      };
+    } else {
+      this.phase = 'round_end';
+      this.lastAction = {
+        type: 'word_guessed',
+        guesserId,
+        creatorId,
+        word: revealedWord,
+        roundNumber: this.roundNumber,
+      };
+    }
 
     return { success: true };
   }
@@ -143,11 +161,17 @@ export class WordGameEngine {
    */
   serializeForPlayer(viewerId) {
     const opponentId = this._opponentId(viewerId);
-    const wordToGuess = this.wordsForGuesser[viewerId];
 
     const revealedWord =
-      this.phase === 'round_end' && this.lastAction?.type === 'word_guessed'
+      (this.phase === 'round_end' || this.phase === 'match_over') &&
+      (this.lastAction?.type === 'word_guessed' ||
+        this.lastAction?.type === 'match_won')
         ? this.lastAction.word
+        : null;
+
+    const myChosenWord =
+      this.submitted[viewerId] && this.wordsForGuesser[opponentId]
+        ? this.wordsForGuesser[opponentId]
         : null;
 
     return {
@@ -155,15 +179,17 @@ export class WordGameEngine {
       phase: this.phase,
       playerIds: this.playerIds,
       scores: { ...this.scores },
+      pointsToWin: this.pointsToWin,
       roundNumber: this.roundNumber,
       iHaveSubmitted: !!this.submitted[viewerId],
       opponentHasSubmitted: !!this.submitted[opponentId],
-      targetWordLength:
-        this.phase === 'playing' && wordToGuess ? wordToGuess.length : 0,
+      myChosenWord,
       revealedWord,
+      winnerId: this.winnerId,
       lastGuesserId:
-        this.lastAction?.type === 'word_guessed'
-          ? this.lastAction.guesserId
+        this.lastAction?.type === 'word_guessed' ||
+        this.lastAction?.type === 'match_won'
+          ? this.lastAction.guesserId ?? this.lastAction.winnerId
           : null,
       canConfirmGuessed: this.phase === 'playing',
       lastAction: this.lastAction,

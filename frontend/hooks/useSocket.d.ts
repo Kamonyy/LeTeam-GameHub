@@ -1,4 +1,4 @@
-import type { LobbyState, MatchSettings } from '@/lib/hub/types';
+import type { MatchSettings, WordGameSettings } from '@/lib/hub/types';
 import type { GameState, Tile } from '@/games/dominoes/types';
 import type { WordGameState } from '@/games/wordgame/types';
 
@@ -7,14 +7,15 @@ export type HubGameState = GameState | WordGameState;
 export interface UseSocketReturn {
   connected: boolean;
   playerId: string;
-  lobby: LobbyState | null;
+  lobby: import('@/lib/hub/types').LobbyState | null;
   gameState: HubGameState | null;
   error: string | null;
   clearError: () => void;
+  refreshDisplayName: (name: string) => void;
   createRoom: (displayName: string, gameType?: string) => Promise<string | null>;
   joinRoom: (roomId: string, displayName: string) => Promise<boolean>;
   leaveRoom: () => void;
-  updateRoomSettings: (settings: Partial<MatchSettings>) => Promise<boolean>;
+  updateRoomSettings: (settings: Partial<MatchSettings | WordGameSettings>) => Promise<boolean>;
   startGame: () => Promise<boolean>;
   kickPlayer: (targetPlayerId: string) => Promise<boolean>;
   cancelMatch: () => Promise<boolean>;

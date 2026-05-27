@@ -1,13 +1,30 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Gamepad2, Zap, ArrowRight } from 'lucide-react';
+import { Gamepad2, Zap, ArrowRight, User } from 'lucide-react';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
 import { useSocket } from '@/hooks/useSocket';
+import { getDisplayName, setDisplayName } from '@/lib/player';
 import { GAMES } from '@/lib/hub/games-registry';
 
 export default function HomePage() {
-  const { connected } = useSocket();
+  const { connected, refreshDisplayName } = useSocket();
+  const [displayName, setDisplayNameState] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setDisplayNameState(getDisplayName());
+  }, []);
+
+  const saveName = () => {
+    const trimmed = displayName.trim();
+    if (!trimmed) return;
+    setDisplayName(trimmed);
+    refreshDisplayName(trimmed);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
 
   return (
     <main className="min-h-screen">
@@ -33,6 +50,37 @@ export default function HomePage() {
             <Zap className="w-4 h-4 text-hub-accent" />
             Low latency
           </span>
+        </div>
+      </section>
+
+      <section className="max-w-md mx-auto px-6 pb-10">
+        <div className="card">
+          <div className="flex items-center gap-2 text-hub-accent mb-4">
+            <User className="w-5 h-5" />
+            <h3 className="text-lg font-semibold">Your Display Name</h3>
+          </div>
+          <p className="text-sm text-hub-muted mb-4">
+            Used when you create or join rooms. Saved on this device for future games and invites.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayNameState(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && saveName()}
+              className="input-field flex-1 normal-case tracking-normal text-left"
+              placeholder="Enter your name"
+              maxLength={20}
+            />
+            <button
+              type="button"
+              onClick={saveName}
+              disabled={!displayName.trim()}
+              className="btn-primary px-5"
+            >
+              {saved ? 'Saved' : 'Save'}
+            </button>
+          </div>
         </div>
       </section>
 

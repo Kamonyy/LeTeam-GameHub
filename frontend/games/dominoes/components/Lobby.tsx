@@ -29,7 +29,11 @@ export default function Lobby({
   const [kickingId, setKickingId] = useState<string | null>(null);
   const isHost = lobby.hostId === playerId;
   const connectedCount = lobby.players.filter((p) => p.connected).length;
-  const settings = lobby.settings ?? { scoreCap: 100, mode: 'ffa', handSize: 7 };
+  const settings: MatchSettings = (lobby.settings as MatchSettings | undefined) ?? {
+    scoreCap: 100,
+    mode: 'ffa',
+    handSize: 7,
+  };
 
   const canStart =
     isHost &&

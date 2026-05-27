@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Lock, Check, Loader2 } from 'lucide-react';
+import { PenLine, Check, Loader2 } from 'lucide-react';
 
 interface WordSetupProps {
   iHaveSubmitted: boolean;
   opponentHasSubmitted: boolean;
   opponentName: string;
+  myChosenWord: string | null;
   onSubmit: (word: string) => Promise<boolean>;
 }
 
@@ -14,6 +15,7 @@ export default function WordSetup({
   iHaveSubmitted,
   opponentHasSubmitted,
   opponentName,
+  myChosenWord,
   onSubmit,
 }: WordSetupProps) {
   const [word, setWord] = useState('');
@@ -35,6 +37,9 @@ export default function WordSetup({
           <Check className="w-7 h-7 text-hub-success" />
         </div>
         <h3 className="text-lg font-semibold mb-2">Word locked in</h3>
+        {myChosenWord && (
+          <p className="text-xl font-bold text-white mb-3">{myChosenWord}</p>
+        )}
         <p className="text-hub-muted text-sm">
           {opponentHasSubmitted
             ? 'Both words submitted — starting round…'
@@ -50,17 +55,18 @@ export default function WordSetup({
   return (
     <div className="word-panel p-8 animate-fade-in">
       <div className="flex items-center gap-2 text-hub-accent mb-4">
-        <Lock className="w-5 h-5" />
+        <PenLine className="w-5 h-5" />
         <h3 className="text-lg font-semibold">Choose a Secret Word</h3>
       </div>
       <p className="text-sm text-hub-muted mb-6">
         Pick a word for <span className="text-gray-200">{opponentName}</span> to
-        guess over voice chat. They won&apos;t see what you type.
+        guess over voice chat. Only they will try to guess it — you&apos;ll see
+        your word as a reminder once locked in.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
-          type="password"
+          type="text"
           autoComplete="off"
           value={word}
           onChange={(e) => setWord(e.target.value)}

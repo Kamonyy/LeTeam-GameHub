@@ -1,15 +1,27 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Check, Users, Crown, LogOut, Play, UserX, MessageCircle } from 'lucide-react';
+import {
+  Copy,
+  Check,
+  Users,
+  Crown,
+  LogOut,
+  Play,
+  UserX,
+  MessageCircle,
+  Settings2,
+} from 'lucide-react';
 import clsx from 'clsx';
-import type { LobbyState } from '@/lib/hub/types';
+import type { LobbyState, WordGameSettings } from '@/lib/hub/types';
+import { WORD_POINTS_OPTIONS } from '@/lib/hub/types';
 
 interface WordLobbyProps {
   lobby: LobbyState;
   playerId: string;
   onStartGame: () => void;
   onLeave: () => void;
+  onSettingsChange?: (settings: Partial<WordGameSettings>) => void;
   onKickPlayer?: (targetPlayerId: string) => void;
   starting?: boolean;
 }
@@ -19,13 +31,22 @@ export default function WordLobby({
   playerId,
   onStartGame,
   onLeave,
+  onSettingsChange,
   onKickPlayer,
   starting = false,
 }: WordLobbyProps) {
   const [copied, setCopied] = useState(false);
   const [kickingId, setKickingId] = useState<string | null>(null);
+  const [customPoints, setCustomPoints] = useState('');
   const isHost = lobby.hostId === playerId;
   const connectedCount = lobby.players.filter((p) => p.connected).length;
+
+  const settings: WordGameSettings = {
+    pointsToWin:
+      lobby.settings && 'pointsToWin' in lobby.settings
+        ? lobby.settings.pointsToWin
+        : 5,
+  };
 
   const canStart =
     isHost && lobby.status === 'lobby' && connectedCount === lobby.maxPlayers;
@@ -46,6 +67,14 @@ export default function WordLobby({
     setKickingId(targetId);
     await onKickPlayer(targetId);
     setKickingId(null);
+  };
+
+  const applyCustomPoints = () => {
+    const value = parseInt(customPoints, 10);
+    if (value >= 1 && value <= 99) {
+      onSettingsChange?.({ pointsToWin: value });
+      setCustomPoints('');
+    }
   };
 
   return (
@@ -77,6 +106,64 @@ export default function WordLobby({
           )}
           {copied ? 'Copied' : 'Share'}
         </button>
+      </div>
+
+      <div className="mb-6 p-4 rounded-xl border border-hub-border bg-hub-surface/60">
+        <div className="flex items-center gap-2 text-sm font-medium text-gray-200 mb-4">
+          <Settings2 className="w-4 h-4 text-hub-accent" />
+          Match Settings
+        </div>
+
+        <div>
+          <label className="block text-xs text-hub-muted mb-2 uppercase tracking-wide">
+            Points to win
+          </label>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {WORD_POINTS_OPTIONS.map((pts) => (
+              <button
+                key={pts}
+                type="button"
+                disabled={!isHost}
+                onClick={() => onSettingsChange?.({ pointsToWin: pts })}
+                className={clsx(
+                  'py-2 rounded-lg text-sm font-semibold border transition-all duration-200',
+                  settings.pointsToWin === pts
+                    ? 'border-hub-accent bg-hub-accent/20 text-white'
+                    : 'border-hub-border bg-hub-card text-hub-muted hover:border-hub-accent/40',
+                  !isHost && 'opacity-70 cursor-default'
+                )}
+              >
+                {pts}
+              </button>
+            ))}
+          </div>
+          {isHost && (
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min={1}
+                max={99}
+                value={customPoints}
+                onChange={(e) => setCustomPoints(e.target.value)}
+                placeholder="Custom"
+                className="input-field flex-1 py-2 text-sm normal-case tracking-normal"
+              />
+              <button
+                type="button"
+                onClick={applyCustomPoints}
+                disabled={!customPoints.trim()}
+                className="btn-secondary py-2 text-sm px-4"
+              >
+                Set
+              </button>
+            </div>
+          )}
+          {!isHost && !WORD_POINTS_OPTIONS.includes(settings.pointsToWin as 3 | 5 | 10) && (
+            <p className="text-xs text-hub-muted mt-2">
+              Custom target: {settings.pointsToWin} points
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="mb-6">

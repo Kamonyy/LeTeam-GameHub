@@ -10,25 +10,42 @@ function generatePlayerId(): string {
   return uuidv4();
 }
 
+function readStorage(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  const fromLocal = localStorage.getItem(key);
+  if (fromLocal) return fromLocal;
+  const fromSession = sessionStorage.getItem(key);
+  if (fromSession) {
+    localStorage.setItem(key, fromSession);
+    sessionStorage.removeItem(key);
+  }
+  return fromSession;
+}
+
+function writeStorage(key: string, value: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(key, value);
+}
+
 export function getOrCreatePlayerId(): string {
   if (typeof window === 'undefined') return '';
 
-  let id = sessionStorage.getItem(PLAYER_ID_KEY);
+  let id = readStorage(PLAYER_ID_KEY);
   if (!id) {
     id = generatePlayerId();
-    sessionStorage.setItem(PLAYER_ID_KEY, id);
+    writeStorage(PLAYER_ID_KEY, id);
   }
   return id;
 }
 
 export function getDisplayName(): string {
   if (typeof window === 'undefined') return '';
-  return sessionStorage.getItem(DISPLAY_NAME_KEY) || '';
+  return readStorage(DISPLAY_NAME_KEY) || '';
 }
 
 export function hasDisplayName(): boolean {
   if (typeof window === 'undefined') return false;
-  const name = sessionStorage.getItem(DISPLAY_NAME_KEY);
+  const name = readStorage(DISPLAY_NAME_KEY);
   return !!name && name.trim().length > 0;
 }
 
@@ -36,5 +53,5 @@ export function setDisplayName(name: string): void {
   if (typeof window === 'undefined') return;
   const trimmed = name.trim();
   if (!trimmed) return;
-  sessionStorage.setItem(DISPLAY_NAME_KEY, trimmed);
+  writeStorage(DISPLAY_NAME_KEY, trimmed);
 }

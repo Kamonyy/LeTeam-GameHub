@@ -26,6 +26,7 @@ export default function WordGameClient() {
     createRoom,
     joinRoom,
     leaveRoom,
+    updateRoomSettings,
     startGame,
     kickPlayer,
     cancelMatch,
@@ -108,7 +109,12 @@ export default function WordGameClient() {
 
   const isHost = lobby?.hostId === playerId;
   const inLobby = lobby && lobby.status === 'lobby';
-  const inGame = lobby?.status === 'playing' && wordState;
+  const inGame =
+    lobby &&
+    wordState &&
+    (lobby.status === 'playing' ||
+      lobby.status === 'finished' ||
+      wordState.phase === 'match_over');
 
   return (
     <main className="min-h-screen">
@@ -226,6 +232,7 @@ export default function WordGameClient() {
             lobby={lobby}
             playerId={playerId}
             onKickPlayer={kickPlayer}
+            onSettingsChange={updateRoomSettings}
             onStartGame={async () => {
               setStarting(true);
               await startGame();

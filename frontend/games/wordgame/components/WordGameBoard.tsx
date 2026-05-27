@@ -39,6 +39,14 @@ export default function WordGameBoard({
       ? playerNames[gameState.lastGuesserId] || 'Player'
       : opponentName;
 
+  const winnerName =
+    gameState.winnerId != null
+      ? playerNames[gameState.winnerId] || 'Player'
+      : undefined;
+
+  const showScratchpad =
+    gameState.phase === 'playing' || gameState.phase === 'round_end';
+
   return (
     <div className="animate-fade-in space-y-6">
       <ScoreCard
@@ -46,6 +54,7 @@ export default function WordGameBoard({
         playerIds={gameState.playerIds}
         scores={gameState.scores}
         myPlayerId={playerId}
+        pointsToWin={gameState.pointsToWin}
       />
 
       <p className="text-center text-xs text-hub-muted uppercase tracking-widest">
@@ -59,24 +68,29 @@ export default function WordGameBoard({
               iHaveSubmitted={gameState.iHaveSubmitted}
               opponentHasSubmitted={gameState.opponentHasSubmitted}
               opponentName={opponentName}
+              myChosenWord={gameState.myChosenWord}
               onSubmit={onSubmitWord}
             />
           )}
 
-          {(gameState.phase === 'playing' || gameState.phase === 'round_end') && (
+          {(gameState.phase === 'playing' ||
+            gameState.phase === 'round_end' ||
+            gameState.phase === 'match_over') && (
             <GuessingBoard
-              targetWordLength={gameState.targetWordLength}
+              myChosenWord={gameState.myChosenWord}
               revealedWord={gameState.revealedWord}
               phase={gameState.phase}
               opponentName={opponentName}
               guesserName={guesserName}
+              winnerName={winnerName}
+              pointsToWin={gameState.pointsToWin}
               canConfirmGuessed={gameState.canConfirmGuessed}
               onConfirmGuessed={onConfirmGuessed}
             />
           )}
         </div>
 
-        {(gameState.phase === 'playing' || gameState.phase === 'round_end') && (
+        {showScratchpad && (
           <Scratchpad
             notes={notes}
             onAdd={addNote}

@@ -31,6 +31,9 @@ export const SocketActor = createSioActor({
     if (!roomManager) {
       roomManager = new RoomManager(server, { useSocketRooms: false });
     }
+    server.on('connection', (socket) => {
+      registerHandlers(socket, roomManager);
+    });
   },
 
   getEngineActorNamespace(bindings) {

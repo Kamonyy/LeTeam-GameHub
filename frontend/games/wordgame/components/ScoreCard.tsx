@@ -7,6 +7,7 @@ interface ScoreCardProps {
   playerIds: string[];
   scores: Record<string, number>;
   myPlayerId: string;
+  pointsToWin?: number;
 }
 
 export default function ScoreCard({
@@ -14,6 +15,7 @@ export default function ScoreCard({
   playerIds,
   scores,
   myPlayerId,
+  pointsToWin,
 }: ScoreCardProps) {
   return (
     <div className="flex gap-4 justify-center animate-fade-in">
@@ -39,7 +41,9 @@ export default function ScoreCard({
             <p className="text-4xl font-black tabular-nums text-white">
               {scores[id] ?? 0}
             </p>
-            <p className="text-[10px] text-hub-muted mt-1">session points</p>
+            <p className="text-[10px] text-hub-muted mt-1">
+              {pointsToWin != null ? `first to ${pointsToWin}` : 'session points'}
+            </p>
           </div>
         );
       })}

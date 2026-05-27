@@ -5,10 +5,13 @@
 
 import {
   DEFAULT_MATCH_SETTINGS,
+  DEFAULT_WORD_GAME_SETTINGS,
   DISCONNECT_GRACE_MS,
   ROUND_RESTART_DELAY_MS,
+  ROOM_IDLE_CLEANUP_MS,
   SCORE_CAP_OPTIONS,
   TURN_TIMER_TICK_MS,
+  WORD_POINTS_OPTIONS,
   WORD_ROUND_RESET_DELAY_MS,
 } from './constants.js';
 import { generateRoomId } from './generateRoomId.js';
@@ -30,6 +33,35 @@ export class RoomManager {
     this._startCleanupLoop();
   }
 
+  /** Resolve player + room even if playerToRoom map was lost (e.g. reconnect). */
+  _getPlayerContext(socket) {
+    const playerId = this.socketToPlayer.get(socket.id);
+    if (!playerId) return { error: 'Not registered' };
+
+    let roomId = this.playerToRoom.get(playerId);
+    let room = roomId ? this.rooms.get(roomId) : null;
+
+    if (!room) {
+      for (const [id, candidate] of this.rooms) {
+        if (candidate.players.some((p) => p.id === playerId)) {
+          roomId = id;
+          room = candidate;
+          this.playerToRoom.set(playerId, id);
+          break;
+        }
+      }
+    }
+
+    if (!roomId || !room) return { error: 'Not in a room' };
+
+    this.playerToSocket.set(playerId, socket.id);
+    return { playerId, roomId, room };
+  }
+
+  _ensureRoomLink(playerId, roomId) {
+    this.playerToRoom.set(playerId, roomId);
+  }
+
   registerPlayer(socket, playerId, displayName) {
     this.socketToPlayer.set(socket.id, playerId);
 
@@ -46,6 +78,7 @@ export class RoomManager {
           player.connected = true;
           player.displayName = displayName || player.displayName;
           this.playerToSocket.set(playerId, socket.id);
+          this._ensureRoomLink(playerId, existingRoomId);
           if (this.useSocketRooms) socket.join(existingRoomId);
 
           if (room.game && room.status === 'playing') {
@@ -90,7 +123,10 @@ export class RoomManager {
         },
       ],
       game: null,
-      settings: { ...DEFAULT_MATCH_SETTINGS },
+      settings:
+        gameType === 'wordgame'
+          ? { ...DEFAULT_WORD_GAME_SETTINGS }
+          : { ...DEFAULT_MATCH_SETTINGS },
       nextRoundTimer: null,
       createdAt: Date.now(),
     };
@@ -210,6 +246,13 @@ export class RoomManager {
       room.settings.mode = settings.mode;
     }
 
+    if (room.gameType === 'wordgame') {
+      const cap = Number(settings?.pointsToWin);
+      if (Number.isInteger(cap) && cap >= 1 && cap <= 99) {
+        room.settings.pointsToWin = cap;
+      }
+    }
+
     this.broadcastLobbyState(roomId);
     return { success: true, settings: room.settings };
   }
@@ -314,12 +357,11 @@ export class RoomManager {
   }
 
   handleWordSubmit(socket, word) {
-    const playerId = this.socketToPlayer.get(socket.id);
-    const roomId = this.playerToRoom.get(playerId);
-    if (!roomId) return { error: 'Not in a room' };
+    const ctx = this._getPlayerContext(socket);
+    if (ctx.error) return { error: ctx.error };
 
-    const room = this.rooms.get(roomId);
-    if (!room?.game || room.gameType !== 'wordgame') {
+    const { playerId, room } = ctx;
+    if (!room.game || room.gameType !== 'wordgame') {
       return { error: 'No active word game' };
     }
 
@@ -330,24 +372,23 @@ export class RoomManager {
     const result = room.game.submitWord(playerId, word);
     if (!result.success) return { error: result.error };
 
-    this.broadcastGameState(roomId);
+    this.broadcastGameState(room.id);
     return { success: true };
   }
 
   handleWordGuessed(socket) {
-    const playerId = this.socketToPlayer.get(socket.id);
-    const roomId = this.playerToRoom.get(playerId);
-    if (!roomId) return { error: 'Not in a room' };
+    const ctx = this._getPlayerContext(socket);
+    if (ctx.error) return { error: ctx.error };
 
-    const room = this.rooms.get(roomId);
-    if (!room?.game || room.gameType !== 'wordgame') {
+    const { playerId, room } = ctx;
+    if (!room.game || room.gameType !== 'wordgame') {
       return { error: 'No active word game' };
     }
 
     const result = room.game.confirmGuessed(playerId);
     if (!result.success) return { error: result.error };
 
-    this.broadcastGameState(roomId);
+    this.broadcastGameState(room.id);
     return { success: true };
   }
 
@@ -373,6 +414,8 @@ export class RoomManager {
       if (typeof room.game.pauseTurnTimer === 'function') {
         room.game.pauseTurnTimer();
       }
+      this.broadcastLobbyState(roomId);
+      return;
     }
 
     player.disconnectTimer = setTimeout(() => {
@@ -543,11 +586,16 @@ export class RoomManager {
     setInterval(() => {
       const now = Date.now();
       for (const [roomId, room] of this.rooms) {
+        if (room.status === 'playing') continue;
+
         const allDisconnected = room.players.every((p) => !p.connected);
-        if (allDisconnected && now - room.createdAt > DISCONNECT_GRACE_MS * 2) {
+        if (allDisconnected && now - room.createdAt > ROOM_IDLE_CLEANUP_MS) {
+          for (const player of room.players) {
+            if (player.disconnectTimer) clearTimeout(player.disconnectTimer);
+          }
           this.rooms.delete(roomId);
         }
       }
-    }, 30_000);
+    }, 60_000);
   }
 }

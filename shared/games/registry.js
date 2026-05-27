@@ -19,7 +19,7 @@ export const GAMES = {
   wordgame: {
     minPlayers: WORD_GAME_MIN_PLAYERS,
     maxPlayers: WORD_GAME_MAX_PLAYERS,
-    createEngine: (playerIds) => new WordGameEngine(playerIds),
+    createEngine: (playerIds, settings) => new WordGameEngine(playerIds, settings),
   },
 };
 
