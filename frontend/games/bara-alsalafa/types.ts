@@ -52,9 +52,14 @@ export interface BaraGameState {
   scores: Record<string, number>;
   roundsToWin: number;
   roundNumber: number;
-  categoryPackageId: string;
+  categoryPackageIds: string[];
+  activeCategoryId: string | null;
+  /** Active round category (legacy alias) */
+  categoryPackageId: string | null;
   categoryName: string;
   categoryNameEn: string;
+  categoryNamesSummary: string;
+  selectedCategoryCount: number;
   secretWord: string | null;
   roleView: BaraRoleView | null;
   cheatSheetWords: string[];
@@ -78,6 +83,6 @@ export interface BaraGameState {
 }
 
 export interface BaraGameSettings {
-  categoryPackageId: string;
+  categoryPackageIds: string[];
   roundsToWin: number;
 }

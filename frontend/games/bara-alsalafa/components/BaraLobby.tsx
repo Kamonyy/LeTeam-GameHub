@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Copy,
   Check,
@@ -11,12 +11,14 @@ import {
   UserX,
   Settings2,
   Package,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import clsx from 'clsx';
 import type { LobbyState, BaraGameSettings } from '@/lib/hub/types';
 import { BARA_ROUNDS_OPTIONS } from '@/lib/hub/types';
 import GameAboutPanel from '@/components/hub/GameAboutPanel';
-import { CATEGORY_PACKAGES } from '@/games/bara-alsalafa/lib/categories';
+import { CATEGORY_PACKAGES } from '@/lib/bara/categories';
 
 interface BaraLobbyProps {
   lobby: LobbyState;
@@ -26,6 +28,21 @@ interface BaraLobbyProps {
   onSettingsChange?: (settings: Partial<BaraGameSettings>) => void;
   onKickPlayer?: (targetPlayerId: string) => void;
   starting?: boolean;
+}
+
+function parseBaraSettings(lobby: LobbyState): BaraGameSettings {
+  const raw = lobby.settings as Partial<BaraGameSettings> | undefined;
+  let categoryPackageIds = raw?.categoryPackageIds;
+  if (!categoryPackageIds?.length && raw?.categoryPackageId) {
+    categoryPackageIds = [raw.categoryPackageId];
+  }
+  if (!categoryPackageIds?.length) {
+    categoryPackageIds = ['food'];
+  }
+  return {
+    categoryPackageIds,
+    roundsToWin: raw?.roundsToWin ?? 3,
+  };
 }
 
 export default function BaraLobby({
@@ -42,24 +59,25 @@ export default function BaraLobby({
   const isHost = lobby.hostId === playerId;
   const connectedCount = lobby.players.filter((p) => p.connected).length;
 
-  const settings: BaraGameSettings = {
-    categoryPackageId:
-      lobby.settings && 'categoryPackageId' in lobby.settings ?
-        (lobby.settings as BaraGameSettings).categoryPackageId
-      :	'food',
-    roundsToWin:
-      lobby.settings && 'roundsToWin' in lobby.settings ?
-        (lobby.settings as BaraGameSettings).roundsToWin
-      :	3,
-  };
+  const settings = parseBaraSettings(lobby);
+  const selectedSet = useMemo(
+    () => new Set(settings.categoryPackageIds),
+    [settings.categoryPackageIds]
+  );
 
-  const selectedPkg = CATEGORY_PACKAGES.find((p) => p.id === settings.categoryPackageId);
+  const totalWords = useMemo(() => {
+    return CATEGORY_PACKAGES.filter((p) => selectedSet.has(p.id)).reduce(
+      (sum, p) => sum + p.wordCount,
+      0
+    );
+  }, [selectedSet]);
 
   const canStart =
     isHost &&
     lobby.status === 'lobby' &&
     connectedCount >= lobby.minPlayers &&
-    connectedCount <= lobby.maxPlayers;
+    connectedCount <= lobby.maxPlayers &&
+    settings.categoryPackageIds.length > 0;
 
   const shareUrl =
     typeof window !== 'undefined' ?
@@ -79,8 +97,28 @@ export default function BaraLobby({
     setKickingId(null);
   };
 
+  const setCategories = (ids: string[]) => {
+    if (ids.length === 0) return;
+    onSettingsChange?.({ categoryPackageIds: ids });
+  };
+
+  const toggleCategory = (id: string) => {
+    const next = new Set(selectedSet);
+    if (next.has(id)) {
+      if (next.size <= 1) return;
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setCategories([...next]);
+  };
+
+  const selectAllCategories = () => {
+    setCategories(CATEGORY_PACKAGES.map((p) => p.id));
+  };
+
   return (
-    <div className="max-w-3xl w-full mx-auto animate-fade-in space-y-6" dir="rtl">
+    <div className="max-w-4xl w-full mx-auto animate-fade-in space-y-6" dir="rtl">
       <div className="card">
         <div className="flex items-center gap-3 mb-4">
           <span className="text-2xl">🕵️</span>
@@ -106,44 +144,82 @@ export default function BaraLobby({
         </div>
 
         <div className="mb-6 p-4 rounded-xl border border-hub-border bg-hub-surface/60">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-200 mb-4">
-            <Settings2 className="w-4 h-4 text-hub-accent" />
-            إعدادات الجولة
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-200">
+              <Settings2 className="w-4 h-4 text-hub-accent" />
+              إعدادات الجولة
+            </div>
+            <span className="text-xs text-hub-muted tabular-nums">
+              {settings.categoryPackageIds.length} / {CATEGORY_PACKAGES.length} فئات · ~{totalWords}{' '}
+              كلمة
+            </span>
           </div>
 
           <div className="mb-6">
-            <label className="flex items-center gap-2 text-xs text-hub-muted mb-3 uppercase tracking-wide">
-              <Package className="w-3.5 h-3.5" />
-              حزمة الفئات
-            </label>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {CATEGORY_PACKAGES.map((pkg) => (
-                <button
-                  key={pkg.id}
-                  type="button"
-                  disabled={!isHost}
-                  onClick={() => onSettingsChange?.({ categoryPackageId: pkg.id })}
-                  className={clsx(
-                    'text-right p-3 rounded-xl border transition-all duration-200',
-                    settings.categoryPackageId === pkg.id ?
-                      'border-hub-accent bg-hub-accent/15'
-                    :	'border-hub-border bg-hub-card hover:border-hub-accent/30',
-                    !isHost && 'opacity-70 cursor-default'
-                  )}
-                >
-                  <p className="font-semibold text-sm">{pkg.nameAr}</p>
-                  <p className="text-[11px] text-hub-muted mt-0.5">{pkg.description}</p>
-                  <p className="text-[10px] text-hub-muted/80 mt-2 truncate">
-                    {pkg.sampleWords.slice(0, 5).join(' · ')}…
-                  </p>
-                </button>
-              ))}
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <label className="flex items-center gap-2 text-xs text-hub-muted uppercase tracking-wide">
+                <Package className="w-3.5 h-3.5" />
+                حزم الفئات (اختر واحدة أو أكثر)
+              </label>
+              {isHost && (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={selectAllCategories}
+                    className="text-[11px] px-2.5 py-1 rounded-md border border-hub-border bg-hub-card text-hub-muted hover:border-hub-accent/40 hover:text-white transition-colors"
+                  >
+                    تحديد الكل
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCategories(['food'])}
+                    className="text-[11px] px-2.5 py-1 rounded-md border border-hub-border bg-hub-card text-hub-muted hover:border-hub-accent/40 hover:text-white transition-colors"
+                  >
+                    إعادة ضبط
+                  </button>
+                </div>
+              )}
             </div>
-            {selectedPkg && (
-              <p className="text-xs text-hub-muted mt-3">
-                عيّنة: {selectedPkg.sampleWords.join('، ')}
-              </p>
-            )}
+
+            <div className="max-h-[min(28rem,55vh)] overflow-y-auto overscroll-contain pr-1 -mr-1">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {CATEGORY_PACKAGES.map((pkg) => {
+                  const selected = selectedSet.has(pkg.id);
+                  return (
+                    <button
+                      key={pkg.id}
+                      type="button"
+                      disabled={!isHost}
+                      onClick={() => toggleCategory(pkg.id)}
+                      className={clsx(
+                        'text-right p-3 rounded-xl border transition-all duration-200 relative',
+                        selected ?
+                          'border-hub-accent bg-hub-accent/15 ring-1 ring-hub-accent/25'
+                        :	'border-hub-border bg-hub-card hover:border-hub-accent/30',
+                        !isHost && 'opacity-70 cursor-default'
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <p className="font-semibold text-sm leading-snug">{pkg.nameAr}</p>
+                        {selected ?
+                          <CheckSquare className="w-4 h-4 text-hub-accent shrink-0" />
+                        :	<Square className="w-4 h-4 text-hub-muted shrink-0" />}
+                      </div>
+                      <p className="text-[10px] text-hub-accent/90 mb-1">{pkg.nameEn}</p>
+                      <p className="text-[11px] text-hub-muted line-clamp-2">{pkg.description}</p>
+                      <p className="text-[10px] text-hub-muted/70 mt-2">
+                        {pkg.wordCount} كلمة · {pkg.sampleWords.slice(0, 4).join('، ')}…
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <p className="text-xs text-hub-muted mt-3 leading-relaxed">
+              كل جولة تُختار فئة عشوائية من الفئات المحددة، ثم تُسحب كلمة سرية من تلك الفئة. كلما
+              زادت الفئات، تنوّعت الجولات أكثر.
+            </p>
           </div>
 
           <div>

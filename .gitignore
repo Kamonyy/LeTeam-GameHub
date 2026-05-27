@@ -43,3 +43,7 @@ Thumbs.db
 
 # TypeScript
 next-env.d.ts
+*.tsbuildinfo
+
+# Design system reference (local / agent context)
+DESIGN.md

@@ -91,8 +91,13 @@ export default function BaraGameBoard({
 
       <header className="text-center mb-6 space-y-2">
         <p className="text-xs uppercase tracking-widest text-hub-muted">
-          الجولة {gameState.roundNumber} · {gameState.categoryName}
+          الجولة {gameState.roundNumber} · فئة الجولة: {gameState.categoryName}
         </p>
+        {gameState.selectedCategoryCount > 1 && (
+          <p className="text-[11px] text-hub-muted max-w-lg mx-auto">
+            الفئات المفعّلة ({gameState.selectedCategoryCount}): {gameState.categoryNamesSummary}
+          </p>
+        )}
         {phase === 'interrogation' && gameState.currentInterviewerId && (
           <div className="bara-interrogation-banner animate-fade-in">
             <span>

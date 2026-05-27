@@ -3,10 +3,11 @@
  */
 
 import {
-  CATEGORY_PACKAGE_IDS,
   getCategoryPackage,
+  normalizeCategoryPackageIds,
+  formatCategoryNamesAr,
   pickRandomWords,
-} from "./categories.js";
+} from "./categories/index.js";
 
 const INTERROGATION_MS = 45_000;
 const DEFEND_MS = 30_000;
@@ -16,19 +17,13 @@ const CHEAT_SHEET_SIZE = 10;
 
 /**
  * @param {string[]} playerIds
- * @param {{ categoryPackageId?: string, roundsToWin?: number }} [settings]
+ * @param {{ categoryPackageIds?: string[], categoryPackageId?: string, roundsToWin?: number }} [settings]
  */
 export class BaraAlsalafaEngine {
   constructor(playerIds, settings = {}) {
     if (playerIds.length < 3 || playerIds.length > 12) {
       throw new Error("برا السالفة requires 3–12 players");
     }
-
-    const pkgId =
-      settings.categoryPackageId &&
-      CATEGORY_PACKAGE_IDS.includes(settings.categoryPackageId) ?
-        settings.categoryPackageId
-      : CATEGORY_PACKAGE_IDS[0];
 
     const rounds = Number(settings.roundsToWin);
     this.roundsToWin =
@@ -38,7 +33,9 @@ export class BaraAlsalafaEngine {
     /** @type {BaraPhase} */
     this.phase = "reveal";
     this.roundNumber = 1;
-    this.categoryPackageId = pkgId;
+    this.categoryPackageIds = normalizeCategoryPackageIds(settings);
+    /** @type {string | null} — category used for the current round */
+    this.activeCategoryId = null;
     this.secretWord = "";
     this.outcastId = null;
     this.cheatSheetWords = [];
@@ -73,7 +70,12 @@ export class BaraAlsalafaEngine {
   }
 
   _pickSecretAndOutcast() {
-    const pkg = getCategoryPackage(this.categoryPackageId);
+    const catId =
+      this.categoryPackageIds[
+        Math.floor(Math.random() * this.categoryPackageIds.length)
+      ];
+    this.activeCategoryId = catId;
+    const pkg = getCategoryPackage(catId);
     if (!pkg) throw new Error("Invalid category package");
 
     const active = this._activePlayerIds();
@@ -419,8 +421,9 @@ export class BaraAlsalafaEngine {
    * @param {string} viewerId
    */
   serializeForPlayer(viewerId) {
-    const pkg = getCategoryPackage(this.categoryPackageId);
+    const pkg = getCategoryPackage(this.activeCategoryId ?? this.categoryPackageIds[0]);
     const isOutcast = viewerId === this.outcastId;
+    const categorySummary = formatCategoryNamesAr(this.categoryPackageIds);
     const meta = this.playerMeta[viewerId] ?? {
       roleRevealed: false,
       microStatus: "waiting_reveal",
@@ -463,9 +466,13 @@ export class BaraAlsalafaEngine {
       scores: { ...this.scores },
       roundsToWin: this.roundsToWin,
       roundNumber: this.roundNumber,
-      categoryPackageId: this.categoryPackageId,
+      categoryPackageIds: [...this.categoryPackageIds],
+      activeCategoryId: this.activeCategoryId,
+      categoryPackageId: this.activeCategoryId,
       categoryName: pkg?.nameAr ?? "",
       categoryNameEn: pkg?.nameEn ?? "",
+      categoryNamesSummary: categorySummary,
+      selectedCategoryCount: this.categoryPackageIds.length,
       secretWord:
         meta.roleRevealed && !isOutcast && this.phase !== "reveal" ?
           this.secretWord

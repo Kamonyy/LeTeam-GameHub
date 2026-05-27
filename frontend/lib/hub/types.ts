@@ -27,7 +27,9 @@ export interface WordGameSettings {
 }
 
 export interface BaraGameSettings {
-  categoryPackageId: string;
+  categoryPackageIds: string[];
+  /** @deprecated Legacy single-pack field */
+  categoryPackageId?: string;
   roundsToWin: number;
 }
 

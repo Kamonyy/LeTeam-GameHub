@@ -18,7 +18,7 @@ export const BARA_ROUNDS_OPTIONS = [3, 5, 7];
 export const BARA_PHASE_TICK_MS = 1000;
 
 export const DEFAULT_BARA_SETTINGS = {
-	categoryPackageId: "food",
+	categoryPackageIds: ["food"],
 	roundsToWin: 3,
 };
 

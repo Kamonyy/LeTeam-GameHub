@@ -18,7 +18,10 @@ import {
 	WORD_ROUND_RESET_DELAY_MS,
 	BARA_ROUNDS_OPTIONS,
 } from "./constants.js";
-import { CATEGORY_PACKAGE_IDS } from "../games/bara-alsalafa/categories.js";
+import {
+	CATEGORY_PACKAGE_IDS,
+	normalizeCategoryPackageIds,
+} from "../games/bara-alsalafa/categories/index.js";
 import { generateRoomId } from "./generateRoomId.js";
 import { getGame, isGameEnabled } from "../games/registry.js";
 import { RateLimiter } from "./RateLimiter.js";
@@ -505,6 +508,13 @@ export class RoomManager {
 			return { error: "Secret Word requires exactly 2 players" };
 		}
 
+		if (room.gameType === "bara-alsalafa") {
+			room.settings.categoryPackageIds = normalizeCategoryPackageIds(room.settings);
+			if (room.settings.categoryPackageIds.length === 0) {
+				return { error: "Select at least one category package" };
+			}
+		}
+
 		room.game = gameDef.createEngine(
 			connectedPlayers.map((p) => p.id),
 			room.settings,
@@ -543,11 +553,20 @@ export class RoomManager {
 		}
 
 		if (room.gameType === "bara-alsalafa") {
-			if (
+			if (settings?.categoryPackageIds !== undefined) {
+				room.settings.categoryPackageIds = normalizeCategoryPackageIds({
+					categoryPackageIds: settings.categoryPackageIds,
+				});
+			} else if (
 				settings?.categoryPackageId &&
 				CATEGORY_PACKAGE_IDS.includes(settings.categoryPackageId)
 			) {
-				room.settings.categoryPackageId = settings.categoryPackageId;
+				const current = normalizeCategoryPackageIds(room.settings);
+				const id = settings.categoryPackageId;
+				const has = current.includes(id);
+				const next = has ? current.filter((x) => x !== id) : [...current, id];
+				room.settings.categoryPackageIds =
+					next.length > 0 ? next : [id];
 			}
 			const rounds = Number(settings?.roundsToWin);
 			if (Number.isInteger(rounds) && rounds >= 1 && rounds <= 10) {
