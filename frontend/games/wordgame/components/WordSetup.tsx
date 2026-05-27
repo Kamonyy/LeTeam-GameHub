@@ -7,6 +7,7 @@ import WordPanelFrame from './WordPanelFrame';
 import ChampionPicker from './ChampionPicker';
 import ChampionPortrait from './ChampionPortrait';
 import type { LolChampion } from '@/lib/wordgame/lol-champions';
+import { useWordGameAudioOptional } from '../hooks/useWordGameAudio';
 
 interface WordSetupProps {
   wordCategory: WordCategory;
@@ -32,6 +33,7 @@ export default function WordSetup({
   const [word, setWord] = useState('');
   const [pendingChampion, setPendingChampion] = useState<LolChampion | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const audio = useWordGameAudioOptional();
 
   const isLol = wordCategory === 'lol-champions';
 
@@ -46,15 +48,24 @@ export default function WordSetup({
 
   const handleChampionLock = async () => {
     if (!pendingChampion || iHaveSubmitted) return;
+    audio?.unlock();
     setSubmitting(true);
     const ok = await onSubmitChampion(pendingChampion.id);
-    if (!ok) setPendingChampion(null);
+    if (ok) {
+      audio?.playSfx('lockIn', 0.75);
+      audio?.playChampionStinger(pendingChampion.id);
+    } else {
+      setPendingChampion(null);
+    }
     setSubmitting(false);
   };
 
   if (iHaveSubmitted) {
     return (
-      <WordPanelFrame className="p-8 sm:p-10 text-center sw-animate-reveal">
+      <WordPanelFrame
+        panelEnter={false}
+        className="p-8 sm:p-10 text-center sw-animate-reveal"
+      >
         <div className="sw-seal">
           <span className="sw-seal__ring sw-seal__ring--outer" aria-hidden />
           <span className="sw-seal__ring" aria-hidden />
@@ -99,7 +110,7 @@ export default function WordSetup({
 
   if (isLol) {
     return (
-      <WordPanelFrame className="p-8 sm:p-10">
+      <WordPanelFrame panelEnter={false} className="p-8 sm:p-10">
         <div className="flex items-center gap-3 mb-2">
           <Shield className="w-5 h-5 text-[#f0d78c]" />
           <h3 className="sw-heading text-base">Choose Champion</h3>
@@ -114,7 +125,12 @@ export default function WordSetup({
         <ChampionPicker
           disabled={submitting}
           selectedId={pendingChampion?.id ?? null}
-          onSelect={(champ) => setPendingChampion(champ)}
+          onSelect={(champ) => {
+            audio?.unlock();
+            audio?.playSfx('click', 0.5);
+            audio?.preloadChampion(champ.id);
+            setPendingChampion(champ);
+          }}
           onClear={() => setPendingChampion(null)}
         />
 
@@ -139,7 +155,7 @@ export default function WordSetup({
   }
 
   return (
-    <WordPanelFrame className="p-8 sm:p-10">
+    <WordPanelFrame panelEnter={false} className="p-8 sm:p-10">
       <div className="flex items-center gap-3 mb-2">
         <PenLine className="w-5 h-5 text-[#f0d78c]" />
         <h3 className="sw-heading text-base">Inscribe Secret Word</h3>

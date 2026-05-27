@@ -56,3 +56,14 @@ export interface UseSocketReturn {
 }
 
 export function useSocket(): UseSocketReturn;
+
+export interface UseHubLiveReturn {
+  connected: boolean;
+  hubPresence: HubPresenceState;
+  error: string | null;
+  clearError: () => void;
+  refreshDisplayName: (name: string) => void;
+  requestHubPresenceRefresh: () => void;
+}
+
+export function useHubLive(): UseHubLiveReturn;

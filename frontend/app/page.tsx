@@ -7,12 +7,13 @@ import OnlinePlayersPanel from '@/components/hub/OnlinePlayersPanel';
 import HubArcadeShell from '@/components/hub/arcade/HubArcadeShell';
 import HubHero from '@/components/hub/arcade/HubHero';
 import GameArcadeCard from '@/components/hub/arcade/GameArcadeCard';
-import { useSocket } from '@/hooks/useSocket';
+import ErrorToast from '@/components/shared/ErrorToast';
+import { useHubLive } from '@/lib/hub/HubLiveContext';
 import { GAMES } from '@/lib/hub/games-registry';
 import './hub-arcade.css';
 
 export default function HomePage() {
-  const { connected, hubPresence } = useSocket();
+  const { connected, hubPresence, error, clearError } = useHubLive();
 
   return (
     <main className="hub-arcade min-h-screen relative overflow-x-hidden">
@@ -61,6 +62,8 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      <ErrorToast message={error} onDismiss={clearError} />
     </main>
   );
 }

@@ -39,6 +39,18 @@ export default function HubHero({ connected, hubPresence }: HubHeroProps) {
     return () => window.clearInterval(id);
   }, []);
 
+  const presenceKey = useMemo(
+    () =>
+      `${hubPresence.total}:${hubPresence.players
+        .map((p) => `${p.id}:${p.displayName}`)
+        .join('|')}`,
+    [hubPresence]
+  );
+
+  useEffect(() => {
+    setTick(0);
+  }, [presenceKey]);
+
   const statusText = messages[tick % messages.length];
 
   return (

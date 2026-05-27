@@ -12,6 +12,7 @@ export interface ChatMessage {
 }
 
 export interface OnlinePlayer {
+  id: string;
   displayName: string;
   isYou?: boolean;
 }

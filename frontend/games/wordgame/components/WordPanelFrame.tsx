@@ -7,6 +7,8 @@ interface WordPanelFrameProps {
   children: ReactNode;
   className?: string;
   embers?: boolean;
+  /** Full blur-rise enter; set false when parent already animates in */
+  panelEnter?: boolean;
 }
 
 /** Crystal centerpiece panel with optional edge embers */
@@ -14,9 +16,17 @@ export default function WordPanelFrame({
   children,
   className,
   embers = true,
+  panelEnter = true,
 }: WordPanelFrameProps) {
   return (
-    <div className={clsx('sw-panel', 'sw-panel--enter', className)}>
+    <div
+      className={clsx(
+        'sw-panel',
+        panelEnter && 'sw-panel--enter',
+        !panelEnter && 'sw-panel--enter-soft',
+        className
+      )}
+    >
       {embers && (
         <div className="sw-panel-embers" aria-hidden>
           {[12, 28, 45, 62, 78, 88].map((left, i) => (

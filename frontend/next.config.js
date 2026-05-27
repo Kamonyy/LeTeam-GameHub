@@ -30,6 +30,11 @@ const nextConfig = {
         hostname: 'ddragon.leagueoflegends.com',
         pathname: '/cdn/**/img/champion/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'raw.communitydragon.org',
+        pathname: '/latest/plugins/**',
+      },
     ],
   },
   webpack: (config) => {

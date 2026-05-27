@@ -1,8 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import clsx from 'clsx';
-import { championIconSrc, getLolChampionById } from '@/lib/wordgame/lol-champions';
+import { getLolChampionById } from '@/lib/wordgame/lol-champions';
+import ChampionIconImage from './ChampionIconImage';
 
 interface ChampionPortraitProps {
   championId: string;
@@ -37,13 +37,12 @@ export default function ChampionPortrait({
       )}
     >
       <div className="sw-champ-portrait__frame">
-        <Image
-          src={championIconSrc(championId)}
-          alt=""
+        <ChampionIconImage
+          championId={championId}
           width={px}
           height={px}
           className="sw-champ-portrait__img"
-          unoptimized
+          loading="eager"
         />
       </div>
       {showName && (

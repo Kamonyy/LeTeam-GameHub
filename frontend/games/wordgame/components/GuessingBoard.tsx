@@ -6,6 +6,7 @@ import WordPanelFrame from './WordPanelFrame';
 import ChampionPortrait from './ChampionPortrait';
 import clsx from 'clsx';
 import type { WordCategory } from '../types';
+import { useWordGameAudioOptional } from '../hooks/useWordGameAudio';
 
 interface GuessingBoardProps {
   wordCategory: WordCategory;
@@ -71,10 +72,18 @@ export default function GuessingBoard({
 }: GuessingBoardProps) {
   const [confirming, setConfirming] = useState(false);
   const isLol = wordCategory === 'lol-champions';
+  const audio = useWordGameAudioOptional();
 
   const handleConfirm = async () => {
+    audio?.unlock();
     setConfirming(true);
-    await onConfirmGuessed();
+    const ok = await onConfirmGuessed();
+    if (ok && isLol && myChosenChampionId) {
+      audio?.playSfx('pickConfirm', 0.7);
+      await audio?.playChampionVoice(myChosenChampionId);
+    } else if (ok) {
+      audio?.playSfx('pickConfirm', 0.65);
+    }
     setConfirming(false);
   };
 
@@ -129,7 +138,7 @@ export default function GuessingBoard({
 
   return (
     <div className="space-y-6 sw-stagger">
-      <WordPanelFrame className="p-6 sm:p-8 sw-accent-cyan" embers={false}>
+      <WordPanelFrame panelEnter={false} className="p-6 sm:p-8 sw-accent-cyan" embers={false}>
         <div className="flex items-center gap-2 text-[#7ee8ff] mb-3">
           <Eye className="w-5 h-5" />
           <h3 className="sw-heading text-xs">Guessing Ground</h3>
@@ -144,7 +153,10 @@ export default function GuessingBoard({
         </p>
       </WordPanelFrame>
 
-      <WordPanelFrame className={clsx('p-6 sm:p-8', 'sw-accent-ember')}>
+      <WordPanelFrame
+        panelEnter={false}
+        className={clsx('p-6 sm:p-8', 'sw-accent-ember')}
+      >
         <div className="flex items-center gap-2 mb-3">
           <CheckCircle className="w-5 h-5 text-[#ff9f43]" />
           <h3 className="sw-heading text-xs">

@@ -16,6 +16,7 @@ import WordGameBoard from '@/games/wordgame/components/WordGameBoard';
 import WordGameAtmosphere from '@/games/wordgame/components/WordGameAtmosphere';
 import WordConnectionBadge from '@/games/wordgame/components/WordConnectionBadge';
 import WordPanelFrame from '@/games/wordgame/components/WordPanelFrame';
+import WordGameAudioProvider from '@/games/wordgame/components/WordGameAudioProvider';
 import '@/games/wordgame/wordgame.css';
 
 export default function WordGameClient() {
@@ -130,7 +131,17 @@ export default function WordGameClient() {
       lobby.status === 'finished' ||
       wordState.phase === 'match_over');
 
+  const lobbyWordCategory =
+    lobby?.settings && 'wordCategory' in lobby.settings ?
+      (lobby.settings.wordCategory as string)
+    : undefined;
+
+  const isLolAudioEnabled =
+    lobbyWordCategory === 'lol-champions' ||
+    wordState?.wordCategory === 'lol-champions';
+
   return (
+    <WordGameAudioProvider enabled={isLolAudioEnabled}>
     <main className="sw-shell min-h-screen relative">
       <WordGameAtmosphere />
 
@@ -265,33 +276,37 @@ export default function WordGameClient() {
         )}
 
         {inLobby && (
-          <WordLobby
-            lobby={lobby}
-            playerId={playerId}
-            onKickPlayer={kickPlayer}
-            onSettingsChange={updateRoomSettings}
-            onStartGame={async () => {
-              setStarting(true);
-              await startGame();
-              setStarting(false);
-            }}
-            onLeave={() => {
-              leaveRoom();
-              router.push('/wordgame');
-            }}
-            starting={starting}
-          />
+          <div key="word-lobby" className="sw-view-mount">
+            <WordLobby
+              lobby={lobby}
+              playerId={playerId}
+              onKickPlayer={kickPlayer}
+              onSettingsChange={updateRoomSettings}
+              onStartGame={async () => {
+                setStarting(true);
+                await startGame();
+                setStarting(false);
+              }}
+              onLeave={() => {
+                leaveRoom();
+                router.push('/wordgame');
+              }}
+              starting={starting}
+            />
+          </div>
         )}
 
         {inGame && wordState && (
-          <WordGameBoard
-            gameState={wordState}
-            lobby={lobby}
-            playerId={playerId}
-            onSubmitWord={submitSecretWord}
-            onSubmitChampion={submitSecretChampion}
-            onConfirmGuessed={confirmWordGuessed}
-          />
+          <div key="word-game" className="sw-view-mount">
+            <WordGameBoard
+              gameState={wordState}
+              lobby={lobby}
+              playerId={playerId}
+              onSubmitWord={submitSecretWord}
+              onSubmitChampion={submitSecretChampion}
+              onConfirmGuessed={confirmWordGuessed}
+            />
+          </div>
         )}
       </div>
 
@@ -310,5 +325,6 @@ export default function WordGameClient() {
         onCancel={() => !cancelling && setCancelConfirmOpen(false)}
       />
     </main>
+    </WordGameAudioProvider>
   );
 }

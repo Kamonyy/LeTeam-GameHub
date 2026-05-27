@@ -1,866 +1,2544 @@
 {
   "version": "16.10.1",
-  "updatedAt": "2026-05-27T09:34:57.016Z",
+  "updatedAt": "2026-05-27T11:09:02.594Z",
   "champions": [
     {
       "id": "Aatrox",
       "key": "266",
-      "name": "Aatrox"
+      "name": "Aatrox",
+      "tags": [
+        "Fighter"
+      ],
+      "partype": "Blood Well",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/266.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/266.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/266.ogg"
+      }
     },
     {
       "id": "Ahri",
       "key": "103",
-      "name": "Ahri"
+      "name": "Ahri",
+      "tags": [
+        "Mage",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/103.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/103.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/103.ogg"
+      }
     },
     {
       "id": "Akali",
       "key": "84",
-      "name": "Akali"
+      "name": "Akali",
+      "tags": [
+        "Assassin"
+      ],
+      "partype": "Energy",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/84.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/84.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/84.ogg"
+      }
     },
     {
       "id": "Akshan",
       "key": "166",
-      "name": "Akshan"
+      "name": "Akshan",
+      "tags": [
+        "Marksman",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/166.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/166.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/166.ogg"
+      }
     },
     {
       "id": "Alistar",
       "key": "12",
-      "name": "Alistar"
+      "name": "Alistar",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/12.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/12.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/12.ogg"
+      }
     },
     {
       "id": "Ambessa",
       "key": "799",
-      "name": "Ambessa"
+      "name": "Ambessa",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Energy",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/799.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/799.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/799.ogg"
+      }
     },
     {
       "id": "Amumu",
       "key": "32",
-      "name": "Amumu"
+      "name": "Amumu",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/32.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/32.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/32.ogg"
+      }
     },
     {
       "id": "Anivia",
       "key": "34",
-      "name": "Anivia"
+      "name": "Anivia",
+      "tags": [
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/34.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/34.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/34.ogg"
+      }
     },
     {
       "id": "Annie",
       "key": "1",
-      "name": "Annie"
+      "name": "Annie",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/1.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/1.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/1.ogg"
+      }
     },
     {
       "id": "Aphelios",
       "key": "523",
-      "name": "Aphelios"
+      "name": "Aphelios",
+      "tags": [
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/523.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/523.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/523.ogg"
+      }
     },
     {
       "id": "Ashe",
       "key": "22",
-      "name": "Ashe"
+      "name": "Ashe",
+      "tags": [
+        "Marksman",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/22.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/22.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/22.ogg"
+      }
     },
     {
       "id": "AurelionSol",
       "key": "136",
-      "name": "Aurelion Sol"
+      "name": "Aurelion Sol",
+      "tags": [
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/136.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/136.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/136.ogg"
+      }
     },
     {
       "id": "Aurora",
       "key": "893",
-      "name": "Aurora"
+      "name": "Aurora",
+      "tags": [
+        "Mage",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/893.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/893.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/893.ogg"
+      }
     },
     {
       "id": "Azir",
       "key": "268",
-      "name": "Azir"
+      "name": "Azir",
+      "tags": [
+        "Mage",
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/268.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/268.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/268.ogg"
+      }
     },
     {
       "id": "Bard",
       "key": "432",
-      "name": "Bard"
+      "name": "Bard",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/432.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/432.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/432.ogg"
+      }
     },
     {
       "id": "Belveth",
       "key": "200",
-      "name": "Bel'Veth"
+      "name": "Bel'Veth",
+      "tags": [
+        "Fighter"
+      ],
+      "partype": "",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/200.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/200.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/200.ogg"
+      }
     },
     {
       "id": "Blitzcrank",
       "key": "53",
-      "name": "Blitzcrank"
+      "name": "Blitzcrank",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/53.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/53.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/53.ogg"
+      }
     },
     {
       "id": "Brand",
       "key": "63",
-      "name": "Brand"
+      "name": "Brand",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/63.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/63.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/63.ogg"
+      }
     },
     {
       "id": "Braum",
       "key": "201",
-      "name": "Braum"
+      "name": "Braum",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/201.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/201.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/201.ogg"
+      }
     },
     {
       "id": "Briar",
       "key": "233",
-      "name": "Briar"
+      "name": "Briar",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Fury",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/233.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/233.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/233.ogg"
+      }
     },
     {
       "id": "Caitlyn",
       "key": "51",
-      "name": "Caitlyn"
+      "name": "Caitlyn",
+      "tags": [
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/51.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/51.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/51.ogg"
+      }
     },
     {
       "id": "Camille",
       "key": "164",
-      "name": "Camille"
+      "name": "Camille",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/164.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/164.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/164.ogg"
+      }
     },
     {
       "id": "Cassiopeia",
       "key": "69",
-      "name": "Cassiopeia"
+      "name": "Cassiopeia",
+      "tags": [
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/69.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/69.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/69.ogg"
+      }
     },
     {
       "id": "Chogath",
       "key": "31",
-      "name": "Cho'Gath"
+      "name": "Cho'Gath",
+      "tags": [
+        "Tank",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/31.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/31.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/31.ogg"
+      }
     },
     {
       "id": "Corki",
       "key": "42",
-      "name": "Corki"
+      "name": "Corki",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/42.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/42.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/42.ogg"
+      }
     },
     {
       "id": "Darius",
       "key": "122",
-      "name": "Darius"
+      "name": "Darius",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/122.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/122.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/122.ogg"
+      }
     },
     {
       "id": "Diana",
       "key": "131",
-      "name": "Diana"
+      "name": "Diana",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/131.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/131.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/131.ogg"
+      }
     },
     {
       "id": "DrMundo",
       "key": "36",
-      "name": "Dr. Mundo"
+      "name": "Dr. Mundo",
+      "tags": [
+        "Tank",
+        "Fighter"
+      ],
+      "partype": "None",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/36.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/36.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/36.ogg"
+      }
     },
     {
       "id": "Draven",
       "key": "119",
-      "name": "Draven"
+      "name": "Draven",
+      "tags": [
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/119.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/119.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/119.ogg"
+      }
     },
     {
       "id": "Ekko",
       "key": "245",
-      "name": "Ekko"
+      "name": "Ekko",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/245.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/245.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/245.ogg"
+      }
     },
     {
       "id": "Elise",
       "key": "60",
-      "name": "Elise"
+      "name": "Elise",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/60.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/60.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/60.ogg"
+      }
     },
     {
       "id": "Evelynn",
       "key": "28",
-      "name": "Evelynn"
+      "name": "Evelynn",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/28.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/28.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/28.ogg"
+      }
     },
     {
       "id": "Ezreal",
       "key": "81",
-      "name": "Ezreal"
+      "name": "Ezreal",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/81.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/81.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/81.ogg"
+      }
     },
     {
       "id": "Fiddlesticks",
       "key": "9",
-      "name": "Fiddlesticks"
+      "name": "Fiddlesticks",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/9.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/9.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/9.ogg"
+      }
     },
     {
       "id": "Fiora",
       "key": "114",
-      "name": "Fiora"
+      "name": "Fiora",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/114.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/114.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/114.ogg"
+      }
     },
     {
       "id": "Fizz",
       "key": "105",
-      "name": "Fizz"
+      "name": "Fizz",
+      "tags": [
+        "Assassin",
+        "Fighter"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/105.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/105.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/105.ogg"
+      }
     },
     {
       "id": "Galio",
       "key": "3",
-      "name": "Galio"
+      "name": "Galio",
+      "tags": [
+        "Tank",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/3.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/3.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/3.ogg"
+      }
     },
     {
       "id": "Gangplank",
       "key": "41",
-      "name": "Gangplank"
+      "name": "Gangplank",
+      "tags": [
+        "Fighter"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/41.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/41.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/41.ogg"
+      }
     },
     {
       "id": "Garen",
       "key": "86",
-      "name": "Garen"
+      "name": "Garen",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "None",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/86.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/86.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/86.ogg"
+      }
     },
     {
       "id": "Gnar",
       "key": "150",
-      "name": "Gnar"
+      "name": "Gnar",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Rage",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/150.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/150.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/150.ogg"
+      }
     },
     {
       "id": "Gragas",
       "key": "79",
-      "name": "Gragas"
+      "name": "Gragas",
+      "tags": [
+        "Fighter",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/79.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/79.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/79.ogg"
+      }
     },
     {
       "id": "Graves",
       "key": "104",
-      "name": "Graves"
+      "name": "Graves",
+      "tags": [
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/104.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/104.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/104.ogg"
+      }
     },
     {
       "id": "Gwen",
       "key": "887",
-      "name": "Gwen"
+      "name": "Gwen",
+      "tags": [
+        "Fighter"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/887.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/887.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/887.ogg"
+      }
     },
     {
       "id": "Hecarim",
       "key": "120",
-      "name": "Hecarim"
+      "name": "Hecarim",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/120.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/120.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/120.ogg"
+      }
     },
     {
       "id": "Heimerdinger",
       "key": "74",
-      "name": "Heimerdinger"
+      "name": "Heimerdinger",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/74.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/74.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/74.ogg"
+      }
     },
     {
       "id": "Hwei",
       "key": "910",
-      "name": "Hwei"
+      "name": "Hwei",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/910.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/910.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/910.ogg"
+      }
     },
     {
       "id": "Illaoi",
       "key": "420",
-      "name": "Illaoi"
+      "name": "Illaoi",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/420.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/420.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/420.ogg"
+      }
     },
     {
       "id": "Irelia",
       "key": "39",
-      "name": "Irelia"
+      "name": "Irelia",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/39.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/39.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/39.ogg"
+      }
     },
     {
       "id": "Ivern",
       "key": "427",
-      "name": "Ivern"
+      "name": "Ivern",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/427.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/427.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/427.ogg"
+      }
     },
     {
       "id": "Janna",
       "key": "40",
-      "name": "Janna"
+      "name": "Janna",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/40.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/40.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/40.ogg"
+      }
     },
     {
       "id": "JarvanIV",
       "key": "59",
-      "name": "Jarvan IV"
+      "name": "Jarvan IV",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/59.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/59.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/59.ogg"
+      }
     },
     {
       "id": "Jax",
       "key": "24",
-      "name": "Jax"
+      "name": "Jax",
+      "tags": [
+        "Fighter"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/24.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/24.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/24.ogg"
+      }
     },
     {
       "id": "Jayce",
       "key": "126",
-      "name": "Jayce"
+      "name": "Jayce",
+      "tags": [
+        "Fighter",
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/126.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/126.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/126.ogg"
+      }
     },
     {
       "id": "Jhin",
       "key": "202",
-      "name": "Jhin"
+      "name": "Jhin",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/202.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/202.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/202.ogg"
+      }
     },
     {
       "id": "Jinx",
       "key": "222",
-      "name": "Jinx"
+      "name": "Jinx",
+      "tags": [
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/222.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/222.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/222.ogg"
+      }
     },
     {
       "id": "KSante",
       "key": "897",
-      "name": "K'Sante"
+      "name": "K'Sante",
+      "tags": [
+        "Tank",
+        "Fighter"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/897.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/897.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/897.ogg"
+      }
     },
     {
       "id": "Kaisa",
       "key": "145",
-      "name": "Kai'Sa"
+      "name": "Kai'Sa",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/145.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/145.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/145.ogg"
+      }
     },
     {
       "id": "Kalista",
       "key": "429",
-      "name": "Kalista"
+      "name": "Kalista",
+      "tags": [
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/429.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/429.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/429.ogg"
+      }
     },
     {
       "id": "Karma",
       "key": "43",
-      "name": "Karma"
+      "name": "Karma",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/43.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/43.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/43.ogg"
+      }
     },
     {
       "id": "Karthus",
       "key": "30",
-      "name": "Karthus"
+      "name": "Karthus",
+      "tags": [
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/30.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/30.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/30.ogg"
+      }
     },
     {
       "id": "Kassadin",
       "key": "38",
-      "name": "Kassadin"
+      "name": "Kassadin",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/38.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/38.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/38.ogg"
+      }
     },
     {
       "id": "Katarina",
       "key": "55",
-      "name": "Katarina"
+      "name": "Katarina",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "partype": "None",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/55.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/55.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/55.ogg"
+      }
     },
     {
       "id": "Kayle",
       "key": "10",
-      "name": "Kayle"
+      "name": "Kayle",
+      "tags": [
+        "Mage",
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/10.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/10.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/10.ogg"
+      }
     },
     {
       "id": "Kayn",
       "key": "141",
-      "name": "Kayn"
+      "name": "Kayn",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/141.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/141.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/141.ogg"
+      }
     },
     {
       "id": "Kennen",
       "key": "85",
-      "name": "Kennen"
+      "name": "Kennen",
+      "tags": [
+        "Mage"
+      ],
+      "partype": "Energy",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/85.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/85.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/85.ogg"
+      }
     },
     {
       "id": "Khazix",
       "key": "121",
-      "name": "Kha'Zix"
+      "name": "Kha'Zix",
+      "tags": [
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/121.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/121.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/121.ogg"
+      }
     },
     {
       "id": "Kindred",
       "key": "203",
-      "name": "Kindred"
+      "name": "Kindred",
+      "tags": [
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/203.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/203.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/203.ogg"
+      }
     },
     {
       "id": "Kled",
       "key": "240",
-      "name": "Kled"
+      "name": "Kled",
+      "tags": [
+        "Fighter"
+      ],
+      "partype": "Courage",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/240.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/240.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/240.ogg"
+      }
     },
     {
       "id": "KogMaw",
       "key": "96",
-      "name": "Kog'Maw"
+      "name": "Kog'Maw",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/96.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/96.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/96.ogg"
+      }
     },
     {
       "id": "Leblanc",
       "key": "7",
-      "name": "LeBlanc"
+      "name": "LeBlanc",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/7.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/7.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/7.ogg"
+      }
     },
     {
       "id": "LeeSin",
       "key": "64",
-      "name": "Lee Sin"
+      "name": "Lee Sin",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Energy",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/64.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/64.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/64.ogg"
+      }
     },
     {
       "id": "Leona",
       "key": "89",
-      "name": "Leona"
+      "name": "Leona",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/89.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/89.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/89.ogg"
+      }
     },
     {
       "id": "Lillia",
       "key": "876",
-      "name": "Lillia"
+      "name": "Lillia",
+      "tags": [
+        "Fighter",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/876.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/876.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/876.ogg"
+      }
     },
     {
       "id": "Lissandra",
       "key": "127",
-      "name": "Lissandra"
+      "name": "Lissandra",
+      "tags": [
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/127.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/127.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/127.ogg"
+      }
     },
     {
       "id": "Lucian",
       "key": "236",
-      "name": "Lucian"
+      "name": "Lucian",
+      "tags": [
+        "Marksman",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/236.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/236.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/236.ogg"
+      }
     },
     {
       "id": "Lulu",
       "key": "117",
-      "name": "Lulu"
+      "name": "Lulu",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/117.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/117.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/117.ogg"
+      }
     },
     {
       "id": "Lux",
       "key": "99",
-      "name": "Lux"
+      "name": "Lux",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/99.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/99.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/99.ogg"
+      }
     },
     {
       "id": "Malphite",
       "key": "54",
-      "name": "Malphite"
+      "name": "Malphite",
+      "tags": [
+        "Tank",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/54.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/54.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/54.ogg"
+      }
     },
     {
       "id": "Malzahar",
       "key": "90",
-      "name": "Malzahar"
+      "name": "Malzahar",
+      "tags": [
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/90.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/90.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/90.ogg"
+      }
     },
     {
       "id": "Maokai",
       "key": "57",
-      "name": "Maokai"
+      "name": "Maokai",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/57.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/57.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/57.ogg"
+      }
     },
     {
       "id": "MasterYi",
       "key": "11",
-      "name": "Master Yi"
+      "name": "Master Yi",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/11.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/11.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/11.ogg"
+      }
     },
     {
       "id": "Mel",
       "key": "800",
-      "name": "Mel"
+      "name": "Mel",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/800.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/800.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/800.ogg"
+      }
     },
     {
       "id": "Milio",
       "key": "902",
-      "name": "Milio"
+      "name": "Milio",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/902.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/902.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/902.ogg"
+      }
     },
     {
       "id": "MissFortune",
       "key": "21",
-      "name": "Miss Fortune"
+      "name": "Miss Fortune",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/21.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/21.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/21.ogg"
+      }
     },
     {
       "id": "Mordekaiser",
       "key": "82",
-      "name": "Mordekaiser"
+      "name": "Mordekaiser",
+      "tags": [
+        "Fighter",
+        "Mage"
+      ],
+      "partype": "Shield",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/82.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/82.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/82.ogg"
+      }
     },
     {
       "id": "Morgana",
       "key": "25",
-      "name": "Morgana"
+      "name": "Morgana",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/25.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/25.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/25.ogg"
+      }
     },
     {
       "id": "Naafiri",
       "key": "950",
-      "name": "Naafiri"
+      "name": "Naafiri",
+      "tags": [
+        "Assassin",
+        "Fighter"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/950.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/950.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/950.ogg"
+      }
     },
     {
       "id": "Nami",
       "key": "267",
-      "name": "Nami"
+      "name": "Nami",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/267.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/267.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/267.ogg"
+      }
     },
     {
       "id": "Nasus",
       "key": "75",
-      "name": "Nasus"
+      "name": "Nasus",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/75.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/75.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/75.ogg"
+      }
     },
     {
       "id": "Nautilus",
       "key": "111",
-      "name": "Nautilus"
+      "name": "Nautilus",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/111.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/111.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/111.ogg"
+      }
     },
     {
       "id": "Neeko",
       "key": "518",
-      "name": "Neeko"
+      "name": "Neeko",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/518.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/518.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/518.ogg"
+      }
     },
     {
       "id": "Nidalee",
       "key": "76",
-      "name": "Nidalee"
+      "name": "Nidalee",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/76.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/76.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/76.ogg"
+      }
     },
     {
       "id": "Nilah",
       "key": "895",
-      "name": "Nilah"
+      "name": "Nilah",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/895.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/895.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/895.ogg"
+      }
     },
     {
       "id": "Nocturne",
       "key": "56",
-      "name": "Nocturne"
+      "name": "Nocturne",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/56.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/56.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/56.ogg"
+      }
     },
     {
       "id": "Nunu",
       "key": "20",
-      "name": "Nunu & Willump"
+      "name": "Nunu & Willump",
+      "tags": [
+        "Tank",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/20.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/20.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/20.ogg"
+      }
     },
     {
       "id": "Olaf",
       "key": "2",
-      "name": "Olaf"
+      "name": "Olaf",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/2.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/2.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/2.ogg"
+      }
     },
     {
       "id": "Orianna",
       "key": "61",
-      "name": "Orianna"
+      "name": "Orianna",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/61.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/61.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/61.ogg"
+      }
     },
     {
       "id": "Ornn",
       "key": "516",
-      "name": "Ornn"
+      "name": "Ornn",
+      "tags": [
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/516.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/516.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/516.ogg"
+      }
     },
     {
       "id": "Pantheon",
       "key": "80",
-      "name": "Pantheon"
+      "name": "Pantheon",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/80.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/80.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/80.ogg"
+      }
     },
     {
       "id": "Poppy",
       "key": "78",
-      "name": "Poppy"
+      "name": "Poppy",
+      "tags": [
+        "Tank",
+        "Fighter"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/78.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/78.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/78.ogg"
+      }
     },
     {
       "id": "Pyke",
       "key": "555",
-      "name": "Pyke"
+      "name": "Pyke",
+      "tags": [
+        "Support",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/555.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/555.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/555.ogg"
+      }
     },
     {
       "id": "Qiyana",
       "key": "246",
-      "name": "Qiyana"
+      "name": "Qiyana",
+      "tags": [
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/246.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/246.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/246.ogg"
+      }
     },
     {
       "id": "Quinn",
       "key": "133",
-      "name": "Quinn"
+      "name": "Quinn",
+      "tags": [
+        "Marksman",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/133.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/133.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/133.ogg"
+      }
     },
     {
       "id": "Rakan",
       "key": "497",
-      "name": "Rakan"
+      "name": "Rakan",
+      "tags": [
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/497.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/497.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/497.ogg"
+      }
     },
     {
       "id": "Rammus",
       "key": "33",
-      "name": "Rammus"
+      "name": "Rammus",
+      "tags": [
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/33.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/33.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/33.ogg"
+      }
     },
     {
       "id": "RekSai",
       "key": "421",
-      "name": "Rek'Sai"
+      "name": "Rek'Sai",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Rage",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/421.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/421.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/421.ogg"
+      }
     },
     {
       "id": "Rell",
       "key": "526",
-      "name": "Rell"
+      "name": "Rell",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/526.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/526.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/526.ogg"
+      }
     },
     {
       "id": "Renata",
       "key": "888",
-      "name": "Renata Glasc"
+      "name": "Renata Glasc",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/888.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/888.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/888.ogg"
+      }
     },
     {
       "id": "Renekton",
       "key": "58",
-      "name": "Renekton"
+      "name": "Renekton",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Fury",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/58.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/58.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/58.ogg"
+      }
     },
     {
       "id": "Rengar",
       "key": "107",
-      "name": "Rengar"
+      "name": "Rengar",
+      "tags": [
+        "Assassin",
+        "Fighter"
+      ],
+      "partype": "Ferocity",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/107.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/107.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/107.ogg"
+      }
     },
     {
       "id": "Riven",
       "key": "92",
-      "name": "Riven"
+      "name": "Riven",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "None",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/92.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/92.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/92.ogg"
+      }
     },
     {
       "id": "Rumble",
       "key": "68",
-      "name": "Rumble"
+      "name": "Rumble",
+      "tags": [
+        "Fighter",
+        "Mage"
+      ],
+      "partype": "Heat",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/68.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/68.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/68.ogg"
+      }
     },
     {
       "id": "Ryze",
       "key": "13",
-      "name": "Ryze"
+      "name": "Ryze",
+      "tags": [
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/13.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/13.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/13.ogg"
+      }
     },
     {
       "id": "Samira",
       "key": "360",
-      "name": "Samira"
+      "name": "Samira",
+      "tags": [
+        "Marksman",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/360.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/360.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/360.ogg"
+      }
     },
     {
       "id": "Sejuani",
       "key": "113",
-      "name": "Sejuani"
+      "name": "Sejuani",
+      "tags": [
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/113.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/113.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/113.ogg"
+      }
     },
     {
       "id": "Senna",
       "key": "235",
-      "name": "Senna"
+      "name": "Senna",
+      "tags": [
+        "Support",
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/235.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/235.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/235.ogg"
+      }
     },
     {
       "id": "Seraphine",
       "key": "147",
-      "name": "Seraphine"
+      "name": "Seraphine",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/147.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/147.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/147.ogg"
+      }
     },
     {
       "id": "Sett",
       "key": "875",
-      "name": "Sett"
+      "name": "Sett",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Grit",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/875.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/875.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/875.ogg"
+      }
     },
     {
       "id": "Shaco",
       "key": "35",
-      "name": "Shaco"
+      "name": "Shaco",
+      "tags": [
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/35.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/35.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/35.ogg"
+      }
     },
     {
       "id": "Shen",
       "key": "98",
-      "name": "Shen"
+      "name": "Shen",
+      "tags": [
+        "Tank"
+      ],
+      "partype": "Energy",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/98.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/98.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/98.ogg"
+      }
     },
     {
       "id": "Shyvana",
       "key": "102",
-      "name": "Shyvana"
+      "name": "Shyvana",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Fury",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/102.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/102.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/102.ogg"
+      }
     },
     {
       "id": "Singed",
       "key": "27",
-      "name": "Singed"
+      "name": "Singed",
+      "tags": [
+        "Tank",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/27.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/27.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/27.ogg"
+      }
     },
     {
       "id": "Sion",
       "key": "14",
-      "name": "Sion"
+      "name": "Sion",
+      "tags": [
+        "Tank",
+        "Fighter"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/14.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/14.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/14.ogg"
+      }
     },
     {
       "id": "Sivir",
       "key": "15",
-      "name": "Sivir"
+      "name": "Sivir",
+      "tags": [
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/15.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/15.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/15.ogg"
+      }
     },
     {
       "id": "Skarner",
       "key": "72",
-      "name": "Skarner"
+      "name": "Skarner",
+      "tags": [
+        "Tank",
+        "Fighter"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/72.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/72.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/72.ogg"
+      }
     },
     {
       "id": "Smolder",
       "key": "901",
-      "name": "Smolder"
+      "name": "Smolder",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/901.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/901.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/901.ogg"
+      }
     },
     {
       "id": "Sona",
       "key": "37",
-      "name": "Sona"
+      "name": "Sona",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/37.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/37.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/37.ogg"
+      }
     },
     {
       "id": "Soraka",
       "key": "16",
-      "name": "Soraka"
+      "name": "Soraka",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/16.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/16.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/16.ogg"
+      }
     },
     {
       "id": "Swain",
       "key": "50",
-      "name": "Swain"
+      "name": "Swain",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/50.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/50.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/50.ogg"
+      }
     },
     {
       "id": "Sylas",
       "key": "517",
-      "name": "Sylas"
+      "name": "Sylas",
+      "tags": [
+        "Mage",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/517.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/517.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/517.ogg"
+      }
     },
     {
       "id": "Syndra",
       "key": "134",
-      "name": "Syndra"
+      "name": "Syndra",
+      "tags": [
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/134.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/134.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/134.ogg"
+      }
     },
     {
       "id": "TahmKench",
       "key": "223",
-      "name": "Tahm Kench"
+      "name": "Tahm Kench",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/223.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/223.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/223.ogg"
+      }
     },
     {
       "id": "Taliyah",
       "key": "163",
-      "name": "Taliyah"
+      "name": "Taliyah",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/163.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/163.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/163.ogg"
+      }
     },
     {
       "id": "Talon",
       "key": "91",
-      "name": "Talon"
+      "name": "Talon",
+      "tags": [
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/91.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/91.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/91.ogg"
+      }
     },
     {
       "id": "Taric",
       "key": "44",
-      "name": "Taric"
+      "name": "Taric",
+      "tags": [
+        "Support",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/44.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/44.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/44.ogg"
+      }
     },
     {
       "id": "Teemo",
       "key": "17",
-      "name": "Teemo"
+      "name": "Teemo",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/17.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/17.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/17.ogg"
+      }
     },
     {
       "id": "Thresh",
       "key": "412",
-      "name": "Thresh"
+      "name": "Thresh",
+      "tags": [
+        "Support",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/412.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/412.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/412.ogg"
+      }
     },
     {
       "id": "Tristana",
       "key": "18",
-      "name": "Tristana"
+      "name": "Tristana",
+      "tags": [
+        "Marksman",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/18.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/18.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/18.ogg"
+      }
     },
     {
       "id": "Trundle",
       "key": "48",
-      "name": "Trundle"
+      "name": "Trundle",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/48.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/48.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/48.ogg"
+      }
     },
     {
       "id": "Tryndamere",
       "key": "23",
-      "name": "Tryndamere"
+      "name": "Tryndamere",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Fury",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/23.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/23.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/23.ogg"
+      }
     },
     {
       "id": "TwistedFate",
       "key": "4",
-      "name": "Twisted Fate"
+      "name": "Twisted Fate",
+      "tags": [
+        "Mage",
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/4.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/4.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/4.ogg"
+      }
     },
     {
       "id": "Twitch",
       "key": "29",
-      "name": "Twitch"
+      "name": "Twitch",
+      "tags": [
+        "Marksman",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/29.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/29.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/29.ogg"
+      }
     },
     {
       "id": "Udyr",
       "key": "77",
-      "name": "Udyr"
+      "name": "Udyr",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/77.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/77.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/77.ogg"
+      }
     },
     {
       "id": "Urgot",
       "key": "6",
-      "name": "Urgot"
+      "name": "Urgot",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/6.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/6.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/6.ogg"
+      }
     },
     {
       "id": "Varus",
       "key": "110",
-      "name": "Varus"
+      "name": "Varus",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/110.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/110.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/110.ogg"
+      }
     },
     {
       "id": "Vayne",
       "key": "67",
-      "name": "Vayne"
+      "name": "Vayne",
+      "tags": [
+        "Marksman",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/67.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/67.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/67.ogg"
+      }
     },
     {
       "id": "Veigar",
       "key": "45",
-      "name": "Veigar"
+      "name": "Veigar",
+      "tags": [
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/45.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/45.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/45.ogg"
+      }
     },
     {
       "id": "Velkoz",
       "key": "161",
-      "name": "Vel'Koz"
+      "name": "Vel'Koz",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/161.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/161.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/161.ogg"
+      }
     },
     {
       "id": "Vex",
       "key": "711",
-      "name": "Vex"
+      "name": "Vex",
+      "tags": [
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/711.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/711.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/711.ogg"
+      }
     },
     {
       "id": "Vi",
       "key": "254",
-      "name": "Vi"
+      "name": "Vi",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/254.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/254.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/254.ogg"
+      }
     },
     {
       "id": "Viego",
       "key": "234",
-      "name": "Viego"
+      "name": "Viego",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "None",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/234.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/234.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/234.ogg"
+      }
     },
     {
       "id": "Viktor",
       "key": "112",
-      "name": "Viktor"
+      "name": "Viktor",
+      "tags": [
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/112.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/112.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/112.ogg"
+      }
     },
     {
       "id": "Vladimir",
       "key": "8",
-      "name": "Vladimir"
+      "name": "Vladimir",
+      "tags": [
+        "Mage",
+        "Fighter"
+      ],
+      "partype": "Crimson Rush",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/8.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/8.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/8.ogg"
+      }
     },
     {
       "id": "Volibear",
       "key": "106",
-      "name": "Volibear"
+      "name": "Volibear",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/106.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/106.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/106.ogg"
+      }
     },
     {
       "id": "Warwick",
       "key": "19",
-      "name": "Warwick"
+      "name": "Warwick",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/19.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/19.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/19.ogg"
+      }
     },
     {
       "id": "MonkeyKing",
       "key": "62",
-      "name": "Wukong"
+      "name": "Wukong",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/62.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/62.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/62.ogg"
+      }
     },
     {
       "id": "Xayah",
       "key": "498",
-      "name": "Xayah"
+      "name": "Xayah",
+      "tags": [
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/498.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/498.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/498.ogg"
+      }
     },
     {
       "id": "Xerath",
       "key": "101",
-      "name": "Xerath"
+      "name": "Xerath",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/101.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/101.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/101.ogg"
+      }
     },
     {
       "id": "XinZhao",
       "key": "5",
-      "name": "Xin Zhao"
+      "name": "Xin Zhao",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/5.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/5.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/5.ogg"
+      }
     },
     {
       "id": "Yasuo",
       "key": "157",
-      "name": "Yasuo"
+      "name": "Yasuo",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Flow",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/157.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/157.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/157.ogg"
+      }
     },
     {
       "id": "Yone",
       "key": "777",
-      "name": "Yone"
+      "name": "Yone",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Flow",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/777.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/777.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/777.ogg"
+      }
     },
     {
       "id": "Yorick",
       "key": "83",
-      "name": "Yorick"
+      "name": "Yorick",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/83.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/83.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/83.ogg"
+      }
     },
     {
       "id": "Yunara",
       "key": "804",
-      "name": "Yunara"
+      "name": "Yunara",
+      "tags": [
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/804.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/804.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/804.ogg"
+      }
     },
     {
       "id": "Yuumi",
       "key": "350",
-      "name": "Yuumi"
+      "name": "Yuumi",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/350.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/350.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/350.ogg"
+      }
     },
     {
       "id": "Zaahen",
       "key": "904",
-      "name": "Zaahen"
+      "name": "Zaahen",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/904.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/904.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/904.ogg"
+      }
     },
     {
       "id": "Zac",
       "key": "154",
-      "name": "Zac"
+      "name": "Zac",
+      "tags": [
+        "Tank",
+        "Fighter"
+      ],
+      "partype": "None",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/154.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/154.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/154.ogg"
+      }
     },
     {
       "id": "Zed",
       "key": "238",
-      "name": "Zed"
+      "name": "Zed",
+      "tags": [
+        "Assassin"
+      ],
+      "partype": "Energy",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/238.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/238.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/238.ogg"
+      }
     },
     {
       "id": "Zeri",
       "key": "221",
-      "name": "Zeri"
+      "name": "Zeri",
+      "tags": [
+        "Marksman"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/221.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/221.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/221.ogg"
+      }
     },
     {
       "id": "Ziggs",
       "key": "115",
-      "name": "Ziggs"
+      "name": "Ziggs",
+      "tags": [
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/115.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/115.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/115.ogg"
+      }
     },
     {
       "id": "Zilean",
       "key": "26",
-      "name": "Zilean"
+      "name": "Zilean",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/26.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/26.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/26.ogg"
+      }
     },
     {
       "id": "Zoe",
       "key": "142",
-      "name": "Zoe"
+      "name": "Zoe",
+      "tags": [
+        "Mage"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/142.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/142.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/142.ogg"
+      }
     },
     {
       "id": "Zyra",
       "key": "143",
-      "name": "Zyra"
+      "name": "Zyra",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "partype": "Mana",
+      "audio": {
+        "choose": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/143.ogg",
+        "ban": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-ban-vo/143.ogg",
+        "stinger": "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-sfx-audios/143.ogg"
+      }
     }
   ]
 }

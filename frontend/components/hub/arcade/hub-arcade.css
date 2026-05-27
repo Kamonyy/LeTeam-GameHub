@@ -241,6 +241,21 @@
 	animation: hub-slide-up 0.75s var(--hub-elastic) 0.35s both;
 }
 
+@keyframes hub-player-in {
+	from {
+		opacity: 0;
+		transform: translateX(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+.hub-player-row--enter {
+	animation: hub-player-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @keyframes hub-drop-in {
 	0% {
 		opacity: 0;
@@ -291,6 +306,7 @@
 .hub-ticker-pill {
 	background: rgba(26, 29, 39, 0.65);
 	border: 1px solid rgba(46, 51, 69, 0.9);
+	-webkit-backdrop-filter: blur(14px);
 	backdrop-filter: blur(14px);
 	box-shadow:
 		0 8px 32px rgba(0, 0, 0, 0.35),
@@ -521,14 +537,21 @@
 	opacity: 0;
 	pointer-events: none;
 	background: conic-gradient(
-		from var(--hub-spot-angle, 0deg),
+		from 0deg,
 		transparent 0deg,
 		rgba(244, 63, 94, 0.45) 40deg,
 		transparent 80deg
 	);
-	mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
+	-webkit-mask:
+		linear-gradient(#000, #000) content-box,
+		linear-gradient(#000, #000);
+	-webkit-mask-composite: xor;
+	mask:
+		linear-gradient(#000, #000) content-box,
+		linear-gradient(#000, #000);
 	mask-composite: exclude;
 	padding: 2px;
+	transform: rotate(0deg);
 }
 
 .hub-game-card--hovered.hub-game-card--bara-alsalafa .hub-bara-spotlight {
@@ -538,14 +561,8 @@
 
 @keyframes hub-spotlight-spin {
 	to {
-		--hub-spot-angle: 360deg;
+		transform: rotate(360deg);
 	}
-}
-
-@property --hub-spot-angle {
-	syntax: '<angle>';
-	initial-value: 0deg;
-	inherits: false;
 }
 
 .hub-bara-logo {
@@ -559,19 +576,17 @@
 @keyframes hub-bara-glitch {
 	0%,
 	100% {
-		transform: translate(0);
-		filter: none;
+		transform: translate3d(0, 0, 0);
 	}
 	25% {
-		transform: translate(-3px, 1px);
-		filter: hue-rotate(20deg);
+		transform: translate3d(-3px, 1px, 0);
 	}
 	50% {
-		transform: translate(3px, -2px);
+		transform: translate3d(3px, -2px, 0);
 		text-shadow: 2px 0 #f43f5e, -2px 0 #3b82f6;
 	}
 	75% {
-		transform: translate(-2px, -1px);
+		transform: translate3d(-2px, -1px, 0);
 	}
 }
 
@@ -654,7 +669,13 @@
 	box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
 }
 
-@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+@media (pointer: coarse) {
+	.hub-aura {
+		filter: blur(72px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
 	.hub-arcade-bg__marquee span {
 		animation: none !important;
 		padding-left: 0;
@@ -666,17 +687,22 @@
 		display: none !important;
 	}
 
-	.hub-enter-hero,
-	.hub-enter-card,
-	.hub-enter-sidebar {
-		animation: none !important;
-	}
-
 	.hub-hero-title {
 		animation: none !important;
 	}
 
-	.hub-game-card {
-		transition: border-color 0.2s, box-shadow 0.2s !important;
+	.hub-bara-spotlight {
+		animation: none !important;
+	}
+
+	.hub-ticker-pill {
+		-webkit-backdrop-filter: none;
+		backdrop-filter: none;
+	}
+}
+
+@media (pointer: coarse) {
+	.hub-cursor {
+		display: none !important;
 	}
 }

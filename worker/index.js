@@ -33,9 +33,7 @@ export const SocketActor = createSioActor({
   },
 
   async onServerStateRestored(server) {
-    if (!roomManager) {
-      attachConnectionHandlers(server);
-    }
+    attachConnectionHandlers(server);
   },
 
   getEngineActorNamespace(bindings) {

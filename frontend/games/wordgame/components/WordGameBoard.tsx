@@ -9,6 +9,8 @@ import Scratchpad from './Scratchpad';
 import RoundCeremony from './RoundCeremony';
 import { useScratchpadNotes } from '../hooks/useScratchpadNotes';
 import clsx from 'clsx';
+import { useEffect, useRef } from 'react';
+import { useWordGameAudioOptional } from '../hooks/useWordGameAudio';
 
 interface WordGameBoardProps {
   gameState: WordGameState;
@@ -52,6 +54,35 @@ export default function WordGameBoard({
     gameState.phase === 'playing' || gameState.phase === 'round_end';
 
   const wordCategory = gameState.wordCategory ?? 'custom';
+  const isLol = wordCategory === 'lol-champions';
+  const audio = useWordGameAudioOptional();
+  const prevPhase = useRef(gameState.phase);
+
+  useEffect(() => {
+    const phase = gameState.phase;
+    const was = prevPhase.current;
+    prevPhase.current = phase;
+
+    if (phase === 'playing' && was === 'setup') {
+      audio?.playSfx('splashForward', 0.55);
+    }
+    if (
+      isLol &&
+      phase === 'round_end' &&
+      was === 'playing' &&
+      gameState.revealedChampionId
+    ) {
+      audio?.playSfx('cardSelect', 0.6);
+    }
+    if (phase === 'match_over' && was !== 'match_over') {
+      audio?.playSfx('roundFinalize', 0.65);
+    }
+  }, [
+    gameState.phase,
+    gameState.revealedChampionId,
+    isLol,
+    audio,
+  ]);
 
   return (
     <div className="sw-animate-ascend-slow space-y-8">
@@ -63,7 +94,10 @@ export default function WordGameBoard({
         pointsToWin={gameState.pointsToWin}
       />
 
-      <RoundCeremony roundNumber={gameState.roundNumber} />
+      <RoundCeremony
+        key={gameState.roundNumber}
+        roundNumber={gameState.roundNumber}
+      />
 
       <div
         className={clsx(
@@ -73,10 +107,7 @@ export default function WordGameBoard({
           :	'max-w-3xl mx-auto w-full'
         )}
       >
-        <div
-          key={`${gameState.phase}-${gameState.roundNumber}`}
-          className="min-w-0 sw-phase-mount"
-        >
+        <div key={gameState.phase} className="min-w-0 sw-phase-mount">
           {gameState.phase === 'setup' && (
             <WordSetup
               wordCategory={wordCategory}
@@ -111,7 +142,7 @@ export default function WordGameBoard({
         </div>
 
         {showScratchpad && (
-          <aside className="w-full lg:sticky lg:top-24 lg:self-start">
+          <aside className="w-full lg:sticky lg:top-24 lg:self-start sw-scratchpad-enter">
             <Scratchpad
               notes={notes}
               onAdd={addNote}

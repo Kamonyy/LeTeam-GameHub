@@ -12,23 +12,10 @@ import {
 import { io } from 'socket.io-client';
 import { getDisplayName, getOrCreatePlayerId, getSessionToken, setDisplayName, setSessionToken, clearSessionToken } from '@/lib/player';
 import { isSameOriginServer, resolveServerUrl } from '@/lib/socket-url';
+import { HubLiveProvider } from '@/lib/hub/HubLiveContext';
+import { hubPresenceEqual, lobbyStateEqual } from '@/lib/hub/hub-live';
 
 const SocketContext = createContext(null);
-
-function hubPresenceEqual(a, b) {
-  if (a === b) return true;
-  if (!a || !b) return false;
-  if (a.total !== b.total) return false;
-  const ap = a.players ?? [];
-  const bp = b.players ?? [];
-  if (ap.length !== bp.length) return false;
-  for (let i = 0; i < ap.length; i++) {
-    if (ap[i].id !== bp[i].id || ap[i].displayName !== bp[i].displayName) {
-      return false;
-    }
-  }
-  return true;
-}
 
 export function SocketProvider({ children }) {
   const socketRef = useRef(null);
@@ -76,6 +63,10 @@ export function SocketProvider({ children }) {
           if (res?.reconnected && res?.roomId) {
             // lobby/game state arrives via reconnect:sync + game:state:update
             if (res?.isSpectator) setIsSpectator(true);
+          } else if (!res?.reconnected) {
+            setLobby(null);
+            setGameState(null);
+            setIsSpectator(false);
           }
           resolve(true);
         }
@@ -125,13 +116,13 @@ export function SocketProvider({ children }) {
       socket.on('disconnect', () => setConnected(false));
       socket.on('connect_error', () => setConnected(false));
       socket.on('hub:presence', (payload) => {
-        if (!payload?.players) return;
+        if (!Array.isArray(payload?.players)) return;
         setHubPresence((prev) =>
           hubPresenceEqual(prev, payload) ? prev : payload
         );
       });
       socket.on('lobby:state', (state) => {
-        setLobby(state);
+        setLobby((prev) => (lobbyStateEqual(prev, state) ? prev : state));
         if (state?.isSpectator !== undefined) {
           setIsSpectator(!!state.isSpectator);
         } else if (state?.spectators && playerIdRef.current) {
@@ -151,7 +142,7 @@ export function SocketProvider({ children }) {
         }
       });
       socket.on('reconnect:sync', (payload) => {
-        setLobby(payload);
+        setLobby((prev) => (lobbyStateEqual(prev, payload) ? prev : payload));
         setIsSpectator(!!payload?.isSpectator);
         if (payload?.status === 'lobby') {
           setGameState(null);
@@ -186,6 +177,23 @@ export function SocketProvider({ children }) {
       socketRef.current = null;
     };
   }, [registerPlayer]);
+
+  const requestHubPresenceRefresh = useCallback(() => {
+    const socket = socketRef.current;
+    if (socket?.connected) {
+      socket.emit('hub:presence:request', {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        requestHubPresenceRefresh();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [requestHubPresenceRefresh]);
 
   useEffect(() => {
     const channel = lobby?.roomId ?? null;
@@ -622,8 +630,29 @@ export function SocketProvider({ children }) {
     ]
   );
 
+  const hubLiveValue = useMemo(
+    () => ({
+      connected,
+      hubPresence,
+      error,
+      clearError,
+      refreshDisplayName,
+      requestHubPresenceRefresh,
+    }),
+    [
+      connected,
+      hubPresence,
+      error,
+      clearError,
+      refreshDisplayName,
+      requestHubPresenceRefresh,
+    ]
+  );
+
   return (
-    <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
+    <HubLiveProvider value={hubLiveValue}>
+      <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
+    </HubLiveProvider>
   );
 }
 

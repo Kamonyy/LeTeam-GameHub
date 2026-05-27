@@ -173,6 +173,7 @@ export class RoomManager {
 	_buildHubPresencePayload(forPlayerId) {
 		const players = [...this.hubPresence.entries()]
 			.map(([id, entry]) => ({
+				id,
 				displayName: entry.displayName,
 				isYou: id === forPlayerId,
 			}))
@@ -202,7 +203,7 @@ export class RoomManager {
 		if (this._hubPresenceFlushTimer != null) return;
 		this._hubPresenceFlushTimer = setTimeout(() => {
 			this._hubPresenceFlushTimer = null;
-			this._scheduleBroadcastHubPresence();
+			this._broadcastHubPresence();
 		}, 250);
 	}
 
@@ -304,6 +305,7 @@ export class RoomManager {
 
 		this._upsertHubPresence(playerId, safeName, socket.id);
 		this._scheduleBroadcastHubPresence();
+		this.sendHubPresenceToSocket(socket);
 		return { success: true };
 	}
 
@@ -360,6 +362,8 @@ export class RoomManager {
 		this.playerToRoom.set(playerId, roomId);
 		if (this.useSocketRooms) socket.join(roomId);
 
+		this._upsertHubPresence(playerId, safeName, socket.id);
+		this._scheduleBroadcastHubPresence();
 		this.broadcastLobbyState(roomId);
 		return { roomId };
 	}
@@ -418,6 +422,8 @@ export class RoomManager {
 		this.playerToRoom.set(playerId, roomId);
 		if (this.useSocketRooms) socket.join(roomId);
 
+		this._upsertHubPresence(playerId, safeName, socket.id);
+		this._scheduleBroadcastHubPresence();
 		this.broadcastLobbyState(roomId);
 		if (room.game) {
 			const state = room.game.serializeForPlayer(playerId);
@@ -466,6 +472,8 @@ export class RoomManager {
 		this.spectatorToRoom.set(playerId, roomId);
 		if (this.useSocketRooms) socket.join(roomId);
 
+		this._upsertHubPresence(playerId, safeName, socket.id);
+		this._scheduleBroadcastHubPresence();
 		this.broadcastLobbyState(roomId);
 
 		if (room.game && room.status === "playing") {
