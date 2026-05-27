@@ -4,8 +4,8 @@ Real-time multiplayer game platform with an authoritative server. First game: **
 
 ## Live stack
 
-- **Frontend:** Next.js static export → **Cloudflare Pages**
-- **Backend:** Express + Socket.io → **Render** (WebSockets)
+- **Frontend:** https://gamehub.mohamed-hussein.net (Cloudflare Workers)
+- **Backend:** Express + Socket.io on **Render**
 
 See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for full production setup.
 

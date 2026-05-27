@@ -1,88 +1,51 @@
 # LeTeam Game Hub — Production Deployment
 
+**Live site:** https://gamehub.mohamed-hussein.net
+
 ## Architecture
 
-| Component | Platform | Why |
+| Component | Platform | URL |
 |-----------|----------|-----|
-| **Frontend** | Cloudflare Pages | Static Next.js export, global CDN |
-| **Backend** | Render | Persistent WebSocket (Socket.io) |
-
-Cloudflare Pages cannot run the Socket.io game server — it needs an always-on Node process.
+| **Frontend** | Cloudflare Workers | https://gamehub.mohamed-hussein.net |
+| **Backend** | Render | `https://<your-service>.onrender.com` |
 
 ---
 
-## 1. Deploy backend (Render)
+## 1. Cloudflare (frontend) — already configured
 
-1. Push this repo to GitHub.
-2. Go to [render.com](https://render.com) → **New** → **Blueprint** → connect your repository.
-3. Render reads `render.yaml` and creates `leteam-gamehub-api`.
-4. Set **CLIENT_URL** in Render dashboard:
+| Setting | Value |
+|---------|-------|
+| **Deploy command** | `npx wrangler deploy` |
+| **Custom domain** | `gamehub.mohamed-hussein.net` (in `wrangler.toml`) |
+
+**Required environment variable** (Cloudflare → gamehub → Settings → Variables):
+
+| Variable | Value |
+|----------|-------|
+| `NEXT_PUBLIC_SERVER_URL` | Your Render API URL, e.g. `https://leteam-gamehub-api.onrender.com` |
+
+Redeploy after setting this so the build embeds the backend URL.
+
+---
+
+## 2. Render (backend)
+
+1. [render.com](https://render.com) → **Blueprint** → connect this repo → creates `leteam-gamehub-api`.
+2. Set **CLIENT_URL**:
    ```
-   https://your-project.pages.dev,https://your-custom-domain.com
+   https://gamehub.mohamed-hussein.net
    ```
-5. Note the service URL, e.g. `https://your-api.onrender.com`.
+3. Copy the Render service URL → paste into Cloudflare `NEXT_PUBLIC_SERVER_URL`.
 
 > Free tier sleeps after inactivity (~50s cold start on first connect).
 
 ---
 
-## 2. Deploy frontend (Cloudflare)
+## 3. Share game links
 
-### Option A — Workers deploy (Wrangler, current setup)
-
-In Cloudflare → your project → **Settings** → **Build**:
-
-| Setting | Value |
-|---------|-------|
-| **Build command** | `npm run build` *(or leave empty — `wrangler.toml` runs it)* |
-| **Deploy command** | `npx wrangler deploy` |
-
-> If **Building application** shows `—` in the log, the dashboard build step is empty.  
-> That is OK: `wrangler.toml` `[build]` runs `npm run build` during deploy.
-
-Add environment variable (Production + Preview):
-
-| Variable | Value |
-|----------|-------|
-| `NEXT_PUBLIC_SERVER_URL` | `https://your-api.onrender.com` |
-
-The build step installs frontend deps and exports static files to `frontend/out`.  
-`wrangler.toml` tells Wrangler to serve that directory.
-
-### Option B — Cloudflare Pages (dashboard only)
-
-| Setting | Value |
-|---------|-------|
-| **Root directory** | `frontend` |
-| **Build command** | `npm install && npm run build` |
-| **Build output directory** | `out` |
-
-Same `NEXT_PUBLIC_SERVER_URL` env var as above.
-
----
-
-## 3. Final wiring
-
-1. Copy your Cloudflare Pages URL.
-2. Update **CLIENT_URL** on Render to include it (comma-separated if multiple).
-3. Redeploy backend if CORS was blocking (Render auto-restarts on env change).
-
-Share room links like:
 ```
-https://your-project.pages.dev/dominoes/?room=A7B9
+https://gamehub.mohamed-hussein.net/dominoes/?room=A7B9
 ```
-
----
-
-## Custom domain (optional)
-
-**Cloudflare Pages:** Settings → Custom domains → add your domain.
-
-**Render:** Settings → Custom Domain → add e.g. `api.yourdomain.com`.
-
-Update env vars:
-- Pages: `NEXT_PUBLIC_SERVER_URL=https://api.yourdomain.com`
-- Render: add `https://yourdomain.com` to `CLIENT_URL`
 
 ---
 
@@ -99,9 +62,9 @@ npm run dev
 
 ## Secrets
 
-Never commit real environment files. Use platform dashboards for production values:
+Never commit real environment files:
 
 - `backend/.env` — local only (gitignored)
 - `frontend/.env.local` — local only (gitignored)
-- Cloudflare Pages → `NEXT_PUBLIC_SERVER_URL`
+- Cloudflare → `NEXT_PUBLIC_SERVER_URL`
 - Render → `CLIENT_URL`
