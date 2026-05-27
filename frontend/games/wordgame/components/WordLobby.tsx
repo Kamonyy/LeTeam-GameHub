@@ -15,6 +15,7 @@ import {
 import clsx from 'clsx';
 import type { LobbyState, WordGameSettings } from '@/lib/hub/types';
 import { WORD_POINTS_OPTIONS } from '@/lib/hub/types';
+import GameAboutPanel from '@/components/hub/GameAboutPanel';
 
 interface WordLobbyProps {
   lobby: LobbyState;
@@ -79,14 +80,12 @@ export default function WordLobby({
 
   return (
     <div className="card max-w-lg w-full mx-auto animate-fade-in">
-      <div className="flex items-center gap-3 mb-2">
+      <div className="flex items-center gap-3 mb-4">
         <MessageCircle className="w-6 h-6 text-hub-accent" />
         <h2 className="text-xl font-bold">Secret Word Lobby</h2>
       </div>
-      <p className="text-sm text-hub-muted mb-6">
-        Invite one friend via link or code. Play over voice chat — ask yes/no questions
-        IRL, then confirm guesses in-app.
-      </p>
+
+      <GameAboutPanel gameId="wordgame" className="mb-6" />
 
       <div className="flex items-center justify-between mb-6">
         <div>

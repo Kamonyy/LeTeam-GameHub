@@ -12,6 +12,8 @@ import PlayerNameControl from '@/components/hub/PlayerNameControl';
 import ErrorToast from '@/components/shared/ErrorToast';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import WordLobby from '@/games/wordgame/components/WordLobby';
+import GameAboutPanel from '@/components/hub/GameAboutPanel';
+import { getGameEntry } from '@/lib/hub/games-registry';
 import WordGameBoard from '@/games/wordgame/components/WordGameBoard';
 
 export default function WordGameClient() {
@@ -116,6 +118,7 @@ export default function WordGameClient() {
   };
 
   const isHost = lobby?.hostId === playerId;
+  const wordGameMeta = getGameEntry('wordgame');
   const inLobby = lobby && lobby.status === 'lobby';
   const inGame =
     lobby &&
@@ -132,7 +135,14 @@ export default function WordGameClient() {
             <Link href="/" className="text-hub-muted hover:text-white transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <h1 className="text-lg font-semibold">Secret Word</h1>
+            <div>
+              <h1 className="text-lg font-semibold">Secret Word</h1>
+              {wordGameMeta && (
+                <p className="text-xs text-hub-muted truncate max-w-[200px] sm:max-w-none">
+                  {wordGameMeta.tagline}
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-3">
             {isHost && inGame && (
@@ -189,7 +199,8 @@ export default function WordGameClient() {
         )}
 
         {!lobby && !inviteJoin && (
-          <div className="max-w-md mx-auto animate-fade-in">
+          <div className="max-w-md mx-auto animate-fade-in space-y-6">
+            <GameAboutPanel gameId="wordgame" />
             {roomParam && loading && !autoJoined && (
               <p className="text-center text-sm text-hub-muted mb-4 animate-pulse-soft">
                 Joining room {roomParam}…

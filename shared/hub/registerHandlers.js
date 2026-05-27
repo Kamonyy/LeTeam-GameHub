@@ -67,7 +67,7 @@ export function registerHandlers(socket, roomManager) {
       ack?.({ error: 'Too many requests, slow down' });
       return;
     }
-    const type = gameType || 'dominoes';
+    const type = gameType || 'wordgame';
     if (!validateGameType(type)) {
       ack?.({ error: 'Invalid game type' });
       return;

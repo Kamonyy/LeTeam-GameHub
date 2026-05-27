@@ -15,7 +15,7 @@ import {
 	WORD_ROUND_RESET_DELAY_MS,
 } from "./constants.js";
 import { generateRoomId } from "./generateRoomId.js";
-import { getGame } from "../games/registry.js";
+import { getGame, isGameEnabled } from "../games/registry.js";
 import { RateLimiter } from "./RateLimiter.js";
 import { generateSessionToken } from "./session.js";
 import { sanitizeChatMessage, sanitizeDisplayName } from "./validate.js";
@@ -296,6 +296,9 @@ export class RoomManager {
 
 		const game = getGame(gameType);
 		if (!game) return { error: "Unknown game type" };
+		if (!isGameEnabled(gameType)) {
+			return { error: "This game is temporarily unavailable" };
+		}
 
 		const safeName = sanitizeDisplayName(displayName);
 
@@ -473,6 +476,9 @@ export class RoomManager {
 
 		const gameDef = getGame(room.gameType);
 		if (!gameDef) return { error: "Invalid game type" };
+		if (!isGameEnabled(room.gameType)) {
+			return { error: "This game is temporarily unavailable" };
+		}
 
 		const connectedPlayers = room.players.filter((p) => p.connected);
 		if (connectedPlayers.length < gameDef.minPlayers) {

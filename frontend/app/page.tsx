@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { Gamepad2, Zap, ArrowRight } from 'lucide-react';
+import { Gamepad2, Zap, ArrowRight, Clock } from 'lucide-react';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
 import PlayerNameControl from '@/components/hub/PlayerNameControl';
 import OnlinePlayersPanel from '@/components/hub/OnlinePlayersPanel';
 import { useSocket } from '@/hooks/useSocket';
 import { GAMES } from '@/lib/hub/games-registry';
+import clsx from 'clsx';
 
 export default function HomePage() {
   const { connected } = useSocket();
@@ -47,33 +48,62 @@ export default function HomePage() {
             <section className="pb-12 lg:pb-20">
               <h3 className="text-sm uppercase tracking-wider text-hub-muted mb-6">Games</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {GAMES.map((game) => (
-                  <Link
-                    key={game.id}
-                    href={game.href}
-                    className="group card hover:border-hub-accent/50 transition-all duration-300 hover:shadow-lg hover:shadow-hub-accent/5"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-hub-accent/15 flex items-center justify-center text-2xl">
-                        {game.icon ?? '🎮'}
+                {GAMES.map((game) => {
+                  const cardClass = clsx(
+                    'group card transition-all duration-300',
+                    game.active ?
+                      'hover:border-hub-accent/50 hover:shadow-lg hover:shadow-hub-accent/5'
+                    :	'opacity-75 cursor-not-allowed border-hub-border',
+                  );
+
+                  const inner = (
+                    <>
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-hub-accent/15 flex items-center justify-center text-2xl">
+                          {game.icon ?? '🎮'}
+                        </div>
+                        {game.active ?
+                          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-hub-success/15 text-hub-success">
+                            Live
+                          </span>
+                        :	<span className="text-xs font-medium px-2.5 py-1 rounded-full bg-hub-border/80 text-hub-muted flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            Soon
+                          </span>
+                        }
                       </div>
-                      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-hub-success/15 text-hub-success">
-                        Live
-                      </span>
-                    </div>
-                    <h4 className="text-xl font-semibold mb-2 group-hover:text-hub-accent transition-colors">
-                      {game.name}
-                    </h4>
-                    <p className="text-hub-muted text-sm mb-4">{game.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-hub-muted">{game.players} players</span>
-                      <span className="flex items-center gap-1 text-sm text-hub-accent font-medium group-hover:gap-2 transition-all">
-                        Play
-                        <ArrowRight className="w-4 h-4" />
-                      </span>
-                    </div>
-                  </Link>
-                ))}
+                      <h4
+                        className={clsx(
+                          'text-xl font-semibold mb-2 transition-colors',
+                          game.active && 'group-hover:text-hub-accent',
+                        )}
+                      >
+                        {game.name}
+                      </h4>
+                      <p className="text-hub-muted text-sm mb-3 leading-snug">{game.tagline}</p>
+                      {!game.active && game.disabledReason && (
+                        <p className="text-xs text-hub-warning mb-3">{game.disabledReason}</p>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-hub-muted">{game.players} players</span>
+                        {game.active && (
+                          <span className="flex items-center gap-1 text-sm text-hub-accent font-medium group-hover:gap-2 transition-all">
+                            Play
+                            <ArrowRight className="w-4 h-4" />
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  );
+
+                  return game.active ?
+                      <Link key={game.id} href={game.href} className={cardClass}>
+                        {inner}
+                      </Link>
+                    :	<div key={game.id} className={cardClass} aria-disabled>
+                        {inner}
+                      </div>;
+                })}
               </div>
               <p className="text-center lg:text-left text-hub-muted text-sm mt-10">
                 More games coming soon.

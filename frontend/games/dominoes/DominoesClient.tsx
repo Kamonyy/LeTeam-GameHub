@@ -16,6 +16,8 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import Lobby from '@/games/dominoes/components/Lobby';
 import GameBoard from '@/games/dominoes/components/GameBoard';
 import SpectatorBanner from '@/games/dominoes/components/SpectatorBanner';
+import GameAboutPanel from '@/components/hub/GameAboutPanel';
+import { getGameEntry, isGameActive } from '@/lib/hub/games-registry';
 import type { GameState } from '@/games/dominoes/types';
 
 export default function DominoesClient() {
@@ -57,13 +59,16 @@ export default function DominoesClient() {
   const [autoJoined, setAutoJoined] = useState(false);
 
   const inviteJoin = !!roomParam && !hasDisplayName();
+  const dominoesEnabled = isGameActive('dominoes');
+  const dominoesMeta = getGameEntry('dominoes');
 
   useEffect(() => {
     setDisplayNameState(getDisplayName());
   }, []);
 
   useEffect(() => {
-    if (!connected || !roomParam || lobby || autoJoined || inviteJoin) return;
+    if (!dominoesEnabled || !connected || !roomParam || lobby || autoJoined || inviteJoin)
+      return;
     const code = normalizeRoomCode(roomParam);
     if (!code) return;
 
@@ -95,6 +100,7 @@ export default function DominoesClient() {
     joinRoomOrSpectate,
     spectateRoom,
     router,
+    dominoesEnabled,
   ]);
 
   const handleCreate = async () => {
@@ -192,7 +198,14 @@ export default function DominoesClient() {
             <Link href="/" className="text-hub-muted hover:text-white transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <h1 className="text-lg font-semibold">Dominoes</h1>
+            <div>
+              <h1 className="text-lg font-semibold">Dominoes</h1>
+              {dominoesMeta && (
+                <p className="text-xs text-hub-muted truncate max-w-[200px] sm:max-w-none">
+                  {dominoesMeta.tagline}
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-3">
             {isHost && inActiveMatch && (
@@ -217,7 +230,24 @@ export default function DominoesClient() {
           showGameBoard ? 'max-w-none' : 'max-w-6xl',
         )}
       >
-        {!lobby && inviteJoin && (
+        {!lobby && !dominoesEnabled && (
+          <div className="max-w-md mx-auto animate-fade-in space-y-6">
+            <div className="card text-center">
+              <h2 className="text-lg font-semibold mb-2">Dominoes is offline</h2>
+              <p className="text-sm text-hub-muted mb-6">
+                {dominoesMeta?.disabledReason ??
+                  'This game is temporarily unavailable.'}
+              </p>
+              <Link href="/" className="btn-primary inline-flex items-center gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                Back to games
+              </Link>
+            </div>
+            <GameAboutPanel gameId="dominoes" />
+          </div>
+        )}
+
+        {!lobby && dominoesEnabled && inviteJoin && (
           <div className="max-w-md mx-auto animate-fade-in">
             <div className="card mb-6">
               <div className="flex items-center gap-2 text-hub-accent mb-4">
@@ -264,8 +294,9 @@ export default function DominoesClient() {
           </div>
         )}
 
-        {!lobby && !inviteJoin && (
-          <div className="max-w-md mx-auto animate-fade-in">
+        {!lobby && dominoesEnabled && !inviteJoin && (
+          <div className="max-w-md mx-auto animate-fade-in space-y-6">
+            <GameAboutPanel gameId="dominoes" />
             {roomParam && loading && !autoJoined && (
               <p className="text-center text-sm text-hub-muted mb-4 animate-pulse-soft">
                 {spectateParam ?

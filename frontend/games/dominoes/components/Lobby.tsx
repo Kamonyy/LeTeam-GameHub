@@ -5,6 +5,7 @@ import { Copy, Check, Users, Crown, LogOut, Play, Settings2, Swords, Handshake, 
 import clsx from 'clsx';
 import type { LobbyState, MatchSettings } from '@/lib/hub/types';
 import { SCORE_CAP_OPTIONS } from '@/lib/hub/types';
+import GameAboutPanel from '@/components/hub/GameAboutPanel';
 
 interface LobbyProps {
   lobby: LobbyState;
@@ -63,6 +64,8 @@ export default function Lobby({
 
   return (
     <div className="card max-w-lg w-full mx-auto animate-fade-in">
+      <GameAboutPanel gameId="dominoes" className="mb-6" />
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <p className="text-hub-muted text-xs uppercase tracking-wider mb-1">

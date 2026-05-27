@@ -178,7 +178,7 @@ export function SocketProvider({ children }) {
     });
   }, []);
 
-  const createRoom = useCallback((displayName, gameType = 'dominoes') => {
+  const createRoom = useCallback((displayName, gameType = 'wordgame') => {
     return new Promise((resolve) => {
       const socket = socketRef.current;
       if (!socket?.connected) {
