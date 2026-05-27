@@ -46,4 +46,5 @@ export const RATE_LIMITS = {
 	move: 120,
 	chat: 30,
 	profile: 20,
+	focus: 40,
 };

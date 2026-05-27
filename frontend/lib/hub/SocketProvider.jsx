@@ -242,6 +242,26 @@ export function SocketProvider({ children }) {
           at: Date.now(),
         });
       });
+      socket.on('word:focus:update', (payload) => {
+        if (!Array.isArray(payload?.players)) return;
+        const focusById = new Map(
+          payload.players.map((p) => [p.id, p.tabFocused !== false])
+        );
+        setLobby((prev) => {
+          if (!prev || prev.gameType !== 'wordgame') return prev;
+          let changed = false;
+          const players = prev.players.map((p) => {
+            if (!focusById.has(p.id)) return p;
+            const tabFocused = focusById.get(p.id);
+            if ((p.tabFocused !== false) === tabFocused) return p;
+            changed = true;
+            return { ...p, tabFocused };
+          });
+          if (!changed) return prev;
+          const next = { ...prev, players };
+          return lobbyStateEqual(prev, next) ? prev : next;
+        });
+      });
       socket.on('room:kicked', (payload) => {
         setLobby(null);
         setGameState(null);
@@ -726,6 +746,12 @@ export function SocketProvider({ children }) {
     });
   }, [ensureRegistered, finishWordGuessedAck]);
 
+  const reportWordTabFocus = useCallback((focused) => {
+    const socket = socketRef.current;
+    if (!socket?.connected || typeof focused !== 'boolean') return;
+    socket.emit('word:focus:report', { focused }, () => {});
+  }, []);
+
   const baraReveal = useCallback(() => {
     return new Promise((resolve) => {
       (async () => {
@@ -844,6 +870,7 @@ export function SocketProvider({ children }) {
       submitSecretWord,
       submitSecretChampion,
       confirmWordGuessed,
+      reportWordTabFocus,
       baraReveal,
       baraAdvanceInterrogation,
       baraVote,
@@ -880,6 +907,7 @@ export function SocketProvider({ children }) {
       submitSecretWord,
       submitSecretChampion,
       confirmWordGuessed,
+      reportWordTabFocus,
       baraReveal,
       baraAdvanceInterrogation,
       baraVote,

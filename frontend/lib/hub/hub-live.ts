@@ -73,7 +73,8 @@ export function lobbyStateEqual(a: LobbyState | null, b: LobbyState | null): boo
     if (
       p.id !== q.id ||
       p.displayName !== q.displayName ||
-      p.connected !== q.connected
+      p.connected !== q.connected ||
+      (p.tabFocused !== false) !== (q.tabFocused !== false)
     ) {
       return false;
     }

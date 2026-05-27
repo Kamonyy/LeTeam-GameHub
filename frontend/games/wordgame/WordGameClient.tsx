@@ -16,6 +16,7 @@ import { getGameEntry, isGameActive } from '@/lib/hub/games-registry';
 import WordGameBoard from '@/games/wordgame/components/WordGameBoard';
 import WordGameAtmosphere from '@/games/wordgame/components/WordGameAtmosphere';
 import WordConnectionBadge from '@/games/wordgame/components/WordConnectionBadge';
+import { useWordGameTabFocus } from '@/games/wordgame/hooks/useWordGameTabFocus';
 import WordPanelFrame from '@/games/wordgame/components/WordPanelFrame';
 import WordGameAudioProvider from '@/games/wordgame/components/WordGameAudioProvider';
 import GameLobbyPendingOverlay from '@/components/hub/GameLobbyPendingOverlay';
@@ -44,6 +45,7 @@ export default function WordGameClient() {
     submitSecretWord,
     submitSecretChampion,
     confirmWordGuessed,
+    reportWordTabFocus,
   } = useSocket();
 
   const [displayName, setDisplayNameState] = useState('');
@@ -189,6 +191,9 @@ export default function WordGameClient() {
   const isLolAudioEnabled =
     lobbyWordCategory === 'lol-champions' ||
     wordState?.wordCategory === 'lol-champions';
+
+  const matchInProgress = !!(inGame && !matchFinished);
+  const selfTabFocused = useWordGameTabFocus(matchInProgress, reportWordTabFocus);
 
   return (
     <WordGameAudioProvider enabled={isLolAudioEnabled}>
@@ -368,6 +373,8 @@ export default function WordGameClient() {
               playerId={playerId}
               isHost={isHost}
               postMatchBusy={postMatchBusy}
+              tabFocusActive={matchInProgress}
+              selfTabFocused={selfTabFocused}
               onHostPlayAgain={isHost ? handlePlayAgain : undefined}
               onHostReturnToLobby={isHost ? handleReturnToLobby : undefined}
               onSubmitWord={submitSecretWord}

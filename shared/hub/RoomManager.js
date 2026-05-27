@@ -31,6 +31,7 @@ import { MAX_ROOMS, RATE_LIMIT_WINDOW_MS } from "./constants.js";
 import { cryptoRandomInt } from "../games/dominoes/random.js";
 import {
 	isActiveWordGameSession,
+	isWordGameRoom,
 	isWordGameWon,
 	shouldPreserveWordGameRoom,
 } from "./wordgame-session.js";
@@ -275,6 +276,7 @@ export class RoomManager {
 				}
 				player.connected = true;
 				player.displayName = safeName;
+				player.tabFocused = true;
 				this._ensureRoomLink(playerId, roomId);
 				if (this.useSocketRooms) socket.join(roomId);
 
@@ -391,6 +393,7 @@ export class RoomManager {
 					displayName: safeName,
 					connected: true,
 					disconnectTimer: null,
+					tabFocused: true,
 				},
 			],
 			spectators: [],
@@ -470,6 +473,7 @@ export class RoomManager {
 				displayName: safeName,
 				connected: true,
 				disconnectTimer: null,
+				tabFocused: true,
 			});
 		}
 
@@ -629,6 +633,12 @@ export class RoomManager {
 			room.settings,
 		);
 		room.status = "playing";
+		if (room.gameType === "wordgame") {
+			for (const p of room.players) {
+				p.tabFocused = true;
+			}
+			this._broadcastWordTabFocus(room);
+		}
 		this.broadcastGameState(roomId);
 		this.broadcastLobbyState(roomId);
 		return { success: true };
@@ -900,6 +910,12 @@ export class RoomManager {
 			room.settings,
 		);
 		room.status = "playing";
+		if (room.gameType === "wordgame") {
+			for (const p of room.players) {
+				p.tabFocused = true;
+			}
+			this._broadcastWordTabFocus(room);
+		}
 		this.broadcastGameState(room.id);
 		this.broadcastLobbyState(room.id);
 		return { success: true };
@@ -1054,6 +1070,39 @@ export class RoomManager {
 		return { success: true, state };
 	}
 
+	handleWordTabFocusReport(socket, focused) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		if (!isActiveWordGameSession(room)) {
+			return { success: true };
+		}
+
+		const player = room.players.find((p) => p.id === playerId);
+		if (!player) return { error: "Player not in room" };
+
+		const nextFocused = !!focused;
+		if (player.tabFocused === nextFocused) {
+			return { success: true };
+		}
+
+		player.tabFocused = nextFocused;
+		this._broadcastWordTabFocus(room);
+		return { success: true };
+	}
+
+	_broadcastWordTabFocus(room) {
+		if (!isWordGameRoom(room)) return;
+		this._emitToRoom(room, "word:focus:update", {
+			players: room.players.map((p) => ({
+				id: p.id,
+				displayName: p.displayName,
+				tabFocused: p.tabFocused !== false,
+			})),
+		});
+	}
+
 	/** Push current game state to one player (e.g. after client/server desync). */
 	syncGameStateForPlayer(socket) {
 		const ctx = this._getPlayerContext(socket);
@@ -1201,6 +1250,10 @@ export class RoomManager {
 			room.game &&
 			(room.status === "playing" || isActiveWordGameSession(room))
 		) {
+			if (isActiveWordGameSession(room) && player.tabFocused !== false) {
+				player.tabFocused = false;
+				this._broadcastWordTabFocus(room);
+			}
 			if (typeof room.game.pauseTurnTimer === "function") {
 				room.game.pauseTurnTimer();
 			}
@@ -1286,6 +1339,7 @@ export class RoomManager {
 				id: p.id,
 				displayName: p.displayName,
 				connected: p.connected,
+				tabFocused: p.tabFocused !== false,
 			})),
 			spectators: (room.spectators ?? []).map((s) => ({
 				id: s.id,
@@ -1382,6 +1436,7 @@ export class RoomManager {
 				id: p.id,
 				displayName: p.displayName,
 				connected: p.connected,
+				tabFocused: p.tabFocused !== false,
 			})),
 			spectators: (room.spectators ?? []).map((s) => ({
 				id: s.id,

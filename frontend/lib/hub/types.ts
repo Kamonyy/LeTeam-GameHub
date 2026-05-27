@@ -41,6 +41,8 @@ export interface LobbyPlayer {
   id: string;
   displayName: string;
   connected: boolean;
+  /** False when the player left the game tab during an active Secret Word match. */
+  tabFocused?: boolean;
 }
 
 export interface LobbySpectator {

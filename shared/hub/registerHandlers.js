@@ -269,6 +269,23 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true, state: result.state });
   });
 
+  socket.on('word:focus:report', ({ focused }, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'focus', RATE_LIMITS.focus)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    if (typeof focused !== 'boolean') {
+      ack?.({ error: 'Invalid focus state' });
+      return;
+    }
+    const result = roomManager.handleWordTabFocusReport(socket, focused);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
   socket.on('game:state:request', (_payload, ack) => {
     const result = roomManager.syncGameStateForPlayer(socket);
     if (result?.error) {

@@ -57,6 +57,7 @@ export interface UseSocketReturn {
   submitSecretWord: (word: string) => Promise<boolean>;
   submitSecretChampion: (championId: string) => Promise<boolean>;
   confirmWordGuessed: () => Promise<boolean>;
+  reportWordTabFocus: (focused: boolean) => void;
   wordGuessedCelebration: WordGuessedCelebrationEvent | null;
   baraReveal: () => Promise<boolean>;
   baraAdvanceInterrogation: () => Promise<boolean>;

@@ -7,6 +7,7 @@ import WordSetup from './WordSetup';
 import GuessingBoard from './GuessingBoard';
 import WordMatchOverModal from './WordMatchOverModal';
 import Scratchpad from './Scratchpad';
+import WordTabFocusAlerts from './WordTabFocusAlerts';
 import RoundCeremony from './RoundCeremony';
 import { useScratchpadNotes } from '../hooks/useScratchpadNotes';
 import clsx from 'clsx';
@@ -24,6 +25,8 @@ interface WordGameBoardProps {
   postMatchBusy?: boolean;
   onHostPlayAgain?: () => void;
   onHostReturnToLobby?: () => void;
+  tabFocusActive?: boolean;
+  selfTabFocused?: boolean;
 }
 
 export default function WordGameBoard({
@@ -37,6 +40,8 @@ export default function WordGameBoard({
   postMatchBusy = false,
   onHostPlayAgain,
   onHostReturnToLobby,
+  tabFocusActive = false,
+  selfTabFocused = true,
 }: WordGameBoardProps) {
   const playerNames = Object.fromEntries(
     lobby.players.map((p) => [p.id, p.displayName])
@@ -275,6 +280,12 @@ export default function WordGameBoard({
 
         {showScratchpad && (
           <aside className="sw-game-with-scratchpad__aside w-full min-h-0 flex flex-col sw-scratchpad-enter">
+            <WordTabFocusAlerts
+              active={tabFocusActive}
+              playerId={playerId}
+              players={lobby.players}
+              selfFocused={selfTabFocused}
+            />
             <Scratchpad
               key={gameState.roundNumber}
               isLol={isLol}
