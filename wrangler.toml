@@ -26,4 +26,4 @@ bindings = [
 
 [[migrations]]
 tag = "v1"
-new_classes = ["EngineActor", "SocketActor"]
+new_sqlite_classes = ["EngineActor", "SocketActor"]
