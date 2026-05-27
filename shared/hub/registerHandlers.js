@@ -41,6 +41,22 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true, ...result });
   });
 
+  socket.on('player:updateDisplayName', ({ displayName }, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'profile', RATE_LIMITS.profile)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    const result = roomManager.updateDisplayName(
+      socket,
+      sanitizeDisplayName(displayName)
+    );
+    if (result.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
   socket.on('hub:presence:request', (_payload, ack) => {
     roomManager.sendHubPresenceToSocket(socket);
     ack?.({ success: true });
@@ -64,7 +80,7 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true, roomId: result.roomId });
   });
 
-  socket.on('room:join', ({ roomId, displayName }, ack) => {
+  socket.on('room:join', ({ roomId, displayName, spectate }, ack) => {
     if (!roomManager.checkRateLimit(socket.id, 'join', RATE_LIMITS.join)) {
       ack?.({ error: 'Too many requests, slow down' });
       return;
@@ -74,12 +90,37 @@ export function registerHandlers(socket, roomManager) {
       ack?.({ error: 'Invalid room code' });
       return;
     }
-    const result = roomManager.joinRoom(socket, normalized, displayName);
+    const result =
+      spectate ?
+        roomManager.spectateRoom(socket, normalized, displayName)
+      : roomManager.joinRoom(socket, normalized, displayName);
     if (result.error) {
       ack?.({ error: result.error });
       return;
     }
-    ack?.({ success: true, roomId: result.roomId });
+    ack?.({
+      success: true,
+      roomId: result.roomId,
+      isSpectator: !!result.isSpectator,
+    });
+  });
+
+  socket.on('room:spectate', ({ roomId, displayName }, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'join', RATE_LIMITS.join)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    const normalized = normalizeRoomId(roomId);
+    if (!normalized) {
+      ack?.({ error: 'Invalid room code' });
+      return;
+    }
+    const result = roomManager.spectateRoom(socket, normalized, displayName);
+    if (result.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, roomId: result.roomId, isSpectator: true });
   });
 
   socket.on('room:leave', (_payload, ack) => {
@@ -196,6 +237,19 @@ export function registerHandlers(socket, roomManager) {
       return;
     }
     ack?.({ success: true, state: result.state });
+  });
+
+  socket.on('chat:send', ({ message }, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'chat', RATE_LIMITS.chat)) {
+      ack?.({ error: 'Too many messages, slow down' });
+      return;
+    }
+    const result = roomManager.handleChatSend(socket, message);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
   });
 
   socket.on('disconnect', () => {

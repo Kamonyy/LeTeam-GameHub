@@ -3,6 +3,14 @@ export interface HubPresenceState {
   players: OnlinePlayer[];
 }
 
+export interface ChatMessage {
+  roomId: string | null;
+  playerId: string;
+  displayName: string;
+  message: string;
+  timestamp: number;
+}
+
 export interface OnlinePlayer {
   displayName: string;
   isYou?: boolean;
@@ -24,15 +32,23 @@ export interface LobbyPlayer {
   connected: boolean;
 }
 
+export interface LobbySpectator {
+  id: string;
+  displayName: string;
+  connected: boolean;
+}
+
 export interface LobbyState {
   roomId: string;
   hostId: string;
   status: 'lobby' | 'playing' | 'finished';
   gameType: string;
   players: LobbyPlayer[];
+  spectators?: LobbySpectator[];
   minPlayers: number;
   maxPlayers: number;
   settings?: MatchSettings | WordGameSettings;
+  isSpectator?: boolean;
 }
 
 export const SCORE_CAP_OPTIONS = [50, 100, 150, 200] as const;

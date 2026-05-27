@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import clsx from 'clsx';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX } from 'lucide-react';
@@ -8,26 +9,33 @@ import { useSocket } from '@/hooks/useSocket';
 import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
+import PlayerNameControl from '@/components/hub/PlayerNameControl';
+import ChatPanel from '@/components/hub/ChatPanel';
 import ErrorToast from '@/components/shared/ErrorToast';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import Lobby from '@/games/dominoes/components/Lobby';
 import GameBoard from '@/games/dominoes/components/GameBoard';
+import SpectatorBanner from '@/games/dominoes/components/SpectatorBanner';
 import type { GameState } from '@/games/dominoes/types';
 
 export default function DominoesClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const roomParam = searchParams.get('room');
+  const spectateParam =
+    searchParams.get('spectate') === '1' || searchParams.get('spectate') === 'true';
 
   const {
     connected,
     playerId,
     lobby,
     gameState,
+    isSpectator,
     error,
     clearError,
     createRoom,
     joinRoom,
+    spectateRoom,
     leaveRoom,
     updateRoomSettings,
     startGame,
@@ -60,16 +68,28 @@ export default function DominoesClient() {
     const attemptJoin = async () => {
       setLoading(true);
       const name = getDisplayName();
-      const ok = await joinRoom(code, name);
+      const joinFn = spectateParam ? spectateRoom : joinRoom;
+      const ok = await joinFn(code, name);
       if (ok) {
-        router.replace(`/dominoes?room=${code}`, { scroll: false });
+        const query = spectateParam ? `?room=${code}&spectate=1` : `?room=${code}`;
+        router.replace(`/dominoes${query}`, { scroll: false });
       }
       setAutoJoined(true);
       setLoading(false);
     };
 
     attemptJoin();
-  }, [connected, roomParam, lobby, autoJoined, inviteJoin, joinRoom, router]);
+  }, [
+    connected,
+    roomParam,
+    lobby,
+    autoJoined,
+    inviteJoin,
+    spectateParam,
+    joinRoom,
+    spectateRoom,
+    router,
+  ]);
 
   const handleCreate = async () => {
     if (!displayName.trim()) return;
@@ -90,14 +110,26 @@ export default function DominoesClient() {
     setLoading(false);
   };
 
+  const handleSpectate = async () => {
+    const code = normalizeRoomCode(joinCode);
+    if (!code || !displayName.trim()) return;
+    setLoading(true);
+    setDisplayName(displayName);
+    const ok = await spectateRoom(code, displayName.trim());
+    if (ok) router.push(`/dominoes?room=${code}&spectate=1`);
+    setLoading(false);
+  };
+
   const handleInviteJoin = async () => {
     const code = roomParam ? normalizeRoomCode(roomParam) : null;
     if (!code || !displayName.trim()) return;
     setLoading(true);
     setDisplayName(displayName);
-    const ok = await joinRoom(code, displayName.trim());
+    const joinFn = spectateParam ? spectateRoom : joinRoom;
+    const ok = await joinFn(code, displayName.trim());
     if (ok) {
-      router.replace(`/dominoes?room=${code}`, { scroll: false });
+      const query = spectateParam ? `?room=${code}&spectate=1` : `?room=${code}`;
+      router.replace(`/dominoes${query}`, { scroll: false });
     }
     setAutoJoined(true);
     setLoading(false);
@@ -113,7 +145,9 @@ export default function DominoesClient() {
   const isHost = lobby?.hostId === playerId;
   const dominoesState =
     gameState && 'board' in gameState ? (gameState as GameState) : null;
-  const inLobby = lobby && lobby.status === 'lobby';
+  const inLobby = lobby && lobby.status === 'lobby' && !isSpectator;
+  const spectatorWaiting =
+    isSpectator && lobby && lobby.status === 'lobby';
   const showGameBoard =
     !!dominoesState && !!lobby && lobby.status !== 'lobby';
   const waitingForGame =
@@ -123,10 +157,23 @@ export default function DominoesClient() {
   const inActiveMatch =
     lobby?.status === 'playing' && (showGameBoard || waitingForGame);
 
+  const showChatSidebar = connected;
+
   return (
-    <main className="min-h-screen">
+    <main
+      className={clsx(
+        'min-h-screen',
+        showChatSidebar && 'lg:grid lg:grid-cols-[minmax(0,1fr)_20rem]',
+      )}
+    >
+      <div className="min-w-0 flex flex-col">
       <header className="border-b border-hub-border bg-hub-surface/50 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div
+          className={clsx(
+            'mx-auto px-6 py-4 flex items-center justify-between w-full',
+            showGameBoard ? 'max-w-7xl' : 'max-w-6xl',
+          )}
+        >
           <div className="flex items-center gap-4">
             <Link href="/" className="text-hub-muted hover:text-white transition-colors">
               <ArrowLeft className="w-5 h-5" />
@@ -145,11 +192,17 @@ export default function DominoesClient() {
               </button>
             )}
             <ConnectionStatus connected={connected} />
+            <PlayerNameControl disabled={inActiveMatch} />
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-10">
+      <div
+        className={clsx(
+          'mx-auto px-4 sm:px-6 py-10 w-full',
+          showGameBoard ? 'max-w-none' : 'max-w-6xl',
+        )}
+      >
         {!lobby && inviteJoin && (
           <div className="max-w-md mx-auto animate-fade-in">
             <div className="card mb-6">
@@ -158,11 +211,15 @@ export default function DominoesClient() {
                 <h2 className="text-lg font-semibold">Join Room</h2>
               </div>
               <p className="text-sm text-hub-muted mb-4">
-                You&apos;ve been invited to room{' '}
-                <span className="font-mono font-bold text-white tracking-widest">
-                  {roomParam}
-                </span>
-                . Choose a display name to continue.
+                {spectateParam ?
+                  'Enter a display name to watch this match as a spectator.'
+                : <>
+                    You&apos;ve been invited to room{' '}
+                    <span className="font-mono font-bold text-white tracking-widest">
+                      {roomParam}
+                    </span>
+                    . Choose a display name to continue.
+                  </>}
               </p>
               <label className="block text-sm text-hub-muted mb-2">Display Name</label>
               <input
@@ -180,7 +237,9 @@ export default function DominoesClient() {
                 className="btn-primary w-full flex items-center justify-center gap-2"
               >
                 <LogIn className="w-4 h-4" />
-                {loading ? 'Joining…' : 'Join Room'}
+                {loading ?
+                  spectateParam ? 'Joining as spectator…' : 'Joining…'
+                : spectateParam ? 'Watch match' : 'Join Room'}
               </button>
             </div>
             {!connected && (
@@ -195,7 +254,9 @@ export default function DominoesClient() {
           <div className="max-w-md mx-auto animate-fade-in">
             {roomParam && loading && !autoJoined && (
               <p className="text-center text-sm text-hub-muted mb-4 animate-pulse-soft">
-                Joining room {roomParam}…
+                {spectateParam ?
+                  `Joining as spectator for ${roomParam}…`
+                : `Joining room ${roomParam}…`}
               </p>
             )}
             <div className="card mb-6">
@@ -234,6 +295,13 @@ export default function DominoesClient() {
                   <LogIn className="w-4 h-4" />
                   {loading ? 'Joining…' : 'Join Room'}
                 </button>
+                <button
+                  onClick={handleSpectate}
+                  disabled={!connected || loading || !joinCode.trim() || !displayName.trim()}
+                  className="btn-secondary w-full flex items-center justify-center gap-2 text-hub-muted border-hub-border/60"
+                >
+                  Watch match
+                </button>
               </div>
             </div>
             {!connected && (
@@ -241,6 +309,22 @@ export default function DominoesClient() {
                 Connecting to server…
               </p>
             )}
+          </div>
+        )}
+
+        {spectatorWaiting && (
+          <div className="max-w-md mx-auto text-center animate-fade-in py-16">
+            <SpectatorBanner
+              roomId={lobby!.roomId}
+              onLeave={() => {
+                leaveRoom();
+                router.push('/dominoes');
+              }}
+            />
+            <p className="text-sm text-hub-muted mt-6">
+              Waiting for the host to start the match. You can chat with players in the
+              panel on the right.
+            </p>
           </div>
         )}
 
@@ -271,16 +355,33 @@ export default function DominoesClient() {
         )}
 
         {showGameBoard && (
-          <GameBoard
-            gameState={dominoesState!}
-            lobby={lobby!}
-            playerId={playerId}
-            onPlayMove={playMove}
-            onDraw={drawTile}
-            onPass={passTurn}
-          />
+          <>
+            {isSpectator && (
+              <SpectatorBanner
+                roomId={lobby!.roomId}
+                onLeave={() => {
+                  leaveRoom();
+                  router.push('/dominoes');
+                }}
+              />
+            )}
+            <GameBoard
+              gameState={dominoesState!}
+              lobby={lobby!}
+              playerId={playerId}
+              isSpectator={isSpectator}
+              onPlayMove={playMove}
+              onDraw={drawTile}
+              onPass={passTurn}
+            />
+          </>
         )}
       </div>
+      </div>
+
+      {showChatSidebar && (
+        <ChatPanel className="hidden lg:flex lg:flex-col lg:col-start-2 lg:row-start-1 border-l border-hub-border bg-hub-surface/80 backdrop-blur-sm sticky top-0 h-dvh min-h-0 z-30" />
+      )}
 
       <ErrorToast message={error} onDismiss={clearError} />
 

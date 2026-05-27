@@ -8,6 +8,7 @@ import { useSocket } from '@/hooks/useSocket';
 import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
+import PlayerNameControl from '@/components/hub/PlayerNameControl';
 import ErrorToast from '@/components/shared/ErrorToast';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import WordLobby from '@/games/wordgame/components/WordLobby';
@@ -145,6 +146,7 @@ export default function WordGameClient() {
               </button>
             )}
             <ConnectionStatus connected={connected} />
+            <PlayerNameControl disabled={!!inGame} />
           </div>
         </div>
       </header>

@@ -6,7 +6,15 @@ import { ChevronDown, User, Check } from 'lucide-react';
 import { getDisplayName, setDisplayName } from '@/lib/player';
 import { useSocket } from '@/hooks/useSocket';
 
-export default function PlayerNameControl() {
+type PlayerNameControlProps = {
+  disabled?: boolean;
+  disabledReason?: string;
+};
+
+export default function PlayerNameControl({
+  disabled = false,
+  disabledReason = 'Name is locked during a match',
+}: PlayerNameControlProps) {
   const { connected, refreshDisplayName } = useSocket();
   const [name, setName] = useState('');
   const [savedName, setSavedName] = useState('');
@@ -48,29 +56,35 @@ export default function PlayerNameControl() {
 
   const showName = !!savedName.trim();
   const label = showName ? savedName : 'Set Name';
+  const locked = disabled || !connected;
 
   return (
     <div className="relative" ref={panelRef}>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        disabled={!connected}
+        onClick={() => !locked && setOpen((v) => !v)}
+        disabled={locked}
+        title={disabled ? disabledReason : undefined}
         className={clsx(
           'flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all',
           showName
             ? 'border-hub-border bg-hub-surface/80 text-gray-100 hover:border-hub-accent/40'
             : 'border-hub-accent/40 bg-hub-accent/10 text-hub-accent hover:bg-hub-accent/20',
-          !connected && 'opacity-50 cursor-not-allowed'
+          locked && 'opacity-60 cursor-not-allowed hover:border-hub-border'
         )}
       >
         <User className="w-4 h-4 shrink-0" />
         <span className="max-w-[120px] truncate">{label}</span>
         <ChevronDown
-          className={clsx('w-3.5 h-3.5 text-hub-muted transition-transform', open && 'rotate-180')}
+          className={clsx(
+            'w-3.5 h-3.5 text-hub-muted transition-transform',
+            open && 'rotate-180',
+            disabled && 'opacity-40'
+          )}
         />
       </button>
 
-      {open && (
+      {open && !disabled && (
         <div
           className="absolute right-0 top-full mt-2 w-72 animate-overlay-pop rounded-xl border border-hub-border
                      bg-hub-surface/95 backdrop-blur-md shadow-xl shadow-black/40 p-4 z-50"

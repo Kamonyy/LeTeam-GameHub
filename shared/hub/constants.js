@@ -13,20 +13,22 @@ export const WORD_GAME_MAX_PLAYERS = 2;
 export const WORD_POINTS_OPTIONS = [3, 5, 10];
 
 export const DEFAULT_MATCH_SETTINGS = {
-  scoreCap: DEFAULT_SCORE_CAP,
-  mode: 'ffa',
-  handSize: DEFAULT_HAND_SIZE,
+	scoreCap: DEFAULT_SCORE_CAP,
+	mode: "ffa",
+	handSize: DEFAULT_HAND_SIZE,
 };
 
 export const DEFAULT_WORD_GAME_SETTINGS = {
-  pointsToWin: 5,
+	pointsToWin: 5,
 };
 
 export const MAX_ROOMS = 500;
 export const RATE_LIMIT_WINDOW_MS = 60_000;
 export const RATE_LIMITS = {
-  register: 30,
-  create: 10,
-  join: 20,
-  move: 120,
+	register: 30,
+	create: 10,
+	join: 20,
+	move: 120,
+	chat: 30,
+	profile: 20,
 };

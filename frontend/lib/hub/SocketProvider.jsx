@@ -24,6 +24,9 @@ export function SocketProvider({ children }) {
   const [gameState, setGameState] = useState(null);
   const [error, setError] = useState(null);
   const [hubPresence, setHubPresence] = useState({ total: 0, players: [] });
+  const [chatMessages, setChatMessages] = useState([]);
+  const [isSpectator, setIsSpectator] = useState(false);
+  const chatChannelRef = useRef(null);
 
   const registerPlayer = useCallback((socket, id, isRetry = false) => {
     return new Promise((resolve) => {
@@ -55,6 +58,7 @@ export function SocketProvider({ children }) {
           }
           if (res?.reconnected && res?.roomId) {
             // lobby/game state arrives via reconnect:sync + game:state:update
+            if (res?.isSpectator) setIsSpectator(true);
           }
           resolve(true);
         }
@@ -107,6 +111,11 @@ export function SocketProvider({ children }) {
       });
       socket.on('lobby:state', (state) => {
         setLobby(state);
+        if (state?.isSpectator !== undefined) {
+          setIsSpectator(!!state.isSpectator);
+        } else if (state?.spectators && playerIdRef.current) {
+          setIsSpectator(state.spectators.some((s) => s.id === playerIdRef.current));
+        }
         if (state?.status === 'lobby') {
           setGameState(null);
         }
@@ -122,6 +131,7 @@ export function SocketProvider({ children }) {
       });
       socket.on('reconnect:sync', (payload) => {
         setLobby(payload);
+        setIsSpectator(!!payload?.isSpectator);
         if (payload?.status === 'lobby') {
           setGameState(null);
         }
@@ -130,15 +140,30 @@ export function SocketProvider({ children }) {
       socket.on('room:kicked', (payload) => {
         setLobby(null);
         setGameState(null);
+        setIsSpectator(false);
         setError(payload?.message || 'You were removed from the room');
       });
       socket.on('game:error', (err) => setError(err.message));
+      socket.on('chat:message', (msg) => {
+        if (!msg?.message || !msg?.playerId) return;
+        setChatMessages((prev) => {
+          const next = [...prev, msg];
+          return next.length > 200 ? next.slice(-200) : next;
+        });
+      });
     })();
 
     return () => {
       cancelled = true;
     };
   }, [registerPlayer]);
+
+  useEffect(() => {
+    const channel = lobby?.roomId ?? null;
+    if (chatChannelRef.current === channel) return;
+    chatChannelRef.current = channel;
+    setChatMessages([]);
+  }, [lobby?.roomId]);
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -147,10 +172,11 @@ export function SocketProvider({ children }) {
     if (!trimmed) return;
     setDisplayName(trimmed);
     const socket = socketRef.current;
-    if (socket?.connected && playerIdRef.current) {
-      registerPlayer(socket, playerIdRef.current);
-    }
-  }, [registerPlayer]);
+    if (!socket?.connected || !playerIdRef.current) return;
+    socket.emit('player:updateDisplayName', { displayName: trimmed }, (res) => {
+      if (res?.error) setError(res.error);
+    });
+  }, []);
 
   const createRoom = useCallback((displayName, gameType = 'dominoes') => {
     return new Promise((resolve) => {
@@ -170,32 +196,41 @@ export function SocketProvider({ children }) {
     });
   }, []);
 
-  const joinRoom = useCallback((roomId, displayName) => {
+  const joinRoom = useCallback((roomId, displayName, options = {}) => {
+    const { spectate = false } = options;
     return new Promise((resolve) => {
       const socket = socketRef.current;
       if (!socket?.connected) {
         resolve(false);
         return;
       }
-      socket.emit(
-        'room:join',
-        { roomId: roomId.toUpperCase(), displayName },
-        (res) => {
-          if (res?.error) {
-            setError(res.error);
-            resolve(false);
-          } else {
-            resolve(true);
-          }
+      const payload = {
+        roomId: roomId.toUpperCase(),
+        displayName,
+        ...(spectate ? { spectate: true } : {}),
+      };
+      const event = spectate ? 'room:spectate' : 'room:join';
+      socket.emit(event, payload, (res) => {
+        if (res?.error) {
+          setError(res.error);
+          resolve(false);
+        } else {
+          setIsSpectator(!!res?.isSpectator || spectate);
+          resolve(true);
         }
-      );
+      });
     });
   }, []);
+
+  const spectateRoom = useCallback((roomId, displayName) => {
+    return joinRoom(roomId, displayName, { spectate: true });
+  }, [joinRoom]);
 
   const leaveRoom = useCallback(() => {
     socketRef.current?.emit('room:leave', {}, () => {
       setLobby(null);
       setGameState(null);
+      setIsSpectator(false);
     });
   }, []);
 
@@ -286,6 +321,17 @@ export function SocketProvider({ children }) {
     });
   }, [ensureRegistered]);
 
+  const sendChat = useCallback((message) => {
+    const trimmed = typeof message === 'string' ? message.trim() : '';
+    if (!trimmed || trimmed.length > 200) return;
+    (async () => {
+      await ensureRegistered();
+      socketRef.current?.emit('chat:send', { message: trimmed }, (res) => {
+        if (res?.error) setError(res.error);
+      });
+    })();
+  }, [ensureRegistered]);
+
   const confirmWordGuessed = useCallback(() => {
     return new Promise((resolve) => {
       (async () => {
@@ -313,12 +359,16 @@ export function SocketProvider({ children }) {
     playerId,
     lobby,
     gameState,
+    isSpectator,
     error,
     hubPresence,
+    chatMessages,
+    sendChat,
     clearError,
     refreshDisplayName,
     createRoom,
     joinRoom,
+    spectateRoom,
     leaveRoom,
     updateRoomSettings,
     startGame,

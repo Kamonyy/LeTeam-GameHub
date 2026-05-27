@@ -8,6 +8,7 @@ import {
   computeGhostPreview,
   TABLE_PADDING,
   type ChainSide,
+  type LayoutDirection,
 } from '../lib/chainLayout';
 import DominoTile from './DominoTile';
 import DropZone from './DropZone';
@@ -28,7 +29,7 @@ interface BoardChainProps {
   onZoneHover: (end: ChainSide | null) => void;
 }
 
-function anchorStyle(
+function chainPointStyle(
   x: number,
   y: number,
   offsetX: number,
@@ -38,6 +39,10 @@ function anchorStyle(
     left: `calc(50% + ${x + offsetX}px)`,
     top: `calc(50% + ${y + offsetY}px)`,
   };
+}
+
+function endFacesVertical(dir: LayoutDirection): boolean {
+  return dir === 'north' || dir === 'south';
 }
 
 export default function BoardChain({
@@ -79,13 +84,11 @@ export default function BoardChain({
 
   return (
     <div
-      className="domino-chain-viewport absolute z-10 flex items-center justify-center overflow-hidden"
-      style={{
-        inset: TABLE_PADDING,
-      }}
+      className="domino-chain-viewport absolute z-10 flex items-center justify-center overflow-hidden pointer-events-none"
+      style={{ inset: TABLE_PADDING }}
     >
       <div
-        className="domino-chain-canvas relative w-full h-full transition-transform duration-500 ease-out"
+        className="domino-chain-canvas relative w-full h-full transition-transform duration-500 ease-out pointer-events-auto"
         style={{
           transform: `scale(${layout.scale})`,
           transformOrigin: 'center center',
@@ -94,10 +97,10 @@ export default function BoardChain({
         <div className="absolute inset-0">
           {layout.tiles.map((t) => (
             <div
-              key={`${t.displayLeft}-${t.displayRight}-${t.index}`}
+              key={`${t.index}-${t.displayLeft}-${t.displayRight}`}
               className="absolute"
               style={{
-                ...anchorStyle(t.x, t.y, layout.offsetX, layout.offsetY),
+                ...chainPointStyle(t.x, t.y, layout.offsetX, layout.offsetY),
                 transform: `translate(-50%, -50%) rotate(${t.rotation}deg)`,
                 zIndex: recentlyPlaced === t.index ? 20 : 10 + t.index,
               }}
@@ -118,7 +121,7 @@ export default function BoardChain({
             <div
               className="absolute pointer-events-none animate-ghost-fade-in"
               style={{
-                ...anchorStyle(ghostLeft.x, ghostLeft.y, 0, 0),
+                ...chainPointStyle(ghostLeft.x, ghostLeft.y, 0, 0),
                 transform: `translate(-50%, -50%) rotate(${ghostLeft.rotation}deg)`,
                 zIndex: 25,
               }}
@@ -137,7 +140,7 @@ export default function BoardChain({
             <div
               className="absolute pointer-events-none animate-ghost-fade-in"
               style={{
-                ...anchorStyle(ghostRight.x, ghostRight.y, 0, 0),
+                ...chainPointStyle(ghostRight.x, ghostRight.y, 0, 0),
                 transform: `translate(-50%, -50%) rotate(${ghostRight.rotation}deg)`,
                 zIndex: 25,
               }}
@@ -164,7 +167,8 @@ export default function BoardChain({
             onHover={() => onZoneHover('left')}
             onHoverEnd={() => onZoneHover(null)}
             floating
-            style={anchorStyle(leftAnchor.x, leftAnchor.y, 0, 0)}
+            vertical={!endFacesVertical(layout.leftEnd.direction)}
+            style={chainPointStyle(leftAnchor.x, leftAnchor.y, 0, 0)}
           />
 
           <DropZone
@@ -179,7 +183,8 @@ export default function BoardChain({
             onHover={() => onZoneHover('right')}
             onHoverEnd={() => onZoneHover(null)}
             floating
-            style={anchorStyle(rightAnchor.x, rightAnchor.y, 0, 0)}
+            vertical={!endFacesVertical(layout.rightEnd.direction)}
+            style={chainPointStyle(rightAnchor.x, rightAnchor.y, 0, 0)}
           />
         </div>
       </div>

@@ -1,4 +1,4 @@
-import type { MatchSettings, WordGameSettings, HubPresenceState } from '@/lib/hub/types';
+import type { MatchSettings, WordGameSettings, HubPresenceState, ChatMessage } from '@/lib/hub/types';
 import type { GameState, Tile } from '@/games/dominoes/types';
 import type { WordGameState } from '@/games/wordgame/types';
 
@@ -9,12 +9,20 @@ export interface UseSocketReturn {
   playerId: string;
   lobby: import('@/lib/hub/types').LobbyState | null;
   gameState: HubGameState | null;
+  isSpectator: boolean;
   error: string | null;
   hubPresence: HubPresenceState;
+  chatMessages: ChatMessage[];
+  sendChat: (message: string) => void;
   clearError: () => void;
   refreshDisplayName: (name: string) => void;
   createRoom: (displayName: string, gameType?: string) => Promise<string | null>;
-  joinRoom: (roomId: string, displayName: string) => Promise<boolean>;
+  joinRoom: (
+    roomId: string,
+    displayName: string,
+    options?: { spectate?: boolean }
+  ) => Promise<boolean>;
+  spectateRoom: (roomId: string, displayName: string) => Promise<boolean>;
   leaveRoom: () => void;
   updateRoomSettings: (settings: Partial<MatchSettings | WordGameSettings>) => Promise<boolean>;
   startGame: () => Promise<boolean>;
