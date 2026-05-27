@@ -4,9 +4,7 @@ import { Gamepad2 } from 'lucide-react';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
 import PlayerNameControl from '@/components/hub/PlayerNameControl';
 import OnlinePlayersPanel from '@/components/hub/OnlinePlayersPanel';
-import HubArcadeBackdrop from '@/components/hub/arcade/HubArcadeBackdrop';
-import HubParticleCanvas from '@/components/hub/arcade/HubParticleCanvas';
-import HubCustomCursor from '@/components/hub/arcade/HubCustomCursor';
+import HubArcadeShell from '@/components/hub/arcade/HubArcadeShell';
 import HubHero from '@/components/hub/arcade/HubHero';
 import GameArcadeCard from '@/components/hub/arcade/GameArcadeCard';
 import { useSocket } from '@/hooks/useSocket';
@@ -18,23 +16,7 @@ export default function HomePage() {
 
   return (
     <main className="hub-arcade min-h-screen relative overflow-x-hidden">
-      <HubArcadeBackdrop />
-      <div className="hub-aura hub-aura--emerald" aria-hidden />
-      <div className="hub-aura hub-aura--indigo" aria-hidden />
-      <div
-        className="hub-aura pointer-events-none fixed rounded-full blur-[140px] z-0"
-        style={{
-          width: 'min(40vw, 400px)',
-          height: 'min(40vw, 400px)',
-          left: '35%',
-          bottom: '8%',
-          background: 'rgba(168, 85, 247, 0.14)',
-          animation: 'hub-aura-breathe 6s ease-in-out infinite 1.5s',
-        }}
-        aria-hidden
-      />
-      <HubParticleCanvas />
-      <HubCustomCursor />
+      <HubArcadeShell />
 
       <header className="relative z-40 border-b border-hub-border/80 bg-hub-surface/40 backdrop-blur-md sticky top-0">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">

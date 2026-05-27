@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowRight, Clock } from 'lucide-react';
 import clsx from 'clsx';
 import type { GameCatalogEntry } from '@/lib/hub/games-registry';
@@ -70,7 +70,7 @@ function WordPreview({ active }: { active: boolean }) {
   );
 }
 
-export default function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
+function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
   const [transform, setTransform] = useState('');
@@ -212,3 +212,5 @@ export default function GameArcadeCard({ game, staggerIndex }: GameArcadeCardPro
     </div>
   );
 }
+
+export default memo(GameArcadeCard);

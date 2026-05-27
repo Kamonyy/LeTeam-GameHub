@@ -75,7 +75,17 @@ export default function HubParticleCanvas() {
       };
     };
 
+    let paused = document.hidden;
+
+    const onVisibility = () => {
+      paused = document.hidden;
+      if (!paused) {
+        raf.current = requestAnimationFrame(draw);
+      }
+    };
+
     const draw = () => {
+      if (paused) return;
       const w = window.innerWidth;
       const h = window.innerHeight;
       ctx.clearRect(0, 0, w, h);
@@ -146,11 +156,13 @@ export default function HubParticleCanvas() {
     resize();
     window.addEventListener('resize', resize);
     window.addEventListener('mousemove', onMove, { passive: true });
+    document.addEventListener('visibilitychange', onVisibility);
     raf.current = requestAnimationFrame(draw);
 
     return () => {
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMove);
+      document.removeEventListener('visibilitychange', onVisibility);
       cancelAnimationFrame(raf.current);
     };
   }, []);

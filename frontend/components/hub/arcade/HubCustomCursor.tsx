@@ -1,32 +1,54 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import clsx from 'clsx';
+import { useEffect, useRef } from 'react';
 
 type CursorMode = 'default' | 'grab' | 'crosshair' | 'letter';
 
 export default function HubCustomCursor() {
-  const [pos, setPos] = useState({ x: -100, y: -100 });
-  const [mode, setMode] = useState<CursorMode>('default');
-  const [visible, setVisible] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const modeRef = useRef<CursorMode>('default');
+  const visibleRef = useRef(false);
 
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const coarse = window.matchMedia('(pointer: coarse)').matches;
     if (reduced || coarse) return;
 
+    const root = rootRef.current;
+    if (!root) return;
+
+    const applyModeClass = (mode: CursorMode) => {
+      root.classList.toggle('hub-cursor--grab', mode === 'grab');
+      root.classList.toggle('hub-cursor--crosshair', mode === 'crosshair');
+      root.classList.toggle('hub-cursor--letter', mode === 'letter');
+      root.textContent = mode === 'letter' ? '?' : '';
+    };
+
+    const setVisible = (next: boolean) => {
+      if (visibleRef.current === next) return;
+      visibleRef.current = next;
+      root.style.opacity = next ? '1' : '0';
+      root.style.pointerEvents = next ? 'auto' : 'none';
+    };
+
     const onMove = (e: MouseEvent) => {
-      setPos({ x: e.clientX, y: e.clientY });
-      if (!visible) setVisible(true);
+      root.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+      setVisible(true);
 
       const target = e.target as HTMLElement | null;
       const el = target?.closest('[data-hub-cursor]') as HTMLElement | null;
       const next = (el?.dataset.hubCursor as CursorMode) || 'default';
-      setMode(next);
+      if (next !== modeRef.current) {
+        modeRef.current = next;
+        applyModeClass(next);
+      }
     };
 
     const onLeave = () => setVisible(false);
     const onEnter = () => setVisible(true);
+
+    applyModeClass('default');
+    setVisible(false);
 
     window.addEventListener('mousemove', onMove, { passive: true });
     document.documentElement.addEventListener('mouseleave', onLeave);
@@ -37,22 +59,14 @@ export default function HubCustomCursor() {
       document.documentElement.removeEventListener('mouseleave', onLeave);
       document.documentElement.removeEventListener('mouseenter', onEnter);
     };
-  }, [visible]);
-
-  if (!visible) return null;
+  }, []);
 
   return (
     <div
-      className={clsx(
-        'hub-cursor',
-        mode === 'grab' && 'hub-cursor--grab',
-        mode === 'crosshair' && 'hub-cursor--crosshair',
-        mode === 'letter' && 'hub-cursor--letter'
-      )}
-      style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
+      ref={rootRef}
+      className="hub-cursor"
+      style={{ opacity: 0, pointerEvents: 'none' }}
       aria-hidden
-    >
-      {mode === 'letter' && '?'}
-    </div>
+    />
   );
 }

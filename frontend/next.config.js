@@ -8,6 +8,9 @@ const extraDevOrigins = (process.env.NEXT_ALLOWED_DEV_ORIGINS ?? '')
 
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
   output: 'export',
   trailingSlash: true,
   outputFileTracingRoot: path.join(__dirname),
@@ -21,6 +24,13 @@ const nextConfig = {
   ],
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ddragon.leagueoflegends.com',
+        pathname: '/cdn/**/img/champion/**',
+      },
+    ],
   },
   webpack: (config) => {
     config.resolve.alias['@shared'] = path.join(__dirname, '../shared');

@@ -9,6 +9,9 @@ node_modules/
 # Build
 .next/
 out/
+
+# LoL icons load from Data Dragon CDN at runtime
+frontend/public/wordgame/champions/*.png
 dist/
 build/
 

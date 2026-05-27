@@ -50,6 +50,7 @@ export class RoomManager {
 		this.spectatorToRoom = new Map();
 		this.playerSessions = new Map();
 		this.hubPresence = new Map();
+		this._hubPresenceFlushTimer = null;
 		this.rateLimiter = new RateLimiter();
 		this._startTurnTimerLoop();
 		this._startBaraPhaseLoop();
@@ -196,6 +197,15 @@ export class RoomManager {
 		}
 	}
 
+	/** Coalesce rapid join/leave/name updates into one hub fan-out. */
+	_scheduleBroadcastHubPresence() {
+		if (this._hubPresenceFlushTimer != null) return;
+		this._hubPresenceFlushTimer = setTimeout(() => {
+			this._hubPresenceFlushTimer = null;
+			this._scheduleBroadcastHubPresence();
+		}, 250);
+	}
+
 	registerPlayer(socket, playerId, displayName, sessionToken) {
 		const session = this._resolvePlayerSession(playerId, sessionToken);
 		if (session.error) return { error: session.error };
@@ -227,7 +237,7 @@ export class RoomManager {
 				this._emitReconnectSync(socket, room, playerId);
 				this.broadcastLobbyState(roomId);
 				this._upsertHubPresence(playerId, safeName, socket.id);
-				this._broadcastHubPresence();
+				this._scheduleBroadcastHubPresence();
 				return {
 					reconnected: true,
 					roomId,
@@ -249,7 +259,7 @@ export class RoomManager {
 				this._emitReconnectSync(socket, room, playerId, { isSpectator: true });
 				this.broadcastLobbyState(roomId);
 				this._upsertHubPresence(playerId, safeName, socket.id);
-				this._broadcastHubPresence();
+				this._scheduleBroadcastHubPresence();
 				return {
 					reconnected: true,
 					roomId,
@@ -260,7 +270,7 @@ export class RoomManager {
 		}
 
 		this._upsertHubPresence(playerId, safeName, socket.id);
-		this._broadcastHubPresence();
+		this._scheduleBroadcastHubPresence();
 		return { reconnected: false, sessionToken: session.sessionToken };
 	}
 
@@ -293,7 +303,7 @@ export class RoomManager {
 		}
 
 		this._upsertHubPresence(playerId, safeName, socket.id);
-		this._broadcastHubPresence();
+		this._scheduleBroadcastHubPresence();
 		return { success: true };
 	}
 
@@ -997,7 +1007,7 @@ export class RoomManager {
 		this._removeHubPresence(playerId, socket.id);
 		this.socketToPlayer.delete(socket.id);
 		this.playerToSocket.delete(playerId);
-		this._broadcastHubPresence();
+		this._scheduleBroadcastHubPresence();
 
 		const spectatorRoomId = this.spectatorToRoom.get(playerId);
 		if (spectatorRoomId) {

@@ -1,7 +1,7 @@
 /**
- * Category manifest for lobby UI — sourced from shared pack library.
+ * Category manifest for lobby UI — metadata only (no full word packs in bundle).
  */
-import { getCategoryManifest } from '@shared/games/bara-alsalafa/categories/index.js';
+import { CATEGORY_MANIFEST } from '@shared/games/bara-alsalafa/categories/package-manifest.js';
 
 export interface CategoryPackageMeta {
   id: string;
@@ -12,7 +12,7 @@ export interface CategoryPackageMeta {
   sampleWords: string[];
 }
 
-export const CATEGORY_PACKAGES: CategoryPackageMeta[] = getCategoryManifest();
+export const CATEGORY_PACKAGES: CategoryPackageMeta[] = CATEGORY_MANIFEST;
 
 export function getCategoryMeta(id: string) {
   return CATEGORY_PACKAGES.find((p) => p.id === id);

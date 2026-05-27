@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -14,8 +15,24 @@ import { isSameOriginServer, resolveServerUrl } from '@/lib/socket-url';
 
 const SocketContext = createContext(null);
 
+function hubPresenceEqual(a, b) {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.total !== b.total) return false;
+  const ap = a.players ?? [];
+  const bp = b.players ?? [];
+  if (ap.length !== bp.length) return false;
+  for (let i = 0; i < ap.length; i++) {
+    if (ap[i].id !== bp[i].id || ap[i].displayName !== bp[i].displayName) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function SocketProvider({ children }) {
   const socketRef = useRef(null);
+  const socketInstRef = useRef(null);
   const playerIdRef = useRef('');
   const registerReadyRef = useRef(Promise.resolve(true));
   const [connected, setConnected] = useState(false);
@@ -93,6 +110,7 @@ export function SocketProvider({ children }) {
       });
 
       socketRef.current = socket;
+      socketInstRef.current = socket;
 
       socket.on('connect', () => {
         setConnected(true);
@@ -107,7 +125,10 @@ export function SocketProvider({ children }) {
       socket.on('disconnect', () => setConnected(false));
       socket.on('connect_error', () => setConnected(false));
       socket.on('hub:presence', (payload) => {
-        if (payload?.players) setHubPresence(payload);
+        if (!payload?.players) return;
+        setHubPresence((prev) =>
+          hubPresenceEqual(prev, payload) ? prev : payload
+        );
       });
       socket.on('lobby:state', (state) => {
         setLobby(state);
@@ -156,6 +177,13 @@ export function SocketProvider({ children }) {
 
     return () => {
       cancelled = true;
+      const s = socketInstRef.current;
+      if (s) {
+        s.removeAllListeners();
+        s.disconnect();
+      }
+      socketInstRef.current = null;
+      socketRef.current = null;
     };
   }, [registerPlayer]);
 
@@ -523,40 +551,76 @@ export function SocketProvider({ children }) {
     });
   }, [ensureRegistered]);
 
-  const value = {
-    connected,
-    playerId,
-    lobby,
-    gameState,
-    isSpectator,
-    error,
-    hubPresence,
-    chatMessages,
-    sendChat,
-    clearError,
-    refreshDisplayName,
-    createRoom,
-    joinRoom,
-    spectateRoom,
-    joinRoomOrSpectate,
-    leaveRoom,
-    updateRoomSettings,
-    startGame,
-    kickPlayer,
-    cancelMatch,
-    playMove,
-    drawTile,
-    passTurn,
-    continueRound,
-    requestRematch,
-    submitSecretWord,
-    submitSecretChampion,
-    confirmWordGuessed,
-    baraReveal,
-    baraAdvanceInterrogation,
-    baraVote,
-    baraGuess,
-  };
+  const value = useMemo(
+    () => ({
+      connected,
+      playerId,
+      lobby,
+      gameState,
+      isSpectator,
+      error,
+      hubPresence,
+      chatMessages,
+      sendChat,
+      clearError,
+      refreshDisplayName,
+      createRoom,
+      joinRoom,
+      spectateRoom,
+      joinRoomOrSpectate,
+      leaveRoom,
+      updateRoomSettings,
+      startGame,
+      kickPlayer,
+      cancelMatch,
+      playMove,
+      drawTile,
+      passTurn,
+      continueRound,
+      requestRematch,
+      submitSecretWord,
+      submitSecretChampion,
+      confirmWordGuessed,
+      baraReveal,
+      baraAdvanceInterrogation,
+      baraVote,
+      baraGuess,
+    }),
+    [
+      connected,
+      playerId,
+      lobby,
+      gameState,
+      isSpectator,
+      error,
+      hubPresence,
+      chatMessages,
+      sendChat,
+      clearError,
+      refreshDisplayName,
+      createRoom,
+      joinRoom,
+      spectateRoom,
+      joinRoomOrSpectate,
+      leaveRoom,
+      updateRoomSettings,
+      startGame,
+      kickPlayer,
+      cancelMatch,
+      playMove,
+      drawTile,
+      passTurn,
+      continueRound,
+      requestRematch,
+      submitSecretWord,
+      submitSecretChampion,
+      confirmWordGuessed,
+      baraReveal,
+      baraAdvanceInterrogation,
+      baraVote,
+      baraGuess,
+    ]
+  );
 
   return (
     <SocketContext.Provider value={value}>{children}</SocketContext.Provider>

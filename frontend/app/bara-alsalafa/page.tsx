@@ -1,7 +1,16 @@
-'use client';
-
+import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
-import BaraAlsalafaClient from '@/games/bara-alsalafa/BaraAlsalafaClient';
+
+const BaraAlsalafaClient = dynamic(
+  () => import('@/games/bara-alsalafa/BaraAlsalafaClient'),
+  {
+    loading: () => (
+      <div className="min-h-screen flex items-center justify-center text-hub-muted">
+        جاري التحميل…
+      </div>
+    ),
+  }
+);
 
 export default function BaraAlsalafaPage() {
   return (

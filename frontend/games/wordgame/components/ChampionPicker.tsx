@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Search, X } from 'lucide-react';
 import clsx from 'clsx';
@@ -10,6 +10,10 @@ import {
   getLolChampionById,
   type LolChampion,
 } from '@/lib/wordgame/lol-champions';
+
+const MIN_QUERY_LEN = 2;
+const GRID_COLS = 4;
+const ROW_HEIGHT_PX = 76;
 
 interface ChampionPickerProps {
   disabled?: boolean;
@@ -22,6 +26,46 @@ function normalizeQuery(q: string) {
   return q.trim().toLowerCase();
 }
 
+const ChampionGridItem = memo(function ChampionGridItem({
+  champ,
+  disabled,
+  selectedId,
+  onSelect,
+}: {
+  champ: LolChampion;
+  disabled: boolean;
+  selectedId: string | null;
+  onSelect: (champion: LolChampion) => void;
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        role="option"
+        disabled={disabled}
+        onClick={() => onSelect(champ)}
+        className={clsx(
+          'sw-champ-option',
+          selectedId === champ.id && 'sw-champ-option--active'
+        )}
+        title={champ.name}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={championIconSrc(champ.id)}
+          alt=""
+          width={40}
+          height={40}
+          className="sw-champ-option__icon"
+          loading="lazy"
+          decoding="async"
+        />
+        <span className="sw-champ-option__name">{champ.name}</span>
+      </button>
+    </li>
+  );
+});
+
 export default function ChampionPicker({
   disabled = false,
   selectedId,
@@ -29,17 +73,34 @@ export default function ChampionPicker({
   onClear,
 }: ChampionPickerProps) {
   const [query, setQuery] = useState('');
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(256);
+
   const selected = selectedId ? getLolChampionById(selectedId) : undefined;
+  const trimmedQuery = query.trim();
+  const canBrowse = trimmedQuery.length >= MIN_QUERY_LEN;
 
   const filtered = useMemo(() => {
     const n = normalizeQuery(query);
-    if (!n) return LOL_CHAMPIONS;
+    if (!n) return [];
     return LOL_CHAMPIONS.filter(
       (c) =>
         c.name.toLowerCase().includes(n) ||
         c.id.toLowerCase().includes(n)
     );
   }, [query]);
+
+  const rowCount = Math.ceil(filtered.length / GRID_COLS);
+  const startRow = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT_PX) - 1);
+  const visibleRows =
+    Math.ceil(viewportHeight / ROW_HEIGHT_PX) + 2;
+  const endRow = Math.min(rowCount, startRow + visibleRows);
+  const visibleChampions = filtered.slice(
+    startRow * GRID_COLS,
+    endRow * GRID_COLS
+  );
+  const padTop = startRow * ROW_HEIGHT_PX;
+  const padBottom = Math.max(0, (rowCount - endRow) * ROW_HEIGHT_PX);
 
   return (
     <div className="sw-champ-picker">
@@ -82,7 +143,7 @@ export default function ChampionPicker({
               onChange={(e) => setQuery(e.target.value)}
               disabled={disabled}
               className="sw-champ-search"
-              placeholder="Search champions…"
+              placeholder="Search champions (min 2 letters)…"
               autoComplete="off"
               autoFocus
             />
@@ -98,51 +159,54 @@ export default function ChampionPicker({
             )}
           </div>
 
-          <p className="text-[10px] sw-muted mb-2 tabular-nums">
-            {filtered.length} of {LOL_CHAMPIONS.length} champions
-          </p>
+          {!canBrowse && (
+            <p className="text-sm sw-muted text-center py-8">
+              Type at least {MIN_QUERY_LEN} letters to browse {LOL_CHAMPIONS.length}{' '}
+              champions.
+            </p>
+          )}
 
-          <ul
-            className={clsx('sw-champ-grid', !query.trim() && 'sw-stagger')}
-            role="listbox"
-            aria-label="Champion list"
-          >
-            {filtered.map((champ, index) => (
-              <li
-                key={champ.id}
-                style={
-                  !query.trim() ?
-                    { animationDelay: `${Math.min(index, 24) * 0.025}s` }
-                  : undefined
+          {canBrowse && (
+            <>
+              <p className="text-[10px] sw-muted mb-2 tabular-nums">
+                {filtered.length} match{filtered.length === 1 ? '' : 'es'}
+              </p>
+
+              <div
+                className="sw-champ-grid-scroll"
+                onScroll={(e) =>
+                  setScrollTop((e.target as HTMLDivElement).scrollTop)
                 }
+                ref={(el) => {
+                  if (el && el.clientHeight !== viewportHeight) {
+                    setViewportHeight(el.clientHeight);
+                  }
+                }}
               >
-                <button
-                  type="button"
-                  role="option"
-                  disabled={disabled}
-                  onClick={() => onSelect(champ)}
-                  className={clsx(
-                    'sw-champ-option',
-                    selectedId === champ.id && 'sw-champ-option--active'
-                  )}
-                  title={champ.name}
+                <ul
+                  className="sw-champ-grid"
+                  role="listbox"
+                  aria-label="Champion list"
+                  style={{ paddingTop: padTop, paddingBottom: padBottom }}
                 >
-                  <Image
-                    src={championIconSrc(champ.id)}
-                    alt=""
-                    width={40}
-                    height={40}
-                    className="sw-champ-option__icon"
-                    unoptimized
-                  />
-                  <span className="sw-champ-option__name">{champ.name}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
+                  {visibleChampions.map((champ) => (
+                    <ChampionGridItem
+                      key={champ.id}
+                      champ={champ}
+                      disabled={disabled}
+                      selectedId={selectedId}
+                      onSelect={onSelect}
+                    />
+                  ))}
+                </ul>
+              </div>
 
-          {filtered.length === 0 && (
-            <p className="text-sm sw-muted text-center py-6">No champions match.</p>
+              {filtered.length === 0 && (
+                <p className="text-sm sw-muted text-center py-6">
+                  No champions match.
+                </p>
+              )}
+            </>
           )}
         </>
       )}
