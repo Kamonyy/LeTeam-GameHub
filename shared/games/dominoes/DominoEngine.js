@@ -3,6 +3,8 @@
  * Supports FFA and 2v2 team mode with match scoring to a configurable cap.
  */
 
+import { cryptoRandomInt, fisherYatesShuffle } from "./random.js";
+
 /** @typedef {{ left: number, right: number }} Tile */
 /** @typedef {{ tile: Tile, isDouble: boolean, displayLeft: number, displayRight: number }} BoardTile */
 /** @typedef {{ scoreCap: number, mode: 'ffa' | '2v2', handSize: number }} MatchSettings */
@@ -19,11 +21,26 @@ export function createTileSet() {
 }
 
 export function shuffle(arr) {
-	for (let i = arr.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		[arr[i], arr[j]] = [arr[j], arr[i]];
+	return fisherYatesShuffle(arr);
+}
+
+/** @param {{ tile: Tile, end: 'left' | 'right' }[]} moves */
+export function pickHighestValueMove(moves) {
+	if (!moves.length) return null;
+	let best = moves[0];
+	let bestPips = tilePips(best.tile);
+	for (let i = 1; i < moves.length; i++) {
+		const m = moves[i];
+		const pips = tilePips(m.tile);
+		if (
+			pips > bestPips ||
+			(pips === bestPips && m.end === "right" && best.end !== "right")
+		) {
+			best = m;
+			bestPips = pips;
+		}
 	}
-	return arr;
+	return best;
 }
 
 export function tilePips(tile) {
@@ -298,7 +315,8 @@ export class DominoEngine {
 			return { success: false, error: "Boneyard is empty" };
 		}
 
-		const drawn = this.boneyard.pop();
+		const drawIndex = cryptoRandomInt(this.boneyard.length);
+		const drawn = this.boneyard.splice(drawIndex, 1)[0];
 		this.hands[playerId].push(drawn);
 		this.lastAction = { type: "draw", playerId, tile: drawn };
 		this.consecutivePasses = 0;
@@ -371,6 +389,10 @@ export class DominoEngine {
 		}
 	}
 
+	/**
+	 * Rule-based autoplay: highest-pip valid tile, draw while boneyard has tiles,
+	 * pass only when no legal moves and boneyard is empty. Uses only this player's hand.
+	 */
 	autoPlay(playerId) {
 		if (this.phase !== "playing" || playerId !== this.currentPlayerId) {
 			return { success: false };
@@ -378,7 +400,8 @@ export class DominoEngine {
 
 		const moves = this.getValidMoves(playerId);
 		if (moves.length > 0) {
-			const pick = moves[Math.floor(Math.random() * moves.length)];
+			const pick = pickHighestValueMove(moves);
+			if (!pick) return { success: false };
 			return this.playMove(playerId, pick.tile, pick.end);
 		}
 

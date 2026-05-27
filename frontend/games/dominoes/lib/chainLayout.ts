@@ -12,6 +12,8 @@ export const D_TILE_H = 80;
 export const CHAIN_TILE_GAP = 6;
 export const TABLE_INNER = 608;
 export const TABLE_PADDING = 36;
+/** Chain runs horizontally until ~80% of table width, then bends */
+export const CHAIN_WRAP_RATIO = 0.8;
 
 export interface PlacedTileLayout {
 	index: number;
@@ -41,6 +43,9 @@ export interface ChainLayoutResult {
 	scale: number;
 	offsetX: number;
 	offsetY: number;
+	/** Pan (px) applied after scale so both open ends stay in view */
+	panX: number;
+	panY: number;
 	leftEnd: ChainEndAnchor;
 	rightEnd: ChainEndAnchor;
 }
@@ -305,9 +310,49 @@ function computeScale(bw: number, bh: number): number {
 	return Math.max(0.75, fit);
 }
 
+function computePan(
+	leftX: number,
+	leftY: number,
+	rightX: number,
+	rightY: number,
+	scale: number,
+	viewportW: number,
+	viewportH: number,
+): { panX: number; panY: number } {
+	const pad = 44;
+	const halfW = viewportW / 2;
+	const halfH = viewportH / 2;
+	const lx = leftX * scale;
+	const ly = leftY * scale;
+	const rx = rightX * scale;
+	const ry = rightY * scale;
+
+	let panX = 0;
+	let panY = 0;
+
+	const minX = Math.min(lx, rx);
+	const maxX = Math.max(lx, rx);
+	const minY = Math.min(ly, ry);
+	const maxY = Math.max(ly, ry);
+
+	const edgeX = halfW - pad;
+	const edgeY = halfH - pad;
+
+	if (maxX > edgeX) panX += edgeX - maxX;
+	if (minX < -edgeX) panX += -edgeX - minX;
+	if (maxY > edgeY) panY += edgeY - maxY;
+	if (minY < -edgeY) panY += -edgeY - minY;
+
+	return { panX, panY };
+}
+
 /** Build coordinate path layout for the board chain with automatic wrapping */
-export function computeChainLayout(board: BoardTile[]): ChainLayoutResult {
+export function computeChainLayout(
+	board: BoardTile[],
+	viewportSize?: { width: number; height: number },
+): ChainLayoutResult {
 	const halfTable = TABLE_INNER / 2;
+	const halfWrap = (TABLE_INNER * CHAIN_WRAP_RATIO) / 2;
 
 	if (board.length === 0) {
 		return {
@@ -316,6 +361,8 @@ export function computeChainLayout(board: BoardTile[]): ChainLayoutResult {
 			scale: 1,
 			offsetX: 0,
 			offsetY: 0,
+			panX: 0,
+			panY: 0,
 			leftEnd: { x: 0, y: 0, rotation: 0, direction: "west" },
 			rightEnd: { x: 0, y: 0, rotation: 0, direction: "east" },
 		};
@@ -341,13 +388,15 @@ export function computeChainLayout(board: BoardTile[]): ChainLayoutResult {
 				tile.isDouble,
 			);
 
+			const wrapLimit =
+				isHorizontal(travelDir) ? halfWrap : halfTable;
 			if (
 				!fitsBounds(
 					nextCenter.x,
 					nextCenter.y,
 					tile.isDouble,
 					travelDir,
-					halfTable,
+					wrapLimit,
 				)
 			) {
 				const northEdge =
@@ -415,14 +464,33 @@ export function computeChainLayout(board: BoardTile[]): ChainLayoutResult {
 	const rightSegDir =
 		last.incomingDir ?? (placed.length > 1 ? leftSegDir : "east");
 
+	const offsetX = -centerX;
+	const offsetY = -centerY;
+	const leftEnd = endAnchor(first.x, first.y, leftSegDir, first.isDouble, "left");
+	const rightEnd = endAnchor(last.x, last.y, rightSegDir, last.isDouble, "right");
+
+	const vpW = viewportSize?.width ?? TABLE_INNER;
+	const vpH = viewportSize?.height ?? TABLE_INNER;
+	const { panX, panY } = computePan(
+		leftEnd.x + offsetX,
+		leftEnd.y + offsetY,
+		rightEnd.x + offsetX,
+		rightEnd.y + offsetY,
+		scale,
+		vpW,
+		vpH,
+	);
+
 	return {
 		tiles: placed,
 		bounds,
 		scale,
-		offsetX: -centerX,
-		offsetY: -centerY,
-		leftEnd: endAnchor(first.x, first.y, leftSegDir, first.isDouble, "left"),
-		rightEnd: endAnchor(last.x, last.y, rightSegDir, last.isDouble, "right"),
+		offsetX,
+		offsetY,
+		panX,
+		panY,
+		leftEnd,
+		rightEnd,
 	};
 }
 

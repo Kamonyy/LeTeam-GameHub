@@ -45,6 +45,8 @@ module.exports = {
 					"boneyardDrawFly 0.62s cubic-bezier(0.22, 0.61, 0.36, 1) forwards",
 				"boneyard-stack-pop":
 					"boneyardStackPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+				"opponent-thinking":
+					"opponentThinking 0.9s ease-in-out infinite",
 			},
 			keyframes: {
 				fadeIn: {
@@ -165,6 +167,10 @@ module.exports = {
 					"0%": { transform: "translateY(0) scale(1)" },
 					"35%": { transform: "translateY(-6px) scale(1.04)" },
 					"100%": { transform: "translateY(0) scale(1)" },
+				},
+				opponentThinking: {
+					"0%, 100%": { opacity: "0.55" },
+					"50%": { opacity: "1" },
 				},
 			},
 		},

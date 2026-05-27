@@ -23,6 +23,10 @@ export interface UseSocketReturn {
     options?: { spectate?: boolean }
   ) => Promise<boolean>;
   spectateRoom: (roomId: string, displayName: string) => Promise<boolean>;
+  joinRoomOrSpectate: (
+    roomId: string,
+    displayName: string
+  ) => Promise<{ ok: boolean; spectating: boolean }>;
   leaveRoom: () => void;
   updateRoomSettings: (settings: Partial<MatchSettings | WordGameSettings>) => Promise<boolean>;
   startGame: () => Promise<boolean>;
@@ -31,6 +35,8 @@ export interface UseSocketReturn {
   playMove: (tile: Tile, end: 'left' | 'right') => void;
   drawTile: () => void;
   passTurn: () => void;
+  continueRound: () => Promise<boolean>;
+  requestRematch: () => Promise<boolean>;
   submitSecretWord: (word: string) => Promise<boolean>;
   confirmWordGuessed: () => Promise<boolean>;
 }

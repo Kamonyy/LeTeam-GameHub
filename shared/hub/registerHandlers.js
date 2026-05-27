@@ -219,6 +219,26 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true });
   });
 
+  socket.on('game:round:continue', (_payload, ack) => {
+    const result = roomManager.handleContinueRound(socket);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
+  socket.on('game:rematch:request', (_payload, ack) => {
+    const result = roomManager.handleRematch(socket);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
   socket.on('word:submit', ({ word }, ack) => {
     const result = roomManager.handleWordSubmit(socket, word);
     if (result?.error) {

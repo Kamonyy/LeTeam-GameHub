@@ -226,6 +226,39 @@ export function SocketProvider({ children }) {
     return joinRoom(roomId, displayName, { spectate: true });
   }, [joinRoom]);
 
+  /** Join as player, or spectate if the match already started. */
+  const joinRoomOrSpectate = useCallback((roomId, displayName) => {
+    return new Promise((resolve) => {
+      const socket = socketRef.current;
+      if (!socket?.connected) {
+        resolve({ ok: false, spectating: false });
+        return;
+      }
+      const code = roomId.toUpperCase();
+      socket.emit('room:join', { roomId: code, displayName }, (res) => {
+        if (!res?.error) {
+          setIsSpectator(false);
+          resolve({ ok: true, spectating: false });
+          return;
+        }
+        if (res.error !== 'Game already in progress') {
+          setError(res.error);
+          resolve({ ok: false, spectating: false });
+          return;
+        }
+        socket.emit('room:spectate', { roomId: code, displayName }, (specRes) => {
+          if (specRes?.error) {
+            setError(specRes.error);
+            resolve({ ok: false, spectating: false });
+          } else {
+            setIsSpectator(true);
+            resolve({ ok: true, spectating: true });
+          }
+        });
+      });
+    });
+  }, []);
+
   const leaveRoom = useCallback(() => {
     socketRef.current?.emit('room:leave', {}, () => {
       setLobby(null);
@@ -299,6 +332,32 @@ export function SocketProvider({ children }) {
     socketRef.current?.emit('game:pass:request', {});
   }, []);
 
+  const continueRound = useCallback(() => {
+    return new Promise((resolve) => {
+      socketRef.current?.emit('game:round:continue', {}, (res) => {
+        if (res?.error) {
+          setError(res.error);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  }, []);
+
+  const requestRematch = useCallback(() => {
+    return new Promise((resolve) => {
+      socketRef.current?.emit('game:rematch:request', {}, (res) => {
+        if (res?.error) {
+          setError(res.error);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  }, []);
+
   const submitSecretWord = useCallback((word) => {
     return new Promise((resolve) => {
       (async () => {
@@ -369,6 +428,7 @@ export function SocketProvider({ children }) {
     createRoom,
     joinRoom,
     spectateRoom,
+    joinRoomOrSpectate,
     leaveRoom,
     updateRoomSettings,
     startGame,
@@ -377,6 +437,8 @@ export function SocketProvider({ children }) {
     playMove,
     drawTile,
     passTurn,
+    continueRound,
+    requestRematch,
     submitSecretWord,
     confirmWordGuessed,
   };

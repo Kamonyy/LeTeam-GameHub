@@ -9,20 +9,24 @@ import {
 	type CSSProperties,
 	type DragEvent,
 } from "react";
-import { Trophy, RotateCcw, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import clsx from "clsx";
 import DominoTile from "./DominoTile";
 import Boneyard from "./Boneyard";
 import DropZone from "./DropZone";
-import BoardChain from "./BoardChain";
+import BoardChain, { type BoardChainHandle } from "./BoardChain";
+import OpponentHandSeat from "./OpponentHandSeat";
+import RoundResultsModal from "./RoundResultsModal";
 import ScoreProgressBar from "./ScoreProgressBar";
 import GameActionOverlay from "./GameActionOverlay";
 import TurnIndicator from "@/components/shared/TurnIndicator";
 import {
 	playDominoSnapSound,
 	playDominoDrawSound,
+	playDominoPassSound,
 } from "../lib/dominoSound";
 import { arcFanTransform, opponentSeatPositions } from "../lib/handArc";
+import { handPipCount, tileKey, tilesMatch } from "../lib/tileUtils";
 import type { GameState, Tile, ValidMove } from "../types";
 import { TEAM_LABELS } from "../types";
 import type { LobbyState } from "@/lib/hub/types";
@@ -31,94 +35,13 @@ interface GameBoardProps {
 	gameState: GameState;
 	lobby: LobbyState;
 	playerId: string;
+	isHost?: boolean;
 	isSpectator?: boolean;
 	onPlayMove: (tile: Tile, end: "left" | "right") => void;
 	onDraw: () => void;
 	onPass: () => void;
-}
-
-function tilesMatch(a: Tile, b: Tile) {
-	return (
-		(a.left === b.left && a.right === b.right) ||
-		(a.left === b.right && a.right === b.left)
-	);
-}
-
-function OpponentHandSeat({
-	name,
-	tileCount,
-	isActive,
-	isTeamMode,
-	teamId,
-	side,
-	handRef,
-	drawPulse,
-}: {
-	name: string;
-	tileCount: number;
-	isActive: boolean;
-	isTeamMode: boolean;
-	teamId?: "team1" | "team2";
-	side: "top" | "left" | "right";
-	handRef?: (el: HTMLDivElement | null) => void;
-	drawPulse?: boolean;
-}) {
-	const visibleTiles = Math.min(tileCount, 9);
-
-	return (
-		<div
-			className={clsx(
-				"domino-opponent-seat",
-				`domino-opponent-seat--${side}`,
-				isActive && "domino-opponent-seat--active",
-				isTeamMode && teamId === "team1" && "domino-opponent-seat--team1",
-				isTeamMode && teamId === "team2" && "domino-opponent-seat--team2",
-			)}
-		>
-			<div className="domino-opponent-seat__badge">
-				<div
-					className={clsx(
-						"w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold uppercase shrink-0",
-						isActive ?
-							"bg-hub-accent text-white"
-						:	"bg-hub-border text-hub-muted",
-					)}
-				>
-					{name.charAt(0)}
-				</div>
-				<div className="text-left min-w-0">
-					<p className="text-xs font-semibold text-gray-100 leading-tight truncate max-w-[88px]">
-						{name}
-					</p>
-					{isTeamMode && teamId && (
-						<p className="text-[9px] text-hub-muted leading-tight">
-							{TEAM_LABELS[teamId]}
-						</p>
-					)}
-				</div>
-			</div>
-			<div
-				ref={handRef}
-				className={clsx(
-					"domino-opponent-hand",
-					drawPulse && "domino-opponent-hand--pulse",
-				)}
-			>
-				{Array.from({ length: visibleTiles }).map((_, i) => (
-					<div
-						key={i}
-						className="domino-opponent-hand__slot"
-						style={{
-							["--slot-i" as string]: String(i),
-							["--slot-n" as string]: String(visibleTiles),
-						}}
-					>
-						<div className="domino-back domino-opponent-tile" />
-					</div>
-				))}
-			</div>
-		</div>
-	);
+	onContinueRound: () => Promise<boolean>;
+	onRematch: () => Promise<boolean>;
 }
 
 export default function GameBoard({
@@ -129,6 +52,9 @@ export default function GameBoard({
 	onPlayMove,
 	onDraw,
 	onPass,
+	onContinueRound,
+	onRematch,
+	isHost = false,
 }: GameBoardProps) {
 	const [selectedTile, setSelectedTile] = useState<Tile | null>(null);
 	const [dragTile, setDragTile] = useState<Tile | null>(null);
@@ -147,11 +73,21 @@ export default function GameBoard({
 		tile?: Tile;
 		style: CSSProperties;
 	} | null>(null);
+	const [placeFly, setPlaceFly] = useState<{
+		tile: Tile;
+		style: CSSProperties;
+	} | null>(null);
+	const [resultsLoading, setResultsLoading] = useState(false);
+	const [opponentThinking, setOpponentThinking] = useState(false);
 
 	const boneyardOriginRef = useRef<HTMLDivElement>(null);
 	const playerHandRef = useRef<HTMLDivElement>(null);
+	const chainRef = useRef<BoardChainHandle>(null);
+	const handTileRefs = useRef<Record<string, HTMLDivElement | null>>({});
 	const opponentDrawTargets = useRef<Record<string, HTMLDivElement | null>>({});
 	const processedDrawSig = useRef<string | null>(null);
+	const processedPassSig = useRef<string | null>(null);
+	const lastTurnPlayerRef = useRef<string | null>(null);
 
 	const isMyTurn = !isSpectator && gameState.currentPlayerId === playerId;
 	const isTeamMode = gameState.settings?.mode === "2v2";
@@ -198,6 +134,41 @@ export default function GameBoard({
 			return () => clearTimeout(t);
 		}
 	}, [gameState.lastAction, gameState.board.length]);
+
+	useEffect(() => {
+		const action = gameState.lastAction;
+		if (action?.type !== "pass") return;
+		const sig = `${action.playerId}:${gameState.roundNumber}`;
+		if (processedPassSig.current === sig) return;
+		processedPassSig.current = sig;
+		playDominoPassSound();
+	}, [gameState.lastAction, gameState.roundNumber]);
+
+	useEffect(() => {
+		if (gameState.phase === "playing") {
+			processedPassSig.current = null;
+		}
+	}, [gameState.roundNumber, gameState.phase]);
+
+	useEffect(() => {
+		const current = gameState.currentPlayerId;
+		if (gameState.phase !== "playing") {
+			lastTurnPlayerRef.current = current;
+			setOpponentThinking(false);
+			return;
+		}
+		if (
+			current !== playerId &&
+			current !== lastTurnPlayerRef.current &&
+			!isSpectator
+		) {
+			setOpponentThinking(true);
+			const t = setTimeout(() => setOpponentThinking(false), 850);
+			lastTurnPlayerRef.current = current;
+			return () => clearTimeout(t);
+		}
+		lastTurnPlayerRef.current = current;
+	}, [gameState.currentPlayerId, gameState.phase, playerId, isSpectator]);
 
 	useEffect(() => {
 		const action = gameState.lastAction;
@@ -332,12 +303,49 @@ export default function GameBoard({
 
 	const playTile = (tile: Tile, end: "left" | "right") => {
 		if (!isPlayable(tile).some((m) => m.end === end)) return;
-		playDominoSnapSound();
-		onPlayMove(tile, end);
-		setSelectedTile(null);
-		setDragTile(null);
-		setDragOverEnd(null);
-		setHoverEnd(null);
+
+		const handIndex = gameState.myHand.findIndex((t) => tilesMatch(t, tile));
+		const handEl =
+			handIndex >= 0 ?
+				handTileRefs.current[tileKey(tile, handIndex)]
+			:	null;
+		const target = chainRef.current?.getEndClientPoint(end);
+
+		const finish = () => {
+			playDominoSnapSound();
+			onPlayMove(tile, end);
+			setSelectedTile(null);
+			setDragTile(null);
+			setDragOverEnd(null);
+			setHoverEnd(null);
+			setPlaceFly(null);
+		};
+
+		if (handEl && target) {
+			const from = handEl.getBoundingClientRect();
+			setPlaceFly({
+				tile,
+				style: {
+					left: from.left + from.width / 2,
+					top: from.top + from.height / 2,
+					transform: "translate(-50%, -50%) scale(1)",
+				},
+			});
+			requestAnimationFrame(() => {
+				setPlaceFly({
+					tile,
+					style: {
+						left: target.x,
+						top: target.y,
+						transform: "translate(-50%, -50%) scale(0.92)",
+					},
+				});
+			});
+			window.setTimeout(finish, 420);
+			return;
+		}
+
+		finish();
 	};
 
 	const handleTileClick = (tile: Tile) => {
@@ -438,127 +446,10 @@ export default function GameBoard({
 				/>
 			));
 
-	if (gameState.phase === "match_over") {
-		const won =
-			!isSpectator &&
-			(isTeamMode ?
-				gameState.matchWinnerId === gameState.teamIds[playerId]
-			:	gameState.matchWinnerId === playerId);
-		const winnerLabel =
-			isTeamMode ?
-				(TEAM_LABELS[gameState.matchWinnerId as "team1" | "team2"] ?? "Team")
-			:	playerNames[gameState.matchWinnerId || ""] || "Unknown";
-
-		return (
-			<div className="flex flex-col items-center justify-center gap-8 py-16 animate-fade-in">
-				<Trophy
-					className={clsx(
-						"w-24 h-24 animate-overlay-pop",
-						won ?
-							"text-amber-400 drop-shadow-[0_0_24px_rgba(251,191,36,0.4)]"
-						:	"text-hub-muted",
-					)}
-				/>
-				<div className="text-center">
-					<p className="text-sm text-hub-muted uppercase tracking-widest mb-2">
-						Match Complete
-					</p>
-					<h2 className="text-4xl font-black mb-2">
-						{won ? "Victory!" : `${winnerLabel} wins!`}
-					</h2>
-					<p className="text-hub-muted">
-						First to {scoreCap} points · {gameState.roundNumber} rounds
-					</p>
-				</div>
-				<div className="flex flex-wrap justify-center gap-4 w-full max-w-2xl px-4">
-					{scoreBars}
-				</div>
-			</div>
-		);
-	}
-
-	if (gameState.phase === "round_over") {
-		const roundWinner = playerNames[gameState.roundWinnerId || ""] || "Unknown";
-		const reason = gameState.lastAction?.reason;
-
-		return (
-			<div className="flex flex-col items-center gap-8 py-12 animate-fade-in">
-				<div
-					className={clsx(
-						"px-10 py-6 rounded-2xl border-2 text-center animate-overlay-pop",
-						reason === "domino" ?
-							"border-amber-400/50 bg-amber-950/40 shadow-lg shadow-amber-500/10"
-						:	"border-orange-400/40 bg-orange-950/30",
-					)}
-				>
-					<p className="text-4xl font-black tracking-wider mb-1">
-						{reason === "domino" ? "DOMINO!" : "TABLE LOCKED"}
-					</p>
-					<p className="text-hub-muted">
-						{roundWinner} wins round {gameState.roundNumber}
-						{gameState.lastAction?.points != null &&
-							` · +${gameState.lastAction.points} pts`}
-					</p>
-				</div>
-				<div className="flex flex-wrap justify-center gap-3 w-full max-w-3xl px-4">
-					{scoreBars}
-				</div>
-				{gameState.handsByPlayer &&
-					Object.keys(gameState.handsByPlayer).length > 0 && (
-						<div className="w-full max-w-4xl px-4 animate-fade-in">
-							<p className="text-center text-xs uppercase tracking-widest text-hub-muted mb-4">
-								Remaining hands
-							</p>
-							<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-								{gameState.playerIds.map((id) => {
-									const hand = gameState.handsByPlayer?.[id] ?? [];
-									return (
-										<div
-											key={id}
-											className="rounded-xl border border-hub-border bg-hub-surface/60 p-4"
-										>
-											<p className="text-sm font-semibold mb-3 truncate">
-												{playerNames[id] || "Player"}
-												{hand.length > 0 && (
-													<span className="text-hub-muted font-normal ml-1">
-														· {hand.length}
-													</span>
-												)}
-											</p>
-											<div className="flex flex-wrap gap-2 justify-center min-h-[2.5rem]">
-												{hand.length === 0 ?
-													<span className="text-xs text-hub-muted">
-														Empty
-													</span>
-												:	hand.map((tile, i) => (
-														<DominoTile
-															key={`${id}-${tile.left}-${tile.right}-${i}`}
-															left={tile.left}
-															right={tile.right}
-															compact
-															className="animate-overlay-pop"
-															style={{
-																animationDelay: `${i * 40}ms`,
-															}}
-														/>
-													))
-												}
-											</div>
-										</div>
-									);
-								})}
-							</div>
-						</div>
-					)}
-				<p className="text-sm text-hub-muted flex items-center gap-2 animate-pulse-soft">
-					<RotateCcw className="w-4 h-4" />
-					Next round starting…
-				</p>
-			</div>
-		);
-	}
-
 	const handCount = gameState.myHand.length;
+	const myPips = handPipCount(gameState.myHand);
+	const showResultsModal =
+		gameState.phase === "round_over" || gameState.phase === "match_over";
 
 	return (
 		<div className="domino-arena flex flex-col gap-3 w-full max-w-7xl mx-auto min-h-[calc(100dvh-5rem)] animate-fade-in pb-2">
@@ -578,22 +469,46 @@ export default function GameBoard({
 				turnTimerPaused={gameState.turnTimerPaused}
 			/>
 
+			{opponentThinking && !isMyTurn && gameState.phase === "playing" && (
+				<p className="text-center text-xs text-emerald-300/80 animate-opponent-thinking">
+					Opponent is thinking…
+				</p>
+			)}
+
 			<div className="domino-table-stage hands-around-table flex-1 min-h-0 w-full">
-				{opponents.map((id, idx) => (
-					<OpponentHandSeat
-						key={id}
-						name={playerNames[id] || "Player"}
-						tileCount={gameState.tileCounts[id] || 0}
-						isActive={id === gameState.currentPlayerId}
-						isTeamMode={isTeamMode}
-						teamId={gameState.teamIds[id]}
-						side={opponentPositions[idx] ?? "top"}
-						handRef={(el) => {
-							opponentDrawTargets.current[id] = el;
-						}}
-						drawPulse={opponentDrawPulse === id}
-					/>
-				))}
+				{opponents.map((id, idx) => {
+					const side = opponentPositions[idx] ?? "top";
+					const count = gameState.tileCounts[id] || 0;
+					return (
+						<div key={id}>
+							<span
+								className={clsx(
+									"domino-hand-pip-badge",
+									side === "top" && "domino-hand-pip-badge--opponent-top",
+									side === "left" &&
+										"domino-hand-pip-badge--opponent-side domino-hand-pip-badge--opponent-left",
+									side === "right" &&
+										"domino-hand-pip-badge--opponent-side domino-hand-pip-badge--opponent-right",
+								)}
+							>
+								{count} {count === 1 ? "tile" : "tiles"}
+							</span>
+							<OpponentHandSeat
+								id={id}
+								name={playerNames[id] || "Player"}
+								tileCount={count}
+								isActive={id === gameState.currentPlayerId}
+								isTeamMode={isTeamMode}
+								teamId={gameState.teamIds[id]}
+								side={side}
+								handRef={(el) => {
+									opponentDrawTargets.current[id] = el;
+								}}
+								drawPulse={opponentDrawPulse === id}
+							/>
+						</div>
+					);
+				})}
 
 				<div
 					className={clsx(
@@ -629,6 +544,7 @@ export default function GameBoard({
 							)}
 						</div>
 					:	<BoardChain
+							ref={chainRef}
 							board={gameState.board}
 							openEnds={gameState.openEnds}
 							showDropZones={showDropZones}
@@ -645,15 +561,25 @@ export default function GameBoard({
 						/>
 					}
 
-					{gameState.openEnds && gameState.board.length > 0 && (
-						<div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-20 flex gap-4 text-xs font-mono">
-							<span className="px-3 py-1 rounded-full bg-black/40 text-emerald-300/90 border border-emerald-500/20 backdrop-blur-sm">
-								◀ {gameState.openEnds.left}
-							</span>
-							<span className="px-3 py-1 rounded-full bg-black/40 text-emerald-300/90 border border-emerald-500/20 backdrop-blur-sm">
-								{gameState.openEnds.right} ▶
-							</span>
-						</div>
+					{showResultsModal && (
+						<RoundResultsModal
+							gameState={gameState}
+							playerNames={playerNames}
+							isHost={isHost}
+							isSpectator={isSpectator}
+							myPlayerId={playerId}
+							loading={resultsLoading}
+							onContinue={async () => {
+								setResultsLoading(true);
+								await onContinueRound();
+								setResultsLoading(false);
+							}}
+							onRematch={async () => {
+								setResultsLoading(true);
+								await onRematch();
+								setResultsLoading(false);
+							}}
+						/>
 					)}
 
 					{gameState.boneyardCount > 0 && (
@@ -671,6 +597,9 @@ export default function GameBoard({
 
 				{!isSpectator && (
 				<>
+				<span className="domino-hand-pip-badge domino-hand-pip-badge--player">
+					{myPips} pips · {handCount} tiles
+				</span>
 				<p className="domino-player-hand-hint text-[10px] uppercase tracking-widest text-hub-muted/90">
 					{isMyTurn ?
 						"Drag to the table or tap a tile"
@@ -701,6 +630,8 @@ export default function GameBoard({
 							selectedTile !== null && tilesMatch(selectedTile, tile);
 						const isDragging =
 							dragTile !== null && tilesMatch(dragTile, tile);
+						const unplayable = isMyTurn && !playable;
+						const key = tileKey(tile, i);
 						const fanTransform = arcFanTransform(i, handCount, "bottom", {
 							selected: isSelected,
 							dragging: isDragging,
@@ -708,14 +639,20 @@ export default function GameBoard({
 						const isHandDrawTarget = i === handCount - 1;
 						const hideDuringFly =
 							drawFly && !drawFly.faceDown && isHandDrawTarget;
+						const hideDuringPlace =
+							placeFly !== null && tilesMatch(placeFly.tile, tile);
 
 						return (
 							<div
-								key={`${tile.left}-${tile.right}-${i}`}
+								key={key}
+								ref={(el) => {
+									handTileRefs.current[key] = el;
+								}}
 								data-draw-target={isHandDrawTarget ? "hand" : undefined}
 								className={clsx(
-									"origin-bottom transition-transform duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]",
+									"domino-hand-slot origin-bottom",
 									hideDuringFly && "opacity-0",
+									hideDuringPlace && "opacity-0",
 								)}
 								style={{
 									transform: fanTransform,
@@ -726,6 +663,7 @@ export default function GameBoard({
 									left={tile.left}
 									right={tile.right}
 									playable={playable && isMyTurn}
+									unplayable={unplayable}
 									selected={isSelected}
 									dragging={isDragging}
 									draggable={playable && isMyTurn}
@@ -755,15 +693,27 @@ export default function GameBoard({
 					style={drawFly.style}
 					aria-hidden
 				>
-					{drawFly.faceDown || !drawFly.tile ?
-						<div className="domino-back domino-opponent-tile rounded-md border border-white/[0.12] shadow-[0_8px_20px_rgba(0,0,0,0.5)]" />
-					:	<DominoTile
-							left={drawFly.tile.left}
-							right={drawFly.tile.right}
-							inHand
-							className="shadow-[0_8px_20px_rgba(0,0,0,0.45)]"
-						/>
-					}
+					<div className="domino-draw-flip-inner">
+						{drawFly.faceDown || !drawFly.tile ?
+							<div className="domino-back domino-opponent-tile rounded-md border border-white/[0.12] shadow-[0_8px_20px_rgba(0,0,0,0.5)]" />
+						:	<DominoTile
+								left={drawFly.tile.left}
+								right={drawFly.tile.right}
+								inHand
+								className="shadow-[0_8px_20px_rgba(0,0,0,0.45)]"
+							/>
+						}
+					</div>
+				</div>
+			)}
+
+			{placeFly && (
+				<div className="domino-tile-fly-layer" style={placeFly.style} aria-hidden>
+					<DominoTile
+						left={placeFly.tile.left}
+						right={placeFly.tile.right}
+						inHand
+					/>
 				</div>
 			)}
 		</div>

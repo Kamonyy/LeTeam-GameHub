@@ -62,9 +62,6 @@ export default function OpponentHandSeat({
 						</p>
 					)}
 				</div>
-				<span className="text-[10px] text-hub-muted tabular-nums ml-0.5">
-					{tileCount}
-				</span>
 			</div>
 
 			<div

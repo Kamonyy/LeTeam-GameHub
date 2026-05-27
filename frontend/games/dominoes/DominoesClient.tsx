@@ -34,7 +34,7 @@ export default function DominoesClient() {
     error,
     clearError,
     createRoom,
-    joinRoom,
+    joinRoomOrSpectate,
     spectateRoom,
     leaveRoom,
     updateRoomSettings,
@@ -44,6 +44,8 @@ export default function DominoesClient() {
     playMove,
     drawTile,
     passTurn,
+    continueRound,
+    requestRematch,
   } = useSocket();
 
   const [displayName, setDisplayNameState] = useState('');
@@ -68,11 +70,15 @@ export default function DominoesClient() {
     const attemptJoin = async () => {
       setLoading(true);
       const name = getDisplayName();
-      const joinFn = spectateParam ? spectateRoom : joinRoom;
-      const ok = await joinFn(code, name);
-      if (ok) {
-        const query = spectateParam ? `?room=${code}&spectate=1` : `?room=${code}`;
-        router.replace(`/dominoes${query}`, { scroll: false });
+      if (spectateParam) {
+        const ok = await spectateRoom(code, name);
+        if (ok) router.replace(`/dominoes?room=${code}&spectate=1`, { scroll: false });
+      } else {
+        const result = await joinRoomOrSpectate(code, name);
+        if (result.ok) {
+          const query = result.spectating ? `?room=${code}&spectate=1` : `?room=${code}`;
+          router.replace(`/dominoes${query}`, { scroll: false });
+        }
       }
       setAutoJoined(true);
       setLoading(false);
@@ -86,7 +92,7 @@ export default function DominoesClient() {
     autoJoined,
     inviteJoin,
     spectateParam,
-    joinRoom,
+    joinRoomOrSpectate,
     spectateRoom,
     router,
   ]);
@@ -105,8 +111,12 @@ export default function DominoesClient() {
     if (!code || !displayName.trim()) return;
     setLoading(true);
     setDisplayName(displayName);
-    const ok = await joinRoom(code, displayName.trim());
-    if (ok) router.push(`/dominoes?room=${code}`);
+    const result = await joinRoomOrSpectate(code, displayName.trim());
+    if (result.ok) {
+      router.push(
+        result.spectating ? `/dominoes?room=${code}&spectate=1` : `/dominoes?room=${code}`
+      );
+    }
     setLoading(false);
   };
 
@@ -125,11 +135,15 @@ export default function DominoesClient() {
     if (!code || !displayName.trim()) return;
     setLoading(true);
     setDisplayName(displayName);
-    const joinFn = spectateParam ? spectateRoom : joinRoom;
-    const ok = await joinFn(code, displayName.trim());
-    if (ok) {
-      const query = spectateParam ? `?room=${code}&spectate=1` : `?room=${code}`;
-      router.replace(`/dominoes${query}`, { scroll: false });
+    if (spectateParam) {
+      const ok = await spectateRoom(code, displayName.trim());
+      if (ok) router.replace(`/dominoes?room=${code}&spectate=1`, { scroll: false });
+    } else {
+      const result = await joinRoomOrSpectate(code, displayName.trim());
+      if (result.ok) {
+        const query = result.spectating ? `?room=${code}&spectate=1` : `?room=${code}`;
+        router.replace(`/dominoes${query}`, { scroll: false });
+      }
     }
     setAutoJoined(true);
     setLoading(false);
@@ -157,7 +171,7 @@ export default function DominoesClient() {
   const inActiveMatch =
     lobby?.status === 'playing' && (showGameBoard || waitingForGame);
 
-  const showChatSidebar = connected;
+  const showChatSidebar = lobby?.status === 'playing';
 
   return (
     <main
@@ -322,8 +336,7 @@ export default function DominoesClient() {
               }}
             />
             <p className="text-sm text-hub-muted mt-6">
-              Waiting for the host to start the match. You can chat with players in the
-              panel on the right.
+              Waiting for the host to start the match.
             </p>
           </div>
         )}
@@ -369,10 +382,13 @@ export default function DominoesClient() {
               gameState={dominoesState!}
               lobby={lobby!}
               playerId={playerId}
+              isHost={isHost}
               isSpectator={isSpectator}
               onPlayMove={playMove}
               onDraw={drawTile}
               onPass={passTurn}
+              onContinueRound={continueRound}
+              onRematch={requestRematch}
             />
           </>
         )}

@@ -20,6 +20,7 @@ import { RateLimiter } from "./RateLimiter.js";
 import { generateSessionToken } from "./session.js";
 import { sanitizeChatMessage, sanitizeDisplayName } from "./validate.js";
 import { MAX_ROOMS, RATE_LIMIT_WINDOW_MS } from "./constants.js";
+import { cryptoRandomInt } from "../games/dominoes/random.js";
 
 export class RoomManager {
 	/**
@@ -321,6 +322,8 @@ export class RoomManager {
 					{ ...DEFAULT_WORD_GAME_SETTINGS }
 				:	{ ...DEFAULT_MATCH_SETTINGS },
 			nextRoundTimer: null,
+			autoPlayTimer: null,
+			autoPlayPending: false,
 			createdAt: Date.now(),
 		};
 
@@ -603,6 +606,7 @@ export class RoomManager {
 		const result = room.game.playMove(playerId, tile, end);
 		if (!result.success) return { error: result.error };
 
+		this._clearAutoPlayTimer(room);
 		this.broadcastGameState(room.id);
 		return { success: true };
 	}
@@ -619,6 +623,7 @@ export class RoomManager {
 		const result = room.game.drawTile(playerId);
 		if (!result.success) return { error: result.error };
 
+		this._clearAutoPlayTimer(room);
 		this.broadcastGameState(room.id);
 		return { success: true };
 	}
@@ -635,7 +640,62 @@ export class RoomManager {
 		const result = room.game.passTurn(playerId);
 		if (!result.success) return { error: result.error };
 
+		this._clearAutoPlayTimer(room);
 		this.broadcastGameState(room.id);
+		return { success: true };
+	}
+
+	handleContinueRound(socket) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { room } = ctx;
+		if (!room.game || room.gameType !== "dominoes") {
+			return { error: "No active dominoes game" };
+		}
+		if (room.game.phase !== "round_over") {
+			return { error: "Round is not over" };
+		}
+
+		this._clearNextRoundTimer(room);
+		this._clearAutoPlayTimer(room);
+		room.game.startNextRound();
+		this.broadcastGameState(room.id);
+		return { success: true };
+	}
+
+	handleRematch(socket) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		if (room.hostId !== playerId) {
+			return { error: "Only the host can start a rematch" };
+		}
+		if (!room.game || room.gameType !== "dominoes") {
+			return { error: "No dominoes match to rematch" };
+		}
+		if (room.game.phase !== "match_over") {
+			return { error: "Match is not finished" };
+		}
+
+		const gameDef = getGame(room.gameType);
+		if (!gameDef) return { error: "Invalid game type" };
+
+		const connectedPlayers = room.players.filter((p) => p.connected);
+		if (connectedPlayers.length < gameDef.minPlayers) {
+			return { error: `Need at least ${gameDef.minPlayers} players` };
+		}
+
+		this._clearNextRoundTimer(room);
+		this._clearAutoPlayTimer(room);
+		room.game = gameDef.createEngine(
+			connectedPlayers.map((p) => p.id),
+			room.settings,
+		);
+		room.status = "playing";
+		this.broadcastGameState(room.id);
+		this.broadcastLobbyState(room.id);
 		return { success: true };
 	}
 
@@ -903,6 +963,14 @@ export class RoomManager {
 		}
 	}
 
+	_clearAutoPlayTimer(room) {
+		if (room.autoPlayTimer) {
+			clearTimeout(room.autoPlayTimer);
+			room.autoPlayTimer = null;
+		}
+		room.autoPlayPending = false;
+	}
+
 	_emitReconnectSync(socket, room, viewerId, { isSpectator = false } = {}) {
 		socket.emit("reconnect:sync", {
 			roomId: room.id,
@@ -961,8 +1029,21 @@ export class RoomManager {
 				if (!player?.connected) continue;
 
 				if (room.game.getTurnTimeRemaining() <= 0) {
-					room.game.autoPlay(currentId);
-					this.broadcastGameState(roomId);
+					if (!room.autoPlayPending) {
+						room.autoPlayPending = true;
+						const delayMs = 600 + cryptoRandomInt(300);
+						room.autoPlayTimer = setTimeout(() => {
+							room.autoPlayTimer = null;
+							room.autoPlayPending = false;
+							const current = this.rooms.get(roomId);
+							if (!current?.game || current.game.phase !== "playing") return;
+							if (current.game.currentPlayerId !== currentId) return;
+							current.game.autoPlay(currentId);
+							this.broadcastGameState(roomId);
+						}, delayMs);
+					}
+				} else if (room.autoPlayPending) {
+					this._clearAutoPlayTimer(room);
 				}
 			}
 		}, TURN_TIMER_TICK_MS);

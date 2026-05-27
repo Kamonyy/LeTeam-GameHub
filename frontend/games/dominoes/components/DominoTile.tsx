@@ -8,6 +8,8 @@ export interface DominoTileProps {
 	right: number;
 	horizontal?: boolean;
 	playable?: boolean;
+	/** Grayed out when it's your turn but the tile cannot be played */
+	unplayable?: boolean;
 	selected?: boolean;
 	compact?: boolean;
 	placed?: boolean;
@@ -107,6 +109,7 @@ export default function DominoTile({
 	right,
 	horizontal = false,
 	playable = false,
+	unplayable = false,
 	selected = false,
 	compact = false,
 	placed = false,
@@ -167,6 +170,7 @@ export default function DominoTile({
 				placed && "domino-placed",
 				inHand && "domino-tile-3d",
 				playable && "domino-playable",
+				unplayable && "domino-unplayable",
 				selected && "domino-selected",
 				dragging && "domino-tile-dragging",
 				ghost && "domino-tile-ghost-preview",
