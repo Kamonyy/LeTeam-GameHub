@@ -21,3 +21,12 @@ export const DEFAULT_MATCH_SETTINGS = {
 export const DEFAULT_WORD_GAME_SETTINGS = {
   pointsToWin: 5,
 };
+
+export const MAX_ROOMS = 500;
+export const RATE_LIMIT_WINDOW_MS = 60_000;
+export const RATE_LIMITS = {
+  register: 30,
+  create: 10,
+  join: 20,
+  move: 120,
+};

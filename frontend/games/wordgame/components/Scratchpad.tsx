@@ -47,14 +47,17 @@ export default function Scratchpad({
   };
 
   return (
-    <aside className="word-scratchpad flex flex-col h-full min-h-[320px] lg:min-h-0">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-hub-border/80">
+    <aside className="word-scratchpad flex flex-col h-[420px] w-full max-w-full shrink-0 overflow-hidden rounded-xl border border-hub-border bg-hub-surface/80">
+      <div className="flex shrink-0 items-center gap-2 px-4 py-3 border-b border-hub-border/80">
         <StickyNote className="w-4 h-4 text-hub-accent" />
         <h3 className="text-sm font-semibold">Clue Scratchpad</h3>
         <span className="ml-auto text-xs text-hub-muted">{notes.length} notes</span>
       </div>
 
-      <form onSubmit={handleAdd} className="p-3 border-b border-hub-border/60">
+      <form
+        onSubmit={handleAdd}
+        className="shrink-0 p-3 border-b border-hub-border/60"
+      >
         <div className="flex gap-2">
           <input
             type="text"
@@ -77,7 +80,7 @@ export default function Scratchpad({
         </div>
       </form>
 
-      <ul className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin">
+      <ul className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-2 scrollbar-thin">
         {notes.length === 0 && (
           <li className="text-center text-xs text-hub-muted py-8 px-4">
             Jot down clues and deductions here. Notes save locally if you refresh.
@@ -124,7 +127,7 @@ export default function Scratchpad({
                 <p className="flex-1 text-sm text-gray-200 leading-relaxed break-words">
                   {note.text}
                 </p>
-                <div className="flex gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                <div className="flex gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity shrink-0">
                   <button
                     type="button"
                     onClick={() => startEdit(note)}

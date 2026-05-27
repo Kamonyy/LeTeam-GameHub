@@ -1,8 +1,9 @@
 'use client';
 
 import clsx from 'clsx';
+import type { DragEvent } from 'react';
 
-interface DominoTileProps {
+export interface DominoTileProps {
   left: number;
   right: number;
   horizontal?: boolean;
@@ -10,9 +11,14 @@ interface DominoTileProps {
   selected?: boolean;
   compact?: boolean;
   placed?: boolean;
+  dragging?: boolean;
+  draggable?: boolean;
   onClick?: () => void;
+  onDragStart?: (e: DragEvent) => void;
+  onDragEnd?: () => void;
   connectEnd?: 'left' | 'right' | null;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 function Pip({ value }: { value: number }) {
@@ -88,9 +94,14 @@ export default function DominoTile({
   selected = false,
   compact = false,
   placed = false,
+  dragging = false,
+  draggable = false,
   onClick,
+  onDragStart,
+  onDragEnd,
   connectEnd = null,
   className,
+  style,
 }: DominoTileProps) {
   const isDouble = left === right;
   const boardHorizontal = horizontal && !isDouble;
@@ -98,30 +109,46 @@ export default function DominoTile({
 
   const size = compact
     ? boardVertical
-      ? 'w-8 h-16'
+      ? 'w-9 h-[4.5rem]'
       : boardHorizontal
-        ? 'w-14 h-7'
-        : 'w-7 h-14'
+        ? 'w-[4.25rem] h-[2.125rem]'
+        : 'w-[2.125rem] h-[4.25rem]'
     : horizontal
-      ? 'w-20 h-10'
-      : 'w-11 h-[5.5rem]';
+      ? 'w-[5.25rem] h-[2.625rem]'
+      : 'w-[3.25rem] h-[6.25rem]';
 
   const layoutHorizontal = compact ? boardHorizontal : horizontal;
+  const interactive = !!(onClick || draggable);
 
   return (
-    <button
-      type="button"
+    <div
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       onClick={onClick}
-      disabled={!onClick}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      style={style}
       className={clsx(
-        'domino-tile relative flex rounded-md transition-all duration-300 ease-out',
+        'domino-tile relative flex rounded-md transition-all duration-300 ease-out select-none touch-none',
         size,
         layoutHorizontal ? 'flex-row' : 'flex-col',
-        placed && 'domino-placed animate-tile-snap',
-        playable && 'domino-playable cursor-pointer',
+        placed && 'domino-placed',
+        playable && 'domino-playable',
         selected && 'domino-selected',
-        onClick && !playable && 'cursor-pointer domino-hover',
-        !onClick && 'cursor-default',
+        dragging && 'domino-tile-dragging',
+        interactive && !playable && onClick && 'cursor-pointer domino-hover',
+        !interactive && 'cursor-default',
         connectEnd && 'ring-2 ring-emerald-400/70',
         className
       )}
@@ -137,6 +164,6 @@ export default function DominoTile({
         <div className="domino-rivet absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
       </div>
       <Half value={right} />
-    </button>
+    </div>
   );
 }

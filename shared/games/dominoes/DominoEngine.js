@@ -564,7 +564,7 @@ export class DominoEngine {
       roundNumber: state.roundNumber,
       settings: state.settings,
       teamIds: state.teamIds,
-      lastAction: state.lastAction,
+      lastAction: this._sanitizeLastAction(state.lastAction, viewerId),
       turnTimeRemaining: state.turnTimeRemaining,
       turnTimerPaused: state.turnTimerPaused,
       validMoves:
@@ -575,5 +575,13 @@ export class DominoEngine {
             }))
           : [],
     };
+  }
+
+  _sanitizeLastAction(lastAction, viewerId) {
+    if (!lastAction) return null;
+    if (lastAction.type === 'draw' && lastAction.playerId !== viewerId) {
+      return { type: 'draw', playerId: lastAction.playerId };
+    }
+    return lastAction;
   }
 }

@@ -9,9 +9,17 @@ import {
 } from 'socket.io-serverless/dist/cf';
 import { RoomManager } from '../shared/hub/RoomManager.js';
 import { registerHandlers } from '../shared/hub/registerHandlers.js';
+import { isAllowedSocketRequest } from '../shared/hub/security.js';
 
 /** @type {RoomManager | null} */
 let roomManager = null;
+
+function attachConnectionHandlers(server) {
+  roomManager = new RoomManager(server, { useSocketRooms: false });
+  server.on('connection', (socket) => {
+    registerHandlers(socket, roomManager);
+  });
+}
 
 export const EngineActor = createEioActor({
   getSocketActorNamespace(bindings) {
@@ -21,19 +29,13 @@ export const EngineActor = createEioActor({
 
 export const SocketActor = createSioActor({
   async onServerCreated(server) {
-    roomManager = new RoomManager(server, { useSocketRooms: false });
-    server.on('connection', (socket) => {
-      registerHandlers(socket, roomManager);
-    });
+    attachConnectionHandlers(server);
   },
 
   async onServerStateRestored(server) {
     if (!roomManager) {
-      roomManager = new RoomManager(server, { useSocketRooms: false });
+      attachConnectionHandlers(server);
     }
-    server.on('connection', (socket) => {
-      registerHandlers(socket, roomManager);
-    });
   },
 
   getEngineActorNamespace(bindings) {
@@ -46,10 +48,14 @@ export default {
     const url = new URL(req.url);
 
     if (url.pathname === '/health') {
-      return Response.json({ status: 'ok', timestamp: Date.now() });
+      return Response.json({ status: 'ok' });
     }
 
     if (url.pathname.startsWith('/socket.io/')) {
+      if (!isAllowedSocketRequest(req)) {
+        return new Response('Forbidden', { status: 403 });
+      }
+
       const actorId = env.engineActor.idFromName('singleton');
       const engineStub = env.engineActor.get(actorId);
 

@@ -1,3 +1,13 @@
+export interface HubPresenceState {
+  total: number;
+  players: OnlinePlayer[];
+}
+
+export interface OnlinePlayer {
+  displayName: string;
+  isYou?: boolean;
+}
+
 export interface MatchSettings {
   scoreCap: number;
   mode: 'ffa' | '2v2';

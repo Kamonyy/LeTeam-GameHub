@@ -1,6 +1,6 @@
 export function generateRoomId() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const length = 4 + Math.floor(Math.random() * 3);
+  const length = 8;
   const bytes = new Uint8Array(length);
   crypto.getRandomValues(bytes);
   let code = '';

@@ -2,6 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 const PLAYER_ID_KEY = 'leteam_player_id';
 const DISPLAY_NAME_KEY = 'leteam_display_name';
+const SESSION_TOKEN_KEY = 'leteam_session_token';
+const MAX_DISPLAY_NAME = 32;
 
 function generatePlayerId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -38,6 +40,22 @@ export function getOrCreatePlayerId(): string {
   return id;
 }
 
+export function getSessionToken(): string {
+  if (typeof window === 'undefined') return '';
+  return readStorage(SESSION_TOKEN_KEY) || '';
+}
+
+export function setSessionToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  if (!token || typeof token !== 'string') return;
+  writeStorage(SESSION_TOKEN_KEY, token);
+}
+
+export function clearSessionToken(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(SESSION_TOKEN_KEY);
+}
+
 export function getDisplayName(): string {
   if (typeof window === 'undefined') return '';
   return readStorage(DISPLAY_NAME_KEY) || '';
@@ -51,7 +69,7 @@ export function hasDisplayName(): boolean {
 
 export function setDisplayName(name: string): void {
   if (typeof window === 'undefined') return;
-  const trimmed = name.trim();
+  const trimmed = name.trim().slice(0, MAX_DISPLAY_NAME);
   if (!trimmed) return;
   writeStorage(DISPLAY_NAME_KEY, trimmed);
 }

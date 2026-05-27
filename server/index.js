@@ -14,14 +14,14 @@ import {
 } from './cors.js';
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
-const HOST = process.env.HOST || '0.0.0.0';
+const HOST = process.env.HOST || '127.0.0.1';
 const allowedOrigins = parseAllowedOrigins(process.env.CLIENT_URL);
 const corsOrigin = createCorsOriginChecker(allowedOrigins);
 
 const app = express();
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: Date.now() });
+  res.json({ status: 'ok' });
 });
 
 const httpServer = createServer(app);

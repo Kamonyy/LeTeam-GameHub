@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX } from 'lucide-react';
 import { useSocket } from '@/hooks/useSocket';
 import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
+import { normalizeRoomCode } from '@/lib/hub/room';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
 import ErrorToast from '@/components/shared/ErrorToast';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import WordLobby from '@/games/wordgame/components/WordLobby';
 import WordGameBoard from '@/games/wordgame/components/WordGameBoard';
 
@@ -39,6 +41,7 @@ export default function WordGameClient() {
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [autoJoined, setAutoJoined] = useState(false);
 
   const inviteJoin = !!roomParam && !hasDisplayName();
@@ -56,12 +59,14 @@ export default function WordGameClient() {
 
   useEffect(() => {
     if (!connected || !roomParam || lobby || autoJoined || inviteJoin) return;
+    const code = normalizeRoomCode(roomParam);
+    if (!code) return;
 
     const attemptJoin = async () => {
       setLoading(true);
-      const ok = await joinRoom(roomParam, getDisplayName());
+      const ok = await joinRoom(code, getDisplayName());
       if (ok) {
-        router.replace(`/wordgame?room=${roomParam.toUpperCase()}`, { scroll: false });
+        router.replace(`/wordgame?room=${code}`, { scroll: false });
       }
       setAutoJoined(true);
       setLoading(false);
@@ -80,31 +85,33 @@ export default function WordGameClient() {
   };
 
   const handleJoin = async () => {
-    if (!joinCode.trim() || !displayName.trim()) return;
+    const code = normalizeRoomCode(joinCode);
+    if (!code || !displayName.trim()) return;
     setLoading(true);
     setDisplayName(displayName);
-    const ok = await joinRoom(joinCode.trim(), displayName.trim());
-    if (ok) router.push(`/wordgame?room=${joinCode.trim().toUpperCase()}`);
+    const ok = await joinRoom(code, displayName.trim());
+    if (ok) router.push(`/wordgame?room=${code}`);
     setLoading(false);
   };
 
   const handleInviteJoin = async () => {
-    if (!roomParam || !displayName.trim()) return;
+    const code = roomParam ? normalizeRoomCode(roomParam) : null;
+    if (!code || !displayName.trim()) return;
     setLoading(true);
     setDisplayName(displayName);
-    const ok = await joinRoom(roomParam, displayName.trim());
+    const ok = await joinRoom(code, displayName.trim());
     if (ok) {
-      router.replace(`/wordgame?room=${roomParam.toUpperCase()}`, { scroll: false });
+      router.replace(`/wordgame?room=${code}`, { scroll: false });
     }
     setAutoJoined(true);
     setLoading(false);
   };
 
   const handleCancelMatch = async () => {
-    if (!confirm('Cancel the match and return to the lobby? Scores will reset.')) return;
     setCancelling(true);
     await cancelMatch();
     setCancelling(false);
+    setCancelConfirmOpen(false);
   };
 
   const isHost = lobby?.hostId === playerId;
@@ -129,7 +136,7 @@ export default function WordGameClient() {
           <div className="flex items-center gap-3">
             {isHost && inGame && (
               <button
-                onClick={handleCancelMatch}
+                onClick={() => setCancelConfirmOpen(true)}
                 disabled={cancelling}
                 className="btn-secondary flex items-center gap-2 text-sm py-2 text-hub-danger border-hub-danger/30 hover:bg-hub-danger/10"
               >
@@ -212,7 +219,7 @@ export default function WordGameClient() {
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                   className="input-field"
                   placeholder="ROOM CODE"
-                  maxLength={6}
+                  maxLength={8}
                 />
                 <button
                   onClick={handleJoin}
@@ -258,6 +265,19 @@ export default function WordGameClient() {
       </div>
 
       <ErrorToast message={error} onDismiss={clearError} />
+
+      <ConfirmDialog
+        open={cancelConfirmOpen}
+        title="Cancel this match?"
+        message="Everyone will return to the lobby and all scores for this session will reset."
+        confirmLabel="Cancel Match"
+        cancelLabel="Keep Playing"
+        variant="danger"
+        icon="cancel"
+        loading={cancelling}
+        onConfirm={handleCancelMatch}
+        onCancel={() => !cancelling && setCancelConfirmOpen(false)}
+      />
     </main>
   );
 }

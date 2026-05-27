@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX } from 'lucide-react';
 import { useSocket } from '@/hooks/useSocket';
 import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
+import { normalizeRoomCode } from '@/lib/hub/room';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
 import ErrorToast from '@/components/shared/ErrorToast';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import Lobby from '@/games/dominoes/components/Lobby';
 import GameBoard from '@/games/dominoes/components/GameBoard';
 import type { GameState } from '@/games/dominoes/types';
@@ -41,6 +43,7 @@ export default function DominoesClient() {
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [autoJoined, setAutoJoined] = useState(false);
 
   const inviteJoin = !!roomParam && !hasDisplayName();
@@ -51,13 +54,15 @@ export default function DominoesClient() {
 
   useEffect(() => {
     if (!connected || !roomParam || lobby || autoJoined || inviteJoin) return;
+    const code = normalizeRoomCode(roomParam);
+    if (!code) return;
 
     const attemptJoin = async () => {
       setLoading(true);
       const name = getDisplayName();
-      const ok = await joinRoom(roomParam, name);
+      const ok = await joinRoom(code, name);
       if (ok) {
-        router.replace(`/dominoes?room=${roomParam.toUpperCase()}`, { scroll: false });
+        router.replace(`/dominoes?room=${code}`, { scroll: false });
       }
       setAutoJoined(true);
       setLoading(false);
@@ -76,31 +81,33 @@ export default function DominoesClient() {
   };
 
   const handleJoin = async () => {
-    if (!joinCode.trim() || !displayName.trim()) return;
+    const code = normalizeRoomCode(joinCode);
+    if (!code || !displayName.trim()) return;
     setLoading(true);
     setDisplayName(displayName);
-    const ok = await joinRoom(joinCode.trim(), displayName.trim());
-    if (ok) router.push(`/dominoes?room=${joinCode.trim().toUpperCase()}`);
+    const ok = await joinRoom(code, displayName.trim());
+    if (ok) router.push(`/dominoes?room=${code}`);
     setLoading(false);
   };
 
   const handleInviteJoin = async () => {
-    if (!roomParam || !displayName.trim()) return;
+    const code = roomParam ? normalizeRoomCode(roomParam) : null;
+    if (!code || !displayName.trim()) return;
     setLoading(true);
     setDisplayName(displayName);
-    const ok = await joinRoom(roomParam, displayName.trim());
+    const ok = await joinRoom(code, displayName.trim());
     if (ok) {
-      router.replace(`/dominoes?room=${roomParam.toUpperCase()}`, { scroll: false });
+      router.replace(`/dominoes?room=${code}`, { scroll: false });
     }
     setAutoJoined(true);
     setLoading(false);
   };
 
   const handleCancelMatch = async () => {
-    if (!confirm('Cancel the match and return everyone to the lobby?')) return;
     setCancelling(true);
     await cancelMatch();
     setCancelling(false);
+    setCancelConfirmOpen(false);
   };
 
   const isHost = lobby?.hostId === playerId;
@@ -131,7 +138,7 @@ export default function DominoesClient() {
           <div className="flex items-center gap-3">
             {isHost && inActiveMatch && (
               <button
-                onClick={handleCancelMatch}
+                onClick={() => setCancelConfirmOpen(true)}
                 disabled={cancelling}
                 className="btn-secondary flex items-center gap-2 text-sm py-2 text-hub-danger border-hub-danger/30 hover:bg-hub-danger/10"
               >
@@ -219,7 +226,7 @@ export default function DominoesClient() {
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                   className="input-field"
                   placeholder="ROOM CODE"
-                  maxLength={6}
+                  maxLength={8}
                 />
                 <button
                   onClick={handleJoin}
@@ -271,6 +278,19 @@ export default function DominoesClient() {
       </div>
 
       <ErrorToast message={error} onDismiss={clearError} />
+
+      <ConfirmDialog
+        open={cancelConfirmOpen}
+        title="Cancel this match?"
+        message="Everyone will return to the lobby. Current round progress and scores will be cleared."
+        confirmLabel="Cancel Match"
+        cancelLabel="Keep Playing"
+        variant="danger"
+        icon="cancel"
+        loading={cancelling}
+        onConfirm={handleCancelMatch}
+        onCancel={() => !cancelling && setCancelConfirmOpen(false)}
+      />
     </main>
   );
 }

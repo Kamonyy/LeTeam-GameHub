@@ -61,7 +61,7 @@ export default function WordGameBoard({
         Round {gameState.roundNumber}
       </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 items-start lg:items-stretch">
         <div className="min-w-0">
           {gameState.phase === 'setup' && (
             <WordSetup

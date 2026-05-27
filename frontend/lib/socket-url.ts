@@ -2,6 +2,30 @@ const LOCAL_API = 'http://localhost:3001';
 
 let cachedServerUrl: string | null = null;
 
+function isAllowedServerUrl(url: string): boolean {
+  if (typeof window === 'undefined') return false;
+
+  try {
+    const parsed = new URL(url, window.location.origin);
+
+    if (parsed.protocol === 'javascript:' || parsed.protocol === 'data:') {
+      return false;
+    }
+
+    if (window.location.protocol === 'https:') {
+      return parsed.origin === window.location.origin;
+    }
+
+    return (
+      parsed.origin === window.location.origin ||
+      parsed.hostname === 'localhost' ||
+      parsed.hostname === '127.0.0.1'
+    );
+  } catch {
+    return false;
+  }
+}
+
 /** Resolve Socket.io URL: config.json → same-origin HTTPS → env → localhost. */
 export async function resolveServerUrl(): Promise<string> {
   if (cachedServerUrl) return cachedServerUrl;
@@ -15,7 +39,7 @@ export async function resolveServerUrl(): Promise<string> {
           cachedServerUrl = window.location.origin;
           return cachedServerUrl;
         }
-        if (data.serverUrl) {
+        if (data.serverUrl && isAllowedServerUrl(data.serverUrl)) {
           cachedServerUrl = data.serverUrl;
           return cachedServerUrl;
         }
@@ -30,7 +54,13 @@ export async function resolveServerUrl(): Promise<string> {
     }
   }
 
-  cachedServerUrl = process.env.NEXT_PUBLIC_SERVER_URL || LOCAL_API;
+  const fallback = process.env.NEXT_PUBLIC_SERVER_URL || LOCAL_API;
+  if (typeof window !== 'undefined' && !isAllowedServerUrl(fallback)) {
+    cachedServerUrl = window.location.origin;
+    return cachedServerUrl;
+  }
+
+  cachedServerUrl = fallback;
   return cachedServerUrl;
 }
 

@@ -8,6 +8,26 @@ export interface ScratchpadNote {
   createdAt: number;
 }
 
+function parseNotes(raw: string): ScratchpadNote[] {
+  const parsed = JSON.parse(raw);
+  if (!Array.isArray(parsed)) return [];
+  return parsed
+    .filter(
+      (n): n is ScratchpadNote =>
+        n &&
+        typeof n === 'object' &&
+        typeof n.id === 'string' &&
+        typeof n.text === 'string' &&
+        typeof n.createdAt === 'number'
+    )
+    .slice(0, 100)
+    .map((n) => ({
+      id: n.id.slice(0, 64),
+      text: n.text.slice(0, 500),
+      createdAt: n.createdAt,
+    }));
+}
+
 function storageKey(roomId: string, playerId: string) {
   return `wordgame_notes_${roomId}_${playerId}`;
 }
@@ -20,7 +40,7 @@ export function useScratchpadNotes(roomId: string, playerId: string) {
     if (!roomId || !playerId) return;
     try {
       const raw = localStorage.getItem(storageKey(roomId, playerId));
-      setNotes(raw ? JSON.parse(raw) : []);
+      setNotes(raw ? parseNotes(raw) : []);
     } catch {
       setNotes([]);
     }

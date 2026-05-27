@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 import { io } from 'socket.io-client';
-import { getDisplayName, getOrCreatePlayerId, setDisplayName } from '@/lib/player';
+import { getDisplayName, getOrCreatePlayerId, getSessionToken, setDisplayName, setSessionToken, clearSessionToken } from '@/lib/player';
 import { isSameOriginServer, resolveServerUrl } from '@/lib/socket-url';
 
 const SocketContext = createContext(null);
@@ -17,18 +17,53 @@ const SocketContext = createContext(null);
 export function SocketProvider({ children }) {
   const socketRef = useRef(null);
   const playerIdRef = useRef('');
+  const registerReadyRef = useRef(Promise.resolve(true));
   const [connected, setConnected] = useState(false);
   const [playerId, setPlayerId] = useState('');
   const [lobby, setLobby] = useState(null);
   const [gameState, setGameState] = useState(null);
   const [error, setError] = useState(null);
+  const [hubPresence, setHubPresence] = useState({ total: 0, players: [] });
 
-  const registerPlayer = useCallback((socket, id) => {
-    socket.emit(
-      'player:register',
-      { playerId: id, displayName: getDisplayName() || 'Player' },
-      () => {}
-    );
+  const registerPlayer = useCallback((socket, id, isRetry = false) => {
+    return new Promise((resolve) => {
+      socket.emit(
+        'player:register',
+        {
+          playerId: id,
+          displayName: getDisplayName() || 'Player',
+          sessionToken: getSessionToken() || undefined,
+        },
+        (res) => {
+          if (
+            !isRetry &&
+            res?.error &&
+            (res.error === 'Invalid session token' ||
+              res.error === 'Session token required')
+          ) {
+            clearSessionToken();
+            registerPlayer(socket, id, true).then(resolve);
+            return;
+          }
+          if (res?.error) {
+            setError(res.error);
+            resolve(false);
+            return;
+          }
+          if (res?.sessionToken) {
+            setSessionToken(res.sessionToken);
+          }
+          if (res?.reconnected && res?.roomId) {
+            // lobby/game state arrives via reconnect:sync + game:state:update
+          }
+          resolve(true);
+        }
+      );
+    });
+  }, []);
+
+  const ensureRegistered = useCallback(async () => {
+    await registerReadyRef.current;
   }, []);
 
   useEffect(() => {
@@ -57,11 +92,19 @@ export function SocketProvider({ children }) {
 
       socket.on('connect', () => {
         setConnected(true);
-        registerPlayer(socket, playerIdRef.current);
+        registerReadyRef.current = registerPlayer(socket, playerIdRef.current).then(
+          (ok) => {
+            if (ok) socket.emit('hub:presence:request', {});
+            return ok;
+          }
+        );
       });
 
       socket.on('disconnect', () => setConnected(false));
       socket.on('connect_error', () => setConnected(false));
+      socket.on('hub:presence', (payload) => {
+        if (payload?.players) setHubPresence(payload);
+      });
       socket.on('lobby:state', (state) => setLobby(state));
       socket.on('game:state:update', (state) => setGameState(state));
       socket.on('reconnect:sync', (payload) => setLobby(payload));
@@ -205,29 +248,47 @@ export function SocketProvider({ children }) {
 
   const submitSecretWord = useCallback((word) => {
     return new Promise((resolve) => {
-      socketRef.current?.emit('word:submit', { word }, (res) => {
-        if (res?.error) {
-          setError(res.error);
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
           resolve(false);
-        } else {
-          resolve(true);
+          return;
         }
-      });
+        socket.emit('word:submit', { word }, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve(false);
+          } else {
+            if (res?.state) setGameState(res.state);
+            resolve(true);
+          }
+        });
+      })();
     });
-  }, []);
+  }, [ensureRegistered]);
 
   const confirmWordGuessed = useCallback(() => {
     return new Promise((resolve) => {
-      socketRef.current?.emit('word:guessed', {}, (res) => {
-        if (res?.error) {
-          setError(res.error);
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
           resolve(false);
-        } else {
-          resolve(true);
+          return;
         }
-      });
+        socket.emit('word:guessed', {}, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve(false);
+          } else {
+            if (res?.state) setGameState(res.state);
+            resolve(true);
+          }
+        });
+      })();
     });
-  }, []);
+  }, [ensureRegistered]);
 
   const value = {
     connected,
@@ -235,6 +296,7 @@ export function SocketProvider({ children }) {
     lobby,
     gameState,
     error,
+    hubPresence,
     clearError,
     refreshDisplayName,
     createRoom,

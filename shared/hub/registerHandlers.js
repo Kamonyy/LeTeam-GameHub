@@ -1,21 +1,62 @@
 /** Hub + dominoes socket event wiring (shared by Worker and local server). */
 
+import {
+  RATE_LIMITS,
+} from './constants.js';
+import {
+  normalizeRoomId,
+  sanitizeDisplayName,
+  validateDominoTile,
+  validateGameType,
+  validateMoveEnd,
+  validatePlayerId,
+  validateSessionToken,
+  validateTargetPlayerId,
+} from './validate.js';
+
 export function registerHandlers(socket, roomManager) {
-  socket.on('player:register', ({ playerId, displayName }, ack) => {
-    if (!playerId || typeof playerId !== 'string') {
+  socket.on('player:register', ({ playerId, displayName, sessionToken }, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'register', RATE_LIMITS.register)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    if (!validatePlayerId(playerId)) {
       ack?.({ error: 'Invalid playerId' });
+      return;
+    }
+    if (!validateSessionToken(sessionToken)) {
+      ack?.({ error: 'Invalid session token' });
       return;
     }
     const result = roomManager.registerPlayer(
       socket,
       playerId,
-      displayName || 'Player'
+      displayName,
+      sessionToken || undefined
     );
+    if (result.error) {
+      ack?.({ error: result.error });
+      return;
+    }
     ack?.({ success: true, ...result });
   });
 
+  socket.on('hub:presence:request', (_payload, ack) => {
+    roomManager.sendHubPresenceToSocket(socket);
+    ack?.({ success: true });
+  });
+
   socket.on('room:create', ({ displayName, gameType }, ack) => {
-    const result = roomManager.createRoom(socket, displayName, gameType);
+    if (!roomManager.checkRateLimit(socket.id, 'create', RATE_LIMITS.create)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    const type = gameType || 'dominoes';
+    if (!validateGameType(type)) {
+      ack?.({ error: 'Invalid game type' });
+      return;
+    }
+    const result = roomManager.createRoom(socket, displayName, type);
     if (result.error) {
       ack?.({ error: result.error });
       return;
@@ -24,11 +65,16 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('room:join', ({ roomId, displayName }, ack) => {
-    if (!roomId) {
-      ack?.({ error: 'Room ID required' });
+    if (!roomManager.checkRateLimit(socket.id, 'join', RATE_LIMITS.join)) {
+      ack?.({ error: 'Too many requests, slow down' });
       return;
     }
-    const result = roomManager.joinRoom(socket, roomId, displayName);
+    const normalized = normalizeRoomId(roomId);
+    if (!normalized) {
+      ack?.({ error: 'Invalid room code' });
+      return;
+    }
+    const result = roomManager.joinRoom(socket, normalized, displayName);
     if (result.error) {
       ack?.({ error: result.error });
       return;
@@ -42,6 +88,10 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('room:settings:update', (settings, ack) => {
+    if (!settings || typeof settings !== 'object') {
+      ack?.({ error: 'Invalid settings' });
+      return;
+    }
     const result = roomManager.updateRoomSettings(socket, settings);
     if (result?.error) {
       ack?.({ error: result.error });
@@ -51,8 +101,8 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('room:kick', ({ targetPlayerId }, ack) => {
-    if (!targetPlayerId) {
-      ack?.({ error: 'Target player required' });
+    if (!validateTargetPlayerId(targetPlayerId)) {
+      ack?.({ error: 'Invalid target player' });
       return;
     }
     const result = roomManager.kickPlayer(socket, targetPlayerId);
@@ -82,7 +132,11 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('game:move:request', ({ tile, end }, ack) => {
-    if (!tile || !end) {
+    if (!roomManager.checkRateLimit(socket.id, 'move', RATE_LIMITS.move)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    if (!validateDominoTile(tile) || !validateMoveEnd(end)) {
       socket.emit('game:error', { message: 'Invalid move payload' });
       ack?.({ error: 'Invalid move payload' });
       return;
@@ -97,6 +151,10 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('game:draw:request', (_payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'move', RATE_LIMITS.move)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
     const result = roomManager.handleDraw(socket);
     if (result?.error) {
       socket.emit('game:error', { message: result.error });
@@ -107,6 +165,10 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('game:pass:request', (_payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'move', RATE_LIMITS.move)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
     const result = roomManager.handlePass(socket);
     if (result?.error) {
       socket.emit('game:error', { message: result.error });
@@ -123,7 +185,7 @@ export function registerHandlers(socket, roomManager) {
       ack?.({ error: result.error });
       return;
     }
-    ack?.({ success: true });
+    ack?.({ success: true, state: result.state });
   });
 
   socket.on('word:guessed', (_payload, ack) => {
@@ -133,7 +195,7 @@ export function registerHandlers(socket, roomManager) {
       ack?.({ error: result.error });
       return;
     }
-    ack?.({ success: true });
+    ack?.({ success: true, state: result.state });
   });
 
   socket.on('disconnect', () => {
