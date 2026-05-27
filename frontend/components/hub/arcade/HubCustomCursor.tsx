@@ -12,7 +12,8 @@ export default function HubCustomCursor() {
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const coarse = window.matchMedia('(pointer: coarse)').matches;
-    if (reduced || coarse) return;
+    const fineHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (reduced || coarse || !fineHover) return;
 
     const root = rootRef.current;
     if (!root) return;
@@ -28,15 +29,14 @@ export default function HubCustomCursor() {
       if (visibleRef.current === next) return;
       visibleRef.current = next;
       root.style.opacity = next ? '1' : '0';
-      root.style.pointerEvents = next ? 'auto' : 'none';
     };
 
     const onMove = (e: MouseEvent) => {
       root.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
       setVisible(true);
 
-      const target = e.target as HTMLElement | null;
-      const el = target?.closest('[data-hub-cursor]') as HTMLElement | null;
+      const hit = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+      const el = hit?.closest('[data-hub-cursor]') as HTMLElement | null;
       const next = (el?.dataset.hubCursor as CursorMode) || 'default';
       if (next !== modeRef.current) {
         modeRef.current = next;
@@ -62,11 +62,6 @@ export default function HubCustomCursor() {
   }, []);
 
   return (
-    <div
-      ref={rootRef}
-      className="hub-cursor"
-      style={{ opacity: 0, pointerEvents: 'none' }}
-      aria-hidden
-    />
+    <div ref={rootRef} className="hub-cursor" style={{ opacity: 0 }} aria-hidden />
   );
 }

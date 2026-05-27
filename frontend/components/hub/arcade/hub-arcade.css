@@ -4,8 +4,8 @@
 	--hub-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
 	--hub-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 	background-color: #080a12;
-	cursor: none;
 }
+
 
 /* ── Arcade environment ── */
 .hub-arcade-bg {
@@ -163,20 +163,15 @@
 .hub-arcade-bg__vignette {
 	position: absolute;
 	inset: 0;
+	pointer-events: none;
 	background: radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.65) 100%);
 }
 
-.hub-arcade a,
-.hub-arcade button,
-.hub-arcade [role='button'] {
-	cursor: none;
-}
-
-@media (pointer: coarse), (prefers-reduced-motion: reduce) {
-	.hub-arcade,
+@media (hover: hover) and (pointer: fine) {
 	.hub-arcade a,
-	.hub-arcade button {
-		cursor: auto;
+	.hub-arcade button,
+	.hub-arcade [role='button'] {
+		cursor: none;
 	}
 }
 
@@ -364,10 +359,12 @@
 	will-change: transform;
 }
 
-.hub-game-card--active:hover,
-.hub-game-card--active.hub-game-card--hovered,
-.hub-game-card--active:has(:focus-visible) {
-	transform: translateY(-6px) translateZ(0);
+@media (hover: hover) and (pointer: fine) {
+	.hub-game-card--active:hover,
+	.hub-game-card--active.hub-game-card--hovered,
+	.hub-game-card--active:focus-visible {
+		transform: translateY(-3px) translateZ(0);
+	}
 }
 
 .hub-game-card__glow {
@@ -382,26 +379,28 @@
 
 .hub-game-card--dominoes .hub-game-card__glow {
 	background:
-		radial-gradient(ellipse 90% 70% at 50% 110%, rgba(52, 211, 153, 0.28), transparent 58%),
-		radial-gradient(ellipse 60% 50% at 20% 0%, rgba(59, 130, 246, 0.08), transparent 55%);
+		radial-gradient(ellipse 90% 70% at 50% 110%, rgba(52, 211, 153, 0.16), transparent 58%),
+		radial-gradient(ellipse 60% 50% at 20% 0%, rgba(59, 130, 246, 0.05), transparent 55%);
 }
 
 .hub-game-card--wordgame .hub-game-card__glow {
 	background:
-		radial-gradient(ellipse 90% 70% at 50% 110%, rgba(56, 189, 248, 0.3), transparent 58%),
-		radial-gradient(ellipse 55% 45% at 85% 15%, rgba(123, 92, 255, 0.12), transparent 50%);
+		radial-gradient(ellipse 90% 70% at 50% 110%, rgba(56, 189, 248, 0.18), transparent 58%),
+		radial-gradient(ellipse 55% 45% at 85% 15%, rgba(123, 92, 255, 0.06), transparent 50%);
 }
 
 .hub-game-card--bara-alsalafa .hub-game-card__glow {
 	background:
-		radial-gradient(ellipse 90% 70% at 50% 110%, rgba(244, 63, 94, 0.32), transparent 58%),
-		radial-gradient(ellipse 50% 40% at 10% 20%, rgba(251, 191, 36, 0.08), transparent 50%);
+		radial-gradient(ellipse 90% 70% at 50% 110%, rgba(244, 63, 94, 0.18), transparent 58%),
+		radial-gradient(ellipse 50% 40% at 10% 20%, rgba(251, 191, 36, 0.05), transparent 50%);
 }
 
-.hub-game-card--active:hover .hub-game-card__glow,
-.hub-game-card--active.hub-game-card--hovered .hub-game-card__glow,
-.hub-game-card--active:has(:focus-visible) .hub-game-card__glow {
-	opacity: 1;
+@media (hover: hover) and (pointer: fine) {
+	.hub-game-card--active:hover .hub-game-card__glow,
+	.hub-game-card--active.hub-game-card--hovered .hub-game-card__glow,
+	.hub-game-card--active:focus-visible .hub-game-card__glow {
+		opacity: 1;
+	}
 }
 
 .hub-game-card__shine {
@@ -424,38 +423,18 @@
 	transform: translateX(-120%) skewX(-18deg);
 }
 
-.hub-game-card--active:hover .hub-game-card__shine,
-.hub-game-card--active.hub-game-card--hovered .hub-game-card__shine {
-	opacity: 1;
-	animation: hub-card-shine 0.85s var(--hub-smooth) forwards;
+@media (hover: hover) and (pointer: fine) {
+	.hub-game-card--active:hover .hub-game-card__shine,
+	.hub-game-card--active.hub-game-card--hovered .hub-game-card__shine {
+		opacity: 0.7;
+		animation: hub-card-shine 1.1s var(--hub-smooth) forwards;
+	}
 }
 
 @keyframes hub-card-shine {
 	to {
 		transform: translateX(280%) skewX(-18deg);
 	}
-}
-
-.hub-game-card__scanlines {
-	position: absolute;
-	inset: 0;
-	border-radius: inherit;
-	pointer-events: none;
-	z-index: 1;
-	opacity: 0;
-	background: repeating-linear-gradient(
-		0deg,
-		transparent,
-		transparent 2px,
-		rgba(0, 0, 0, 0.04) 2px,
-		rgba(0, 0, 0, 0.04) 4px
-	);
-	transition: opacity 0.35s ease;
-}
-
-.hub-game-card--active:hover .hub-game-card__scanlines,
-.hub-game-card--active.hub-game-card--hovered .hub-game-card__scanlines {
-	opacity: 1;
 }
 
 .hub-game-card__icon {
@@ -465,27 +444,29 @@
 		border-color 0.25s ease;
 }
 
-.hub-game-card--active:hover .hub-game-card__icon,
-.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
-	transform: scale(1.08) translateZ(0);
-}
+@media (hover: hover) and (pointer: fine) {
+	.hub-game-card--active:hover .hub-game-card__icon,
+	.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
+		transform: scale(1.04) translateZ(0);
+	}
 
-.hub-game-card--dominoes.hub-game-card--active:hover .hub-game-card__icon,
-.hub-game-card--dominoes.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
-	border-color: rgba(52, 211, 153, 0.55);
-	box-shadow: 0 0 22px rgba(52, 211, 153, 0.35);
-}
+	.hub-game-card--dominoes.hub-game-card--active:hover .hub-game-card__icon,
+	.hub-game-card--dominoes.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
+		border-color: rgba(52, 211, 153, 0.4);
+		box-shadow: 0 0 14px rgba(52, 211, 153, 0.22);
+	}
 
-.hub-game-card--wordgame.hub-game-card--active:hover .hub-game-card__icon,
-.hub-game-card--wordgame.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
-	border-color: rgba(56, 189, 248, 0.55);
-	box-shadow: 0 0 22px rgba(56, 189, 248, 0.35);
-}
+	.hub-game-card--wordgame.hub-game-card--active:hover .hub-game-card__icon,
+	.hub-game-card--wordgame.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
+		border-color: rgba(56, 189, 248, 0.4);
+		box-shadow: 0 0 14px rgba(56, 189, 248, 0.22);
+	}
 
-.hub-game-card--bara-alsalafa.hub-game-card--active:hover .hub-game-card__icon,
-.hub-game-card--bara-alsalafa.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
-	border-color: rgba(244, 63, 94, 0.55);
-	box-shadow: 0 0 22px rgba(244, 63, 94, 0.38);
+	.hub-game-card--bara-alsalafa.hub-game-card--active:hover .hub-game-card__icon,
+	.hub-game-card--bara-alsalafa.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
+		border-color: rgba(244, 63, 94, 0.42);
+		box-shadow: 0 0 14px rgba(244, 63, 94, 0.24);
+	}
 }
 
 .hub-game-card__play {
@@ -500,33 +481,27 @@
 	transition: transform 0.3s var(--hub-elastic);
 }
 
-.hub-game-card--dominoes.hub-game-card--active:hover .hub-game-card__play,
-.hub-game-card--dominoes.hub-game-card--active.hub-game-card--hovered .hub-game-card__play {
-	color: #6ee7b7;
-	text-shadow: 0 0 14px rgba(52, 211, 153, 0.55);
-}
+@media (hover: hover) and (pointer: fine) {
+	.hub-game-card--dominoes.hub-game-card--active:hover .hub-game-card__play,
+	.hub-game-card--dominoes.hub-game-card--active.hub-game-card--hovered .hub-game-card__play {
+		color: #6ee7b7;
+	}
 
-.hub-game-card--wordgame.hub-game-card--active:hover .hub-game-card__play,
-.hub-game-card--wordgame.hub-game-card--active.hub-game-card--hovered .hub-game-card__play {
-	color: #7dd3fc;
-	text-shadow: 0 0 14px rgba(56, 189, 248, 0.55);
-}
+	.hub-game-card--wordgame.hub-game-card--active:hover .hub-game-card__play,
+	.hub-game-card--wordgame.hub-game-card--active.hub-game-card--hovered .hub-game-card__play {
+		color: #7dd3fc;
+	}
 
-.hub-game-card--bara-alsalafa.hub-game-card--active:hover .hub-game-card__play,
-.hub-game-card--bara-alsalafa.hub-game-card--active.hub-game-card--hovered .hub-game-card__play {
-	color: #fda4af;
-	text-shadow: 0 0 14px rgba(244, 63, 94, 0.5);
-}
+	.hub-game-card--bara-alsalafa.hub-game-card--active:hover .hub-game-card__play,
+	.hub-game-card--bara-alsalafa.hub-game-card--active.hub-game-card--hovered .hub-game-card__play {
+		color: #fda4af;
+	}
 
-.hub-game-card--active:hover .hub-game-card__play-arrow,
-.hub-game-card--active.hub-game-card--hovered .hub-game-card__play-arrow,
-.hub-game-card--active:has(:focus-visible) .hub-game-card__play-arrow {
-	transform: translateX(4px);
-}
-
-.hub-game-card--active:hover .hub-game-card__play-label,
-.hub-game-card--active.hub-game-card--hovered .hub-game-card__play-label {
-	animation: hub-play-pulse 1.2s ease-in-out infinite;
+	.hub-game-card--active:hover .hub-game-card__play-arrow,
+	.hub-game-card--active.hub-game-card--hovered .hub-game-card__play-arrow,
+	.hub-game-card--active:focus-visible .hub-game-card__play-arrow {
+		transform: translateX(3px);
+	}
 }
 
 @keyframes hub-play-pulse {
@@ -547,69 +522,73 @@
 	content: '';
 	position: absolute;
 	inset: auto 12% 0;
-	height: 3px;
+	height: 2px;
 	border-radius: 999px;
 	opacity: 0;
+	pointer-events: none;
 	transition: opacity 0.3s ease;
-}
-
-.hub-game-card--active:hover::after,
-.hub-game-card--active.hub-game-card--hovered::after,
-.hub-game-card--active:has(:focus-visible)::after {
-	opacity: 1;
 }
 
 .hub-game-card--dominoes::after {
 	background: linear-gradient(90deg, transparent, #34d399, transparent);
-	box-shadow: 0 0 20px rgba(52, 211, 153, 0.5);
+	box-shadow: 0 0 12px rgba(52, 211, 153, 0.35);
 }
 
 .hub-game-card--wordgame::after {
 	background: linear-gradient(90deg, transparent, #38bdf8, transparent);
-	box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+	box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
 }
 
 .hub-game-card--bara-alsalafa::after {
 	background: linear-gradient(90deg, transparent, #f43f5e, transparent);
-	box-shadow: 0 0 20px rgba(244, 63, 94, 0.5);
+	box-shadow: 0 0 12px rgba(244, 63, 94, 0.35);
 }
 
-.hub-game-card--active:hover,
-.hub-game-card--active.hub-game-card--hovered,
-.hub-game-card--active:has(:focus-visible) {
-	box-shadow:
-		0 28px 56px rgba(0, 0, 0, 0.55),
-		0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+@media (hover: hover) and (pointer: fine) {
+	.hub-game-card--active:hover::after,
+	.hub-game-card--active.hub-game-card--hovered::after,
+	.hub-game-card--active:focus-visible::after {
+		opacity: 1;
+	}
+
+	.hub-game-card--active:hover,
+	.hub-game-card--active.hub-game-card--hovered,
+	.hub-game-card--active:focus-visible {
+		box-shadow:
+			0 16px 36px rgba(0, 0, 0, 0.45),
+			0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+	}
+
+	.hub-game-card--dominoes.hub-game-card--active:hover,
+	.hub-game-card--dominoes.hub-game-card--active.hub-game-card--hovered,
+	.hub-game-card--dominoes.hub-game-card--active:focus-visible {
+		border-color: rgba(52, 211, 153, 0.38);
+		box-shadow:
+			0 16px 36px rgba(0, 0, 0, 0.45),
+			0 0 16px rgba(52, 211, 153, 0.12);
+	}
+
+	.hub-game-card--wordgame.hub-game-card--active:hover,
+	.hub-game-card--wordgame.hub-game-card--active.hub-game-card--hovered,
+	.hub-game-card--wordgame.hub-game-card--active:focus-visible {
+		border-color: rgba(56, 189, 248, 0.38);
+		box-shadow:
+			0 16px 36px rgba(0, 0, 0, 0.45),
+			0 0 16px rgba(56, 189, 248, 0.14);
+	}
+
+	.hub-game-card--bara-alsalafa.hub-game-card--active:hover,
+	.hub-game-card--bara-alsalafa.hub-game-card--active.hub-game-card--hovered,
+	.hub-game-card--bara-alsalafa.hub-game-card--active:focus-visible {
+		border-color: rgba(244, 63, 94, 0.42);
+		box-shadow:
+			0 16px 36px rgba(0, 0, 0, 0.45),
+			0 0 16px rgba(244, 63, 94, 0.14);
+	}
 }
 
-.hub-game-card--dominoes.hub-game-card--active:hover,
-.hub-game-card--dominoes.hub-game-card--active.hub-game-card--hovered,
-.hub-game-card--dominoes.hub-game-card--active:has(:focus-visible) {
-	border-color: rgba(52, 211, 153, 0.5);
-	box-shadow:
-		0 28px 56px rgba(0, 0, 0, 0.55),
-		0 0 28px rgba(52, 211, 153, 0.18),
-		0 0 0 1px rgba(52, 211, 153, 0.2) inset;
-}
-
-.hub-game-card--wordgame.hub-game-card--active:hover,
-.hub-game-card--wordgame.hub-game-card--active.hub-game-card--hovered,
-.hub-game-card--wordgame.hub-game-card--active:has(:focus-visible) {
-	border-color: rgba(56, 189, 248, 0.5);
-	box-shadow:
-		0 28px 56px rgba(0, 0, 0, 0.55),
-		0 0 28px rgba(56, 189, 248, 0.2),
-		0 0 0 1px rgba(56, 189, 248, 0.18) inset;
-}
-
-.hub-game-card--bara-alsalafa.hub-game-card--active:hover,
-.hub-game-card--bara-alsalafa.hub-game-card--active.hub-game-card--hovered,
-.hub-game-card--bara-alsalafa.hub-game-card--active:has(:focus-visible) {
-	border-color: rgba(244, 63, 94, 0.55);
-	box-shadow:
-		0 28px 56px rgba(0, 0, 0, 0.55),
-		0 0 28px rgba(244, 63, 94, 0.22),
-		0 0 0 1px rgba(244, 63, 94, 0.2) inset;
+.hub-game-card--active:focus-visible {
+	outline: none;
 }
 
 .hub-game-card__surface {
@@ -811,7 +790,7 @@
 	border-radius: 50%;
 	background: rgba(59, 130, 246, 0.85);
 	box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
-	pointer-events: none;
+	pointer-events: none !important;
 	z-index: 9999;
 	transition:
 		width 0.2s var(--hub-smooth),

@@ -71,23 +71,37 @@ function WordPreview({ active }: { active: boolean }) {
 }
 
 function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLAnchorElement | HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
   const [transform, setTransform] = useState('');
+  const canTiltRef = useRef(false);
 
-  const handleMove = useCallback((e: React.MouseEvent) => {
-    if (!game.active) return;
-    const el = cardRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    const rotateX = y * -14;
-    const rotateY = x * 14;
-    setTransform(
-      `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05) translateY(-6px) translateZ(0)`
-    );
+  useEffect(() => {
+    const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const update = () => {
+      canTiltRef.current = mq.matches;
+    };
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
   }, []);
+
+  const handleMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!game.active || !canTiltRef.current) return;
+      const el = cardRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      const rotateX = y * -10;
+      const rotateY = x * 10;
+      setTransform(
+        `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02) translateY(-3px) translateZ(0)`
+      );
+    },
+    [game.active]
+  );
 
   const handleLeave = useCallback(() => {
     setHovered(false);
@@ -97,7 +111,7 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
   const handleEnter = useCallback(() => setHovered(true), []);
 
   const cardClass = clsx(
-    'hub-game-card hub-enter-card block rounded-2xl border border-hub-border bg-hub-card p-6 overflow-hidden min-h-[220px]',
+    'hub-game-card hub-enter-card group block rounded-2xl border border-hub-border bg-hub-card p-6 overflow-hidden min-h-[220px]',
     `hub-game-card--${game.id}`,
     game.active && 'hub-game-card--active',
     !game.active && 'hub-game-card--inactive opacity-70 cursor-not-allowed',
@@ -105,10 +119,9 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
   );
 
   const inner = (
-  <>
+    <>
       <span className="hub-game-card__glow" aria-hidden />
       <span className="hub-game-card__shine" aria-hidden />
-      <span className="hub-game-card__scanlines" aria-hidden />
 
       {game.id === 'dominoes' && (
         <>
@@ -190,31 +203,40 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
 
   const style = {
     ['--hub-stagger' as string]: staggerIndex,
-    transform: hovered ? transform : undefined,
+    transform: hovered && transform ? transform : undefined,
   } as React.CSSProperties;
 
-  const shellProps = {
-    ref: cardRef,
-    className: clsx(cardClass, game.active && 'group'),
-    style,
-    onMouseMove: game.active ? handleMove : undefined,
-    onMouseEnter: game.active ? handleEnter : undefined,
-    onMouseLeave: game.active ? handleLeave : undefined,
-    'data-hub-cursor': game.active ? (CURSOR_BY_GAME[game.id] ?? 'default') : undefined,
-  };
+  const interactionProps = game.active
+    ? {
+        onMouseMove: handleMove,
+        onMouseEnter: handleEnter,
+        onMouseLeave: handleLeave,
+        'data-hub-cursor': CURSOR_BY_GAME[game.id] ?? 'default',
+      }
+    : {};
 
   if (game.active) {
     return (
-      <div {...shellProps}>
-        <Link href={game.href} className="block h-full outline-none focus-visible:ring-2 focus-visible:ring-hub-accent rounded-2xl">
-          {inner}
-        </Link>
-      </div>
+      <Link
+        ref={cardRef as React.RefObject<HTMLAnchorElement>}
+        href={game.href}
+        className={clsx(cardClass, 'outline-none focus-visible:ring-2 focus-visible:ring-hub-accent')}
+        style={style}
+        {...interactionProps}
+      >
+        {inner}
+      </Link>
     );
   }
 
   return (
-    <div {...shellProps} aria-disabled>
+    <div
+      ref={cardRef as React.RefObject<HTMLDivElement>}
+      className={cardClass}
+      style={style}
+      aria-disabled
+      {...interactionProps}
+    >
       {inner}
     </div>
   );

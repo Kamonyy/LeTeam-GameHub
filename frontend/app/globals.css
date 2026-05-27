@@ -804,10 +804,11 @@
 
 	.stuck-reset-btn {
 		position: fixed;
-		top: max(0.75rem, env(safe-area-inset-top, 0px));
-		right: max(0.75rem, env(safe-area-inset-right, 0px));
-		left: auto;
-		z-index: 46;
+		bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+		left: max(0.75rem, env(safe-area-inset-left, 0px));
+		right: auto;
+		top: auto;
+		z-index: 30;
 		padding: 0.45rem 0.85rem;
 		border-radius: 0.5rem;
 		font-size: 0.75rem;
@@ -828,8 +829,8 @@
 
 	@media (min-width: 640px) {
 		.stuck-reset-btn {
-			top: max(0.85rem, env(safe-area-inset-top, 0px));
-			right: max(1rem, env(safe-area-inset-right, 0px));
+			bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+			left: max(1rem, env(safe-area-inset-left, 0px));
 		}
 	}
 
