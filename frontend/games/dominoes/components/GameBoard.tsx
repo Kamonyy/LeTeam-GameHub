@@ -6,9 +6,11 @@ import clsx from 'clsx';
 import DominoTile from './DominoTile';
 import Boneyard from './Boneyard';
 import DropZone from './DropZone';
+import BoardChain from './BoardChain';
 import ScoreProgressBar from './ScoreProgressBar';
 import GameActionOverlay from './GameActionOverlay';
 import TurnIndicator from '@/components/shared/TurnIndicator';
+import { playDominoSnapSound } from '../lib/dominoSound';
 import type { GameState, Tile, ValidMove } from '../types';
 import { TEAM_LABELS } from '../types';
 import type { LobbyState } from '@/lib/hub/types';
@@ -103,8 +105,10 @@ export default function GameBoard({
   const [selectedTile, setSelectedTile] = useState<Tile | null>(null);
   const [dragTile, setDragTile] = useState<Tile | null>(null);
   const [dragOverEnd, setDragOverEnd] = useState<'left' | 'right' | null>(null);
+  const [hoverEnd, setHoverEnd] = useState<'left' | 'right' | null>(null);
   const [localTimer, setLocalTimer] = useState(gameState.turnTimeRemaining);
   const [recentlyPlaced, setRecentlyPlaced] = useState<number | null>(null);
+  const [shockwave, setShockwave] = useState(false);
 
   const isMyTurn = gameState.currentPlayerId === playerId;
   const isTeamMode = gameState.settings?.mode === '2v2';
@@ -140,6 +144,11 @@ export default function GameBoard({
       const t = setTimeout(() => setRecentlyPlaced(null), 700);
       return () => clearTimeout(t);
     }
+    if (gameState.lastAction?.type === 'gameover') {
+      setShockwave(true);
+      const t = setTimeout(() => setShockwave(false), 900);
+      return () => clearTimeout(t);
+    }
   }, [gameState.lastAction, gameState.board.length]);
 
   useEffect(() => {
@@ -165,10 +174,12 @@ export default function GameBoard({
 
   const playTile = (tile: Tile, end: 'left' | 'right') => {
     if (!isPlayable(tile).some((m) => m.end === end)) return;
+    playDominoSnapSound();
     onPlayMove(tile, end);
     setSelectedTile(null);
     setDragTile(null);
     setDragOverEnd(null);
+    setHoverEnd(null);
   };
 
   const handleTileClick = (tile: Tile) => {
@@ -233,6 +244,14 @@ export default function GameBoard({
     isMyTurn && validMoves.length === 0 && gameState.boneyardCount > 0;
   const showDropZones = isMyTurn && gameState.phase === 'playing';
   const activeDragTile = dragTile || selectedTile;
+  const ghostEnd = dragOverEnd ?? hoverEnd;
+  const urgentTimer =
+    isMyTurn && localTimer <= 10000 && !gameState.turnTimerPaused;
+  const tableGlowClass = shockwave
+    ? 'animate-table-shockwave'
+    : urgentTimer
+      ? 'animate-table-glow-urgent'
+      : 'animate-table-glow';
 
   const scoreBars = isTeamMode ? (
     <>
@@ -367,24 +386,30 @@ export default function GameBoard({
 
         {/* Square table */}
         <div className="flex flex-1 flex-col items-center justify-center gap-3 w-full">
-          <div className="domino-table-square animate-table-glow relative flex items-center justify-center p-4 sm:p-6">
+          <div
+            className={clsx(
+              'domino-table-square relative w-full max-w-[min(92vw,580px)]',
+              tableGlowClass
+            )}
+          >
             <GameActionOverlay
               lastAction={gameState.lastAction}
               playerNames={playerNames}
             />
 
             {gameState.board.length === 0 ? (
-              <div className="relative z-10 flex flex-col items-center justify-center gap-4">
+              <div className="relative z-10 flex flex-col items-center justify-center gap-4 h-full min-h-[280px]">
                 <DropZone
                   end="left"
                   active={showDropZones}
                   valid={validMoves.length > 0}
-                  previewTile={activeDragTile}
                   dragOver={dragOverEnd === 'left'}
                   onClick={() => activeDragTile && handleBoardEndClick('left')}
                   onDragOver={handleDragOverEnd('left')}
                   onDragLeave={() => setDragOverEnd(null)}
                   onDrop={handleDropOnEnd('left')}
+                  onHover={() => setHoverEnd('left')}
+                  onHoverEnd={() => setHoverEnd(null)}
                   vertical={false}
                   large
                 />
@@ -395,51 +420,21 @@ export default function GameBoard({
                 )}
               </div>
             ) : (
-              <div className="relative z-10 w-full h-full flex items-center justify-center overflow-auto scrollbar-thin max-h-full">
-                <div className="flex items-center gap-0 py-4 px-2 transition-all duration-500 ease-out">
-                  <DropZone
-                    end="left"
-                    active={showDropZones}
-                    valid={canPlayEnd('left')}
-                    previewTile={activeDragTile}
-                    dragOver={dragOverEnd === 'left'}
-                    onClick={() => handleBoardEndClick('left')}
-                    onDragOver={handleDragOverEnd('left')}
-                    onDragLeave={() => setDragOverEnd(null)}
-                    onDrop={handleDropOnEnd('left')}
-                    large
-                  />
-
-                  {gameState.board.map((tile, i) => (
-                    <DominoTile
-                      key={`${tile.left}-${tile.right}-${i}`}
-                      left={tile.left}
-                      right={tile.right}
-                      horizontal
-                      compact
-                      placed
-                      className={clsx(
-                        'transition-all duration-500',
-                        recentlyPlaced === i && 'animate-tile-snap z-10',
-                        i > 0 && '-ml-0.5'
-                      )}
-                    />
-                  ))}
-
-                  <DropZone
-                    end="right"
-                    active={showDropZones}
-                    valid={canPlayEnd('right')}
-                    previewTile={activeDragTile}
-                    dragOver={dragOverEnd === 'right'}
-                    onClick={() => handleBoardEndClick('right')}
-                    onDragOver={handleDragOverEnd('right')}
-                    onDragLeave={() => setDragOverEnd(null)}
-                    onDrop={handleDropOnEnd('right')}
-                    large
-                  />
-                </div>
-              </div>
+              <BoardChain
+                board={gameState.board}
+                openEnds={gameState.openEnds}
+                showDropZones={showDropZones}
+                canPlayEnd={canPlayEnd}
+                activeTile={activeDragTile}
+                dragOverEnd={dragOverEnd}
+                ghostEnd={ghostEnd}
+                recentlyPlaced={recentlyPlaced}
+                onEndClick={handleBoardEndClick}
+                onDragOverEnd={handleDragOverEnd}
+                onDragLeave={() => setDragOverEnd(null)}
+                onDropOnEnd={handleDropOnEnd}
+                onZoneHover={setHoverEnd}
+              />
             )}
 
             {gameState.openEnds && gameState.board.length > 0 && (
@@ -466,7 +461,10 @@ export default function GameBoard({
           Your hand · {isMyTurn ? 'Drag a tile to the table or tap to select' : 'Waiting for your turn'}
         </p>
 
-        <div className="domino-hand-fan flex justify-center items-end min-h-[7.5rem] gap-1 sm:gap-2 flex-wrap sm:flex-nowrap">
+        <div
+          key={gameState.roundNumber}
+          className="domino-hand-fan flex justify-center items-end min-h-[7.5rem] gap-1 sm:gap-2 flex-wrap sm:flex-nowrap"
+        >
           {gameState.myHand.map((tile, i) => {
             const playable = isPlayable(tile).length > 0;
             const isSelected =
@@ -482,24 +480,33 @@ export default function GameBoard({
               : `rotate(${spread}deg) translateY(${lift}px)`;
 
             return (
-              <DominoTile
+              <div
                 key={`${tile.left}-${tile.right}-${i}`}
-                left={tile.left}
-                right={tile.right}
-                playable={playable && isMyTurn}
-                selected={isSelected}
-                dragging={isDragging}
-                draggable={playable && isMyTurn}
-                onDragStart={handleDragStart(tile)}
-                onDragEnd={handleDragEnd}
-                onClick={() => handleTileClick(tile)}
-                className="animate-hand-deal origin-bottom transition-transform duration-300"
+                className="origin-bottom transition-transform duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]"
                 style={{
-                  animationDelay: `${i * 55}ms`,
                   transform: fanTransform,
                   zIndex: isSelected || isDragging ? 30 : i + 1,
                 }}
-              />
+              >
+                <DominoTile
+                  left={tile.left}
+                  right={tile.right}
+                  playable={playable && isMyTurn}
+                  selected={isSelected}
+                  dragging={isDragging}
+                  draggable={playable && isMyTurn}
+                  inHand
+                  onDragStart={handleDragStart(tile)}
+                  onDragEnd={handleDragEnd}
+                  onClick={() => handleTileClick(tile)}
+                  className="animate-hand-deal"
+                  style={{
+                    animationDelay: `${i * 65}ms`,
+                    ['--deal-from-x' as string]: `${-spread * 3}px`,
+                    ['--fan-rotate' as string]: '0deg',
+                  }}
+                />
+              </div>
             );
           })}
         </div>

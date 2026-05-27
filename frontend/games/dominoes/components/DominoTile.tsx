@@ -1,7 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
-import type { DragEvent } from 'react';
+import type { DragEvent, CSSProperties } from 'react';
 
 export interface DominoTileProps {
   left: number;
@@ -13,12 +13,14 @@ export interface DominoTileProps {
   placed?: boolean;
   dragging?: boolean;
   draggable?: boolean;
+  ghost?: boolean;
+  inHand?: boolean;
   onClick?: () => void;
   onDragStart?: (e: DragEvent) => void;
   onDragEnd?: () => void;
   connectEnd?: 'left' | 'right' | null;
   className?: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 }
 
 function Pip({ value }: { value: number }) {
@@ -79,6 +81,7 @@ function Pip({ value }: { value: number }) {
 function Half({ value }: { value: number }) {
   return (
     <div className="domino-face flex-1 flex items-center justify-center min-w-0 relative overflow-hidden">
+      <div className="domino-face-shimmer absolute inset-0 pointer-events-none z-[2]" />
       <div className="w-[88%] h-[88%] aspect-square relative z-[1]">
         <Pip value={value} />
       </div>
@@ -96,6 +99,8 @@ export default function DominoTile({
   placed = false,
   dragging = false,
   draggable = false,
+  ghost = false,
+  inHand = false,
   onClick,
   onDragStart,
   onDragEnd,
@@ -104,7 +109,8 @@ export default function DominoTile({
   style,
 }: DominoTileProps) {
   const isDouble = left === right;
-  const boardHorizontal = horizontal && !isDouble;
+  const boardHorizontal =
+    placed && compact ? !isDouble : horizontal && !isDouble;
   const boardVertical = isDouble && compact;
 
   const size = compact
@@ -140,13 +146,17 @@ export default function DominoTile({
       }
       style={style}
       className={clsx(
-        'domino-tile relative flex rounded-md transition-all duration-300 ease-out select-none touch-none',
+        'domino-tile relative flex rounded-md select-none touch-none',
+        'transition-[transform,box-shadow,filter] duration-300',
+        inHand ? 'domino-tile-hand ease-[cubic-bezier(0.175,0.885,0.32,1.275)]' : 'ease-out',
         size,
         layoutHorizontal ? 'flex-row' : 'flex-col',
         placed && 'domino-placed',
+        inHand && 'domino-tile-3d',
         playable && 'domino-playable',
         selected && 'domino-selected',
         dragging && 'domino-tile-dragging',
+        ghost && 'domino-tile-ghost-preview',
         interactive && !playable && onClick && 'cursor-pointer domino-hover',
         !interactive && 'cursor-default',
         connectEnd && 'ring-2 ring-emerald-400/70',
