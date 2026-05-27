@@ -1,0 +1,8 @@
+name = "leteam-gamehub"
+compatibility_date = "2024-01-01"
+
+# Static Next.js export — built to frontend/out before deploy
+[assets]
+directory = "frontend/out"
+not_found_handling = "single-page-application"
+html_handling = "auto-trailing-slash"

@@ -26,27 +26,35 @@ Cloudflare Pages cannot run the Socket.io game server — it needs an always-on 
 
 ---
 
-## 2. Deploy frontend (Cloudflare Pages)
+## 2. Deploy frontend (Cloudflare)
 
-1. [Cloudflare Dashboard](https://dash.cloudflare.com) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
-2. Select your repository.
-3. Build settings:
+### Option A — Workers deploy (Wrangler, current setup)
 
-   | Setting | Value |
-   |---------|-------|
-   | **Production branch** | `main` |
-   | **Root directory** | `frontend` |
-   | **Build command** | `npm install && npm run build` |
-   | **Build output directory** | `out` |
-   | **Node.js version** | `20` |
+In Cloudflare → your project → **Settings** → **Build**:
 
-4. **Environment variables** (Production + Preview):
+| Setting | Value |
+|---------|-------|
+| **Build command** | `npm run build` |
+| **Deploy command** | `npx wrangler deploy` |
 
-   | Variable | Value |
-   |----------|-------|
-   | `NEXT_PUBLIC_SERVER_URL` | `https://your-api.onrender.com` |
+Add environment variable (Production + Preview):
 
-5. Deploy. Your site will be at `https://<project-name>.pages.dev`.
+| Variable | Value |
+|----------|-------|
+| `NEXT_PUBLIC_SERVER_URL` | `https://your-api.onrender.com` |
+
+The build step installs frontend deps and exports static files to `frontend/out`.  
+`wrangler.toml` tells Wrangler to serve that directory.
+
+### Option B — Cloudflare Pages (dashboard only)
+
+| Setting | Value |
+|---------|-------|
+| **Root directory** | `frontend` |
+| **Build command** | `npm install && npm run build` |
+| **Build output directory** | `out` |
+
+Same `NEXT_PUBLIC_SERVER_URL` env var as above.
 
 ---
 
