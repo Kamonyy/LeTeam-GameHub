@@ -7,6 +7,7 @@ import WordSetup from './WordSetup';
 import GuessingBoard from './GuessingBoard';
 import Scratchpad from './Scratchpad';
 import RoundCeremony from './RoundCeremony';
+import WordGameAboutSidebar from './WordGameAboutSidebar';
 import { useScratchpadNotes } from '../hooks/useScratchpadNotes';
 
 interface WordGameBoardProps {
@@ -64,7 +65,7 @@ export default function WordGameBoard({
 
       <RoundCeremony roundNumber={gameState.roundNumber} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 lg:gap-8 items-start lg:items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 lg:gap-8 items-start lg:items-stretch">
         <div className="min-w-0">
           {gameState.phase === 'setup' && (
             <WordSetup
@@ -99,14 +100,17 @@ export default function WordGameBoard({
           )}
         </div>
 
-        {showScratchpad && (
-          <Scratchpad
-            notes={notes}
-            onAdd={addNote}
-            onUpdate={updateNote}
-            onDelete={deleteNote}
-          />
-        )}
+        <aside className="flex flex-col gap-6 w-full">
+          <WordGameAboutSidebar />
+          {showScratchpad && (
+            <Scratchpad
+              notes={notes}
+              onAdd={addNote}
+              onUpdate={updateNote}
+              onDelete={deleteNote}
+            />
+          )}
+        </aside>
       </div>
     </div>
   );

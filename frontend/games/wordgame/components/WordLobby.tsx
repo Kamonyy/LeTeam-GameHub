@@ -15,8 +15,8 @@ import {
 import clsx from 'clsx';
 import type { LobbyState, WordCategory, WordGameSettings } from '@/lib/hub/types';
 import { WORD_POINTS_OPTIONS } from '@/lib/hub/types';
-import GameAboutPanel from '@/components/hub/GameAboutPanel';
 import WordPanelFrame from './WordPanelFrame';
+import WordGameAboutSidebar from './WordGameAboutSidebar';
 
 interface WordLobbyProps {
   lobby: LobbyState;
@@ -93,16 +93,13 @@ export default function WordLobby({
   };
 
   return (
-    <WordPanelFrame className="max-w-lg w-full mx-auto animate-fade-in p-6 sm:p-8">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 lg:gap-8 items-start animate-fade-in">
+      <WordPanelFrame className="w-full p-6 sm:p-8">
       <div className="flex items-center gap-3 mb-2">
         <Swords className="w-6 h-6 text-[#f0d78c]" />
         <h2 className="sw-heading text-lg">Secret Word Lobby</h2>
       </div>
       <div className="sw-divider-gold mb-6" />
-
-      <div className="rounded-xl border border-[rgba(201,162,39,0.12)] bg-[rgba(6,8,22,0.4)] p-4 mb-6 [&_p]:text-[#8b95ad] [&_.text-gray-300]:text-[#c9a227]">
-        <GameAboutPanel gameId="wordgame" />
-      </div>
 
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -297,6 +294,9 @@ export default function WordLobby({
           Leave
         </button>
       </div>
-    </WordPanelFrame>
+      </WordPanelFrame>
+
+      <WordGameAboutSidebar />
+    </div>
   );
 }

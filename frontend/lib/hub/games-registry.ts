@@ -33,8 +33,9 @@ export const GAMES: GameCatalogEntry[] = [
     name: 'Secret Word',
     tagline: 'Two players, one secret word — guess it through voice chat and in-app confirms.',
     lobbyDescription: [
-      'Built for voice chat: one player picks a secret word, the other asks yes/no questions out loud, then locks in guesses here.',
+      'Built for voice chat: one player picks a secret word (or League champion), the other asks yes/no questions out loud, then confirms guesses here.',
       'Each correct guess earns a point; first to the chosen score wins the match. Share the room link so your friend joins the same lobby.',
+      'In the lobby, choose Custom words or the League of Legends roster with champion search and portraits.',
       'Best with exactly 2 players in the same call (Discord, Zoom, etc.).',
     ],
     href: '/wordgame',

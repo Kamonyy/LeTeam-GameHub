@@ -11,7 +11,7 @@ import PlayerNameControl from '@/components/hub/PlayerNameControl';
 import ErrorToast from '@/components/shared/ErrorToast';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import WordLobby from '@/games/wordgame/components/WordLobby';
-import GameAboutPanel from '@/components/hub/GameAboutPanel';
+import WordGameAboutSidebar from '@/games/wordgame/components/WordGameAboutSidebar';
 import { getGameEntry } from '@/lib/hub/games-registry';
 import WordGameBoard from '@/games/wordgame/components/WordGameBoard';
 import WordGameAtmosphere from '@/games/wordgame/components/WordGameAtmosphere';
@@ -212,10 +212,8 @@ export default function WordGameClient() {
         )}
 
         {!lobby && !inviteJoin && (
-          <div className="max-w-md mx-auto animate-fade-in space-y-6">
-            <div className="rounded-xl border border-[rgba(201,162,39,0.12)] bg-[rgba(6,8,22,0.5)] p-4 [&_p]:text-[#8b95ad]">
-              <GameAboutPanel gameId="wordgame" />
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 lg:gap-8 items-start animate-fade-in">
+            <div className="min-w-0 max-w-lg w-full mx-auto lg:max-w-none lg:mx-0">
             {roomParam && loading && !autoJoined && (
               <p className="text-center text-sm sw-muted mb-4 animate-pulse-soft">
                 Crossing into room {roomParam}…
@@ -263,6 +261,8 @@ export default function WordGameClient() {
                 </button>
               </div>
             </WordPanelFrame>
+            </div>
+            <WordGameAboutSidebar />
           </div>
         )}
 
