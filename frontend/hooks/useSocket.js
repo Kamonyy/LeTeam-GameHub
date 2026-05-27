@@ -11,6 +11,7 @@ import { io } from 'socket.io-client';
 import {
   getDisplayName,
   getOrCreatePlayerId,
+  isSameOriginServer,
   resolveServerUrl,
 } from '@/lib/player';
 
@@ -21,6 +22,8 @@ export function useSocket() {
   const [lobby, setLobby] = useState(null);
   const [gameState, setGameState] = useState(null);
   const [error, setError] = useState(null);
+  const [serverOffline, setServerOffline] = useState(false);
+  const connectAttempts = useRef(0);
 
   const registerPlayer = useCallback((socket, id) => {
     const name = getDisplayName();
@@ -46,13 +49,16 @@ export function useSocket() {
       const serverUrl = await resolveServerUrl();
       if (cancelled) return;
 
+      // Cloudflare Worker uses WebSocket-only; Node dev server supports polling too
+      const sameOrigin = isSameOriginServer(serverUrl);
+
       socket = io(serverUrl, {
         autoConnect: true,
         reconnection: true,
         reconnectionAttempts: Infinity,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
-        transports: ['websocket', 'polling'],
+        transports: sameOrigin ? ['websocket'] : ['websocket', 'polling'],
       });
 
       socketRef.current = socket;

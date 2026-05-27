@@ -13,8 +13,12 @@
     "build": "npm install --prefix frontend && npm run build --prefix frontend",
     "deploy": "npm run build && wrangler deploy"
   },
+  "dependencies": {
+    "socket.io-serverless": "^0.2.1"
+  },
   "devDependencies": {
     "concurrently": "^9.1.2",
+    "socket.io": "^4.8.1",
     "wrangler": "^4.95.0"
   }
 }

@@ -1,17 +1,29 @@
 name = "gamehub"
-compatibility_date = "2024-01-01"
+main = "worker/index.js"
+compatibility_date = "2024-08-21"
+compatibility_flags = ["nodejs_compat_v2"]
 
-# Runs automatically before `wrangler deploy` (even if dashboard build step is empty)
 [build]
 command = "npm run build"
 
-# Production custom domain
 [[routes]]
 pattern = "gamehub.mohamed-hussein.net"
 custom_domain = true
 
-# Static Next.js export output
+# Static Next.js export — worker handles /socket.io and /health first
 [assets]
 directory = "frontend/out"
+binding = "ASSETS"
 not_found_handling = "single-page-application"
 html_handling = "auto-trailing-slash"
+run_worker_first = ["/socket.io/*", "/health"]
+
+[durable_objects]
+bindings = [
+  { name = "engineActor", class_name = "EngineActor" },
+  { name = "socketActor", class_name = "SocketActor" },
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["EngineActor", "SocketActor"]
