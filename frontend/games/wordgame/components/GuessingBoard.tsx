@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Eye, Trophy, CheckCircle, Crown } from 'lucide-react';
+import { Eye, Trophy, CheckCircle, Crown, Sparkles } from 'lucide-react';
+import WordPanelFrame from './WordPanelFrame';
+import clsx from 'clsx';
 
 interface GuessingBoardProps {
   myChosenWord: string | null;
@@ -36,103 +38,86 @@ export default function GuessingBoard({
 
   if (phase === 'match_over' && winnerName) {
     return (
-      <div className="word-panel p-8 text-center animate-overlay-pop">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/15 mb-4">
-          <Crown className="w-8 h-8 text-amber-400" />
+      <WordPanelFrame className="p-8 sm:p-12 text-center animate-overlay-pop">
+        <div className="sw-victory-icon mx-auto mb-5">
+          <Crown className="w-9 h-9" strokeWidth={1.5} />
         </div>
-        <h3 className="text-2xl font-black text-amber-100 mb-2 tracking-wide">
-          MATCH WON!
-        </h3>
-        <p className="text-hub-muted text-sm mb-4">
-          <span className="text-gray-200">{winnerName}</span> reached {pointsToWin}{' '}
-          points first
+        <h3 className="sw-heading-lg mb-3">Victory Claimed</h3>
+        <p className="sw-muted text-sm mb-6">
+          <span className="sw-text-accent font-semibold">{winnerName}</span> reached{' '}
+          {pointsToWin} points first
         </p>
         {revealedWord && (
-          <div className="inline-block px-8 py-4 rounded-xl bg-hub-bg/60 border border-amber-400/30">
-            <p className="text-xs text-hub-muted uppercase tracking-widest mb-2">
-              Last word
-            </p>
-            <p className="text-3xl font-bold text-white tracking-wide">{revealedWord}</p>
+          <div className="sw-reveal-box">
+            <p className="text-[10px] sw-muted uppercase tracking-[0.25em] mb-2">Final word</p>
+            <p className="sw-word-reveal text-2xl sm:text-3xl">{revealedWord}</p>
           </div>
         )}
-      </div>
+      </WordPanelFrame>
     );
   }
 
   if (phase === 'round_end' && revealedWord) {
     return (
-      <div className="word-panel p-8 text-center animate-overlay-pop">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/15 mb-4">
-          <Trophy className="w-8 h-8 text-amber-400" />
+      <WordPanelFrame className="p-8 sm:p-12 text-center animate-overlay-pop">
+        <div className="sw-victory-icon mx-auto mb-5">
+          <Trophy className="w-8 h-8" strokeWidth={1.5} />
         </div>
-        <h3 className="text-2xl font-black text-amber-100 mb-2 tracking-wide">
-          WORD GUESSED!
-        </h3>
-        <p className="text-hub-muted text-sm mb-6">
-          <span className="text-gray-200">{guesserName}</span> got it — +1 point
+        <h3 className="sw-heading-lg mb-3">Word Revealed</h3>
+        <p className="sw-muted text-sm mb-8">
+          <span className="sw-text-accent font-semibold">{guesserName}</span> earns the point
         </p>
-        <div className="inline-block px-8 py-4 rounded-xl bg-hub-bg/60 border border-amber-400/30">
-          <p className="text-xs text-hub-muted uppercase tracking-widest mb-2">
-            The word was
-          </p>
-          <p className="text-3xl font-bold text-white tracking-wide">{revealedWord}</p>
+        <div className="sw-reveal-box">
+          <p className="text-[10px] sw-muted uppercase tracking-[0.25em] mb-2">The word was</p>
+          <p className="sw-word-reveal">{revealedWord}</p>
         </div>
-        <p className="text-xs text-hub-muted mt-6 animate-pulse-soft">
-          Next round starting…
+        <p className="text-xs sw-muted mt-8 flex items-center justify-center gap-2 animate-pulse-soft">
+          <Sparkles className="w-3.5 h-3.5 text-[#c9a227]" />
+          Next round approaches…
         </p>
-      </div>
+      </WordPanelFrame>
     );
   }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="word-panel p-6 sm:p-8">
-        <div className="flex items-center gap-2 text-emerald-400/90 mb-2">
+      <WordPanelFrame className="p-6 sm:p-8 sw-accent-cyan" embers={false}>
+        <div className="flex items-center gap-2 text-[#7ee8ff] mb-3">
           <Eye className="w-5 h-5" />
-          <h3 className="text-sm font-semibold uppercase tracking-wider">
-            Your Guessing Board
-          </h3>
+          <h3 className="sw-heading text-xs">Guessing Ground</h3>
         </div>
-        <p className="text-sm text-hub-muted">
-          Guess the word <span className="text-gray-200">{opponentName}</span>{' '}
-          chose for you. Ask yes/no questions on voice chat — they answer out loud.
-          Use the scratchpad to track your clues.
+        <div className="sw-divider-gold opacity-60" />
+        <p className="text-sm sw-muted mt-4 leading-relaxed">
+          Discern the word <span className="sw-text-accent">{opponentName}</span> chose for you.
+          Ask yes/no questions on voice — track clues on your scratchpad.
         </p>
-      </div>
+      </WordPanelFrame>
 
-      <div className="word-panel p-6 sm:p-8 border-2 border-hub-accent/40 bg-hub-accent/5">
-        <div className="flex items-center gap-2 mb-2">
-          <CheckCircle className="w-5 h-5 text-hub-accent" />
-          <h3 className="text-sm font-semibold uppercase tracking-wider">
-            Your Word for {opponentName}
-          </h3>
+      <WordPanelFrame className={clsx('p-6 sm:p-8', 'sw-accent-ember')}>
+        <div className="flex items-center gap-2 mb-3">
+          <CheckCircle className="w-5 h-5 text-[#ff9f43]" />
+          <h3 className="sw-heading text-xs">Your Word for {opponentName}</h3>
         </div>
+        <div className="sw-divider-gold opacity-60" />
         {myChosenWord && (
-          <div className="mb-5 px-4 py-3 rounded-lg bg-hub-bg/60 border border-hub-border">
-            <p className="text-xs text-hub-muted uppercase tracking-widest mb-1">
-              You chose
-            </p>
-            <p className="text-xl font-bold text-white">{myChosenWord}</p>
+          <div className="mt-5 mb-6 px-5 py-4 rounded-lg border border-[rgba(255,107,53,0.25)] bg-[rgba(8,12,24,0.6)]">
+            <p className="text-[10px] sw-muted uppercase tracking-[0.2em] mb-2">You inscribed</p>
+            <p className="text-xl font-semibold sw-text-accent tracking-wide">{myChosenWord}</p>
           </div>
         )}
-        <p className="text-sm text-hub-muted mb-5">
-          When <span className="text-gray-200">{opponentName}</span> guesses your
-          word on voice chat, press the button to award them a point.
+        <p className="text-sm sw-muted mb-6 leading-relaxed">
+          When <span className="sw-text-accent">{opponentName}</span> guesses your word aloud,
+          confirm to award the point.
         </p>
         <button
           type="button"
           onClick={handleConfirm}
           disabled={!canConfirmGuessed || confirming}
-          className="w-full py-4 px-6 rounded-xl font-bold text-lg tracking-wide
-                     bg-gradient-to-r from-hub-accent to-blue-500
-                     hover:from-hub-accent-dim hover:to-blue-600
-                     disabled:opacity-40 disabled:cursor-not-allowed
-                     transition-all duration-200 shadow-lg shadow-hub-accent/20
-                     hover:scale-[1.02] active:scale-[0.98]"
+          className="sw-btn-confirm"
         >
           {confirming ? 'Confirming…' : 'Word Guessed!'}
         </button>
-      </div>
+      </WordPanelFrame>
     </div>
   );
 }

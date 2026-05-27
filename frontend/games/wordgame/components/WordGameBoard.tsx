@@ -6,6 +6,7 @@ import ScoreCard from './ScoreCard';
 import WordSetup from './WordSetup';
 import GuessingBoard from './GuessingBoard';
 import Scratchpad from './Scratchpad';
+import RoundCeremony from './RoundCeremony';
 import { useScratchpadNotes } from '../hooks/useScratchpadNotes';
 
 interface WordGameBoardProps {
@@ -35,20 +36,20 @@ export default function WordGameBoard({
   );
 
   const guesserName =
-    gameState.lastGuesserId != null
-      ? playerNames[gameState.lastGuesserId] || 'Player'
-      : opponentName;
+    gameState.lastGuesserId != null ?
+      playerNames[gameState.lastGuesserId] || 'Player'
+    : opponentName;
 
   const winnerName =
-    gameState.winnerId != null
-      ? playerNames[gameState.winnerId] || 'Player'
-      : undefined;
+    gameState.winnerId != null ?
+      playerNames[gameState.winnerId] || 'Player'
+    : undefined;
 
   const showScratchpad =
     gameState.phase === 'playing' || gameState.phase === 'round_end';
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="animate-fade-in space-y-8">
       <ScoreCard
         playerNames={playerNames}
         playerIds={gameState.playerIds}
@@ -57,11 +58,9 @@ export default function WordGameBoard({
         pointsToWin={gameState.pointsToWin}
       />
 
-      <p className="text-center text-xs text-hub-muted uppercase tracking-widest">
-        Round {gameState.roundNumber}
-      </p>
+      <RoundCeremony roundNumber={gameState.roundNumber} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 items-start lg:items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 lg:gap-8 items-start lg:items-stretch">
         <div className="min-w-0">
           {gameState.phase === 'setup' && (
             <WordSetup

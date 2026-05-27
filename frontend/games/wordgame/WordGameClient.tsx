@@ -7,7 +7,6 @@ import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX } from 'lucide-react';
 import { useSocket } from '@/hooks/useSocket';
 import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
-import ConnectionStatus from '@/components/hub/ConnectionStatus';
 import PlayerNameControl from '@/components/hub/PlayerNameControl';
 import ErrorToast from '@/components/shared/ErrorToast';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
@@ -15,6 +14,10 @@ import WordLobby from '@/games/wordgame/components/WordLobby';
 import GameAboutPanel from '@/components/hub/GameAboutPanel';
 import { getGameEntry } from '@/lib/hub/games-registry';
 import WordGameBoard from '@/games/wordgame/components/WordGameBoard';
+import WordGameAtmosphere from '@/games/wordgame/components/WordGameAtmosphere';
+import WordConnectionBadge from '@/games/wordgame/components/WordConnectionBadge';
+import WordPanelFrame from '@/games/wordgame/components/WordPanelFrame';
+import '@/games/wordgame/wordgame.css';
 
 export default function WordGameClient() {
   const searchParams = useSearchParams();
@@ -128,122 +131,137 @@ export default function WordGameClient() {
       wordState.phase === 'match_over');
 
   return (
-    <main className="min-h-screen">
-      <header className="border-b border-hub-border bg-hub-surface/50 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-hub-muted hover:text-white transition-colors">
+    <main className="sw-shell min-h-screen relative">
+      <WordGameAtmosphere />
+
+      <header className="sw-header">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-4 min-w-0">
+            <Link href="/" className="sw-back-link shrink-0" aria-label="Back to hub">
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div>
-              <h1 className="text-lg font-semibold">Secret Word</h1>
+            <div className="min-w-0">
+              <h1 className="sw-header__title text-base sm:text-lg">Secret Word</h1>
               {wordGameMeta && (
-                <p className="text-xs text-hub-muted truncate max-w-[200px] sm:max-w-none">
+                <p className="text-[10px] sm:text-xs sw-muted truncate max-w-[200px] sm:max-w-md tracking-wide">
                   {wordGameMeta.tagline}
                 </p>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             {isHost && inGame && (
               <button
+                type="button"
                 onClick={() => setCancelConfirmOpen(true)}
                 disabled={cancelling}
-                className="btn-secondary flex items-center gap-2 text-sm py-2 text-hub-danger border-hub-danger/30 hover:bg-hub-danger/10"
+                className="sw-btn-secondary sw-btn-danger flex items-center gap-2 text-sm py-2"
               >
                 <OctagonX className="w-4 h-4" />
-                {cancelling ? 'Cancelling…' : 'Cancel Match'}
+                {cancelling ? 'Cancelling…' : 'Cancel'}
               </button>
             )}
-            <ConnectionStatus connected={connected} />
-            <PlayerNameControl disabled={!!inGame} />
+            <WordConnectionBadge connected={connected} />
+            <div className="[&_button]:border-[rgba(201,162,39,0.25)] [&_button]:text-[#e8edf7]">
+              <PlayerNameControl disabled={!!inGame} />
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-10">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {!lobby && inviteJoin && (
           <div className="max-w-md mx-auto animate-fade-in">
-            <div className="card mb-6">
-              <div className="flex items-center gap-2 text-hub-accent mb-4">
-                <UserPlus className="w-5 h-5" />
-                <h2 className="text-lg font-semibold">Join Secret Word</h2>
+            <WordPanelFrame className="p-6 sm:p-8">
+              <div className="flex items-center gap-2 mb-4">
+                <UserPlus className="w-5 h-5 text-[#f0d78c]" />
+                <h2 className="sw-heading text-base">Join the Rift</h2>
               </div>
-              <p className="text-sm text-hub-muted mb-4">
-                Invited to room{' '}
-                <span className="font-mono font-bold text-white tracking-widest">
+              <div className="sw-divider-gold mb-4" />
+              <p className="text-sm sw-muted mb-4 leading-relaxed">
+                Summoned to room{' '}
+                <span className="font-mono font-bold text-[#fff8e7] tracking-widest">
                   {roomParam}
                 </span>
-                . Choose a display name first.
+                . Inscribe your name to enter.
               </p>
-              <label className="block text-sm text-hub-muted mb-2">Display Name</label>
+              <label className="block text-[10px] sw-muted mb-2 uppercase tracking-widest">
+                Champion Name
+              </label>
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayNameState(e.target.value)}
-                className="input-field normal-case tracking-normal text-left mb-6"
+                className="sw-input normal-case tracking-normal text-left mb-6"
                 placeholder="Enter your name"
                 maxLength={20}
                 autoFocus
               />
               <button
+                type="button"
                 onClick={handleInviteJoin}
                 disabled={!connected || loading || !displayName.trim()}
-                className="btn-primary w-full flex items-center justify-center gap-2"
+                className="sw-btn-primary"
               >
                 <LogIn className="w-4 h-4" />
-                {loading ? 'Joining…' : 'Join Room'}
+                {loading ? 'Entering…' : 'Enter Room'}
               </button>
-            </div>
+            </WordPanelFrame>
           </div>
         )}
 
         {!lobby && !inviteJoin && (
           <div className="max-w-md mx-auto animate-fade-in space-y-6">
-            <GameAboutPanel gameId="wordgame" />
+            <div className="rounded-xl border border-[rgba(201,162,39,0.12)] bg-[rgba(6,8,22,0.5)] p-4 [&_p]:text-[#8b95ad]">
+              <GameAboutPanel gameId="wordgame" />
+            </div>
             {roomParam && loading && !autoJoined && (
-              <p className="text-center text-sm text-hub-muted mb-4 animate-pulse-soft">
-                Joining room {roomParam}…
+              <p className="text-center text-sm sw-muted mb-4 animate-pulse-soft">
+                Crossing into room {roomParam}…
               </p>
             )}
-            <div className="card mb-6">
-              <label className="block text-sm text-hub-muted mb-2">Display Name</label>
+            <WordPanelFrame className="p-6 sm:p-8">
+              <label className="block text-[10px] sw-muted mb-2 uppercase tracking-widest">
+                Champion Name
+              </label>
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayNameState(e.target.value)}
                 onBlur={() => displayName.trim() && setDisplayName(displayName)}
-                className="input-field normal-case tracking-normal text-left mb-6"
+                className="sw-input normal-case tracking-normal text-left mb-6"
                 placeholder="Your name"
                 maxLength={20}
               />
               <div className="space-y-4">
                 <button
+                  type="button"
                   onClick={handleCreate}
                   disabled={!connected || loading || !displayName.trim()}
-                  className="btn-primary w-full flex items-center justify-center gap-2"
+                  className="sw-btn-primary"
                 >
                   <Plus className="w-4 h-4" />
-                  {loading ? 'Creating…' : 'Create Room'}
+                  {loading ? 'Forging…' : 'Create Room'}
                 </button>
                 <input
                   type="text"
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  className="input-field"
+                  className="sw-input uppercase tracking-[0.25em] text-center font-mono"
                   placeholder="ROOM CODE"
                   maxLength={8}
                 />
                 <button
+                  type="button"
                   onClick={handleJoin}
                   disabled={!connected || loading || !joinCode.trim() || !displayName.trim()}
-                  className="btn-secondary w-full flex items-center justify-center gap-2"
+                  className="sw-btn-secondary w-full"
                 >
                   <LogIn className="w-4 h-4" />
-                  {loading ? 'Joining…' : 'Join Room'}
+                  {loading ? 'Entering…' : 'Join Room'}
                 </button>
               </div>
-            </div>
+            </WordPanelFrame>
           </div>
         )}
 

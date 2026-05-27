@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { PenLine, Check, Loader2 } from 'lucide-react';
+import { PenLine, Loader2, Flame } from 'lucide-react';
+import WordPanelFrame from './WordPanelFrame';
 
 interface WordSetupProps {
   iHaveSubmitted: boolean;
@@ -32,36 +33,43 @@ export default function WordSetup({
 
   if (iHaveSubmitted) {
     return (
-      <div className="word-panel p-8 text-center animate-fade-in">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-hub-success/15 mb-4">
-          <Check className="w-7 h-7 text-hub-success" />
+      <WordPanelFrame className="p-8 sm:p-10 text-center animate-fade-in">
+        <div className="sw-seal">
+          <span className="sw-seal__ring sw-seal__ring--outer" aria-hidden />
+          <span className="sw-seal__ring" aria-hidden />
+          <span className="sw-seal__flame" aria-hidden />
+          <span className="sw-seal__icon">
+            <Flame className="w-8 h-8" strokeWidth={1.5} />
+          </span>
         </div>
-        <h3 className="text-lg font-semibold mb-2">Word locked in</h3>
-        {myChosenWord && (
-          <p className="text-xl font-bold text-white mb-3">{myChosenWord}</p>
-        )}
-        <p className="text-hub-muted text-sm">
-          {opponentHasSubmitted
-            ? 'Both words submitted — starting round…'
-            : `Waiting for ${opponentName} to choose their word…`}
+        <h3 className="sw-heading-lg mb-2">Word Sealed</h3>
+        <p className="sw-muted text-sm uppercase tracking-widest mb-4">
+          Arcane lock engaged
+        </p>
+        {myChosenWord && <p className="sw-word-reveal mb-5">{myChosenWord}</p>}
+        <div className="sw-divider-gold max-w-xs mx-auto" />
+        <p className="sw-muted text-sm mt-4 leading-relaxed">
+          {opponentHasSubmitted ?
+            'Both words submitted — the round awakens…'
+          :	`Awaiting ${opponentName} to inscribe their secret…`}
         </p>
         {opponentHasSubmitted && (
-          <Loader2 className="w-5 h-5 text-hub-accent animate-spin mx-auto mt-4" />
+          <Loader2 className="w-6 h-6 text-[#c9a227] animate-spin mx-auto mt-5" />
         )}
-      </div>
+      </WordPanelFrame>
     );
   }
 
   return (
-    <div className="word-panel p-8 animate-fade-in">
-      <div className="flex items-center gap-2 text-hub-accent mb-4">
-        <PenLine className="w-5 h-5" />
-        <h3 className="text-lg font-semibold">Choose a Secret Word</h3>
+    <WordPanelFrame className="p-8 sm:p-10 animate-fade-in">
+      <div className="flex items-center gap-3 mb-2">
+        <PenLine className="w-5 h-5 text-[#f0d78c]" />
+        <h3 className="sw-heading text-base">Inscribe Secret Word</h3>
       </div>
-      <p className="text-sm text-hub-muted mb-6">
-        Pick a word for <span className="text-gray-200">{opponentName}</span> to
-        guess over voice chat. Only they will try to guess it — you&apos;ll see
-        your word as a reminder once locked in.
+      <div className="sw-divider-gold" />
+      <p className="text-sm sw-muted mb-8 leading-relaxed">
+        Choose a word for <span className="sw-text-accent font-medium">{opponentName}</span>{' '}
+        to divine through voice. Once sealed, only you retain its memory until the round ends.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -70,25 +78,21 @@ export default function WordSetup({
           autoComplete="off"
           value={word}
           onChange={(e) => setWord(e.target.value)}
-          className="input-field normal-case tracking-normal text-left w-full"
+          className="sw-input"
           placeholder="Enter secret word…"
           maxLength={30}
           autoFocus
         />
-        <button
-          type="submit"
-          disabled={submitting || !word.trim()}
-          className="btn-primary w-full"
-        >
-          {submitting ? 'Submitting…' : 'Lock In Word'}
+        <button type="submit" disabled={submitting || !word.trim()} className="sw-btn-primary">
+          {submitting ? 'Sealing…' : 'Lock In Word'}
         </button>
       </form>
 
-      <p className="text-xs text-hub-muted mt-4 text-center">
-        {opponentHasSubmitted
-          ? `${opponentName} is ready — submit yours to begin`
-          : `${opponentName} is still choosing their word`}
+      <p className="text-xs sw-muted mt-6 text-center tracking-wide">
+        {opponentHasSubmitted ?
+          `${opponentName} is ready — seal yours to begin`
+        :	`${opponentName} is still choosing their word`}
       </p>
-    </div>
+    </WordPanelFrame>
   );
 }

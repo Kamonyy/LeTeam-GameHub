@@ -9,13 +9,14 @@ import {
   LogOut,
   Play,
   UserX,
-  MessageCircle,
   Settings2,
+  Swords,
 } from 'lucide-react';
 import clsx from 'clsx';
 import type { LobbyState, WordGameSettings } from '@/lib/hub/types';
 import { WORD_POINTS_OPTIONS } from '@/lib/hub/types';
 import GameAboutPanel from '@/components/hub/GameAboutPanel';
+import WordPanelFrame from './WordPanelFrame';
 
 interface WordLobbyProps {
   lobby: LobbyState;
@@ -44,18 +45,18 @@ export default function WordLobby({
 
   const settings: WordGameSettings = {
     pointsToWin:
-      lobby.settings && 'pointsToWin' in lobby.settings
-        ? lobby.settings.pointsToWin
-        : 5,
+      lobby.settings && 'pointsToWin' in lobby.settings ?
+        lobby.settings.pointsToWin
+      :	5,
   };
 
   const canStart =
     isHost && lobby.status === 'lobby' && connectedCount === lobby.maxPlayers;
 
   const shareUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/wordgame?room=${lobby.roomId}`
-      : '';
+    typeof window !== 'undefined' ?
+      `${window.location.origin}/wordgame?room=${lobby.roomId}`
+    :	'';
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(shareUrl);
@@ -79,132 +80,128 @@ export default function WordLobby({
   };
 
   return (
-    <div className="card max-w-lg w-full mx-auto animate-fade-in">
-      <div className="flex items-center gap-3 mb-4">
-        <MessageCircle className="w-6 h-6 text-hub-accent" />
-        <h2 className="text-xl font-bold">Secret Word Lobby</h2>
+    <WordPanelFrame className="max-w-lg w-full mx-auto animate-fade-in p-6 sm:p-8">
+      <div className="flex items-center gap-3 mb-2">
+        <Swords className="w-6 h-6 text-[#f0d78c]" />
+        <h2 className="sw-heading text-lg">Secret Word Lobby</h2>
+      </div>
+      <div className="sw-divider-gold mb-6" />
+
+      <div className="rounded-xl border border-[rgba(201,162,39,0.12)] bg-[rgba(6,8,22,0.4)] p-4 mb-6 [&_p]:text-[#8b95ad] [&_.text-gray-300]:text-[#c9a227]">
+        <GameAboutPanel gameId="wordgame" />
       </div>
 
-      <GameAboutPanel gameId="wordgame" className="mb-6" />
-
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <p className="text-hub-muted text-xs uppercase tracking-wider mb-1">Room Code</p>
-          <h3 className="text-3xl font-mono font-bold tracking-[0.3em] text-white">
+          <p className="sw-muted text-[10px] uppercase tracking-[0.25em] mb-1">Summon Code</p>
+          <h3 className="text-3xl font-mono font-bold tracking-[0.35em] text-[#fff8e7] drop-shadow-[0_0_12px_rgba(201,162,39,0.3)]">
             {lobby.roomId}
           </h3>
         </div>
-        <button
-          onClick={copyLink}
-          className="btn-secondary flex items-center gap-2 text-sm py-2"
-        >
-          {copied ? (
-            <Check className="w-4 h-4 text-hub-success" />
-          ) : (
-            <Copy className="w-4 h-4" />
-          )}
+        <button type="button" onClick={copyLink} className="sw-btn-secondary text-sm py-2">
+          {copied ?
+            <Check className="w-4 h-4 text-[#86efac]" />
+          :	<Copy className="w-4 h-4" />}
           {copied ? 'Copied' : 'Share'}
         </button>
       </div>
 
-      <div className="mb-6 p-4 rounded-xl border border-hub-border bg-hub-surface/60">
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-200 mb-4">
-          <Settings2 className="w-4 h-4 text-hub-accent" />
-          Match Settings
+      <div className="mb-8 p-4 rounded-xl border border-[rgba(201,162,39,0.15)] bg-[rgba(8,12,24,0.5)]">
+        <div className="flex items-center gap-2 text-sm font-medium sw-text-accent mb-4">
+          <Settings2 className="w-4 h-4 text-[#f0d78c]" />
+          <span className="sw-heading text-xs">Match Settings</span>
         </div>
 
-        <div>
-          <label className="block text-xs text-hub-muted mb-2 uppercase tracking-wide">
-            Points to win
-          </label>
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            {WORD_POINTS_OPTIONS.map((pts) => (
-              <button
-                key={pts}
-                type="button"
-                disabled={!isHost}
-                onClick={() => onSettingsChange?.({ pointsToWin: pts })}
-                className={clsx(
-                  'py-2 rounded-lg text-sm font-semibold border transition-all duration-200',
-                  settings.pointsToWin === pts
-                    ? 'border-hub-accent bg-hub-accent/20 text-white'
-                    : 'border-hub-border bg-hub-card text-hub-muted hover:border-hub-accent/40',
-                  !isHost && 'opacity-70 cursor-default'
-                )}
-              >
-                {pts}
-              </button>
-            ))}
-          </div>
-          {isHost && (
-            <div className="flex gap-2">
-              <input
-                type="number"
-                min={1}
-                max={99}
-                value={customPoints}
-                onChange={(e) => setCustomPoints(e.target.value)}
-                placeholder="Custom"
-                className="input-field flex-1 py-2 text-sm normal-case tracking-normal"
-              />
-              <button
-                type="button"
-                onClick={applyCustomPoints}
-                disabled={!customPoints.trim()}
-                className="btn-secondary py-2 text-sm px-4"
-              >
-                Set
-              </button>
-            </div>
-          )}
-          {!isHost && !WORD_POINTS_OPTIONS.includes(settings.pointsToWin as 3 | 5 | 10) && (
-            <p className="text-xs text-hub-muted mt-2">
-              Custom target: {settings.pointsToWin} points
-            </p>
-          )}
+        <label className="block text-[10px] sw-muted mb-2 uppercase tracking-[0.2em]">
+          Points to win
+        </label>
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          {WORD_POINTS_OPTIONS.map((pts) => (
+            <button
+              key={pts}
+              type="button"
+              disabled={!isHost}
+              onClick={() => onSettingsChange?.({ pointsToWin: pts })}
+              className={clsx(
+                'py-2 rounded-lg text-sm font-semibold border transition-all duration-200',
+                settings.pointsToWin === pts ?
+                  'border-[rgba(201,162,39,0.55)] bg-[rgba(201,162,39,0.18)] text-[#fff8e7] shadow-[0_0_16px_rgba(201,162,39,0.12)]'
+                :	'border-[rgba(201,162,39,0.15)] bg-[rgba(6,8,22,0.6)] sw-muted hover:border-[rgba(201,162,39,0.35)]',
+                !isHost && 'opacity-70 cursor-default'
+              )}
+            >
+              {pts}
+            </button>
+          ))}
         </div>
+        {isHost && (
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min={1}
+              max={99}
+              value={customPoints}
+              onChange={(e) => setCustomPoints(e.target.value)}
+              placeholder="Custom"
+              className="sw-input flex-1 py-2 text-sm normal-case tracking-normal"
+            />
+            <button
+              type="button"
+              onClick={applyCustomPoints}
+              disabled={!customPoints.trim()}
+              className="sw-btn-secondary py-2 text-sm px-4"
+            >
+              Set
+            </button>
+          </div>
+        )}
+        {!isHost && !WORD_POINTS_OPTIONS.includes(settings.pointsToWin as 3 | 5 | 10) && (
+          <p className="text-xs sw-muted mt-2">Custom target: {settings.pointsToWin} points</p>
+        )}
       </div>
 
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-hub-muted text-sm mb-3">
+      <div className="mb-8">
+        <div className="flex items-center gap-2 sw-muted text-sm mb-3">
           <Users className="w-4 h-4" />
           <span>
-            {lobby.players.length} / {lobby.maxPlayers} players
+            {lobby.players.length} / {lobby.maxPlayers} champions
           </span>
         </div>
 
         <ul className="space-y-2">
-          {lobby.players.map((player) => (
+          {lobby.players.map((player, index) => (
             <li
               key={player.id}
               className={clsx(
-                'flex items-center justify-between px-4 py-3 rounded-lg border',
-                player.id === playerId
-                  ? 'bg-hub-accent/10 border-hub-accent/30'
-                  : 'bg-hub-surface border-hub-border'
+                'flex items-center justify-between px-4 py-3 rounded-lg border transition-colors',
+                player.id === playerId ?
+                  index === 0 ?
+                    'border-[rgba(255,107,53,0.35)] bg-[rgba(157,47,15,0.15)]'
+                  :	'border-[rgba(76,201,240,0.35)] bg-[rgba(26,107,138,0.12)]'
+                :	'border-[rgba(201,162,39,0.1)] bg-[rgba(6,8,22,0.4)]'
               )}
             >
               <div className="flex items-center gap-2">
                 {player.id === lobby.hostId && (
-                  <Crown className="w-4 h-4 text-hub-warning" />
+                  <Crown className="w-4 h-4 text-[#f0d78c]" />
                 )}
-                <span className="font-medium">
+                <span className="font-medium sw-text-accent">
                   {player.displayName}
                   {player.id === playerId && (
-                    <span className="text-hub-muted text-sm ml-1">(you)</span>
+                    <span className="sw-muted text-sm ml-1">(you)</span>
                   )}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <span
                   className={clsx(
-                    'text-xs px-2 py-0.5 rounded-full',
-                    player.connected
-                      ? 'bg-hub-success/15 text-hub-success'
-                      : 'bg-hub-warning/15 text-hub-warning'
+                    'text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold',
+                    player.connected ?
+                      'border border-[rgba(34,197,94,0.4)] text-[#86efac] bg-[rgba(22,101,52,0.2)]'
+                    :	'border border-[rgba(245,158,11,0.35)] text-[#fcd34d] bg-[rgba(120,53,15,0.2)]'
                   )}
                 >
-                  {player.connected ? 'Online' : 'Away'}
+                  {player.connected ? 'Live' : 'Away'}
                 </span>
                 {isHost &&
                   player.id !== playerId &&
@@ -214,7 +211,7 @@ export default function WordLobby({
                       type="button"
                       onClick={() => handleKick(player.id)}
                       disabled={kickingId === player.id}
-                      className="p-1.5 rounded-md text-hub-muted hover:text-hub-danger hover:bg-hub-danger/10 transition-colors"
+                      className="p-1.5 rounded-md sw-muted hover:text-[#fca5a5] hover:bg-[rgba(239,68,68,0.1)] transition-colors"
                       title="Kick player"
                     >
                       <UserX className="w-4 h-4" />
@@ -224,48 +221,45 @@ export default function WordLobby({
             </li>
           ))}
 
-          {Array.from({ length: lobby.maxPlayers - lobby.players.length }).map(
-            (_, i) => (
-              <li
-                key={`empty-${i}`}
-                className="px-4 py-3 rounded-lg border border-dashed border-hub-border text-hub-muted text-sm text-center"
-              >
-                Waiting for friend…
-              </li>
-            )
-          )}
+          {Array.from({ length: lobby.maxPlayers - lobby.players.length }).map((_, i) => (
+            <li
+              key={`empty-${i}`}
+              className="px-4 py-3 rounded-lg border border-dashed border-[rgba(201,162,39,0.15)] sw-muted text-sm text-center"
+            >
+              Awaiting rival…
+            </li>
+          ))}
         </ul>
       </div>
 
       {isHost && connectedCount < 2 && (
-        <p className="text-sm text-hub-muted text-center mb-4">
-          Share the link — you need exactly 1 more player to start.
+        <p className="text-sm sw-muted text-center mb-4">
+          Share the summon code — one more champion required.
         </p>
       )}
 
       <div className="flex gap-3">
         {canStart && (
           <button
+            type="button"
             onClick={onStartGame}
             disabled={starting}
-            className="btn-primary flex-1 flex items-center justify-center gap-2"
+            className="sw-btn-primary flex-1"
           >
             <Play className="w-4 h-4" />
-            {starting ? 'Starting…' : 'Start Game'}
+            {starting ? 'Awakening…' : 'Begin Match'}
           </button>
         )}
 
         {!isHost && lobby.status === 'lobby' && (
-          <p className="flex-1 text-center text-sm text-hub-muted py-2.5">
-            Waiting for host to start…
-          </p>
+          <p className="flex-1 text-center text-sm sw-muted py-2.5">Awaiting host…</p>
         )}
 
-        <button onClick={onLeave} className="btn-secondary flex items-center gap-2">
+        <button type="button" onClick={onLeave} className="sw-btn-secondary">
           <LogOut className="w-4 h-4" />
           Leave
         </button>
       </div>
-    </div>
+    </WordPanelFrame>
   );
 }
