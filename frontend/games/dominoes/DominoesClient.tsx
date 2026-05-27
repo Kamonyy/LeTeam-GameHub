@@ -112,18 +112,16 @@ export default function DominoesClient() {
 
   const isHost = lobby?.hostId === playerId;
   const dominoesState =
-    lobby?.gameType === 'dominoes' && gameState && 'board' in gameState
-      ? (gameState as GameState)
-      : null;
-  const inGame =
-    lobby?.status === 'playing' &&
-    dominoesState &&
-    dominoesState.phase === 'playing';
-  const inPostGame =
-    dominoesState &&
-    (dominoesState.phase === 'round_over' || dominoesState.phase === 'match_over');
+    gameState && 'board' in gameState ? (gameState as GameState) : null;
   const inLobby = lobby && lobby.status === 'lobby';
-  const inActiveMatch = lobby?.status === 'playing' && (inGame || inPostGame);
+  const showGameBoard =
+    !!dominoesState && !!lobby && lobby.status !== 'lobby';
+  const waitingForGame =
+    lobby?.gameType === 'dominoes' &&
+    lobby?.status === 'playing' &&
+    !dominoesState;
+  const inActiveMatch =
+    lobby?.status === 'playing' && (showGameBoard || waitingForGame);
 
   return (
     <main className="min-h-screen">
@@ -265,7 +263,14 @@ export default function DominoesClient() {
           />
         )}
 
-        {(inGame || inPostGame || (lobby?.status === 'finished' && dominoesState)) && (
+        {waitingForGame && (
+          <div className="flex flex-col items-center justify-center gap-4 py-24 animate-fade-in">
+            <div className="w-10 h-10 border-2 border-hub-accent/30 border-t-hub-accent rounded-full animate-spin" />
+            <p className="text-sm text-hub-muted">Loading game…</p>
+          </div>
+        )}
+
+        {showGameBoard && (
           <GameBoard
             gameState={dominoesState!}
             lobby={lobby!}

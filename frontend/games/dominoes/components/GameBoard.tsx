@@ -55,9 +55,9 @@ function OpponentSeat({
           : 'border-hub-border/60 bg-hub-surface/70',
         isTeamMode && teamId === 'team1' && 'ring-1 ring-blue-500/30',
         isTeamMode && teamId === 'team2' && 'ring-1 ring-amber-500/30',
-        position === 'left' && 'lg:col-start-1 lg:row-start-2 lg:self-center',
-        position === 'right' && 'lg:col-start-3 lg:row-start-2 lg:self-center',
-        position === 'top' && 'lg:col-span-3 lg:justify-self-center'
+        position === 'left' && 'lg:self-center',
+        position === 'right' && 'lg:self-center',
+        position === 'top' && 'lg:justify-self-center'
       )}
     >
       <div className="flex items-center gap-2">
@@ -349,22 +349,24 @@ export default function GameBoard({
       />
 
       {/* Arena: opponents + square table */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_minmax(280px,580px)_1fr] grid-rows-[auto_1fr_auto] gap-3 lg:gap-4 items-center min-h-0">
-        {opponents.map((id, idx) => (
-          <OpponentSeat
-            key={id}
-            id={id}
-            name={playerNames[id] || 'Player'}
-            tileCount={gameState.tileCounts[id] || 0}
-            isActive={id === gameState.currentPlayerId}
-            isTeamMode={isTeamMode}
-            teamId={gameState.teamIds[id]}
-            position={opponentPositions[idx] ?? 'top'}
-          />
-        ))}
+      <div className="flex-1 flex flex-col gap-4 min-h-[320px]">
+        <div className="flex flex-wrap justify-center gap-3">
+          {opponents.map((id, idx) => (
+            <OpponentSeat
+              key={id}
+              id={id}
+              name={playerNames[id] || 'Player'}
+              tileCount={gameState.tileCounts[id] || 0}
+              isActive={id === gameState.currentPlayerId}
+              isTeamMode={isTeamMode}
+              teamId={gameState.teamIds[id]}
+              position={opponentPositions[idx] ?? 'top'}
+            />
+          ))}
+        </div>
 
         {/* Square table */}
-        <div className="lg:col-start-2 lg:row-start-1 lg:row-span-3 flex flex-col items-center justify-center gap-3 w-full">
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 w-full">
           <div className="domino-table-square animate-table-glow relative flex items-center justify-center p-4 sm:p-6">
             <GameActionOverlay
               lastAction={gameState.lastAction}

@@ -105,9 +105,27 @@ export function SocketProvider({ children }) {
       socket.on('hub:presence', (payload) => {
         if (payload?.players) setHubPresence(payload);
       });
-      socket.on('lobby:state', (state) => setLobby(state));
-      socket.on('game:state:update', (state) => setGameState(state));
-      socket.on('reconnect:sync', (payload) => setLobby(payload));
+      socket.on('lobby:state', (state) => {
+        setLobby(state);
+        if (state?.status === 'lobby') {
+          setGameState(null);
+        }
+      });
+      socket.on('game:state:update', (state) => {
+        if (state?.gameType === 'wordgame') {
+          setGameState(state);
+          return;
+        }
+        if (state && 'board' in state) {
+          setGameState(state);
+        }
+      });
+      socket.on('reconnect:sync', (payload) => {
+        setLobby(payload);
+        if (payload?.status === 'lobby') {
+          setGameState(null);
+        }
+      });
       socket.on('game:cancelled', () => setGameState(null));
       socket.on('room:kicked', (payload) => {
         setLobby(null);
