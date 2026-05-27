@@ -6,6 +6,7 @@ A browser-based **multiplayer game hub** for playing real-time party games with 
 
 - **Secret Word** — Two-player word guessing (custom words or League champions); built for voice chat.
 - **برا السالفة** — Arabic social deduction for 3–12 players (who’s out of the loop?).
+- **Mafia** — Face-to-face Werewolf-style party game for 6–12 in the room (one narrator + 5–11 with roles). The site is a narrator console and secret role cards; discussion and votes happen in person.
 - **Dominoes** — Block dominoes for 2–4 (currently offline in the hub while it’s being polished).
 
 **Stack:** Next.js static frontend, shared game engines, Socket.io hub (local dev) or Cloudflare Worker (production).
