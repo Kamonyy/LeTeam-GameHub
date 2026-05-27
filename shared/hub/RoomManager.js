@@ -7,6 +7,7 @@ import {
 	DEFAULT_MATCH_SETTINGS,
 	DEFAULT_WORD_GAME_SETTINGS,
 	DEFAULT_BARA_SETTINGS,
+	DEFAULT_MAFIA_SETTINGS,
 	DISCONNECT_GRACE_MS,
 	ROUND_RESTART_DELAY_MS,
 	ROOM_IDLE_CLEANUP_MS,
@@ -35,6 +36,16 @@ import {
 	isWordGameWon,
 	shouldPreserveWordGameRoom,
 } from "./wordgame-session.js";
+import {
+	suggestBalancedSetup,
+	validateLobbySetup,
+	normalizeRoleCounts,
+} from "../games/tavern-council/balancing.js";
+import { ROLE_IDS } from "../games/tavern-council/roles.js";
+import {
+	isDevBotsEnabled,
+	createBotPlayer,
+} from "./devBots.js";
 
 export class RoomManager {
 	/**
@@ -403,6 +414,8 @@ export class RoomManager {
 					{ ...DEFAULT_WORD_GAME_SETTINGS }
 				: gameType === "bara-alsalafa" ?
 					{ ...DEFAULT_BARA_SETTINGS }
+				: gameType === "mafia" ?
+					{ ...DEFAULT_MAFIA_SETTINGS }
 				:	{ ...DEFAULT_MATCH_SETTINGS },
 			nextRoundTimer: null,
 			autoPlayTimer: null,
@@ -628,10 +641,33 @@ export class RoomManager {
 			}
 		}
 
-		room.game = gameDef.createEngine(
-			connectedPlayers.map((p) => p.id),
-			room.settings,
-		);
+		let enginePlayerIds = connectedPlayers.map((p) => p.id);
+		if (room.gameType === "mafia") {
+			const ids = connectedPlayers.map((p) => p.id);
+			if (!room.settings.narratorId || !ids.includes(room.settings.narratorId)) {
+				room.settings.narratorId = room.hostId;
+			}
+			const narratorId = room.settings.narratorId;
+			enginePlayerIds = ids.filter((id) => id !== narratorId);
+			if (enginePlayerIds.length > 11) {
+				return { error: "At most 11 gameplay players (narrator is separate)" };
+			}
+			if (!room.settings.roleCounts) {
+				room.settings.roleCounts = suggestBalancedSetup(
+					enginePlayerIds.length,
+				).counts;
+			}
+			room.settings.roleCounts = normalizeRoleCounts(room.settings.roleCounts);
+			const setup = validateLobbySetup(
+				enginePlayerIds.length,
+				room.settings.roleCounts,
+			);
+			if (!setup.valid) {
+				return { error: setup.errors[0] };
+			}
+		}
+
+		room.game = gameDef.createEngine(enginePlayerIds, room.settings);
 		room.status = "playing";
 		if (room.gameType === "wordgame") {
 			for (const p of room.players) {
@@ -701,8 +737,110 @@ export class RoomManager {
 			}
 		}
 
+		if (room.gameType === "mafia") {
+			if (
+				settings?.narratorId &&
+				room.players.some((p) => p.id === settings.narratorId)
+			) {
+				room.settings.narratorId = settings.narratorId;
+			}
+			if (typeof settings?.revealRoleOnDeath === "boolean") {
+				room.settings.revealRoleOnDeath = settings.revealRoleOnDeath;
+			}
+			if (settings?.roleCounts && typeof settings.roleCounts === "object") {
+				room.settings.roleCounts = normalizeRoleCounts({
+					...room.settings.roleCounts,
+					...settings.roleCounts,
+				});
+			}
+			if (
+				settings?.roleAssignments &&
+				typeof settings.roleAssignments === "object"
+			) {
+				room.settings.roleAssignments = {
+					...room.settings.roleAssignments,
+					...settings.roleAssignments,
+				};
+			}
+		}
+
 		this.broadcastLobbyState(roomId);
 		return { success: true, settings: room.settings };
+	}
+
+	addDevBots(socket, requestedCount) {
+		if (!isDevBotsEnabled()) {
+			return { error: "Dev bots are not enabled on this server" };
+		}
+
+		const hostId = this.socketToPlayer.get(socket.id);
+		const roomId = this.playerToRoom.get(hostId);
+		if (!roomId) return { error: "Not in a room" };
+
+		const room = this.rooms.get(roomId);
+		if (!room) return { error: "Room not found" };
+		if (room.hostId !== hostId) {
+			return { error: "Only the host can add dev bots" };
+		}
+		if (room.status !== "lobby") {
+			return { error: "Bots can only be added in the lobby" };
+		}
+
+		const gameDef = getGame(room.gameType);
+		if (!gameDef) return { error: "Invalid game type" };
+
+		const slotsLeft = gameDef.maxPlayers - room.players.length;
+		if (slotsLeft <= 0) {
+			return { error: "Room is full" };
+		}
+
+		let toAdd = Number(requestedCount);
+		if (!Number.isInteger(toAdd) || toAdd < 1) {
+			toAdd = Math.max(0, gameDef.minPlayers - room.players.length);
+		}
+		toAdd = Math.min(toAdd, slotsLeft);
+		if (toAdd <= 0) {
+			return {
+				error: `Already at or above minimum players (${gameDef.minPlayers})`,
+			};
+		}
+
+		const existingBots = room.players.filter((p) => p.isBot).length;
+		for (let i = 0; i < toAdd; i++) {
+			room.players.push(createBotPlayer(existingBots + i + 1));
+		}
+
+		this.broadcastLobbyState(roomId);
+		return { success: true, added: toAdd };
+	}
+
+	removeDevBots(socket) {
+		if (!isDevBotsEnabled()) {
+			return { error: "Dev bots are not enabled on this server" };
+		}
+
+		const hostId = this.socketToPlayer.get(socket.id);
+		const roomId = this.playerToRoom.get(hostId);
+		if (!roomId) return { error: "Not in a room" };
+
+		const room = this.rooms.get(roomId);
+		if (!room) return { error: "Room not found" };
+		if (room.hostId !== hostId) {
+			return { error: "Only the host can remove dev bots" };
+		}
+		if (room.status !== "lobby") {
+			return { error: "Bots can only be removed in the lobby" };
+		}
+
+		const before = room.players.length;
+		room.players = room.players.filter((p) => !p.isBot);
+		const removed = before - room.players.length;
+		if (removed === 0) {
+			return { error: "No bots in the room" };
+		}
+
+		this.broadcastLobbyState(roomId);
+		return { success: true, removed };
 	}
 
 	kickPlayer(socket, targetPlayerId) {
@@ -1119,6 +1257,78 @@ export class RoomManager {
 		return { success: true, state };
 	}
 
+	_requireTavernGame(room, playerId) {
+		if (!room.game || room.gameType !== "mafia") {
+			return { error: "No active Mafia game" };
+		}
+		if (room.game.narratorId !== playerId) {
+			return { error: "Only the narrator can control the game" };
+		}
+		return { game: room.game };
+	}
+
+	handleTavernAcknowledgeRole(socket) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+		const { playerId, room } = ctx;
+		if (!room.game || room.gameType !== "mafia") {
+			return { error: "No active Mafia game" };
+		}
+		const result = room.game.acknowledgeRole(playerId);
+		if (!result.success) return { error: result.error };
+		this.broadcastGameState(room.id);
+		return {
+			success: true,
+			state: { roomId: room.id, ...room.game.serializeForPlayer(playerId) },
+		};
+	}
+
+	handleTavernNarratorAction(socket, action, payload = {}) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+		const { playerId, room } = ctx;
+		const guard = this._requireTavernGame(room, playerId);
+		if (guard.error) return { error: guard.error };
+		const game = guard.game;
+
+		let result;
+		switch (action) {
+			case "start_day":
+				result = game.narratorStartDay(playerId);
+				break;
+			case "day_eliminate":
+				result = game.narratorDayEliminate(playerId, payload.targetPlayerId);
+				break;
+			case "begin_night":
+				result = game.narratorBeginNight(playerId);
+				break;
+			case "set_night_target":
+				result = game.narratorSetNightTarget(
+					playerId,
+					payload.targetPlayerId ?? null,
+				);
+				break;
+			case "confirm_night_step":
+				result = game.narratorConfirmNightStep(playerId);
+				break;
+			case "end_morning":
+				result = game.narratorEndMorning(playerId);
+				break;
+			case "reset_match":
+				result = game.narratorResetMatch(playerId);
+				break;
+			default:
+				return { error: "Unknown action" };
+		}
+
+		if (!result.success) return { error: result.error };
+		this.broadcastGameState(room.id);
+		return {
+			success: true,
+			state: { roomId: room.id, ...game.serializeForPlayer(playerId) },
+		};
+	}
+
 	handleBaraReveal(socket) {
 		const ctx = this._getPlayerContext(socket);
 		if (ctx.error) return { error: ctx.error };
@@ -1340,6 +1550,7 @@ export class RoomManager {
 				displayName: p.displayName,
 				connected: p.connected,
 				tabFocused: p.tabFocused !== false,
+				isBot: !!p.isBot,
 			})),
 			spectators: (room.spectators ?? []).map((s) => ({
 				id: s.id,
@@ -1349,6 +1560,7 @@ export class RoomManager {
 			minPlayers: gameDef?.minPlayers ?? 2,
 			maxPlayers: gameDef?.maxPlayers ?? 4,
 			settings: { ...room.settings },
+			devBotsEnabled: isDevBotsEnabled(),
 		};
 
 		this._emitToRoom(room, "lobby:state", payload);
@@ -1437,6 +1649,7 @@ export class RoomManager {
 				displayName: p.displayName,
 				connected: p.connected,
 				tabFocused: p.tabFocused !== false,
+				isBot: !!p.isBot,
 			})),
 			spectators: (room.spectators ?? []).map((s) => ({
 				id: s.id,
@@ -1447,6 +1660,7 @@ export class RoomManager {
 			minPlayers: getGame(room.gameType)?.minPlayers ?? 2,
 			maxPlayers: getGame(room.gameType)?.maxPlayers ?? 4,
 			isSpectator,
+			devBotsEnabled: isDevBotsEnabled(),
 		});
 
 		if (room.game) {

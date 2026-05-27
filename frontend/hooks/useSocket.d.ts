@@ -2,14 +2,23 @@ import type {
   MatchSettings,
   WordGameSettings,
   BaraGameSettings,
+  TavernCouncilSettings,
   HubPresenceState,
   ChatMessage,
 } from '@/lib/hub/types';
 import type { GameState, Tile } from '@/games/dominoes/types';
 import type { WordGameState } from '@/games/wordgame/types';
 import type { BaraGameState } from '@/games/bara-alsalafa/types';
+import type {
+  TavernCouncilGameState,
+  TavernNarratorAction,
+} from '@/games/tavern-council/types';
 
-export type HubGameState = GameState | WordGameState | BaraGameState;
+export type HubGameState =
+  | GameState
+  | WordGameState
+  | BaraGameState
+  | TavernCouncilGameState;
 
 export interface WordGuessedCelebrationEvent {
   wordCategory: string;
@@ -44,7 +53,9 @@ export interface UseSocketReturn {
   leaveRoom: () => void;
   hardResetPlayer: () => Promise<void>;
   updateRoomSettings: (
-    settings: Partial<MatchSettings | WordGameSettings | BaraGameSettings>
+    settings: Partial<
+      MatchSettings | WordGameSettings | BaraGameSettings | TavernCouncilSettings
+    >
   ) => Promise<boolean>;
   startGame: () => Promise<boolean>;
   kickPlayer: (targetPlayerId: string) => Promise<boolean>;
@@ -63,6 +74,14 @@ export interface UseSocketReturn {
   baraAdvanceInterrogation: () => Promise<boolean>;
   baraVote: (targetPlayerId: string) => Promise<boolean>;
   baraGuess: (guess: string) => Promise<boolean>;
+  tavernAcknowledgeRole: () => Promise<boolean>;
+  tavernNarratorAction: (
+    action: TavernNarratorAction,
+    targetPlayerId?: string | null
+  ) => Promise<boolean>;
+  /** Dev only — fill lobby with fake players */
+  addDevBots: (count?: number) => Promise<{ ok: boolean; added?: number; error?: string }>;
+  removeDevBots: () => Promise<{ ok: boolean; removed?: number; error?: string }>;
 }
 
 export function useSocket(): UseSocketReturn;

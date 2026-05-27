@@ -6,6 +6,7 @@ export const GAME_ENABLED = {
   dominoes: false,
   wordgame: true,
   'bara-alsalafa': true,
+  mafia: true,
 };
 
 export function isGameEnabled(gameType) {

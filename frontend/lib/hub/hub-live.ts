@@ -60,7 +60,8 @@ export function lobbyStateEqual(a: LobbyState | null, b: LobbyState | null): boo
     a.status !== b.status ||
     a.gameType !== b.gameType ||
     a.minPlayers !== b.minPlayers ||
-    a.maxPlayers !== b.maxPlayers
+    a.maxPlayers !== b.maxPlayers ||
+    !!a.devBotsEnabled !== !!b.devBotsEnabled
   ) {
     return false;
   }
@@ -74,7 +75,8 @@ export function lobbyStateEqual(a: LobbyState | null, b: LobbyState | null): boo
       p.id !== q.id ||
       p.displayName !== q.displayName ||
       p.connected !== q.connected ||
-      (p.tabFocused !== false) !== (q.tabFocused !== false)
+      (p.tabFocused !== false) !== (q.tabFocused !== false) ||
+      !!p.isBot !== !!q.isBot
     ) {
       return false;
     }

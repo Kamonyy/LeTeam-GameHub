@@ -37,12 +37,21 @@ export interface BaraGameSettings {
   roundsToWin: number;
 }
 
+export interface TavernCouncilSettings {
+  narratorId: string | null;
+  revealRoleOnDeath: boolean;
+  roleCounts: Record<string, number> | null;
+  roleAssignments?: Record<string, string>;
+}
+
 export interface LobbyPlayer {
   id: string;
   displayName: string;
   connected: boolean;
   /** False when the player left the game tab during an active Secret Word match. */
   tabFocused?: boolean;
+  /** Dev-only filler players (local testing). */
+  isBot?: boolean;
 }
 
 export interface LobbySpectator {
@@ -60,8 +69,14 @@ export interface LobbyState {
   spectators?: LobbySpectator[];
   minPlayers: number;
   maxPlayers: number;
-  settings?: MatchSettings | WordGameSettings | BaraGameSettings;
+  settings?:
+    | MatchSettings
+    | WordGameSettings
+    | BaraGameSettings
+    | TavernCouncilSettings;
   isSpectator?: boolean;
+  /** Server allows `room:dev:*` bot fillers (hide UI when false). */
+  devBotsEnabled?: boolean;
 }
 
 export const SCORE_CAP_OPTIONS = [50, 100, 150, 200] as const;

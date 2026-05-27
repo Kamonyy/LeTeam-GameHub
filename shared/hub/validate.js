@@ -40,7 +40,8 @@ export function validateGameType(gameType) {
 	return (
 		gameType === "dominoes" ||
 		gameType === "wordgame" ||
-		gameType === "bara-alsalafa"
+		gameType === "bara-alsalafa" ||
+		gameType === "mafia"
 	);
 }
 

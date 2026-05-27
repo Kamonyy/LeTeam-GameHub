@@ -123,6 +123,24 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true, roomId: result.roomId, isSpectator: true });
   });
 
+  socket.on('room:dev:add-bots', ({ count }, ack) => {
+    const result = roomManager.addDevBots(socket, count);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, added: result.added });
+  });
+
+  socket.on('room:dev:remove-bots', (_payload, ack) => {
+    const result = roomManager.removeDevBots(socket);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, removed: result.removed });
+  });
+
   socket.on('room:leave', (_payload, ack) => {
     roomManager.leaveRoom(socket);
     ack?.({ success: true });
@@ -289,6 +307,36 @@ export function registerHandlers(socket, roomManager) {
   socket.on('game:state:request', (_payload, ack) => {
     const result = roomManager.syncGameStateForPlayer(socket);
     if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, state: result.state });
+  });
+
+  socket.on('tavern:role:acknowledge', (_payload, ack) => {
+    const result = roomManager.handleTavernAcknowledgeRole(socket);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, state: result.state });
+  });
+
+  socket.on('tavern:narrator', ({ action, targetPlayerId }, ack) => {
+    if (
+      (action === 'day_eliminate' || action === 'set_night_target') &&
+      targetPlayerId != null &&
+      !validateTargetPlayerId(targetPlayerId)
+    ) {
+      ack?.({ error: 'Invalid target player' });
+      return;
+    }
+    const result = roomManager.handleTavernNarratorAction(socket, action, {
+      targetPlayerId: targetPlayerId ?? null,
+    });
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
       ack?.({ error: result.error });
       return;
     }

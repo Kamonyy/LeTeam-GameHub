@@ -56,6 +56,21 @@ const CATALOG: Omit<GameCatalogEntry, 'active'>[] = [
     players: '3–12',
     icon: '🕵️',
   },
+  {
+    id: 'mafia',
+    name: 'Mafia',
+    tagline:
+      'Face-to-face social deduction — one narrator guides the night; players only see their secret role.',
+    lobbyDescription: [
+      'Played in person: the website is a narrator console and role card, not the game board.',
+      'One player is the narrator and runs day votes, night steps, and eliminations here.',
+      'Everyone else joins on their phone to read their secret role and alive/dead status only.',
+      '5–12 players with balanced Mafia, Seer, Doctor, Sniper, Sheriff, and Villagers.',
+    ],
+    href: '/mafia',
+    players: '5–12',
+    icon: '🎭',
+  },
 ];
 
 /** Hub catalog with `active` derived from shared availability flags. */

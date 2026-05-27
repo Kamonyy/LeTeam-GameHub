@@ -18,6 +18,16 @@ export const BARA_MAX_PLAYERS = 12;
 export const BARA_ROUND_RESET_DELAY_MS = 6000;
 export const BARA_ROUNDS_OPTIONS = [3, 5, 7];
 export const BARA_PHASE_TICK_MS = 1000;
+/** Lobby size: at least 5 gameplay players + 1 narrator */
+export const MAFIA_MIN_PLAYERS = 6;
+export const MAFIA_MAX_PLAYERS = 12;
+
+export const DEFAULT_MAFIA_SETTINGS = {
+	narratorId: null,
+	revealRoleOnDeath: true,
+	roleCounts: null,
+	roleAssignments: {},
+};
 
 export const DEFAULT_BARA_SETTINGS = {
 	categoryPackageIds: ["food"],

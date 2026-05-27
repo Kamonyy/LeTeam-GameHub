@@ -418,6 +418,22 @@
 	filter: drop-shadow(0 0 16px rgba(244, 63, 94, 0.35));
 }
 
+.hub-game-card--mafia .hub-game-card__loading-icon {
+	color: #c9a227;
+	filter: drop-shadow(0 0 12px rgba(201, 162, 39, 0.45));
+}
+
+.hub-game-loading--mafia .hub-game-loading__spinner {
+	color: #c9a227;
+	filter: drop-shadow(0 0 16px rgba(201, 162, 39, 0.4));
+}
+
+.hub-game-card--mafia .hub-game-card__glow {
+	background:
+		radial-gradient(ellipse 90% 70% at 50% 110%, rgba(201, 162, 39, 0.16), transparent 58%),
+		radial-gradient(ellipse 50% 40% at 10% 20%, rgba(92, 21, 36, 0.12), transparent 50%);
+}
+
 .hub-game-loading--dominoes .hub-game-loading__spinner {
 	color: #34d399;
 	filter: drop-shadow(0 0 16px rgba(52, 211, 153, 0.35));

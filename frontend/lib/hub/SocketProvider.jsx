@@ -215,6 +215,10 @@ export function SocketProvider({ children }) {
           setGameState(state);
           return;
         }
+        if (state?.gameType === 'mafia') {
+          setGameState(state);
+          return;
+        }
         if (state && 'board' in state) {
           setGameState(state);
         }
@@ -817,6 +821,96 @@ export function SocketProvider({ children }) {
     });
   }, [ensureRegistered]);
 
+  const addDevBots = useCallback((count) => {
+    return new Promise((resolve) => {
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve({ ok: false, error: 'Not connected' });
+          return;
+        }
+        socket.emit('room:dev:add-bots', { count }, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve({ ok: false, error: res.error });
+          } else {
+            resolve({ ok: true, added: res.added ?? 0 });
+          }
+        });
+      })();
+    });
+  }, [ensureRegistered]);
+
+  const removeDevBots = useCallback(() => {
+    return new Promise((resolve) => {
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve({ ok: false, error: 'Not connected' });
+          return;
+        }
+        socket.emit('room:dev:remove-bots', {}, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve({ ok: false, error: res.error });
+          } else {
+            resolve({ ok: true, removed: res.removed ?? 0 });
+          }
+        });
+      })();
+    });
+  }, [ensureRegistered]);
+
+  const tavernAcknowledgeRole = useCallback(() => {
+    return new Promise((resolve) => {
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve(false);
+          return;
+        }
+        socket.emit('tavern:role:acknowledge', {}, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve(false);
+          } else {
+            if (res?.state) setGameState(res.state);
+            resolve(true);
+          }
+        });
+      })();
+    });
+  }, [ensureRegistered]);
+
+  const tavernNarratorAction = useCallback((action, targetPlayerId = null) => {
+    return new Promise((resolve) => {
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve(false);
+          return;
+        }
+        socket.emit(
+          'tavern:narrator',
+          { action, targetPlayerId },
+          (res) => {
+            if (res?.error) {
+              setError(res.error);
+              resolve(false);
+            } else {
+              if (res?.state) setGameState(res.state);
+              resolve(true);
+            }
+          }
+        );
+      })();
+    });
+  }, [ensureRegistered]);
+
   const baraGuess = useCallback((guess) => {
     return new Promise((resolve) => {
       (async () => {
@@ -875,6 +969,10 @@ export function SocketProvider({ children }) {
       baraAdvanceInterrogation,
       baraVote,
       baraGuess,
+      tavernAcknowledgeRole,
+      tavernNarratorAction,
+      addDevBots,
+      removeDevBots,
       wordGuessedCelebration,
     }),
     [
@@ -912,6 +1010,10 @@ export function SocketProvider({ children }) {
       baraAdvanceInterrogation,
       baraVote,
       baraGuess,
+      tavernAcknowledgeRole,
+      tavernNarratorAction,
+      addDevBots,
+      removeDevBots,
       wordGuessedCelebration,
     ]
   );
