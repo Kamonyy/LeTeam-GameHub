@@ -1,4 +1,4 @@
-name = "leteam-gamehub"
+name = "gamehub"
 compatibility_date = "2024-01-01"
 
 # Runs automatically before `wrangler deploy` (even if dashboard build step is empty)
