@@ -1,6 +1,16 @@
 # LeTeam Game Hub
 
-Real-time multiplayer game hub. Production: Cloudflare Worker at https://gamehub.mohamed-hussein.net
+A browser-based **multiplayer game hub** for playing real-time party games with friends. Create or join a room with a short code, pick a game, and stay in sync over WebSockets—no install required.
+
+**Games**
+
+- **Secret Word** — Two-player word guessing (custom words or League champions); built for voice chat.
+- **برا السالفة** — Arabic social deduction for 3–12 players (who’s out of the loop?).
+- **Dominoes** — Block dominoes for 2–4 (currently offline in the hub while it’s being polished).
+
+**Stack:** Next.js static frontend, shared game engines, Socket.io hub (local dev) or Cloudflare Worker (production).
+
+**Live:** https://gamehub.mohamed-hussein.net
 
 ## Local dev
 
