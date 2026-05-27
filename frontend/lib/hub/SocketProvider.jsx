@@ -380,6 +380,28 @@ export function SocketProvider({ children }) {
     });
   }, [ensureRegistered]);
 
+  const submitSecretChampion = useCallback((championId) => {
+    return new Promise((resolve) => {
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve(false);
+          return;
+        }
+        socket.emit('word:submit', { championId }, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve(false);
+          } else {
+            if (res?.state) setGameState(res.state);
+            resolve(true);
+          }
+        });
+      })();
+    });
+  }, [ensureRegistered]);
+
   const sendChat = useCallback((message) => {
     const trimmed = typeof message === 'string' ? message.trim() : '';
     if (!trimmed || trimmed.length > 200) return;
@@ -527,6 +549,7 @@ export function SocketProvider({ children }) {
     continueRound,
     requestRematch,
     submitSecretWord,
+    submitSecretChampion,
     confirmWordGuessed,
     baraReveal,
     baraAdvanceInterrogation,

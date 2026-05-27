@@ -239,8 +239,8 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true });
   });
 
-  socket.on('word:submit', ({ word }, ack) => {
-    const result = roomManager.handleWordSubmit(socket, word);
+  socket.on('word:submit', (payload, ack) => {
+    const result = roomManager.handleWordSubmit(socket, payload);
     if (result?.error) {
       socket.emit('game:error', { message: result.error });
       ack?.({ error: result.error });

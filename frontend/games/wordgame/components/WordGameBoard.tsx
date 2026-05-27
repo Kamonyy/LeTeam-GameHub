@@ -14,6 +14,7 @@ interface WordGameBoardProps {
   lobby: LobbyState;
   playerId: string;
   onSubmitWord: (word: string) => Promise<boolean>;
+  onSubmitChampion: (championId: string) => Promise<boolean>;
   onConfirmGuessed: () => Promise<boolean>;
 }
 
@@ -22,6 +23,7 @@ export default function WordGameBoard({
   lobby,
   playerId,
   onSubmitWord,
+  onSubmitChampion,
   onConfirmGuessed,
 }: WordGameBoardProps) {
   const playerNames = Object.fromEntries(
@@ -48,6 +50,8 @@ export default function WordGameBoard({
   const showScratchpad =
     gameState.phase === 'playing' || gameState.phase === 'round_end';
 
+  const wordCategory = gameState.wordCategory ?? 'custom';
+
   return (
     <div className="animate-fade-in space-y-8">
       <ScoreCard
@@ -64,11 +68,14 @@ export default function WordGameBoard({
         <div className="min-w-0">
           {gameState.phase === 'setup' && (
             <WordSetup
+              wordCategory={wordCategory}
               iHaveSubmitted={gameState.iHaveSubmitted}
               opponentHasSubmitted={gameState.opponentHasSubmitted}
               opponentName={opponentName}
               myChosenWord={gameState.myChosenWord}
-              onSubmit={onSubmitWord}
+              myChosenChampionId={gameState.myChosenChampionId}
+              onSubmitWord={onSubmitWord}
+              onSubmitChampion={onSubmitChampion}
             />
           )}
 
@@ -76,8 +83,11 @@ export default function WordGameBoard({
             gameState.phase === 'round_end' ||
             gameState.phase === 'match_over') && (
             <GuessingBoard
+              wordCategory={wordCategory}
               myChosenWord={gameState.myChosenWord}
+              myChosenChampionId={gameState.myChosenChampionId}
               revealedWord={gameState.revealedWord}
+              revealedChampionId={gameState.revealedChampionId}
               phase={gameState.phase}
               opponentName={opponentName}
               guesserName={guesserName}

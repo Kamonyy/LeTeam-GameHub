@@ -13,7 +13,7 @@ import {
   Swords,
 } from 'lucide-react';
 import clsx from 'clsx';
-import type { LobbyState, WordGameSettings } from '@/lib/hub/types';
+import type { LobbyState, WordCategory, WordGameSettings } from '@/lib/hub/types';
 import { WORD_POINTS_OPTIONS } from '@/lib/hub/types';
 import GameAboutPanel from '@/components/hub/GameAboutPanel';
 import WordPanelFrame from './WordPanelFrame';
@@ -48,7 +48,20 @@ export default function WordLobby({
       lobby.settings && 'pointsToWin' in lobby.settings ?
         lobby.settings.pointsToWin
       :	5,
+    wordCategory:
+      lobby.settings && 'wordCategory' in lobby.settings ?
+        (lobby.settings.wordCategory as WordCategory)
+      :	'custom',
   };
+
+  const categoryOptions: { id: WordCategory; label: string; hint: string }[] = [
+    { id: 'custom', label: 'Custom', hint: 'Any secret word you choose' },
+    {
+      id: 'lol-champions',
+      label: 'League of Legends',
+      hint: 'Pick from all current champions',
+    },
+  ];
 
   const canStart =
     isHost && lobby.status === 'lobby' && connectedCount === lobby.maxPlayers;
@@ -110,6 +123,30 @@ export default function WordLobby({
         <div className="flex items-center gap-2 text-sm font-medium sw-text-accent mb-4">
           <Settings2 className="w-4 h-4 text-[#f0d78c]" />
           <span className="sw-heading text-xs">Match Settings</span>
+        </div>
+
+        <label className="block text-[10px] sw-muted mb-2 uppercase tracking-[0.2em]">
+          Word category
+        </label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
+          {categoryOptions.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              disabled={!isHost}
+              onClick={() => onSettingsChange?.({ wordCategory: opt.id })}
+              className={clsx(
+                'text-left px-3 py-2.5 rounded-lg border transition-all duration-200',
+                settings.wordCategory === opt.id ?
+                  'border-[rgba(201,162,39,0.55)] bg-[rgba(201,162,39,0.18)] shadow-[0_0_16px_rgba(201,162,39,0.12)]'
+                :	'border-[rgba(201,162,39,0.15)] bg-[rgba(6,8,22,0.6)] hover:border-[rgba(201,162,39,0.35)]',
+                !isHost && 'opacity-70 cursor-default'
+              )}
+            >
+              <span className="block text-sm font-semibold sw-text-accent">{opt.label}</span>
+              <span className="block text-[10px] sw-muted mt-0.5 leading-snug">{opt.hint}</span>
+            </button>
+          ))}
         </div>
 
         <label className="block text-[10px] sw-muted mb-2 uppercase tracking-[0.2em]">

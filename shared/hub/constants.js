@@ -28,8 +28,11 @@ export const DEFAULT_MATCH_SETTINGS = {
 	handSize: DEFAULT_HAND_SIZE,
 };
 
+export const WORD_CATEGORY_OPTIONS = ["custom", "lol-champions"];
+
 export const DEFAULT_WORD_GAME_SETTINGS = {
 	pointsToWin: 5,
+	wordCategory: "custom",
 };
 
 export const MAX_ROOMS = 500;

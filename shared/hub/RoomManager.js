@@ -550,6 +550,12 @@ export class RoomManager {
 			if (Number.isInteger(cap) && cap >= 1 && cap <= 99) {
 				room.settings.pointsToWin = cap;
 			}
+			if (
+				settings?.wordCategory === "custom" ||
+				settings?.wordCategory === "lol-champions"
+			) {
+				room.settings.wordCategory = settings.wordCategory;
+			}
 		}
 
 		if (room.gameType === "bara-alsalafa") {
@@ -747,7 +753,7 @@ export class RoomManager {
 		return { success: true };
 	}
 
-	handleWordSubmit(socket, word) {
+	handleWordSubmit(socket, payload) {
 		const ctx = this._getPlayerContext(socket);
 		if (ctx.error) return { error: ctx.error };
 
@@ -756,11 +762,29 @@ export class RoomManager {
 			return { error: "No active word game" };
 		}
 
-		if (typeof word !== "string" || !word.trim()) {
+		const word =
+			typeof payload === "string" ? payload : (
+				typeof payload?.word === "string" ? payload.word : ""
+			);
+		const championId =
+			typeof payload === "object" && payload !== null ?
+				payload.championId
+			:	undefined;
+
+		if (room.game.wordCategory === "lol-champions") {
+			if (!championId || typeof championId !== "string") {
+				return { error: "Select a champion" };
+			}
+		} else if (!word.trim()) {
 			return { error: "Word is required" };
 		}
 
-		const result = room.game.submitWord(playerId, word);
+		const submitPayload =
+			room.game.wordCategory === "lol-champions" ?
+				{ championId }
+			:	{ word };
+
+		const result = room.game.submitWord(playerId, submitPayload);
 		if (!result.success) return { error: result.error };
 
 		this.broadcastGameState(room.id);

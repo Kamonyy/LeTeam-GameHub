@@ -2,6 +2,8 @@
  * WordGameEngine — 2-player secret word guessing (voice-chat companion).
  */
 
+import { getLolChampionById, normalizeWordCategory } from "./lol-champions.js";
+
 const MIN_WORD_LENGTH = 2;
 const MAX_WORD_LENGTH = 30;
 const WORD_PATTERN = /^[\p{L}\p{N}\s'-]+$/u;
@@ -9,7 +11,7 @@ const WORD_PATTERN = /^[\p{L}\p{N}\s'-]+$/u;
 export class WordGameEngine {
 	/**
 	 * @param {string[]} playerIds — exactly 2
-	 * @param {{ pointsToWin?: number }} [settings]
+	 * @param {{ pointsToWin?: number, wordCategory?: string }} [settings]
 	 */
 	constructor(playerIds, settings = {}) {
 		if (playerIds.length !== 2) {
@@ -18,12 +20,15 @@ export class WordGameEngine {
 
 		const cap = Number(settings.pointsToWin);
 		this.pointsToWin = Number.isInteger(cap) && cap >= 1 && cap <= 99 ? cap : 5;
+		this.wordCategory = normalizeWordCategory(settings.wordCategory);
 
 		this.playerIds = [...playerIds];
 		/** @type {'setup' | 'playing' | 'round_end' | 'match_over'} */
 		this.phase = "setup";
 		/** Words each player must guess: keyed by guesser id */
 		this.wordsForGuesser = /** @type {Record<string, string>} */ ({});
+		/** LoL champion ids for guesser (lol-champions mode) */
+		this.championIdsForGuesser = /** @type {Record<string, string>} */ ({});
 		/** @type {Record<string, boolean>} */
 		this.submitted = {};
 		/** @type {Record<string, number>} */
@@ -61,9 +66,9 @@ export class WordGameEngine {
 
 	/**
 	 * @param {string} creatorId
-	 * @param {string} word
+	 * @param {string | { word?: string, championId?: string }} payload
 	 */
-	submitWord(creatorId, word) {
+	submitWord(creatorId, payload) {
 		if (this.phase !== "setup") {
 			return { success: false, error: "Not in word selection phase" };
 		}
@@ -76,14 +81,44 @@ export class WordGameEngine {
 			return { success: false, error: "You already submitted a word" };
 		}
 
-		const normalized = this._normalizeWord(word);
-		const validationError = this._validateWord(normalized);
-		if (validationError) {
-			return { success: false, error: validationError };
+		const guesserId = this._opponentId(creatorId);
+		let secretWord = "";
+		let championId = null;
+
+		if (this.wordCategory === "lol-champions") {
+			const id =
+				typeof payload === "object" && payload !== null ?
+					payload.championId
+				:	null;
+			if (!id || typeof id !== "string") {
+				return { success: false, error: "Select a champion" };
+			}
+			const champ = getLolChampionById(id);
+			if (!champ) {
+				return { success: false, error: "Invalid champion" };
+			}
+			secretWord = champ.name;
+			championId = champ.id;
+		} else {
+			const raw =
+				typeof payload === "string" ? payload
+				: typeof payload === "object" && payload !== null ? payload.word
+				: "";
+			if (typeof raw !== "string" || !raw.trim()) {
+				return { success: false, error: "Word is required" };
+			}
+			const normalized = this._normalizeWord(raw);
+			const validationError = this._validateWord(normalized);
+			if (validationError) {
+				return { success: false, error: validationError };
+			}
+			secretWord = normalized;
 		}
 
-		const guesserId = this._opponentId(creatorId);
-		this.wordsForGuesser[guesserId] = normalized;
+		this.wordsForGuesser[guesserId] = secretWord;
+		if (championId) {
+			this.championIdsForGuesser[guesserId] = championId;
+		}
 		this.submitted[creatorId] = true;
 		this.lastAction = { type: "word_submitted", playerId: creatorId };
 
@@ -111,6 +146,8 @@ export class WordGameEngine {
 
 		const guesserId = this._opponentId(creatorId);
 		const revealedWord = this.wordsForGuesser[guesserId];
+		const revealedChampionId =
+			this.championIdsForGuesser[guesserId] ?? null;
 
 		if (!revealedWord) {
 			return { success: false, error: "Word not found" };
@@ -118,14 +155,20 @@ export class WordGameEngine {
 
 		this.scores[guesserId] = (this.scores[guesserId] || 0) + 1;
 
+		const revealMeta = {
+			word: revealedWord,
+			...(revealedChampionId ? { championId: revealedChampionId } : {}),
+		};
+
 		if (this.scores[guesserId] >= this.pointsToWin) {
 			this.winnerId = guesserId;
 			this.phase = "match_over";
 			this.lastAction = {
 				type: "match_won",
 				winnerId: guesserId,
-				word: revealedWord,
+				guesserId,
 				roundNumber: this.roundNumber,
+				...revealMeta,
 			};
 		} else {
 			this.phase = "round_end";
@@ -133,8 +176,8 @@ export class WordGameEngine {
 				type: "word_guessed",
 				guesserId,
 				creatorId,
-				word: revealedWord,
 				roundNumber: this.roundNumber,
+				...revealMeta,
 			};
 		}
 
@@ -146,6 +189,7 @@ export class WordGameEngine {
 
 		this.roundNumber += 1;
 		this.wordsForGuesser = {};
+		this.championIdsForGuesser = {};
 		this.submitted = {};
 		for (const id of this.playerIds) {
 			this.submitted[id] = false;
@@ -155,24 +199,41 @@ export class WordGameEngine {
 		return true;
 	}
 
+	_revealedFromLastAction() {
+		if (
+			this.phase !== "round_end" &&
+			this.phase !== "match_over"
+		) {
+			return { word: null, championId: null };
+		}
+		if (
+			this.lastAction?.type !== "word_guessed" &&
+			this.lastAction?.type !== "match_won"
+		) {
+			return { word: null, championId: null };
+		}
+		return {
+			word: this.lastAction.word ?? null,
+			championId: this.lastAction.championId ?? null,
+		};
+	}
+
 	/**
 	 * @param {string} viewerId
 	 */
 	serializeForPlayer(viewerId) {
 		const opponentId = this._opponentId(viewerId);
-
-		const revealedWord =
-			(
-				(this.phase === "round_end" || this.phase === "match_over") &&
-				(this.lastAction?.type === "word_guessed" ||
-					this.lastAction?.type === "match_won")
-			) ?
-				this.lastAction.word
-			:	null;
+		const { word: revealedWord, championId: revealedChampionId } =
+			this._revealedFromLastAction();
 
 		const myChosenWord =
 			this.submitted[viewerId] && this.wordsForGuesser[opponentId] ?
 				this.wordsForGuesser[opponentId]
+			:	null;
+
+		const myChosenChampionId =
+			this.submitted[viewerId] && this.championIdsForGuesser[opponentId] ?
+				this.championIdsForGuesser[opponentId]
 			:	null;
 
 		return {
@@ -181,11 +242,14 @@ export class WordGameEngine {
 			playerIds: this.playerIds,
 			scores: { ...this.scores },
 			pointsToWin: this.pointsToWin,
+			wordCategory: this.wordCategory,
 			roundNumber: this.roundNumber,
 			iHaveSubmitted: !!this.submitted[viewerId],
 			opponentHasSubmitted: !!this.submitted[opponentId],
 			myChosenWord,
+			myChosenChampionId,
 			revealedWord,
+			revealedChampionId,
 			winnerId: this.winnerId,
 			lastGuesserId:
 				(

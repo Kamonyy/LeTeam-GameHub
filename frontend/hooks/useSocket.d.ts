@@ -47,6 +47,7 @@ export interface UseSocketReturn {
   continueRound: () => Promise<boolean>;
   requestRematch: () => Promise<boolean>;
   submitSecretWord: (word: string) => Promise<boolean>;
+  submitSecretChampion: (championId: string) => Promise<boolean>;
   confirmWordGuessed: () => Promise<boolean>;
   baraReveal: () => Promise<boolean>;
   baraAdvanceInterrogation: () => Promise<boolean>;

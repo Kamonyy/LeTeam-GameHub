@@ -39,6 +39,7 @@ export default function WordGameClient() {
     kickPlayer,
     cancelMatch,
     submitSecretWord,
+    submitSecretChampion,
     confirmWordGuessed,
   } = useSocket();
 
@@ -290,6 +291,7 @@ export default function WordGameClient() {
             lobby={lobby}
             playerId={playerId}
             onSubmitWord={submitSecretWord}
+            onSubmitChampion={submitSecretChampion}
             onConfirmGuessed={confirmWordGuessed}
           />
         )}

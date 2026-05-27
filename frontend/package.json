@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "lint": "next lint"
+    "lint": "next lint",
+    "fetch:lol-champions": "node scripts/fetch-lol-champion-icons.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

@@ -22,8 +22,11 @@ export interface MatchSettings {
   handSize: number;
 }
 
+export type WordCategory = 'custom' | 'lol-champions';
+
 export interface WordGameSettings {
   pointsToWin: number;
+  wordCategory?: WordCategory;
 }
 
 export interface BaraGameSettings {
@@ -60,4 +63,5 @@ export interface LobbyState {
 
 export const SCORE_CAP_OPTIONS = [50, 100, 150, 200] as const;
 export const WORD_POINTS_OPTIONS = [3, 5, 10] as const;
+export const WORD_CATEGORY_OPTIONS = ['custom', 'lol-champions'] as const;
 export const BARA_ROUNDS_OPTIONS = [3, 5, 7] as const;

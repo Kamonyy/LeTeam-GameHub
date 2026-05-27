@@ -3,11 +3,16 @@
 import { useState } from 'react';
 import { Eye, Trophy, CheckCircle, Crown, Sparkles } from 'lucide-react';
 import WordPanelFrame from './WordPanelFrame';
+import ChampionPortrait from './ChampionPortrait';
 import clsx from 'clsx';
+import type { WordCategory } from '../types';
 
 interface GuessingBoardProps {
+  wordCategory: WordCategory;
   myChosenWord: string | null;
+  myChosenChampionId: string | null;
   revealedWord: string | null;
+  revealedChampionId: string | null;
   phase: 'playing' | 'round_end' | 'match_over';
   opponentName: string;
   guesserName: string;
@@ -17,9 +22,40 @@ interface GuessingBoardProps {
   onConfirmGuessed: () => Promise<boolean>;
 }
 
-export default function GuessingBoard({
-  myChosenWord,
+function RevealContent({
+  wordCategory,
   revealedWord,
+  revealedChampionId,
+  label,
+}: {
+  wordCategory: WordCategory;
+  revealedWord: string;
+  revealedChampionId: string | null;
+  label: string;
+}) {
+  const isLol = wordCategory === 'lol-champions' && revealedChampionId;
+
+  return (
+    <div className="sw-reveal-box">
+      <p className="text-[10px] sw-muted uppercase tracking-[0.25em] mb-3">{label}</p>
+      {isLol && (
+        <div className="flex justify-center mb-4">
+          <ChampionPortrait championId={revealedChampionId} size="xl" showName={false} />
+        </div>
+      )}
+      <p className={clsx('sw-word-reveal', isLol && 'text-2xl sm:text-3xl')}>
+        {revealedWord}
+      </p>
+    </div>
+  );
+}
+
+export default function GuessingBoard({
+  wordCategory,
+  myChosenWord,
+  myChosenChampionId,
+  revealedWord,
+  revealedChampionId,
   phase,
   opponentName,
   guesserName,
@@ -29,6 +65,7 @@ export default function GuessingBoard({
   onConfirmGuessed,
 }: GuessingBoardProps) {
   const [confirming, setConfirming] = useState(false);
+  const isLol = wordCategory === 'lol-champions';
 
   const handleConfirm = async () => {
     setConfirming(true);
@@ -48,10 +85,12 @@ export default function GuessingBoard({
           {pointsToWin} points first
         </p>
         {revealedWord && (
-          <div className="sw-reveal-box">
-            <p className="text-[10px] sw-muted uppercase tracking-[0.25em] mb-2">Final word</p>
-            <p className="sw-word-reveal text-2xl sm:text-3xl">{revealedWord}</p>
-          </div>
+          <RevealContent
+            wordCategory={wordCategory}
+            revealedWord={revealedWord}
+            revealedChampionId={revealedChampionId}
+            label={isLol ? 'Final champion' : 'Final word'}
+          />
         )}
       </WordPanelFrame>
     );
@@ -63,14 +102,18 @@ export default function GuessingBoard({
         <div className="sw-victory-icon mx-auto mb-5">
           <Trophy className="w-8 h-8" strokeWidth={1.5} />
         </div>
-        <h3 className="sw-heading-lg mb-3">Word Revealed</h3>
+        <h3 className="sw-heading-lg mb-3">
+          {isLol ? 'Champion Revealed' : 'Word Revealed'}
+        </h3>
         <p className="sw-muted text-sm mb-8">
           <span className="sw-text-accent font-semibold">{guesserName}</span> earns the point
         </p>
-        <div className="sw-reveal-box">
-          <p className="text-[10px] sw-muted uppercase tracking-[0.25em] mb-2">The word was</p>
-          <p className="sw-word-reveal">{revealedWord}</p>
-        </div>
+        <RevealContent
+          wordCategory={wordCategory}
+          revealedWord={revealedWord}
+          revealedChampionId={revealedChampionId}
+          label={isLol ? 'The champion was' : 'The word was'}
+        />
         <p className="text-xs sw-muted mt-8 flex items-center justify-center gap-2 animate-pulse-soft">
           <Sparkles className="w-3.5 h-3.5 text-[#c9a227]" />
           Next round approaches…
@@ -88,7 +131,10 @@ export default function GuessingBoard({
         </div>
         <div className="sw-divider-gold opacity-60" />
         <p className="text-sm sw-muted mt-4 leading-relaxed">
-          Discern the word <span className="sw-text-accent">{opponentName}</span> chose for you.
+          {isLol ?
+            <>Discern the champion <span className="sw-text-accent">{opponentName}</span> chose for you.</>
+          :	<>Discern the word <span className="sw-text-accent">{opponentName}</span> chose for you.</>}
+          {' '}
           Ask yes/no questions on voice — track clues on your scratchpad.
         </p>
       </WordPanelFrame>
@@ -96,17 +142,31 @@ export default function GuessingBoard({
       <WordPanelFrame className={clsx('p-6 sm:p-8', 'sw-accent-ember')}>
         <div className="flex items-center gap-2 mb-3">
           <CheckCircle className="w-5 h-5 text-[#ff9f43]" />
-          <h3 className="sw-heading text-xs">Your Word for {opponentName}</h3>
+          <h3 className="sw-heading text-xs">
+            {isLol ? `Your Champion for ${opponentName}` : `Your Word for ${opponentName}`}
+          </h3>
         </div>
         <div className="sw-divider-gold opacity-60" />
-        {myChosenWord && (
+        {(myChosenWord || myChosenChampionId) && (
           <div className="mt-5 mb-6 px-5 py-4 rounded-lg border border-[rgba(255,107,53,0.25)] bg-[rgba(8,12,24,0.6)]">
-            <p className="text-[10px] sw-muted uppercase tracking-[0.2em] mb-2">You inscribed</p>
-            <p className="text-xl font-semibold sw-text-accent tracking-wide">{myChosenWord}</p>
+            <p className="text-[10px] sw-muted uppercase tracking-[0.2em] mb-3">
+              {isLol ? 'You chose' : 'You inscribed'}
+            </p>
+            {isLol && myChosenChampionId && (
+              <div className="flex justify-center mb-3">
+                <ChampionPortrait championId={myChosenChampionId} size="md" />
+              </div>
+            )}
+            {myChosenWord && (
+              <p className="text-xl font-semibold sw-text-accent tracking-wide text-center">
+                {myChosenWord}
+              </p>
+            )}
           </div>
         )}
         <p className="text-sm sw-muted mb-6 leading-relaxed">
-          When <span className="sw-text-accent">{opponentName}</span> guesses your word aloud,
+          When <span className="sw-text-accent">{opponentName}</span>{' '}
+          {isLol ? 'guesses your champion aloud' : 'guesses your word aloud'},
           confirm to award the point.
         </p>
         <button
@@ -115,7 +175,7 @@ export default function GuessingBoard({
           disabled={!canConfirmGuessed || confirming}
           className="sw-btn-confirm"
         >
-          {confirming ? 'Confirming…' : 'Word Guessed!'}
+          {confirming ? 'Confirming…' : isLol ? 'Champion Guessed!' : 'Word Guessed!'}
         </button>
       </WordPanelFrame>
     </div>
