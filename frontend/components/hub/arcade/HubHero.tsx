@@ -58,7 +58,7 @@ export default function HubHero({ connected, hubPresence }: HubHeroProps) {
       <p className="text-xs uppercase tracking-[0.35em] text-hub-muted mb-4 font-medium">
         Digital Arcade Lounge
       </p>
-      <h2 className="hub-hero-title text-4xl sm:text-5xl lg:text-6xl font-bold mb-5 leading-tight">
+      <h2 className="hub-hero-title text-4xl sm:text-5xl lg:text-6xl font-bold mb-5">
         Play together, instantly
       </h2>
       <p className="text-hub-muted text-lg max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed">
