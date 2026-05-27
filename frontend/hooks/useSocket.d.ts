@@ -1,8 +1,15 @@
-import type { MatchSettings, WordGameSettings, HubPresenceState, ChatMessage } from '@/lib/hub/types';
+import type {
+  MatchSettings,
+  WordGameSettings,
+  BaraGameSettings,
+  HubPresenceState,
+  ChatMessage,
+} from '@/lib/hub/types';
 import type { GameState, Tile } from '@/games/dominoes/types';
 import type { WordGameState } from '@/games/wordgame/types';
+import type { BaraGameState } from '@/games/bara-alsalafa/types';
 
-export type HubGameState = GameState | WordGameState;
+export type HubGameState = GameState | WordGameState | BaraGameState;
 
 export interface UseSocketReturn {
   connected: boolean;
@@ -28,7 +35,9 @@ export interface UseSocketReturn {
     displayName: string
   ) => Promise<{ ok: boolean; spectating: boolean }>;
   leaveRoom: () => void;
-  updateRoomSettings: (settings: Partial<MatchSettings | WordGameSettings>) => Promise<boolean>;
+  updateRoomSettings: (
+    settings: Partial<MatchSettings | WordGameSettings | BaraGameSettings>
+  ) => Promise<boolean>;
   startGame: () => Promise<boolean>;
   kickPlayer: (targetPlayerId: string) => Promise<boolean>;
   cancelMatch: () => Promise<boolean>;
@@ -39,6 +48,10 @@ export interface UseSocketReturn {
   requestRematch: () => Promise<boolean>;
   submitSecretWord: (word: string) => Promise<boolean>;
   confirmWordGuessed: () => Promise<boolean>;
+  baraReveal: () => Promise<boolean>;
+  baraAdvanceInterrogation: () => Promise<boolean>;
+  baraVote: (targetPlayerId: string) => Promise<boolean>;
+  baraGuess: (guess: string) => Promise<boolean>;
 }
 
 export function useSocket(): UseSocketReturn;

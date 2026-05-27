@@ -47,6 +47,11 @@ module.exports = {
 					"boneyardStackPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
 				"opponent-thinking":
 					"opponentThinking 0.9s ease-in-out infinite",
+				"bara-seat-entry":
+					"baraSeatEntry 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards",
+				"bara-vibrate": "baraVibrate 0.45s ease-in-out infinite",
+				"bara-shake": "baraShake 0.55s cubic-bezier(0.34, 1.56, 0.64, 1)",
+				"bara-explosion": "baraExplosion 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)",
 			},
 			keyframes: {
 				fadeIn: {
@@ -171,6 +176,27 @@ module.exports = {
 				opponentThinking: {
 					"0%, 100%": { opacity: "0.55" },
 					"50%": { opacity: "1" },
+				},
+				baraSeatEntry: {
+					"0%": { opacity: "0", transform: "scale(0.6)" },
+					"100%": { opacity: "1", transform: "scale(1)" },
+				},
+				baraVibrate: {
+					"0%, 100%": { transform: "translateX(0)" },
+					"25%": { transform: "translateX(-3px)" },
+					"75%": { transform: "translateX(3px)" },
+				},
+				baraShake: {
+					"0%, 100%": { transform: "translateX(0)" },
+					"20%": { transform: "translateX(-8px) rotate(-1deg)" },
+					"40%": { transform: "translateX(8px) rotate(1deg)" },
+					"60%": { transform: "translateX(-6px)" },
+					"80%": { transform: "translateX(6px)" },
+				},
+				baraExplosion: {
+					"0%": { transform: "scale(0.85)", opacity: "0.5" },
+					"50%": { transform: "scale(1.08)", opacity: "1" },
+					"100%": { transform: "scale(1)", opacity: "1" },
 				},
 			},
 		},

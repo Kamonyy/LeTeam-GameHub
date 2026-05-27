@@ -37,7 +37,11 @@ export function normalizeRoomId(id) {
 }
 
 export function validateGameType(gameType) {
-	return gameType === "dominoes" || gameType === "wordgame";
+	return (
+		gameType === "dominoes" ||
+		gameType === "wordgame" ||
+		gameType === "bara-alsalafa"
+	);
 }
 
 export function validateMoveEnd(end) {

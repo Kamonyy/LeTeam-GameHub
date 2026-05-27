@@ -11,6 +11,16 @@ export const WORD_ROUND_RESET_DELAY_MS = 3500;
 export const WORD_GAME_MIN_PLAYERS = 2;
 export const WORD_GAME_MAX_PLAYERS = 2;
 export const WORD_POINTS_OPTIONS = [3, 5, 10];
+export const BARA_MIN_PLAYERS = 3;
+export const BARA_MAX_PLAYERS = 12;
+export const BARA_ROUND_RESET_DELAY_MS = 6000;
+export const BARA_ROUNDS_OPTIONS = [3, 5, 7];
+export const BARA_PHASE_TICK_MS = 1000;
+
+export const DEFAULT_BARA_SETTINGS = {
+	categoryPackageId: "food",
+	roundsToWin: 3,
+};
 
 export const DEFAULT_MATCH_SETTINGS = {
 	scoreCap: DEFAULT_SCORE_CAP,

@@ -259,6 +259,50 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true, state: result.state });
   });
 
+  socket.on('bara:reveal', (_payload, ack) => {
+    const result = roomManager.handleBaraReveal(socket);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, state: result.state });
+  });
+
+  socket.on('bara:interrogation:advance', (_payload, ack) => {
+    const result = roomManager.handleBaraAdvanceInterrogation(socket);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
+  socket.on('bara:vote', ({ targetPlayerId }, ack) => {
+    if (!validateTargetPlayerId(targetPlayerId)) {
+      ack?.({ error: 'Invalid target player' });
+      return;
+    }
+    const result = roomManager.handleBaraVote(socket, targetPlayerId);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, state: result.state });
+  });
+
+  socket.on('bara:guess', ({ guess }, ack) => {
+    const result = roomManager.handleBaraGuess(socket, guess);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, state: result.state });
+  });
+
   socket.on('chat:send', ({ message }, ack) => {
     if (!roomManager.checkRateLimit(socket.id, 'chat', RATE_LIMITS.chat)) {
       ack?.({ error: 'Too many messages, slow down' });

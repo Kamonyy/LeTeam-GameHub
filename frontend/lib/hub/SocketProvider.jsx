@@ -121,7 +121,7 @@ export function SocketProvider({ children }) {
         }
       });
       socket.on('game:state:update', (state) => {
-        if (state?.gameType === 'wordgame') {
+        if (state?.gameType === 'wordgame' || state?.gameType === 'bara-alsalafa') {
           setGameState(state);
           return;
         }
@@ -413,6 +413,93 @@ export function SocketProvider({ children }) {
     });
   }, [ensureRegistered]);
 
+  const baraReveal = useCallback(() => {
+    return new Promise((resolve) => {
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve(false);
+          return;
+        }
+        socket.emit('bara:reveal', {}, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve(false);
+          } else {
+            if (res?.state) setGameState(res.state);
+            resolve(true);
+          }
+        });
+      })();
+    });
+  }, [ensureRegistered]);
+
+  const baraAdvanceInterrogation = useCallback(() => {
+    return new Promise((resolve) => {
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve(false);
+          return;
+        }
+        socket.emit('bara:interrogation:advance', {}, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve(false);
+          } else {
+            resolve(true);
+          }
+        });
+      })();
+    });
+  }, [ensureRegistered]);
+
+  const baraVote = useCallback((targetPlayerId) => {
+    return new Promise((resolve) => {
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve(false);
+          return;
+        }
+        socket.emit('bara:vote', { targetPlayerId }, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve(false);
+          } else {
+            if (res?.state) setGameState(res.state);
+            resolve(true);
+          }
+        });
+      })();
+    });
+  }, [ensureRegistered]);
+
+  const baraGuess = useCallback((guess) => {
+    return new Promise((resolve) => {
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve(false);
+          return;
+        }
+        socket.emit('bara:guess', { guess }, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve(false);
+          } else {
+            if (res?.state) setGameState(res.state);
+            resolve(true);
+          }
+        });
+      })();
+    });
+  }, [ensureRegistered]);
+
   const value = {
     connected,
     playerId,
@@ -441,6 +528,10 @@ export function SocketProvider({ children }) {
     requestRematch,
     submitSecretWord,
     confirmWordGuessed,
+    baraReveal,
+    baraAdvanceInterrogation,
+    baraVote,
+    baraGuess,
   };
 
   return (

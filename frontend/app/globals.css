@@ -626,4 +626,179 @@
 	.word-scratchpad {
 		@apply rounded-xl border border-hub-border bg-hub-surface/90 overflow-hidden;
 	}
+
+	.glass-card {
+		@apply rounded-xl border border-white/10 bg-white/5 backdrop-blur-md shadow-lg;
+	}
+
+	.bara-board--emerald {
+		background: linear-gradient(160deg, #143224 0%, #0a1a12 55%, #0f1117 100%);
+		border-color: rgba(52, 211, 153, 0.15);
+	}
+
+	.bara-board--crimson {
+		background: linear-gradient(160deg, #2a1218 0%, #0f1117 45%, #1a0a0e 100%);
+		border-color: rgba(239, 68, 68, 0.25);
+		box-shadow: 0 0 40px rgba(239, 68, 68, 0.08);
+	}
+
+	.bara-player-grid {
+		display: grid;
+		gap: 0.75rem;
+		justify-items: center;
+		width: 100%;
+	}
+
+	.bara-grid--few {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		max-width: 36rem;
+		margin-inline: auto;
+	}
+
+	@media (min-width: 640px) {
+		.bara-grid--few {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+	}
+
+	.bara-grid--medium {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		max-width: 48rem;
+		margin-inline: auto;
+	}
+
+	.bara-grid--dense {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		max-width: 56rem;
+		margin-inline: auto;
+	}
+
+	@media (min-width: 1024px) {
+		.bara-grid--dense {
+			grid-template-columns: repeat(6, minmax(0, 1fr));
+		}
+	}
+
+	.bara-seat {
+		@apply relative flex flex-col items-center gap-1.5 p-3 transition-all duration-300;
+	}
+
+	.bara-seat--me {
+		@apply ring-1 ring-hub-accent/40;
+	}
+
+	.bara-seat--vote-target:hover {
+		@apply ring-2 ring-hub-danger/70 scale-105;
+		box-shadow: 0 0 24px rgba(239, 68, 68, 0.35);
+	}
+
+	.bara-seat--spotlight {
+		@apply ring-2 ring-amber-400;
+		box-shadow: 0 0 32px rgba(251, 191, 36, 0.45);
+		animation: baraSpotlight 1.2s ease-in-out infinite;
+	}
+
+	.bara-seat--eliminated {
+		@apply opacity-40 grayscale;
+	}
+
+	.bara-vote-crosshair {
+		@apply absolute inset-0 rounded-xl pointer-events-none;
+		background:
+			linear-gradient(rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05)),
+			repeating-linear-gradient(
+				0deg,
+				transparent,
+				transparent 48%,
+				rgba(239, 68, 68, 0.2) 49%,
+				rgba(239, 68, 68, 0.2) 51%,
+				transparent 52%
+			),
+			repeating-linear-gradient(
+				90deg,
+				transparent,
+				transparent 48%,
+				rgba(239, 68, 68, 0.2) 49%,
+				rgba(239, 68, 68, 0.2) 51%,
+				transparent 52%
+			);
+	}
+
+	.bara-pill--revealed {
+		@apply bg-blue-500/20 text-blue-200;
+	}
+
+	.bara-pill--waiting {
+		@apply bg-hub-surface text-hub-muted;
+	}
+
+	.bara-pill--voted {
+		@apply bg-red-500/20 text-red-200;
+	}
+
+	.bara-pill--thinking {
+		@apply bg-emerald-500/15 text-emerald-200 animate-pulse-soft;
+	}
+
+	.bara-interrogation-banner {
+		@apply inline-block px-6 py-2 rounded-full text-sm font-semibold;
+		background: linear-gradient(90deg, #143224, #1e4d38);
+		border: 1px solid rgba(52, 211, 153, 0.3);
+	}
+
+	.bara-defend-banner,
+	.bara-voting-banner {
+		@apply text-sm font-medium text-red-200;
+	}
+
+	.bara-flip-card {
+		@apply relative w-full max-w-sm;
+		aspect-ratio: 3 / 4;
+		perspective: 1200px;
+	}
+
+	.bara-flip-card__inner {
+		@apply relative w-full h-full transition-transform duration-700;
+		transform-style: preserve-3d;
+	}
+
+	.bara-flip-card--flipped .bara-flip-card__inner {
+		transform: rotateY(180deg);
+	}
+
+	.bara-flip-card__face {
+		@apply absolute inset-0 rounded-2xl border border-white/10;
+		backface-visibility: hidden;
+		background: linear-gradient(145deg, #222633, #0f1117);
+	}
+
+	.bara-flip-card__back {
+		transform: rotateY(0deg);
+	}
+
+	.bara-flip-card__front {
+		transform: rotateY(180deg);
+	}
+
+	.bara-category-badge {
+		@apply text-xs px-3 py-1 rounded-full bg-blue-500/20 text-blue-200 border border-blue-400/30;
+	}
+
+	.bara-outcast-block {
+		@apply px-4 py-3 rounded-lg text-lg font-black text-center;
+		color: #fecaca;
+		background: rgba(239, 68, 68, 0.25);
+		border: 2px solid #ef4444;
+		box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+	}
+
+	@keyframes baraSpotlight {
+		0%,
+		100% {
+			box-shadow: 0 0 24px rgba(251, 191, 36, 0.35);
+		}
+		50% {
+			box-shadow: 0 0 40px rgba(251, 191, 36, 0.65);
+		}
+	}
 }

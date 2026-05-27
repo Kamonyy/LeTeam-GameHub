@@ -26,6 +26,11 @@ export interface WordGameSettings {
   pointsToWin: number;
 }
 
+export interface BaraGameSettings {
+  categoryPackageId: string;
+  roundsToWin: number;
+}
+
 export interface LobbyPlayer {
   id: string;
   displayName: string;
@@ -47,9 +52,10 @@ export interface LobbyState {
   spectators?: LobbySpectator[];
   minPlayers: number;
   maxPlayers: number;
-  settings?: MatchSettings | WordGameSettings;
+  settings?: MatchSettings | WordGameSettings | BaraGameSettings;
   isSpectator?: boolean;
 }
 
 export const SCORE_CAP_OPTIONS = [50, 100, 150, 200] as const;
 export const WORD_POINTS_OPTIONS = [3, 5, 10] as const;
+export const BARA_ROUNDS_OPTIONS = [3, 5, 7] as const;

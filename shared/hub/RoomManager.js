@@ -6,14 +6,19 @@
 import {
 	DEFAULT_MATCH_SETTINGS,
 	DEFAULT_WORD_GAME_SETTINGS,
+	DEFAULT_BARA_SETTINGS,
 	DISCONNECT_GRACE_MS,
 	ROUND_RESTART_DELAY_MS,
 	ROOM_IDLE_CLEANUP_MS,
 	SCORE_CAP_OPTIONS,
 	TURN_TIMER_TICK_MS,
+	BARA_PHASE_TICK_MS,
+	BARA_ROUND_RESET_DELAY_MS,
 	WORD_POINTS_OPTIONS,
 	WORD_ROUND_RESET_DELAY_MS,
+	BARA_ROUNDS_OPTIONS,
 } from "./constants.js";
+import { CATEGORY_PACKAGE_IDS } from "../games/bara-alsalafa/categories.js";
 import { generateRoomId } from "./generateRoomId.js";
 import { getGame, isGameEnabled } from "../games/registry.js";
 import { RateLimiter } from "./RateLimiter.js";
@@ -39,6 +44,7 @@ export class RoomManager {
 		this.hubPresence = new Map();
 		this.rateLimiter = new RateLimiter();
 		this._startTurnTimerLoop();
+		this._startBaraPhaseLoop();
 		this._startCleanupLoop();
 	}
 
@@ -323,6 +329,8 @@ export class RoomManager {
 			settings:
 				gameType === "wordgame" ?
 					{ ...DEFAULT_WORD_GAME_SETTINGS }
+				: gameType === "bara-alsalafa" ?
+					{ ...DEFAULT_BARA_SETTINGS }
 				:	{ ...DEFAULT_MATCH_SETTINGS },
 			nextRoundTimer: null,
 			autoPlayTimer: null,
@@ -531,6 +539,21 @@ export class RoomManager {
 			const cap = Number(settings?.pointsToWin);
 			if (Number.isInteger(cap) && cap >= 1 && cap <= 99) {
 				room.settings.pointsToWin = cap;
+			}
+		}
+
+		if (room.gameType === "bara-alsalafa") {
+			if (
+				settings?.categoryPackageId &&
+				CATEGORY_PACKAGE_IDS.includes(settings.categoryPackageId)
+			) {
+				room.settings.categoryPackageId = settings.categoryPackageId;
+			}
+			const rounds = Number(settings?.roundsToWin);
+			if (Number.isInteger(rounds) && rounds >= 1 && rounds <= 10) {
+				room.settings.roundsToWin = rounds;
+			} else if (BARA_ROUNDS_OPTIONS.includes(settings?.roundsToWin)) {
+				room.settings.roundsToWin = settings.roundsToWin;
 			}
 		}
 
@@ -792,6 +815,102 @@ export class RoomManager {
 		};
 	}
 
+	handleBaraReveal(socket) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		if (!room.game || room.gameType !== "bara-alsalafa") {
+			return { error: "No active برا السالفة game" };
+		}
+
+		const result = room.game.revealRole(playerId);
+		if (!result.success) return { error: result.error };
+
+		this.broadcastGameState(room.id);
+		return {
+			success: true,
+			state: { roomId: room.id, ...room.game.serializeForPlayer(playerId) },
+		};
+	}
+
+	handleBaraAdvanceInterrogation(socket) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		if (!room.game || room.gameType !== "bara-alsalafa") {
+			return { error: "No active برا السالفة game" };
+		}
+		if (room.hostId !== playerId) {
+			return { error: "Only the host can skip the timer" };
+		}
+
+		const result = room.game.advanceInterrogation(playerId);
+		if (!result.success) return { error: result.error };
+
+		this.broadcastGameState(room.id);
+		return { success: true };
+	}
+
+	handleBaraVote(socket, targetPlayerId) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		if (!room.game || room.gameType !== "bara-alsalafa") {
+			return { error: "No active برا السالفة game" };
+		}
+
+		const result = room.game.castVote(playerId, targetPlayerId);
+		if (!result.success) return { error: result.error };
+
+		this.broadcastGameState(room.id);
+		return {
+			success: true,
+			state: { roomId: room.id, ...room.game.serializeForPlayer(playerId) },
+		};
+	}
+
+	handleBaraGuess(socket, guess) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		if (!room.game || room.gameType !== "bara-alsalafa") {
+			return { error: "No active برا السالفة game" };
+		}
+
+		if (typeof guess !== "string" || !guess.trim()) {
+			return { error: "Guess is required" };
+		}
+
+		const result = room.game.submitOutcastGuess(playerId, guess);
+		if (!result.success) return { error: result.error };
+
+		this.broadcastGameState(room.id);
+		return {
+			success: true,
+			state: { roomId: room.id, ...room.game.serializeForPlayer(playerId) },
+		};
+	}
+
+	_tickBaraPhaseTimers() {
+		for (const [roomId, room] of this.rooms) {
+			if (room.status !== "playing" || room.gameType !== "bara-alsalafa") continue;
+			if (!room.game?.phaseEndsAt) continue;
+			if (Date.now() < room.game.phaseEndsAt) continue;
+
+			if (room.game.phase === "interrogation") {
+				const result = room.game.onInterrogationTimerExpired();
+				if (result?.changed) this.broadcastGameState(roomId);
+			} else if (room.game.phase === "defend") {
+				const result = room.game.onDefendTimerExpired();
+				if (result?.changed) this.broadcastGameState(roomId);
+			}
+		}
+	}
+
 	handleDisconnect(socket) {
 		const playerId = this.socketToPlayer.get(socket.id);
 		if (!playerId) return;
@@ -950,6 +1069,8 @@ export class RoomManager {
 		const delay =
 			room.gameType === "wordgame" ?
 				WORD_ROUND_RESET_DELAY_MS
+			: room.gameType === "bara-alsalafa" ?
+				BARA_ROUND_RESET_DELAY_MS
 			:	ROUND_RESTART_DELAY_MS;
 
 		room.nextRoundTimer = setTimeout(() => {
@@ -1020,6 +1141,10 @@ export class RoomManager {
 			if (!socketId) continue;
 			this.io.to(socketId).emit(event, payload);
 		}
+	}
+
+	_startBaraPhaseLoop() {
+		setInterval(() => this._tickBaraPhaseTimers(), BARA_PHASE_TICK_MS);
 	}
 
 	_startTurnTimerLoop() {

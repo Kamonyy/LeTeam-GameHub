@@ -1,10 +1,13 @@
 import { DominoEngine } from './dominoes/DominoEngine.js';
 import { WordGameEngine } from './wordgame/WordGameEngine.js';
+import { BaraAlsalafaEngine } from './bara-alsalafa/BaraAlsalafaEngine.js';
 import {
   DEFAULT_MAX_PLAYERS,
   DEFAULT_MIN_PLAYERS,
   WORD_GAME_MAX_PLAYERS,
   WORD_GAME_MIN_PLAYERS,
+  BARA_MIN_PLAYERS,
+  BARA_MAX_PLAYERS,
 } from '../hub/constants.js';
 
 /** @typedef {{ minPlayers: number, maxPlayers: number, createEngine: (playerIds: string[], settings?: object) => object }} GameDefinition */
@@ -22,6 +25,12 @@ export const GAMES = {
     minPlayers: WORD_GAME_MIN_PLAYERS,
     maxPlayers: WORD_GAME_MAX_PLAYERS,
     createEngine: (playerIds, settings) => new WordGameEngine(playerIds, settings),
+  },
+  'bara-alsalafa': {
+    enabled: true,
+    minPlayers: BARA_MIN_PLAYERS,
+    maxPlayers: BARA_MAX_PLAYERS,
+    createEngine: (playerIds, settings) => new BaraAlsalafaEngine(playerIds, settings),
   },
 };
 

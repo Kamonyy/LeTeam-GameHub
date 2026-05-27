@@ -42,6 +42,20 @@ export const GAMES: GameCatalogEntry[] = [
     players: '2',
     icon: '🔤',
   },
+  {
+    id: 'bara-alsalafa',
+    name: 'برا السالفة',
+    tagline: 'لعبة اجتماعية للتخمين والخداع — من 3 إلى 12 لاعباً، واحد برا السالفة!',
+    lobbyDescription: [
+      'لعبة حفلات عربية مستوحاة من Out of the Loop: الجميع يعرف الكلمة السرية إلا شخص واحد.',
+      'اسألوا وتصوّتوا لاكتشاف من «برا السالفة»، أو اختبروا معرفتكم إن كنتم المطرود.',
+      'اختر الحزمة: أكلات، مهن، أماكن، بوب كالتشر، أو أغراض منزلية — حتى 12 لاعباً في الغرفة.',
+    ],
+    href: '/bara-alsalafa',
+    active: true,
+    players: '3–12',
+    icon: '🕵️',
+  },
 ];
 
 export function getGameEntry(id: string): GameCatalogEntry | undefined {
