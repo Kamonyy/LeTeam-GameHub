@@ -493,132 +493,9 @@
   transform: rotate(135deg);
 }
 
-/* ── Full-screen phase transition overlay ── */
+/* ── Phase transition stage container (overlay styles in PHASE 6) ── */
 .tc-game-stage {
   position: relative;
-}
-
-.tc-phase-transition {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  animation: tc-phase-overlay 1.2s ease-in-out forwards;
-}
-
-.tc-phase-flash {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  animation: tc-phase-flash 1.2s ease-in-out forwards;
-}
-
-.tc-phase-transition--day .tc-phase-flash {
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 45%, rgba(232, 212, 139, 0.42), transparent 62%),
-    radial-gradient(ellipse 120% 100% at 50% 100%, rgba(201, 162, 39, 0.22), transparent 55%);
-}
-
-.tc-phase-transition--night .tc-phase-flash {
-  background:
-    radial-gradient(ellipse 85% 65% at 50% 20%, rgba(72, 130, 210, 0.45), transparent 58%),
-    radial-gradient(ellipse 100% 90% at 50% 100%, rgba(8, 16, 40, 0.55), transparent 50%);
-}
-
-.tc-phase-transition--morning .tc-phase-flash {
-  background:
-    radial-gradient(ellipse 80% 60% at 35% 25%, rgba(180, 200, 240, 0.38), transparent 55%),
-    radial-gradient(ellipse 90% 70% at 65% 80%, rgba(201, 120, 60, 0.2), transparent 52%);
-}
-
-.tc-phase-transition--role_reveal .tc-phase-flash {
-  background:
-    radial-gradient(ellipse 75% 55% at 50% 50%, rgba(160, 36, 52, 0.35), transparent 60%),
-    radial-gradient(ellipse 100% 80% at 50% 100%, rgba(201, 162, 39, 0.18), transparent 55%);
-}
-
-.tc-phase-banner {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 1.5rem 2.25rem;
-  text-align: center;
-  border: 1px solid rgba(201, 162, 39, 0.45);
-  border-radius: 4px;
-  background: linear-gradient(
-    180deg,
-    rgba(18, 24, 42, 0.92) 0%,
-    rgba(8, 12, 28, 0.96) 100%
-  );
-  box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.65),
-    0 0 48px rgba(201, 162, 39, 0.12),
-    inset 0 1px 0 rgba(255, 230, 180, 0.14);
-  animation: tc-phase-banner 1.2s ease-in-out forwards;
-}
-
-.tc-phase-banner__icon {
-  font-size: 2.75rem;
-  line-height: 1;
-  filter: drop-shadow(0 0 16px rgba(232, 212, 139, 0.45));
-}
-
-.tc-phase-banner__label {
-  font-size: 1.35rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--tc-gold-bright);
-  text-shadow: 0 0 20px rgba(201, 162, 39, 0.45);
-}
-
-@keyframes tc-phase-overlay {
-  0%,
-  100% {
-    opacity: 0;
-  }
-  10%,
-  72% {
-    opacity: 1;
-  }
-}
-
-@keyframes tc-phase-flash {
-  0%,
-  100% {
-    opacity: 0;
-  }
-  14% {
-    opacity: 0.9;
-  }
-  48% {
-    opacity: 0.4;
-  }
-}
-
-@keyframes tc-phase-banner {
-  0% {
-    opacity: 0;
-    transform: scale(0.9) translateY(18px);
-  }
-  16% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-  72% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.03) translateY(-10px);
-  }
 }
 
 .tc-phase-sigil,
@@ -1114,173 +991,7 @@
   text-transform: uppercase;
 }
 
-/* ── Mafia lobby controls ── */
-.tc-mafia-select-field {
-  display: block;
-}
-
-.tc-mafia-select-field__label {
-  display: block;
-  margin-bottom: 0.35rem;
-  font-size: 0.875rem;
-  color: var(--tc-ivory-muted);
-}
-
-.tc-mafia-select {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-height: 2.5rem;
-  padding: 0.5rem 2.25rem 0.5rem 0.85rem;
-  border-radius: 4px;
-  color: var(--tc-ivory);
-  background:
-    linear-gradient(180deg, rgba(92, 21, 36, 0.55) 0%, rgba(58, 10, 20, 0.85) 100%),
-    rgba(5, 11, 26, 0.9);
-  border: 1px solid rgba(184, 148, 58, 0.45);
-  box-shadow:
-    inset 0 1px 0 rgba(232, 212, 139, 0.08),
-    inset 0 2px 10px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(58, 10, 20, 0.4);
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-}
-
-.tc-mafia-select:hover:not(.tc-mafia-select--disabled) {
-  border-color: rgba(201, 162, 39, 0.65);
-}
-
-.tc-mafia-select:has(.tc-mafia-select__native:focus-visible) {
-  border-color: var(--tc-gold);
-  box-shadow:
-    inset 0 2px 10px rgba(0, 0, 0, 0.35),
-    0 0 14px rgba(201, 162, 39, 0.2);
-}
-
-.tc-mafia-select--disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.tc-mafia-select__value {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.875rem;
-  pointer-events: none;
-}
-
-.tc-mafia-select__chevron {
-  position: absolute;
-  right: 0.65rem;
-  top: 50%;
-  width: 1rem;
-  height: 1rem;
-  transform: translateY(-50%);
-  color: var(--tc-gold-bright);
-  pointer-events: none;
-}
-
-.tc-mafia-select__native {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  opacity: 0;
-  cursor: pointer;
-  appearance: none;
-  border: none;
-  background: transparent;
-  font-size: 1rem;
-}
-
-.tc-mafia-select__native:disabled {
-  cursor: not-allowed;
-}
-
-.tc-mafia-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: var(--tc-ivory-muted);
-  user-select: none;
-}
-
-.tc-mafia-toggle--disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.tc-mafia-toggle__native {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.tc-mafia-toggle__box {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 3px;
-  background:
-    linear-gradient(180deg, rgba(58, 10, 20, 0.9) 0%, rgba(92, 21, 36, 0.75) 100%);
-  border: 1px solid rgba(138, 109, 31, 0.5);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
-  transition:
-    border-color 0.15s,
-    background 0.15s,
-    box-shadow 0.15s;
-}
-
-.tc-mafia-toggle:hover:not(.tc-mafia-toggle--disabled) .tc-mafia-toggle__box {
-  border-color: rgba(201, 162, 39, 0.55);
-}
-
-.tc-mafia-toggle:has(.tc-mafia-toggle__native:focus-visible) .tc-mafia-toggle__box {
-  outline: 2px solid var(--tc-gold);
-  outline-offset: 2px;
-}
-
-.tc-mafia-toggle--checked .tc-mafia-toggle__box {
-  background:
-    linear-gradient(180deg, rgba(201, 162, 39, 0.35) 0%, rgba(138, 109, 31, 0.55) 100%),
-    var(--tc-crimson);
-  border-color: var(--tc-gold);
-  box-shadow:
-    inset 0 1px 0 rgba(232, 212, 139, 0.2),
-    0 0 10px rgba(201, 162, 39, 0.25);
-}
-
-.tc-mafia-toggle__icon {
-  width: 0.85rem;
-  height: 0.85rem;
-  color: var(--tc-gold-bright);
-}
-
-.tc-mafia-toggle--checked .tc-mafia-toggle__label {
-  color: var(--tc-ivory);
-}
-
-.tc-mafia-toggle__label {
-  line-height: 1.35;
-  transition: color 0.15s;
-}
+/* ── Mafia lobby controls — see PHASE 6 (.tc-p2-lobby scope) ── */
 
 /* ── Log, dev, lobby list ── */
 .tc-log {
@@ -3013,17 +2724,6 @@
     animation: none !important;
   }
 
-  .tc-phase-transition,
-  .tc-phase-flash,
-  .tc-phase-banner {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
-
-  .tc-phase-banner {
-    transform: none !important;
-  }
-
   .tc-target-btn--selected,
   .tc-seer-result,
   .tc-chronicle-period--open .tc-chronicle-entry,
@@ -3046,3 +2746,4129 @@
     transition: none;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   PHASE 1 — Foundation: tokens, atmosphere, header, connection seal
+   Override layer. Phases 2-7 will progressively replace the rest.
+   When Phase 7 lands, everything above this marker is removed.
+   ════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+/* ─── Tokens (p1 = phase 1, fresh palette) ───────────────────────── */
+.tc-shell,
+.tc-root {
+  --p1-ink: #f5eedb;
+  --p1-ink-soft: rgba(245, 238, 219, 0.82);
+  --p1-ink-dim: rgba(245, 238, 219, 0.58);
+
+  --p1-abyss: #03060f;
+  --p1-deep: #070d20;
+  --p1-night: #0a1228;
+  --p1-mid: #0f1932;
+
+  --p1-bronze: #8b6a26;
+  --p1-bronze-bright: #d8b35e;
+  --p1-bronze-glint: #f5dc94;
+  --p1-bronze-dark: #43320f;
+
+  --p1-gold: #c9a227;
+  --p1-gold-bright: #ffd97a;
+  --p1-gold-glow: rgba(255, 217, 122, 0.45);
+
+  --p1-jade: #4ad895;
+  --p1-jade-deep: #186c4d;
+  --p1-jade-glow: rgba(74, 216, 149, 0.55);
+
+  --p1-rust: #c46a2e;
+  --p1-rust-deep: #6a2e10;
+  --p1-rust-glow: rgba(196, 106, 46, 0.45);
+
+  --p1-font-display: 'Cinzel', Georgia, serif;
+  --p1-font-decor: 'Cinzel Decorative', 'Cinzel', Georgia, serif;
+  --p1-font-script: 'Cormorant Garamond', 'Cinzel', Georgia, serif;
+
+  /* Reusable parchment / grain SVG */
+  --p1-noise: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 0.85  0 0 0 0 0.6  0 0 0 0.08 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+
+  color: var(--p1-ink);
+}
+
+/* Soften legacy muted to match new ink scale */
+.tc-shell .tc-muted,
+.tc-root .tc-muted {
+  color: var(--p1-ink-soft);
+}
+
+.tc-shell .tc-font-display,
+.tc-root .tc-font-display,
+.tc-shell .tc-display,
+.tc-root .tc-display {
+  font-family: var(--p1-font-display);
+}
+
+/* ─── Atmosphere ─────────────────────────────────────────────────── */
+.tc-atmosphere {
+  background:
+    radial-gradient(ellipse 90% 65% at 50% 110%, rgba(255, 170, 90, 0.10), transparent 55%),
+    radial-gradient(ellipse 60% 35% at 50% -10%, rgba(120, 160, 220, 0.08), transparent 60%),
+    linear-gradient(180deg, var(--p1-abyss) 0%, var(--p1-deep) 38%, #050a18 75%, #02050d 100%);
+}
+.tc-atmosphere::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--p1-noise);
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+.tc-atmosphere--night,
+.tc-atmosphere--morning {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(72, 120, 200, 0.20), transparent 55%),
+    radial-gradient(ellipse 90% 50% at 50% 110%, rgba(30, 40, 80, 0.5), transparent 50%),
+    linear-gradient(180deg, #010410 0%, var(--p1-night) 50%, #01040d 100%);
+}
+.tc-atmosphere--morning {
+  background:
+    radial-gradient(ellipse 70% 50% at 25% 5%, rgba(150, 180, 230, 0.18), transparent 60%),
+    radial-gradient(ellipse 90% 55% at 75% 110%, rgba(220, 140, 70, 0.12), transparent 55%),
+    linear-gradient(180deg, #050a18 0%, var(--p1-night) 50%, #02060f 100%);
+}
+
+.tc-atmosphere__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 75% 65% at 50% 50%,
+    transparent 45%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+  pointer-events: none;
+}
+
+.tc-atmosphere__runes {
+  opacity: 0.04;
+}
+
+/* ─── Header bar ─────────────────────────────────────────────────── */
+.tc-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid rgba(216, 179, 94, 0.28);
+  background: linear-gradient(
+    180deg,
+    rgba(7, 13, 32, 0.94) 0%,
+    rgba(3, 6, 15, 0.88) 100%
+  );
+  backdrop-filter: blur(16px) saturate(115%);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(216, 179, 94, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6);
+}
+.tc-header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(216, 179, 94, 0.55) 18%,
+    rgba(255, 217, 122, 0.85) 50%,
+    rgba(216, 179, 94, 0.55) 82%,
+    transparent 100%
+  );
+  filter: drop-shadow(0 0 6px rgba(255, 217, 122, 0.4));
+  pointer-events: none;
+}
+
+.tc-header__inner {
+  max-width: 76rem;
+  padding: 0.85rem 1.25rem;
+  gap: 1.25rem;
+}
+
+.tc-header__back {
+  color: var(--p1-ink-soft);
+  border: 1px solid transparent;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 235, 180, 0.05),
+    rgba(0, 0, 0, 0)
+  );
+  border-radius: 10px;
+}
+.tc-header__back:hover {
+  color: var(--p1-gold-bright);
+  border-color: rgba(216, 179, 94, 0.35);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 235, 180, 0.10),
+    rgba(216, 179, 94, 0.04)
+  );
+  box-shadow: 0 0 14px rgba(255, 217, 122, 0.25);
+}
+.tc-header__back:focus-visible {
+  outline: 2px solid var(--p1-gold-bright);
+  outline-offset: 3px;
+}
+
+.tc-header__title {
+  font-family: var(--p1-font-display);
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  background: linear-gradient(
+    180deg,
+    #fff5d0 0%,
+    var(--p1-gold-bright) 55%,
+    var(--p1-bronze) 100%
+  );
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 18px rgba(255, 217, 122, 0.18));
+}
+
+.tc-header__tagline {
+  font-family: var(--p1-font-script);
+  font-style: italic;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: var(--p1-ink-soft);
+  max-width: 22rem;
+}
+
+/* ─── Connection seal: jadeite gem in bronze claws ──────────────── */
+/* The legacy .tc-connection-seal wrapper is reset; the new structure
+   lives inside it as .tc-conn-seal with explicit claw + gem nodes. */
+.tc-header .tc-connection-seal {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tc-conn-seal {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.95rem 0.45rem 0.75rem;
+  border-radius: 999px;
+  font-family: var(--p1-font-display);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #d8f1e2;
+  background:
+    radial-gradient(ellipse at 50% 110%, rgba(74, 216, 149, 0.22), transparent 60%),
+    linear-gradient(180deg, #0f2820 0%, #08160f 100%);
+  border: 1px solid rgba(216, 179, 94, 0.55);
+  box-shadow:
+    0 0 18px rgba(74, 216, 149, 0.28),
+    inset 0 1px 0 rgba(255, 235, 180, 0.18),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.5),
+    0 6px 14px rgba(0, 0, 0, 0.45);
+}
+
+.tc-conn-seal__claw {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 22px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--p1-bronze-glint) 0%,
+    var(--p1-bronze-bright) 32%,
+    var(--p1-bronze) 65%,
+    var(--p1-bronze-dark) 100%
+  );
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.55));
+}
+.tc-conn-seal__claw--left {
+  left: -6px;
+  clip-path: polygon(
+    100% 0%,
+    100% 100%,
+    58% 92%,
+    28% 70%,
+    0% 50%,
+    28% 30%,
+    58% 8%
+  );
+}
+.tc-conn-seal__claw--right {
+  right: -6px;
+  clip-path: polygon(
+    0% 0%,
+    42% 8%,
+    72% 30%,
+    100% 50%,
+    72% 70%,
+    42% 92%,
+    0% 100%
+  );
+}
+
+.tc-conn-seal__gem {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  color: #d8f5e4;
+  background: radial-gradient(
+    circle at 32% 28%,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(120, 245, 180, 0.85) 26%,
+    var(--p1-jade) 55%,
+    var(--p1-jade-deep) 100%
+  );
+  box-shadow:
+    0 0 10px var(--p1-jade-glow),
+    inset 0 1px 1px rgba(255, 255, 255, 0.55),
+    inset 0 -2px 4px rgba(0, 50, 30, 0.6);
+}
+.tc-conn-seal__gem svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 3px rgba(0, 60, 30, 0.9));
+}
+
+.tc-conn-seal__label {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.tc-conn-seal--off {
+  color: #f0d3b4;
+  background:
+    radial-gradient(ellipse at 50% 110%, rgba(200, 110, 60, 0.22), transparent 60%),
+    linear-gradient(180deg, #281410 0%, #110705 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.12),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.55),
+    0 6px 14px rgba(0, 0, 0, 0.4);
+  animation: p1-warn-pulse 2.4s ease-in-out infinite;
+}
+.tc-conn-seal--off .tc-conn-seal__gem {
+  background: radial-gradient(
+    circle at 32% 28%,
+    rgba(255, 225, 200, 0.55) 0%,
+    #d28a4a 35%,
+    #7a3d1a 75%,
+    #2a1108 100%
+  );
+  box-shadow:
+    0 0 10px rgba(208, 120, 60, 0.45),
+    inset 0 1px 1px rgba(255, 225, 200, 0.5),
+    inset 0 -2px 4px rgba(60, 25, 10, 0.65);
+}
+.tc-conn-seal--off .tc-conn-seal__claw {
+  background: linear-gradient(
+    180deg,
+    #6a4d22 0%,
+    #4a3315 60%,
+    #20140a 100%
+  );
+}
+
+@keyframes p1-warn-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* ─── Profile locket: hammered copper frame around player name ──── */
+.tc-header .tc-profile-locket {
+  position: relative;
+  padding: 2px;
+  border-radius: 999px;
+  background: conic-gradient(
+    from 220deg at 50% 50%,
+    var(--p1-bronze-glint) 0deg,
+    var(--p1-bronze) 90deg,
+    var(--p1-bronze-bright) 180deg,
+    var(--p1-bronze-dark) 270deg,
+    var(--p1-bronze-glint) 360deg
+  );
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45);
+}
+.tc-header .tc-profile-locket > * {
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(20, 30, 60, 0.92),
+    rgba(8, 14, 32, 0.96)
+  );
+}
+
+/* ─── Mobile header tightening ───────────────────────────────────── */
+@media (max-width: 720px) {
+  .tc-header__inner {
+    padding: 0.6rem 0.85rem;
+    gap: 0.6rem;
+  }
+  .tc-header__title {
+    font-size: 1rem;
+    letter-spacing: 0.14em;
+  }
+  .tc-header__tagline {
+    display: none;
+  }
+  .tc-conn-seal {
+    font-size: 0.6rem;
+    padding: 0.35rem 0.7rem 0.35rem 0.55rem;
+    letter-spacing: 0.12em;
+  }
+  .tc-conn-seal__claw {
+    width: 11px;
+    height: 17px;
+  }
+  .tc-conn-seal__gem {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+/* ─── Reduced motion (extend) ────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .tc-conn-seal--off {
+    animation: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ░░░  PHASE 2 — LOBBY: THE COUNCIL CHAMBER                       ░░░
+   The lobby becomes a parchment scroll laid on the council table:
+   wax-sealed room code, roman-numeral roster, ritual altar of
+   settings, and a banner-emblazoned start button.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 2.1  TOME / SCROLL WRAPPER ─────────────────────────────── */
+.tc-p2-lobby {
+  position: relative;
+  max-width: 44rem;
+  margin: 1.5rem auto;
+  padding: 2.25rem 1.5rem 2rem;
+  isolation: isolate;
+}
+
+.tc-p2-lobby::before,
+.tc-p2-lobby::after {
+  /* parchment-scroll rolled caps top & bottom */
+  content: '';
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  height: 14px;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(120, 84, 38, 0.85) 18%,
+      var(--p1-bronze-bright, #c89858) 42%,
+      var(--p1-bronze, #8a6028) 70%,
+      rgba(0, 0, 0, 0.6) 100%
+    );
+  border-radius: 999px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 160, 0.45),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.65),
+    0 8px 24px -10px rgba(0, 0, 0, 0.75);
+}
+.tc-p2-lobby::before { top: 6px; }
+.tc-p2-lobby::after  { bottom: 6px; }
+
+/* ── 2.2  CREST / HERO ──────────────────────────────────────── */
+.tc-p2-lobby__crest {
+  position: relative;
+  text-align: center;
+  padding: 1.25rem 1rem 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tc-p2-lobby__crest-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 0.75rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 235, 180, 0.18), transparent 60%),
+    conic-gradient(
+      from 45deg,
+      #2a1a08 0deg,
+      var(--p1-bronze, #8a6028) 60deg,
+      var(--p1-bronze-bright, #c89858) 110deg,
+      var(--p1-gold, #d4a64a) 150deg,
+      var(--p1-bronze-bright, #c89858) 200deg,
+      var(--p1-bronze, #8a6028) 270deg,
+      #2a1a08 360deg
+    );
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 4px rgba(212, 166, 74, 0.35),
+    inset 0 2px 4px rgba(255, 235, 180, 0.4),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.55),
+    0 6px 18px -4px rgba(0, 0, 0, 0.7),
+    0 0 22px -6px rgba(212, 166, 74, 0.5);
+  color: #f3e2b0;
+  filter: drop-shadow(0 0 8px rgba(212, 166, 74, 0.25));
+}
+
+.tc-p2-lobby__crest h1.tc-display,
+.tc-p2-lobby__crest h1 {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: clamp(1.75rem, 5vw, 2.6rem) !important;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin: 0 0 0.4rem;
+  background: linear-gradient(
+    180deg,
+    #fff6dc 0%,
+    var(--p1-gold-bright, #f0c66a) 38%,
+    var(--p1-gold, #d4a64a) 62%,
+    var(--p1-bronze, #8a6028) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 30px rgba(212, 166, 74, 0.25);
+}
+
+.tc-p2-lobby__crest p {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 1rem;
+  color: rgba(232, 215, 175, 0.78);
+  max-width: 32rem;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* ── 2.3  ORNATE DIVIDER (between sections) ─────────────────── */
+.tc-p2-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  margin: 1.25rem auto;
+  color: var(--p1-gold, #d4a64a);
+  opacity: 0.85;
+}
+
+.tc-p2-divider::before,
+.tc-p2-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(212, 166, 74, 0.55) 50%,
+    transparent 100%
+  );
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+  max-width: 14rem;
+}
+
+.tc-p2-divider__glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 1.1rem;
+  color: var(--p1-gold-bright, #f0c66a);
+  text-shadow:
+    0 0 6px rgba(212, 166, 74, 0.6),
+    0 1px 0 rgba(0, 0, 0, 0.7);
+  transform: rotate(45deg);
+}
+
+/* ── 2.4  PARCHMENT CARDS (override stone-panel within lobby) ── */
+.tc-p2-lobby .tc-stone-panel,
+.tc-p2-lobby .tc-lobby-panel {
+  position: relative;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(38, 28, 16, 0.88) 0%,
+      rgba(26, 19, 11, 0.92) 100%
+    ),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(138, 96, 40, 0.55);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.18),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    inset 0 -20px 40px -20px rgba(0, 0, 0, 0.65),
+    0 8px 22px -10px rgba(0, 0, 0, 0.7);
+  padding: 1.1rem 1.15rem;
+  margin-bottom: 0.85rem;
+  animation: none;
+}
+
+/* gold inner trim line */
+.tc-p2-lobby .tc-stone-panel::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(212, 166, 74, 0.22);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* four corner ornaments */
+.tc-p2-lobby .tc-stone-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 8px 8px, var(--p1-gold, #d4a64a) 1.5px, transparent 2px),
+    radial-gradient(circle at calc(100% - 8px) 8px, var(--p1-gold, #d4a64a) 1.5px, transparent 2px),
+    radial-gradient(circle at 8px calc(100% - 8px), var(--p1-gold, #d4a64a) 1.5px, transparent 2px),
+    radial-gradient(circle at calc(100% - 8px) calc(100% - 8px), var(--p1-gold, #d4a64a) 1.5px, transparent 2px);
+  opacity: 0.7;
+  filter: drop-shadow(0 0 3px rgba(212, 166, 74, 0.5));
+}
+
+/* section title small-caps banner */
+.tc-p2-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--p1-gold-bright, #f0c66a);
+  margin: 0 0 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(138, 96, 40, 0.4);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.65);
+}
+
+.tc-p2-section-title::before {
+  content: '◆';
+  font-size: 0.55rem;
+  color: var(--p1-gold, #d4a64a);
+  filter: drop-shadow(0 0 3px rgba(212, 166, 74, 0.6));
+}
+
+/* ── 2.5  ROOM CODE — WAX SEAL ──────────────────────────────── */
+.tc-p2-room {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0 0.25rem;
+}
+
+.tc-p2-room__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: rgba(232, 215, 175, 0.75);
+}
+
+.tc-p2-room__count strong {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-style: normal;
+  font-weight: 700;
+  color: var(--p1-gold-bright, #f0c66a);
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+}
+
+.tc-p2-wax-seal {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 1.6rem;
+  border-radius: 4px;
+  background:
+    radial-gradient(ellipse at 35% 25%, rgba(255, 200, 200, 0.35) 0%, transparent 50%),
+    linear-gradient(180deg, #8a1f1f 0%, #5c1414 55%, #3a0c0c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 180, 180, 0.4),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(212, 166, 74, 0.5),
+    0 4px 14px -4px rgba(120, 20, 20, 0.6),
+    0 0 22px -8px rgba(180, 40, 40, 0.4);
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-weight: 700;
+  font-size: 1.4rem;
+  letter-spacing: 0.32em;
+  color: #f3e2b0;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.8),
+    0 0 10px rgba(255, 220, 160, 0.35);
+}
+
+.tc-p2-wax-seal::before {
+  /* hammered rim */
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 166, 74, 0.35);
+  pointer-events: none;
+}
+
+.tc-p2-wax-seal::after {
+  /* glossy top highlight */
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 12%;
+  right: 12%;
+  height: 30%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 220, 220, 0.35) 0%,
+    transparent 100%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* invite link button — bronze plaque variant inside lobby */
+.tc-p2-lobby .tc-btn-ghost {
+  background:
+    linear-gradient(180deg, rgba(60, 42, 22, 0.85) 0%, rgba(34, 24, 12, 0.9) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(138, 96, 40, 0.55);
+  color: rgba(243, 226, 176, 0.92);
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  border-radius: 4px;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    0 2px 6px -2px rgba(0, 0, 0, 0.6);
+  transition: all 0.18s ease;
+}
+
+.tc-p2-lobby .tc-btn-ghost:hover:not(:disabled) {
+  border-color: rgba(212, 166, 74, 0.7);
+  color: var(--p1-gold-bright, #f0c66a);
+  background:
+    linear-gradient(180deg, rgba(78, 54, 28, 0.9) 0%, rgba(44, 30, 14, 0.95) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.35),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+    0 4px 12px -4px rgba(212, 166, 74, 0.35);
+}
+
+.tc-p2-lobby .tc-btn-ghost:disabled {
+  opacity: 0.45;
+}
+
+/* ── 2.6  ROSTER — COUNCIL SEATS WITH ROMAN NUMERALS ────────── */
+.tc-p2-lobby .tc-lobby-player {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.5rem 0.65rem 2.5rem;
+  border-bottom: 1px dashed rgba(138, 96, 40, 0.28);
+  transition: background 0.18s ease;
+}
+
+.tc-p2-lobby .tc-lobby-player:last-child {
+  border-bottom: none;
+}
+
+.tc-p2-lobby .tc-lobby-player:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(212, 166, 74, 0.06) 0%,
+    transparent 100%
+  );
+}
+
+.tc-p2-lobby .tc-lobby-player::before {
+  /* roman numeral medallion */
+  content: counter(tc-seat, upper-roman);
+  counter-increment: tc-seat;
+  position: absolute;
+  left: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.85rem;
+  height: 1.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 220, 160, 0.4), transparent 60%),
+    linear-gradient(180deg, #4a3318 0%, #2a1d0c 100%);
+  border: 1px solid rgba(212, 166, 74, 0.45);
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--p1-gold-bright, #f0c66a);
+  letter-spacing: 0.04em;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.3),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.6),
+    0 2px 4px -1px rgba(0, 0, 0, 0.5);
+}
+
+.tc-p2-roster-list {
+  counter-reset: tc-seat;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* bot rune tag */
+.tc-p2-lobby .tc-bot-tag {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.4rem;
+  background: linear-gradient(180deg, #2a3a1f 0%, #1a2612 100%);
+  border: 1px solid rgba(120, 180, 100, 0.4);
+  color: #b6d8a0;
+  border-radius: 2px;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+/* ── 2.7  ROYAL BUTTON — BANNER ─────────────────────────────── */
+.tc-p2-lobby .tc-btn-royal {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.75rem;
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #1a0f04;
+  background:
+    linear-gradient(180deg,
+      #f6dc94 0%,
+      var(--p1-gold-bright, #f0c66a) 30%,
+      var(--p1-gold, #d4a64a) 60%,
+      #8a6028 100%
+    );
+  border: 1px solid #6a4818;
+  border-radius: 4px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 245, 200, 0.7),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(212, 166, 74, 0.6),
+    0 4px 14px -2px rgba(212, 166, 74, 0.5),
+    0 8px 22px -6px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 1px 0 rgba(255, 235, 180, 0.4);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.tc-p2-lobby .tc-btn-royal:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background:
+    linear-gradient(180deg,
+      #fff0c0 0%,
+      #f6dc94 30%,
+      var(--p1-gold-bright, #f0c66a) 60%,
+      var(--p1-gold, #d4a64a) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 250, 220, 0.85),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 235, 180, 0.7),
+    0 6px 20px -2px rgba(240, 198, 106, 0.7),
+    0 10px 28px -6px rgba(0, 0, 0, 0.75);
+}
+
+.tc-p2-lobby .tc-btn-royal:disabled {
+  background: linear-gradient(180deg, #4a3a22 0%, #2a1f10 100%);
+  color: rgba(232, 215, 175, 0.4);
+  border-color: #2a1f10;
+  text-shadow: none;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.1),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.5);
+  cursor: not-allowed;
+}
+
+/* ── 2.8  SETTINGS — RITUAL ALTAR INNER ─────────────────────── */
+.tc-p2-lobby .tc-stone-panel--warning {
+  background:
+    linear-gradient(180deg, rgba(50, 22, 22, 0.65) 0%, rgba(30, 14, 14, 0.75) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(180, 70, 70, 0.35);
+  border-radius: 4px;
+}
+
+/* role balance row hover */
+.tc-p2-role-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.5rem;
+  border-radius: 3px;
+  transition: background 0.15s ease;
+}
+
+.tc-p2-role-row:hover {
+  background: rgba(212, 166, 74, 0.06);
+}
+
+/* increment/decrement coin buttons */
+.tc-p2-lobby .tc-btn-ghost.tc-p2-coin {
+  width: 1.85rem;
+  height: 1.85rem;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  letter-spacing: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── 2.9  FOOTER ACTION ROW ─────────────────────────────────── */
+.tc-p2-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  justify-content: center;
+  padding-top: 0.5rem;
+}
+
+.tc-p2-waiting {
+  text-align: center;
+  margin-top: 1rem;
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 1rem;
+  color: rgba(232, 215, 175, 0.65);
+  letter-spacing: 0.04em;
+}
+
+.tc-p2-waiting::before,
+.tc-p2-waiting::after {
+  content: '~';
+  display: inline-block;
+  margin: 0 0.5rem;
+  color: var(--p1-gold, #d4a64a);
+  opacity: 0.6;
+}
+
+/* ── 2.10  MOBILE TIGHTEN ───────────────────────────────────── */
+@media (max-width: 640px) {
+  .tc-p2-lobby {
+    padding: 1.5rem 0.85rem 1.5rem;
+    margin: 0.75rem auto;
+  }
+  .tc-p2-lobby__crest {
+    padding: 0.75rem 0.5rem 1rem;
+  }
+  .tc-p2-lobby__crest-mark {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 0.5rem;
+  }
+  .tc-p2-wax-seal {
+    font-size: 1.15rem;
+    padding: 0.7rem 1.25rem;
+    letter-spacing: 0.24em;
+  }
+  .tc-p2-divider::before,
+  .tc-p2-divider::after {
+    max-width: 6rem;
+  }
+}
+
+/* ── 2.11  REDUCED MOTION ───────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .tc-p2-lobby .tc-btn-royal {
+    transition: none;
+  }
+  .tc-p2-lobby .tc-btn-royal:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ░░░  PHASE 3 — NARRATOR: THE LOREMASTER'S CODEX               ░░░
+   The narrator wields a bronze-trimmed codex: a stone-tablet action
+   deck with phase-tinted parchment, rune-stone night progress,
+   crystal-orb seer reveals, and an ornate banner header.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 3.1  OUTER FRAME ──────────────────────────────────────── */
+.tc-p3-narrator {
+  position: relative;
+  padding: 1.5rem 1rem 2.5rem;
+  max-width: 78rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .tc-p3-narrator {
+    padding: 2rem 1.5rem 3rem;
+  }
+}
+
+/* ── 3.2  HEADER BANNER ────────────────────────────────────── */
+.tc-p3-narrator .tc-narrator-layout__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.4rem;
+  margin-bottom: 1.25rem;
+  background:
+    linear-gradient(180deg, rgba(38, 28, 16, 0.95) 0%, rgba(20, 14, 8, 0.95) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(138, 96, 40, 0.55);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.25),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 8px 24px -8px rgba(0, 0, 0, 0.7);
+}
+
+.tc-p3-narrator .tc-narrator-layout__header::before {
+  /* gold filigree band across the top */
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--p1-gold, #d4a64a) 20%,
+    var(--p1-gold-bright, #f0c66a) 50%,
+    var(--p1-gold, #d4a64a) 80%,
+    transparent 100%
+  );
+  box-shadow: 0 0 8px rgba(212, 166, 74, 0.5);
+}
+
+.tc-p3-narrator .tc-narrator-console-title {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: clamp(1.15rem, 2.8vw, 1.65rem) !important;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin: 0 0 0.35rem;
+  background: linear-gradient(
+    180deg,
+    #fff6dc 0%,
+    var(--p1-gold-bright, #f0c66a) 45%,
+    var(--p1-gold, #d4a64a) 75%,
+    var(--p1-bronze, #8a6028) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 20px rgba(212, 166, 74, 0.2);
+}
+
+/* reset button — iron with subtle red glow */
+.tc-p3-narrator .tc-narrator-layout__header .tc-btn-ghost {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 0.5rem 0.9rem;
+  background: linear-gradient(180deg, rgba(58, 26, 26, 0.7) 0%, rgba(34, 14, 14, 0.85) 100%);
+  border: 1px solid rgba(180, 70, 70, 0.45);
+  color: rgba(248, 200, 180, 0.85);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 200, 180, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+    0 2px 6px -2px rgba(0, 0, 0, 0.6);
+  transition: all 0.18s ease;
+}
+
+.tc-p3-narrator .tc-narrator-layout__header .tc-btn-ghost:hover:not(:disabled) {
+  border-color: rgba(220, 100, 100, 0.7);
+  color: #fcd6c8;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 200, 0.25),
+    0 4px 12px -3px rgba(180, 50, 50, 0.4);
+}
+
+/* ── 3.3  PHASE CEREMONY BADGE ─────────────────────────────── */
+.tc-p3-narrator .tc-phase-ceremony {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.tc-p3-narrator .tc-phase-ceremony__blade {
+  display: inline-block;
+  width: 32px;
+  height: 8px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--p1-bronze-glint, #e6c890) 30%,
+    var(--p1-bronze-bright, #c89858) 60%,
+    var(--p1-bronze-dark, #5a3e18) 100%
+  );
+  clip-path: polygon(0 50%, 18% 0, 100% 35%, 100% 65%, 18% 100%);
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+}
+
+.tc-p3-narrator .tc-phase-ceremony__blade--right {
+  transform: scaleX(-1);
+}
+
+.tc-p3-narrator .tc-phase-sigil {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.85rem;
+  background:
+    linear-gradient(180deg, rgba(58, 40, 18, 0.9) 0%, rgba(28, 18, 8, 0.95) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(212, 166, 74, 0.55);
+  border-radius: 2px;
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--p1-gold-bright, #f0c66a);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.25),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* ── 3.4  SETUP WARNINGS — WAX-STAMPED PARCHMENT ───────────── */
+.tc-p3-narrator > .tc-stone-panel--warning {
+  position: relative;
+  padding: 0.85rem 1rem 0.85rem 2.5rem;
+  background:
+    linear-gradient(180deg, rgba(50, 22, 22, 0.85) 0%, rgba(28, 12, 12, 0.9) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(180, 70, 70, 0.5);
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  color: rgba(248, 210, 200, 0.9);
+}
+
+.tc-p3-narrator > .tc-stone-panel--warning::before {
+  /* wax warning seal */
+  content: '!';
+  position: absolute;
+  left: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.4rem;
+  height: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #d65656 0%, #8a1f1f 60%, #5c1414 100%);
+  color: #fff6dc;
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-weight: 700;
+  font-size: 0.85rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 200, 200, 0.5),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.5),
+    0 0 8px rgba(180, 40, 40, 0.5);
+}
+
+/* ── 3.5  TABS — ORNATE SCROLLS ────────────────────────────── */
+.tc-p3-narrator .tc-narrator-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  padding: 0.35rem;
+  background: linear-gradient(180deg, rgba(28, 20, 10, 0.85) 0%, rgba(18, 12, 6, 0.9) 100%);
+  border: 1px solid rgba(138, 96, 40, 0.4);
+  border-radius: 4px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.tc-p3-narrator .tc-narrator-tabs__btn {
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: rgba(232, 215, 175, 0.55);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.tc-p3-narrator .tc-narrator-tabs__btn:hover {
+  color: rgba(243, 226, 176, 0.9);
+  background: rgba(212, 166, 74, 0.06);
+}
+
+.tc-p3-narrator .tc-narrator-tabs__btn--active {
+  background:
+    linear-gradient(180deg, rgba(58, 40, 18, 0.95) 0%, rgba(38, 26, 10, 0.95) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border-color: rgba(212, 166, 74, 0.6);
+  color: var(--p1-gold-bright, #f0c66a);
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.3),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.5),
+    0 0 12px -2px rgba(212, 166, 74, 0.25);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+/* ── 3.6  GRID LAYOUT ──────────────────────────────────────── */
+.tc-p3-narrator .tc-narrator-layout__grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 960px) {
+  .tc-p3-narrator .tc-narrator-layout__grid {
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  }
+  .tc-p3-narrator .tc-narrator-tabs {
+    display: none;
+  }
+}
+
+.tc-p3-narrator .tc-narrator-layout__panel--hidden {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .tc-p3-narrator .tc-narrator-layout__panel--hidden {
+    display: block;
+  }
+}
+
+/* ── 3.7  ACTION DECK — STONE TABLET ───────────────────────── */
+.tc-p3-narrator .tc-action-deck {
+  position: relative;
+  padding: 1.25rem 1.35rem 1.5rem;
+  background:
+    linear-gradient(180deg, rgba(34, 24, 12, 0.92) 0%, rgba(20, 14, 8, 0.96) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(138, 96, 40, 0.55);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.2),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    inset 0 -20px 40px -20px rgba(0, 0, 0, 0.7),
+    0 10px 28px -10px rgba(0, 0, 0, 0.75);
+}
+
+.tc-p3-narrator .tc-action-deck::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(212, 166, 74, 0.22);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.tc-p3-narrator .tc-action-deck__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(138, 96, 40, 0.4);
+}
+
+.tc-p3-narrator .tc-action-deck__title {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--p1-gold-bright, #f0c66a);
+  margin: 0;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+.tc-p3-narrator .tc-action-deck__title::before {
+  content: '◆ ';
+  font-size: 0.6rem;
+  color: var(--p1-gold, #d4a64a);
+}
+
+.tc-p3-narrator .tc-action-deck__phase {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 0.9rem;
+  color: rgba(232, 215, 175, 0.7);
+}
+
+/* ── 3.8  ACTION CARD — DEFAULT (DAY/MORNING) ──────────────── */
+.tc-p3-narrator .tc-action-card {
+  position: relative;
+  padding: 1rem 1.1rem;
+  background:
+    linear-gradient(180deg, rgba(56, 40, 22, 0.55) 0%, rgba(32, 22, 10, 0.65) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(138, 96, 40, 0.4);
+  border-radius: 4px;
+  color: rgba(243, 226, 176, 0.95);
+}
+
+.tc-p3-narrator .tc-action-card__lead {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: rgba(243, 226, 176, 0.92);
+  margin: 0 0 0.85rem;
+}
+
+.tc-p3-narrator .tc-action-card__step {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--p1-gold-bright, #f0c66a);
+  margin: 0.5rem 0 0.35rem;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+.tc-p3-narrator .tc-action-card__step-ar {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-size: 1.05rem;
+  color: rgba(232, 215, 175, 0.75);
+  margin: 0 0 0.85rem;
+}
+
+.tc-p3-narrator .tc-action-card__instruction {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-size: 1rem;
+  line-height: 1.55;
+  color: rgba(243, 226, 176, 0.88);
+  margin: 0.35rem 0;
+}
+
+.tc-p3-narrator .tc-action-card__list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+}
+
+.tc-p3-narrator .tc-action-card__list li {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px dashed rgba(138, 96, 40, 0.3);
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-size: 1rem;
+  color: rgba(243, 226, 176, 0.92);
+}
+
+.tc-p3-narrator .tc-action-card__list li:last-child {
+  border-bottom: none;
+}
+
+/* ── 3.9  ACTION CARD — NIGHT (MIDNIGHT VARIANT) ──────────── */
+.tc-p3-narrator .tc-action-card--night {
+  background:
+    linear-gradient(180deg, rgba(18, 22, 48, 0.75) 0%, rgba(10, 12, 28, 0.85) 100%),
+    radial-gradient(ellipse at 80% 0%, rgba(120, 140, 240, 0.15) 0%, transparent 60%),
+    var(--p1-noise);
+  background-blend-mode: normal, normal, overlay;
+  border-color: rgba(110, 130, 200, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(180, 200, 255, 0.12),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 28px -8px rgba(60, 80, 160, 0.3);
+  color: rgba(220, 230, 250, 0.95);
+}
+
+.tc-p3-narrator .tc-action-card--night .tc-action-card__step {
+  background: linear-gradient(
+    180deg,
+    #e4ecff 0%,
+    #a6b8e8 50%,
+    #6878b8 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 18px rgba(140, 160, 220, 0.4);
+}
+
+.tc-p3-narrator .tc-action-card--night .tc-action-card__lead,
+.tc-p3-narrator .tc-action-card--night .tc-action-card__instruction {
+  color: rgba(220, 230, 250, 0.88);
+}
+
+.tc-p3-narrator .tc-action-card__night-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(110, 130, 200, 0.3);
+}
+
+.tc-p3-narrator .tc-ritual__lock-label {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(180, 200, 255, 0.85);
+  margin: 0;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.8);
+}
+
+.tc-p3-narrator .tc-ritual__lock-label::before {
+  content: '☾ ';
+  color: rgba(220, 230, 255, 0.95);
+  font-size: 0.85rem;
+}
+
+/* ── 3.10  NIGHT PROGRESS — RUNE STONES ─────────────────────── */
+.tc-p3-narrator .tc-night-progress {
+  display: inline-flex;
+  gap: 0.3rem;
+  padding: 0.25rem 0.4rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(110, 130, 200, 0.3);
+  border-radius: 999px;
+}
+
+.tc-p3-narrator .tc-night-progress__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: rgba(110, 130, 200, 0.2);
+  border: 1px solid rgba(110, 130, 200, 0.35);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.tc-p3-narrator .tc-night-progress__dot--done {
+  background: rgba(180, 200, 255, 0.55);
+  border-color: rgba(180, 200, 255, 0.7);
+}
+
+.tc-p3-narrator .tc-night-progress__dot--current {
+  background: radial-gradient(circle at 35% 30%, #fff 0%, #c8d8ff 50%, #6878b8 100%);
+  border-color: rgba(220, 230, 255, 0.9);
+  box-shadow: 0 0 8px rgba(180, 200, 255, 0.7);
+  width: 10px;
+  height: 10px;
+  animation: p3-rune-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes p3-rune-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(180, 200, 255, 0.5); }
+  50%      { box-shadow: 0 0 12px rgba(220, 230, 255, 0.9); }
+}
+
+/* ── 3.11  RITUAL ROLE HEADER — MEDALLION ──────────────────── */
+.tc-p3-narrator .tc-ritual__role-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  margin: 0.85rem 0;
+  background: linear-gradient(180deg, rgba(28, 32, 60, 0.65) 0%, rgba(14, 16, 32, 0.8) 100%);
+  border: 1px solid rgba(110, 130, 200, 0.35);
+  border-radius: 4px;
+}
+
+.tc-p3-narrator .tc-ritual__role-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  font-size: 1.4rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(220, 230, 255, 0.4), transparent 60%),
+    linear-gradient(180deg, #2a3060 0%, #14182e 100%);
+  border: 2px solid rgba(180, 200, 255, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(220, 230, 255, 0.3),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.6),
+    0 0 12px -2px rgba(140, 160, 220, 0.4);
+}
+
+.tc-p3-narrator .tc-ritual__role-name {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(220, 230, 255, 0.95);
+  margin: 0;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+.tc-p3-narrator .tc-ritual__role-name-ar {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-size: 0.9rem;
+  color: rgba(180, 200, 255, 0.7);
+  margin: 0.1rem 0 0;
+}
+
+/* ── 3.12  ACTION DETAILS / SUMMARY ───────────────────────── */
+.tc-p3-narrator .tc-action-details {
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(138, 96, 40, 0.3);
+  border-radius: 3px;
+}
+
+.tc-p3-narrator .tc-action-card--night .tc-action-details {
+  border-color: rgba(110, 130, 200, 0.3);
+}
+
+.tc-p3-narrator .tc-action-details__summary {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(212, 166, 74, 0.85);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tc-p3-narrator .tc-action-card--night .tc-action-details__summary {
+  color: rgba(180, 200, 255, 0.8);
+}
+
+.tc-p3-narrator .tc-action-details__summary::before {
+  content: '▸';
+  transition: transform 0.18s ease;
+}
+
+.tc-p3-narrator .tc-action-details[open] .tc-action-details__summary::before {
+  transform: rotate(90deg);
+}
+
+/* ── 3.13  SEER RESULT — CRYSTAL ORB ───────────────────────── */
+.tc-p3-narrator .tc-seer-result {
+  position: relative;
+  margin: 1rem 0;
+  padding: 1rem 1.1rem;
+  background:
+    radial-gradient(ellipse at 30% 30%, rgba(180, 140, 240, 0.25) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(38, 18, 58, 0.85) 0%, rgba(20, 10, 32, 0.9) 100%);
+  border: 1px solid rgba(180, 140, 240, 0.5);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(220, 180, 255, 0.25),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    0 0 24px -6px rgba(150, 100, 220, 0.45);
+  overflow: hidden;
+}
+
+.tc-p3-narrator .tc-seer-result::before {
+  /* glowing orb in corner */
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 35%,
+    rgba(255, 220, 255, 0.5) 0%,
+    rgba(200, 140, 255, 0.3) 40%,
+    transparent 70%
+  );
+  filter: blur(8px);
+  animation: p3-orb-glow 3.5s ease-in-out infinite;
+}
+
+@keyframes p3-orb-glow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.15); }
+}
+
+.tc-p3-narrator .tc-seer-result__label {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(220, 180, 255, 0.95);
+  margin: 0 0 0.4rem;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.8);
+}
+
+.tc-p3-narrator .tc-seer-result__line {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 1.15rem;
+  color: #f3e2ff;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(180, 140, 240, 0.5);
+}
+
+/* ── 3.14  CONFIRM BUTTON — BANNER (reuse royal styling) ──── */
+.tc-p3-narrator .tc-btn-royal {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.5rem;
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #1a0f04;
+  background:
+    linear-gradient(180deg,
+      #f6dc94 0%,
+      var(--p1-gold-bright, #f0c66a) 30%,
+      var(--p1-gold, #d4a64a) 60%,
+      #8a6028 100%
+    );
+  border: 1px solid #6a4818;
+  border-radius: 4px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 245, 200, 0.7),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(212, 166, 74, 0.6),
+    0 4px 14px -2px rgba(212, 166, 74, 0.5),
+    0 8px 22px -6px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 1px 0 rgba(255, 235, 180, 0.4);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.tc-p3-narrator .tc-btn-royal--wide {
+  width: 100%;
+  margin-top: 0.85rem;
+}
+
+.tc-p3-narrator .tc-btn-royal:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg,
+    #fff0c0 0%,
+    #f6dc94 30%,
+    var(--p1-gold-bright, #f0c66a) 60%,
+    var(--p1-gold, #d4a64a) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 250, 220, 0.85),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3),
+    0 6px 20px -2px rgba(240, 198, 106, 0.7),
+    0 10px 28px -6px rgba(0, 0, 0, 0.75);
+}
+
+.tc-p3-narrator .tc-btn-royal:disabled {
+  background: linear-gradient(180deg, #4a3a22 0%, #2a1f10 100%);
+  color: rgba(232, 215, 175, 0.4);
+  border-color: #2a1f10;
+  text-shadow: none;
+  cursor: not-allowed;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.1),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* night variant — silvered moonlight banner */
+.tc-p3-narrator .tc-action-card--night .tc-btn-royal {
+  background: linear-gradient(180deg,
+    #e4ecff 0%,
+    #b8c8f0 30%,
+    #8898d0 60%,
+    #4858a0 100%
+  );
+  border-color: #2a3060;
+  color: #0c0f24;
+  text-shadow: 0 1px 0 rgba(230, 240, 255, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(180, 200, 255, 0.6),
+    0 4px 14px -2px rgba(140, 160, 220, 0.5),
+    0 8px 22px -6px rgba(0, 0, 0, 0.75);
+}
+
+.tc-p3-narrator .tc-action-card--night .tc-btn-royal:hover:not(:disabled) {
+  background: linear-gradient(180deg,
+    #ffffff 0%,
+    #e4ecff 30%,
+    #b8c8f0 60%,
+    #6878b8 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 6px 20px -2px rgba(180, 200, 255, 0.7),
+    0 10px 28px -6px rgba(0, 0, 0, 0.8);
+}
+
+/* ── 3.15  SIDEBAR — RIGHT RAIL ────────────────────────────── */
+.tc-p3-narrator .tc-narrator-layout__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ── 3.16  MOBILE TWEAKS ───────────────────────────────────── */
+@media (max-width: 640px) {
+  .tc-p3-narrator {
+    padding: 1rem 0.6rem 1.5rem;
+  }
+  .tc-p3-narrator .tc-narrator-layout__header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.85rem 1rem;
+  }
+  .tc-p3-narrator .tc-action-deck {
+    padding: 1rem 0.85rem 1.15rem;
+  }
+  .tc-p3-narrator .tc-action-card {
+    padding: 0.85rem 0.85rem;
+  }
+  .tc-p3-narrator .tc-action-deck__phase {
+    font-size: 0.85rem;
+  }
+}
+
+/* ── 3.17  REDUCED MOTION ──────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .tc-p3-narrator .tc-night-progress__dot--current,
+  .tc-p3-narrator .tc-seer-result::before {
+    animation: none !important;
+  }
+  .tc-p3-narrator .tc-btn-royal {
+    transition: none;
+  }
+  .tc-p3-narrator .tc-btn-royal:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ░░░  PHASE 4 — PLAYER: THE OATH-BEARER'S TOME                  ░░░
+   The player carries a personal slate: a phase ceremony banner,
+   a team-tinted role cartouche, a Round-Table council grid, a
+   pulsing night summons card, and the ceremonial Role Tome reveal.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 4.1  COMPANION OUTER FRAME ─────────────────────────────── */
+.tc-p4-companion {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem 2.5rem;
+  max-width: 32rem;
+  margin: 0 auto;
+  gap: 1rem;
+}
+
+.tc-p4-companion.tc-companion--role-reveal {
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 2rem 1rem 3rem;
+  min-height: calc(100dvh - 10rem);
+}
+
+/* ── 4.2  PHASE CEREMONY (re-style within companion) ───────── */
+.tc-p4-companion .tc-phase-ceremony {
+  display: inline-flex;
+  align-self: center;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.tc-p4-companion .tc-phase-ceremony__blade {
+  display: inline-block;
+  width: 38px;
+  height: 9px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--p1-bronze-glint, #e6c890) 25%,
+    var(--p1-bronze-bright, #c89858) 55%,
+    var(--p1-bronze-dark, #5a3e18) 100%
+  );
+  clip-path: polygon(0 50%, 18% 0, 100% 35%, 100% 65%, 18% 100%);
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.7));
+}
+
+.tc-p4-companion .tc-phase-ceremony__blade--right {
+  transform: scaleX(-1);
+}
+
+.tc-p4-companion .tc-phase-sigil {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 1rem;
+  background:
+    linear-gradient(180deg, rgba(58, 40, 18, 0.92) 0%, rgba(28, 18, 8, 0.96) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(212, 166, 74, 0.55);
+  border-radius: 2px;
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--p1-gold-bright, #f0c66a);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.75);
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.3),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.6),
+    0 0 14px -4px rgba(212, 166, 74, 0.5);
+}
+
+/* ── 4.3  ROLE BADGE — TEAM CARTOUCHE ───────────────────────── */
+.tc-p4-companion .tc-role-badge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.95rem 1.1rem;
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, rgba(34, 24, 12, 0.85) 0%, rgba(20, 14, 8, 0.92) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(138, 96, 40, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.22),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    0 6px 18px -8px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+}
+
+.tc-p4-companion .tc-role-badge::before {
+  /* team-tinted glow on the left flank */
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 6px;
+  background: var(--tc-team-accent, var(--p1-gold, #d4a64a));
+  box-shadow: 0 0 16px var(--tc-team-accent, rgba(212, 166, 74, 0.5));
+}
+
+.tc-p4-companion .tc-role-badge.tc-team--good {
+  --tc-team-accent: #6ec890;
+}
+.tc-p4-companion .tc-role-badge.tc-team--evil {
+  --tc-team-accent: #c8546a;
+}
+.tc-p4-companion .tc-role-badge.tc-team--neutral {
+  --tc-team-accent: #c8a86a;
+}
+
+.tc-p4-companion .tc-role-badge__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.2rem;
+  height: 3.2rem;
+  font-size: 1.7rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%,
+      color-mix(in srgb, var(--tc-team-accent) 35%, transparent),
+      transparent 60%),
+    linear-gradient(180deg, #2a1d0c 0%, #1a1208 100%);
+  border: 2px solid color-mix(in srgb, var(--tc-team-accent) 55%, rgba(212, 166, 74, 0.4));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.25),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.6),
+    0 0 14px -2px color-mix(in srgb, var(--tc-team-accent) 40%, transparent);
+}
+
+.tc-p4-companion .tc-role-badge__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.tc-p4-companion .tc-role-badge__ar {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif) !important;
+  font-size: 1.1rem;
+  color: rgba(232, 215, 175, 0.85);
+}
+
+.tc-p4-companion .tc-role-badge__en {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: linear-gradient(
+    180deg,
+    #fff6dc 0%,
+    var(--p1-gold-bright, #f0c66a) 45%,
+    var(--p1-gold, #d4a64a) 80%,
+    var(--p1-bronze, #8a6028) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 12px rgba(212, 166, 74, 0.2);
+}
+
+/* ── 4.4  NIGHT CALLOUT — DORMANT (others) ──────────────────── */
+.tc-p4-companion .tc-player-night-call {
+  position: relative;
+  padding: 1.1rem 1.15rem;
+  background:
+    radial-gradient(ellipse at 80% 0%, rgba(120, 140, 240, 0.12) 0%, transparent 65%),
+    linear-gradient(180deg, rgba(18, 22, 48, 0.85) 0%, rgba(10, 12, 28, 0.9) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, normal, overlay;
+  border: 1px solid rgba(110, 130, 200, 0.4);
+  border-radius: 6px;
+  text-align: center;
+  color: rgba(220, 230, 250, 0.85);
+  box-shadow:
+    inset 0 1px 0 rgba(180, 200, 255, 0.12),
+    0 6px 18px -8px rgba(0, 0, 0, 0.65);
+}
+
+.tc-p4-companion .tc-player-night-call__title {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin: 0 0 0.4rem;
+  background: linear-gradient(180deg, #e4ecff 0%, #a6b8e8 60%, #6878b8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 14px rgba(140, 160, 220, 0.35);
+}
+
+.tc-p4-companion .tc-player-night-call__title::before {
+  content: '☾ ';
+  color: rgba(220, 230, 255, 0.95);
+}
+
+.tc-p4-companion .tc-player-night-call__step {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(220, 230, 255, 0.9);
+  margin: 0 0 0.5rem;
+}
+
+.tc-p4-companion .tc-player-night-call__hint {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: rgba(220, 230, 250, 0.7);
+  margin: 0;
+}
+
+/* ── 4.5  NIGHT CALLOUT — YOURS (summoned) ──────────────────── */
+.tc-p4-companion .tc-player-night-call--yours {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 220, 120, 0.18) 0%, transparent 65%),
+    linear-gradient(180deg, rgba(40, 28, 14, 0.9) 0%, rgba(24, 16, 8, 0.95) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, normal, overlay;
+  border-color: rgba(240, 198, 106, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 230, 160, 0.3),
+    0 0 32px -6px rgba(240, 198, 106, 0.4),
+    0 6px 18px -8px rgba(0, 0, 0, 0.7);
+  animation: p4-summons-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes p4-summons-pulse {
+  0%, 100% { box-shadow:
+    inset 0 1px 0 rgba(255, 230, 160, 0.3),
+    0 0 28px -6px rgba(240, 198, 106, 0.35),
+    0 6px 18px -8px rgba(0, 0, 0, 0.7); }
+  50%      { box-shadow:
+    inset 0 1px 0 rgba(255, 230, 160, 0.4),
+    0 0 48px -4px rgba(240, 198, 106, 0.65),
+    0 6px 18px -8px rgba(0, 0, 0, 0.7); }
+}
+
+.tc-p4-companion .tc-player-night-call--yours .tc-player-night-call__title {
+  background: linear-gradient(
+    180deg, #fff6dc 0%, var(--p1-gold-bright, #f0c66a) 50%,
+    var(--p1-gold, #d4a64a) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tc-p4-companion .tc-player-night-call--yours .tc-player-night-call__title::before {
+  content: '✦ ';
+  color: var(--p1-gold-bright, #f0c66a);
+}
+
+.tc-p4-companion .tc-player-night-call__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.6rem;
+  height: 3.6rem;
+  font-size: 1.85rem;
+  margin: 0 auto 0.75rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 240, 180, 0.55), transparent 60%),
+    linear-gradient(180deg, #4a3318 0%, #2a1d0c 100%);
+  border: 2px solid rgba(240, 198, 106, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.4),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.5),
+    0 0 22px -2px rgba(240, 198, 106, 0.6);
+}
+
+/* ── 4.6  COUNCIL — ROUND TABLE GRID ────────────────────────── */
+.tc-p4-companion .tc-companion__council {
+  position: relative;
+  padding: 1rem 1.1rem;
+  background:
+    linear-gradient(180deg, rgba(34, 24, 12, 0.88) 0%, rgba(20, 14, 8, 0.94) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(138, 96, 40, 0.55);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.22),
+    inset 0 -16px 32px -16px rgba(0, 0, 0, 0.7),
+    0 8px 24px -10px rgba(0, 0, 0, 0.7);
+}
+
+.tc-p4-companion .tc-companion__council > p {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: 0.72rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--p1-gold-bright, #f0c66a);
+  margin: 0 0 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(138, 96, 40, 0.4);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+.tc-p4-companion .tc-companion__council > p::before {
+  content: '◆ ';
+  font-size: 0.55rem;
+  color: var(--p1-gold, #d4a64a);
+}
+
+.tc-p4-companion .tc-council-seat {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.7rem;
+  background: linear-gradient(180deg, rgba(50, 36, 20, 0.55) 0%, rgba(28, 20, 10, 0.7) 100%);
+  border: 1px solid rgba(138, 96, 40, 0.35);
+  border-radius: 4px;
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-size: 0.95rem;
+  color: rgba(243, 226, 176, 0.92);
+  transition: all 0.18s ease;
+}
+
+.tc-p4-companion .tc-council-seat:hover {
+  border-color: rgba(212, 166, 74, 0.5);
+  background: linear-gradient(180deg, rgba(64, 46, 24, 0.6) 0%, rgba(38, 26, 12, 0.75) 100%);
+}
+
+.tc-p4-companion .tc-council-seat .tc-dot {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.4),
+    0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+.tc-p4-companion .tc-council-seat__name {
+  flex: 1;
+  min-width: 0;
+}
+
+.tc-p4-companion .tc-council-seat__meta {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(212, 166, 74, 0.7);
+  flex-shrink: 0;
+}
+
+/* SELF — golden ring */
+.tc-p4-companion .tc-council-seat--self {
+  border-color: rgba(240, 198, 106, 0.7);
+  background:
+    linear-gradient(180deg, rgba(78, 56, 28, 0.7) 0%, rgba(48, 34, 16, 0.8) 100%),
+    radial-gradient(ellipse at 50% 0%, rgba(240, 198, 106, 0.18) 0%, transparent 70%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.3),
+    0 0 14px -3px rgba(240, 198, 106, 0.45);
+}
+
+.tc-p4-companion .tc-council-seat--self .tc-council-seat__meta {
+  color: var(--p1-gold-bright, #f0c66a);
+}
+
+/* DEAD — shrouded, desaturated, crossed */
+.tc-p4-companion .tc-council-seat--dead {
+  position: relative;
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  background: linear-gradient(180deg, rgba(30, 22, 12, 0.5) 0%, rgba(16, 12, 6, 0.7) 100%);
+  border-color: rgba(80, 60, 30, 0.3);
+}
+
+.tc-p4-companion .tc-council-seat--dead::after {
+  /* faint cross / dagger mark */
+  content: '⚰';
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  color: rgba(180, 70, 70, 0.5);
+}
+
+.tc-p4-companion .tc-council-seat--dead .tc-council-seat__meta {
+  color: rgba(180, 70, 70, 0.7);
+}
+
+.tc-p4-companion .tc-council-seat--dead .tc-council-seat__name {
+  text-decoration: line-through;
+  text-decoration-color: rgba(120, 60, 40, 0.6);
+}
+
+/* ── 4.7  OUTCOME / HINT TEXT ───────────────────────────────── */
+.tc-p4-companion .tc-companion__outcome {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 1.25rem 1rem;
+  background:
+    linear-gradient(180deg, rgba(40, 28, 14, 0.92) 0%, rgba(22, 14, 8, 0.96) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(212, 166, 74, 0.55);
+  border-radius: 6px;
+  background-clip: padding-box;
+  color: transparent;
+  -webkit-background-clip: text, padding-box;
+}
+
+.tc-p4-companion .tc-companion__hint {
+  text-align: center;
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 1rem;
+  color: rgba(232, 215, 175, 0.6);
+  margin: 0;
+  padding: 0.5rem 0;
+}
+
+.tc-p4-companion .tc-companion__hint::before,
+.tc-p4-companion .tc-companion__hint::after {
+  content: '~';
+  display: inline-block;
+  margin: 0 0.5rem;
+  color: var(--p1-gold, #d4a64a);
+  opacity: 0.5;
+}
+
+/* dead / silenced inline notes */
+.tc-p4-companion .tc-body-sm {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 0.98rem;
+  color: rgba(232, 215, 175, 0.75);
+  padding: 0.6rem 0.85rem;
+  background: linear-gradient(180deg, rgba(30, 20, 10, 0.6) 0%, rgba(18, 12, 6, 0.75) 100%);
+  border: 1px dashed rgba(138, 96, 40, 0.4);
+  border-radius: 4px;
+  margin: 0;
+}
+
+/* ════════════════════════════════════════════════════════════
+   ── 4.8  ROLE TOME — CEREMONIAL REVEAL ──────────────────────
+   ════════════════════════════════════════════════════════════ */
+
+.tc-p4-companion .tc-role-tome {
+  position: relative;
+  width: 100%;
+  max-width: 26rem;
+  padding: 2.25rem 1.75rem 2rem;
+  text-align: center;
+  background:
+    radial-gradient(ellipse at 50% 0%,
+      color-mix(in srgb, var(--accent, #d4a64a) 28%, transparent) 0%,
+      transparent 60%),
+    linear-gradient(180deg,
+      rgba(48, 34, 18, 0.96) 0%,
+      rgba(28, 20, 10, 0.98) 60%,
+      rgba(18, 12, 6, 0.99) 100%
+    ),
+    var(--p1-noise);
+  background-blend-mode: normal, normal, overlay;
+  border: 1px solid rgba(212, 166, 74, 0.6);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.35),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+    inset 0 -30px 60px -30px rgba(0, 0, 0, 0.85),
+    0 16px 48px -12px rgba(0, 0, 0, 0.85),
+    0 0 36px -6px color-mix(in srgb, var(--accent, #d4a64a) 35%, transparent);
+}
+
+/* gold inner trim like an old leather book */
+.tc-p4-companion .tc-role-tome::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(212, 166, 74, 0.35);
+  border-radius: 5px;
+  pointer-events: none;
+}
+
+/* corner gold studs */
+.tc-p4-companion .tc-role-tome::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 14px 14px, var(--p1-gold-bright, #f0c66a) 2px, transparent 3px),
+    radial-gradient(circle at calc(100% - 14px) 14px, var(--p1-gold-bright, #f0c66a) 2px, transparent 3px),
+    radial-gradient(circle at 14px calc(100% - 14px), var(--p1-gold-bright, #f0c66a) 2px, transparent 3px),
+    radial-gradient(circle at calc(100% - 14px) calc(100% - 14px), var(--p1-gold-bright, #f0c66a) 2px, transparent 3px);
+  filter: drop-shadow(0 0 4px rgba(212, 166, 74, 0.7));
+  opacity: 0.85;
+}
+
+.tc-p4-companion .tc-role-tome--enter {
+  animation: p4-tome-open 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@keyframes p4-tome-open {
+  0%   { opacity: 0; transform: translateY(20px) scale(0.95); filter: blur(8px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+/* wax seal at the top — big icon */
+.tc-p4-companion .tc-role-tome__seal-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 5.5rem;
+  height: 5.5rem;
+  margin: 0 auto 1.25rem;
+  font-size: 2.6rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%,
+      color-mix(in srgb, var(--accent, #d4a64a) 50%, transparent) 0%,
+      transparent 60%),
+    linear-gradient(180deg, #2a1d0c 0%, #14100a 100%);
+  border: 3px solid color-mix(in srgb, var(--accent, #d4a64a) 70%, var(--p1-gold, #d4a64a));
+  box-shadow:
+    inset 0 2px 0 rgba(255, 235, 180, 0.35),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.6),
+    0 0 24px -2px color-mix(in srgb, var(--accent, #d4a64a) 50%, transparent),
+    0 8px 22px -6px rgba(0, 0, 0, 0.7);
+  z-index: 2;
+}
+
+.tc-p4-companion .tc-role-tome__seal-glow {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent, #d4a64a) 40%, transparent) 0%,
+    transparent 70%
+  );
+  filter: blur(10px);
+  z-index: -1;
+  animation: p4-seal-breathe 3.5s ease-in-out infinite;
+}
+
+@keyframes p4-seal-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+.tc-p4-companion .tc-role-tome__ar {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif) !important;
+  font-size: 1.4rem;
+  color: rgba(243, 226, 176, 0.88);
+  margin: 0 0 0.25rem;
+}
+
+.tc-p4-companion .tc-role-tome__title {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: clamp(1.65rem, 5vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin: 0 0 1.1rem;
+  background: linear-gradient(
+    180deg,
+    #fff6dc 0%,
+    var(--p1-gold-bright, #f0c66a) 40%,
+    var(--p1-gold, #d4a64a) 70%,
+    var(--p1-bronze, #8a6028) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 26px color-mix(in srgb, var(--accent, #d4a64a) 35%, transparent);
+}
+
+.tc-p4-companion .tc-role-tome .tc-muted {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-size: 1rem;
+  line-height: 1.55;
+  color: rgba(232, 215, 175, 0.78);
+  margin: 0 0 0.65rem;
+}
+
+/* acknowledge button — same royal banner styling */
+.tc-p4-companion .tc-role-tome .tc-btn-royal {
+  margin-top: 0.5rem;
+  padding: 0.9rem 1.5rem;
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #1a0f04;
+  background: linear-gradient(180deg,
+    #f6dc94 0%,
+    var(--p1-gold-bright, #f0c66a) 30%,
+    var(--p1-gold, #d4a64a) 60%,
+    #8a6028 100%
+  );
+  border: 1px solid #6a4818;
+  border-radius: 4px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 245, 200, 0.7),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(212, 166, 74, 0.6),
+    0 4px 14px -2px rgba(212, 166, 74, 0.5),
+    0 8px 22px -6px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 1px 0 rgba(255, 235, 180, 0.4);
+  transition: all 0.2s ease;
+}
+
+.tc-p4-companion .tc-role-tome .tc-btn-royal:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg,
+    #fff0c0 0%, #f6dc94 30%,
+    var(--p1-gold-bright, #f0c66a) 60%, var(--p1-gold, #d4a64a) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 250, 220, 0.9),
+    0 6px 22px -2px rgba(240, 198, 106, 0.75),
+    0 10px 28px -6px rgba(0, 0, 0, 0.75);
+}
+
+/* ── 4.9  OATH-LOCKED STATE ────────────────────────────────── */
+.tc-p4-companion .tc-role-tome--acknowledged {
+  background:
+    radial-gradient(ellipse at 50% 100%,
+      color-mix(in srgb, var(--accent, #d4a64a) 22%, transparent) 0%,
+      transparent 60%),
+    linear-gradient(180deg,
+      rgba(28, 20, 10, 0.96) 0%,
+      rgba(14, 10, 6, 0.99) 100%
+    ),
+    var(--p1-noise);
+  background-blend-mode: normal, normal, overlay;
+}
+
+.tc-p4-companion .tc-oath-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+/* rune sigil — glowing ring with center mark */
+.tc-p4-companion .tc-rune-sigil {
+  position: relative;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%,
+      color-mix(in srgb, var(--accent, #d4a64a) 38%, transparent) 0%,
+      transparent 55%),
+    conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      var(--accent, #d4a64a) 30deg,
+      transparent 60deg,
+      var(--accent, #d4a64a) 120deg,
+      transparent 150deg,
+      var(--accent, #d4a64a) 210deg,
+      transparent 240deg,
+      var(--accent, #d4a64a) 300deg,
+      transparent 330deg
+    );
+  -webkit-mask: radial-gradient(circle, transparent 38%, #000 39%, #000 50%, transparent 51%);
+          mask: radial-gradient(circle, transparent 38%, #000 39%, #000 50%, transparent 51%);
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent, #d4a64a) 60%, transparent));
+  animation: p4-rune-rotate 18s linear infinite;
+}
+
+.tc-p4-companion .tc-rune-sigil::before {
+  /* inner static rune mark */
+  content: '◆';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 1.4rem;
+  color: var(--accent, var(--p1-gold-bright, #f0c66a));
+  -webkit-mask: none;
+          mask: none;
+  text-shadow: 0 0 14px color-mix(in srgb, var(--accent, #d4a64a) 80%, transparent);
+  animation: none;
+}
+
+@keyframes p4-rune-rotate {
+  to { transform: rotate(360deg); }
+}
+
+.tc-p4-companion .tc-oath-locked__word {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin: 0;
+  background: linear-gradient(
+    180deg,
+    #fff6dc 0%,
+    var(--p1-gold-bright, #f0c66a) 45%,
+    var(--p1-gold, #d4a64a) 75%,
+    var(--p1-bronze, #8a6028) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 18px color-mix(in srgb, var(--accent, #d4a64a) 35%, transparent);
+}
+
+.tc-p4-companion .tc-oath-locked__status {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 1rem;
+  color: rgba(232, 215, 175, 0.7);
+  margin: 0;
+}
+
+.tc-p4-companion .tc-oath-locked__status::before,
+.tc-p4-companion .tc-oath-locked__status::after {
+  content: '~';
+  color: var(--p1-gold, #d4a64a);
+  opacity: 0.55;
+  margin: 0 0.4rem;
+}
+
+/* ── 4.10  MOBILE TWEAKS ───────────────────────────────────── */
+@media (max-width: 640px) {
+  .tc-p4-companion {
+    padding: 1rem 0.65rem 1.5rem;
+  }
+  .tc-p4-companion.tc-companion--role-reveal {
+    padding: 1.25rem 0.75rem 2rem;
+    min-height: auto;
+  }
+  .tc-p4-companion .tc-role-badge {
+    padding: 0.75rem 0.85rem;
+  }
+  .tc-p4-companion .tc-role-badge__icon {
+    width: 2.6rem;
+    height: 2.6rem;
+    font-size: 1.4rem;
+  }
+  .tc-p4-companion .tc-role-tome {
+    padding: 1.75rem 1.25rem 1.5rem;
+  }
+  .tc-p4-companion .tc-role-tome__seal-wrap {
+    width: 4.5rem;
+    height: 4.5rem;
+    font-size: 2.1rem;
+  }
+}
+
+/* council grid stays single column on narrow */
+@media (max-width: 480px) {
+  .tc-p4-companion .tc-companion__council ul {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── 4.11  REDUCED MOTION ──────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .tc-p4-companion .tc-player-night-call--yours,
+  .tc-p4-companion .tc-role-tome__seal-glow,
+  .tc-p4-companion .tc-rune-sigil,
+  .tc-p4-companion .tc-role-tome--enter {
+    animation: none !important;
+  }
+  .tc-p4-companion .tc-role-tome .tc-btn-royal {
+    transition: none;
+  }
+  .tc-p4-companion .tc-role-tome .tc-btn-royal:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ░░░  PHASE 5 — CHRONICLES, ROSTERS, ASK PROMPT, TARGETS        ░░░
+   The codex of events, the secret roster banners (jade for the
+   faithful, crimson for the wicked), the "Wake This Player" hero
+   card, the team-grouped target picker, and the player's diary.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* shared section-title style used in both narrator + player scopes */
+.tc-p3-narrator .tc-section-title,
+.tc-p4-companion .tc-section-title {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: 0.82rem !important;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--p1-gold-bright, #f0c66a);
+  margin: 0 0 0.35rem;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tc-p3-narrator .tc-section-title::before,
+.tc-p4-companion .tc-section-title::before {
+  content: '◆';
+  font-size: 0.55rem;
+  color: var(--p1-gold, #d4a64a);
+  filter: drop-shadow(0 0 3px rgba(212, 166, 74, 0.5));
+}
+
+.tc-p3-narrator .tc-section-hint,
+.tc-p4-companion .tc-section-hint {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: rgba(232, 215, 175, 0.6);
+  margin: 0 0 0.75rem;
+}
+
+/* ════════════════════════════════════════════════════════════
+   ── 5.1  CHRONICLE — THE NARRATOR'S CODEX ─────────────────
+   ════════════════════════════════════════════════════════════ */
+
+.tc-p3-narrator .tc-chronicle {
+  position: relative;
+  padding: 1rem 1.1rem 1.15rem;
+  background:
+    linear-gradient(180deg, rgba(34, 24, 12, 0.92) 0%, rgba(20, 14, 8, 0.96) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(138, 96, 40, 0.55);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.22),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    inset 0 -16px 32px -16px rgba(0, 0, 0, 0.7),
+    0 8px 24px -10px rgba(0, 0, 0, 0.7);
+}
+
+.tc-p3-narrator .tc-chronicle__empty {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 1rem;
+  color: rgba(232, 215, 175, 0.55);
+  text-align: center;
+  padding: 1.25rem 0.5rem;
+  margin: 0;
+}
+
+.tc-p3-narrator .tc-chronicle__empty::before,
+.tc-p3-narrator .tc-chronicle__empty::after {
+  content: '~';
+  display: inline-block;
+  margin: 0 0.4rem;
+  color: var(--p1-gold, #d4a64a);
+  opacity: 0.5;
+}
+
+.tc-p3-narrator .tc-chronicle__periods {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* each period card */
+.tc-p3-narrator .tc-chronicle-period {
+  background: linear-gradient(180deg, rgba(50, 36, 20, 0.55) 0%, rgba(28, 20, 10, 0.7) 100%);
+  border: 1px solid rgba(138, 96, 40, 0.4);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tc-p3-narrator .tc-chronicle-period--open {
+  border-color: rgba(212, 166, 74, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.2),
+    0 0 14px -4px rgba(212, 166, 74, 0.3);
+}
+
+.tc-p3-narrator .tc-chronicle-period--current {
+  border-color: rgba(240, 198, 106, 0.7);
+  background:
+    linear-gradient(180deg, rgba(64, 46, 24, 0.7) 0%, rgba(38, 26, 12, 0.8) 100%),
+    radial-gradient(ellipse at 0% 50%, rgba(240, 198, 106, 0.15) 0%, transparent 60%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.25),
+    0 0 18px -6px rgba(240, 198, 106, 0.45);
+}
+
+.tc-p3-narrator .tc-chronicle-period__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  color: rgba(243, 226, 176, 0.92);
+}
+
+.tc-p3-narrator .tc-chronicle-period__toggle:hover {
+  background: rgba(212, 166, 74, 0.06);
+}
+
+.tc-p3-narrator .tc-chronicle-period__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 220, 160, 0.4), transparent 60%),
+    linear-gradient(180deg, #2a1d0c 0%, #14100a 100%);
+  border: 1px solid rgba(212, 166, 74, 0.45);
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.tc-p3-narrator .tc-chronicle-period__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.tc-p3-narrator .tc-chronicle-period__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--p1-gold-bright, #f0c66a);
+}
+
+.tc-p3-narrator .tc-chronicle-period__summary {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 0.88rem;
+  color: rgba(232, 215, 175, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tc-p3-narrator .tc-chronicle-period__meta {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(212, 166, 74, 0.7);
+  flex-shrink: 0;
+}
+
+.tc-p3-narrator .tc-chronicle-period__chevron {
+  color: rgba(212, 166, 74, 0.75);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.tc-p3-narrator .tc-chronicle-period__entries {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0.85rem 0.85rem;
+  border-top: 1px solid rgba(138, 96, 40, 0.35);
+}
+
+.tc-p3-narrator .tc-chronicle-period__entries--scroll {
+  max-height: 18rem;
+  overflow-y: auto;
+  scrollbar-color: rgba(212, 166, 74, 0.45) transparent;
+  scrollbar-width: thin;
+}
+
+.tc-p3-narrator .tc-chronicle-entry {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px dashed rgba(138, 96, 40, 0.25);
+}
+
+.tc-p3-narrator .tc-chronicle-entry:last-child {
+  border-bottom: none;
+}
+
+.tc-p3-narrator .tc-chronicle-entry__icon {
+  flex-shrink: 0;
+  width: 1.3rem;
+  font-size: 0.95rem;
+  text-align: center;
+  color: var(--p1-gold, #d4a64a);
+}
+
+.tc-p3-narrator .tc-chronicle-entry__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.tc-p3-narrator .tc-chronicle-entry__text {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-size: 1rem;
+  line-height: 1.45;
+  color: rgba(243, 226, 176, 0.92);
+  margin: 0;
+}
+
+.tc-p3-narrator .tc-chronicle-entry__detail {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: rgba(232, 215, 175, 0.6);
+  margin: 0.15rem 0 0;
+}
+
+/* ════════════════════════════════════════════════════════════
+   ── 5.2  ROSTER (SECRET) — TEAM BANNERS ────────────────────
+   ════════════════════════════════════════════════════════════ */
+
+.tc-p3-narrator .tc-roster-split {
+  position: relative;
+  padding: 1rem 1.1rem 1.15rem;
+  background:
+    linear-gradient(180deg, rgba(34, 24, 12, 0.92) 0%, rgba(20, 14, 8, 0.96) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(138, 96, 40, 0.55);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.22),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    inset 0 -16px 32px -16px rgba(0, 0, 0, 0.7),
+    0 8px 24px -10px rgba(0, 0, 0, 0.7);
+}
+
+.tc-p3-narrator .tc-roster-split__toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid rgba(138, 96, 40, 0.35);
+}
+
+.tc-p3-narrator .tc-roster-split__toggle {
+  padding: 0.4rem 0.75rem !important;
+  font-size: 0.65rem !important;
+}
+
+/* compact chip view */
+.tc-p3-narrator .tc-roster-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.tc-p3-narrator .tc-roster-chips-row {
+  position: relative;
+  padding: 0.65rem 0.75rem 0.75rem;
+  background: linear-gradient(180deg, rgba(50, 36, 20, 0.55) 0%, rgba(28, 20, 10, 0.7) 100%);
+  border: 1px solid rgba(138, 96, 40, 0.4);
+  border-radius: 4px;
+}
+
+.tc-p3-narrator .tc-roster-chips-row.tc-team--good {
+  --tc-team-accent: #6ec890;
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(110, 200, 144, 0.12) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(28, 50, 32, 0.7) 0%, rgba(14, 28, 18, 0.85) 100%);
+  border-color: rgba(110, 200, 144, 0.4);
+}
+
+.tc-p3-narrator .tc-roster-chips-row.tc-team--evil {
+  --tc-team-accent: #c8546a;
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(200, 84, 106, 0.12) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(52, 22, 26, 0.7) 0%, rgba(28, 12, 14, 0.85) 100%);
+  border-color: rgba(200, 84, 106, 0.4);
+}
+
+.tc-p3-narrator .tc-roster-chips-row__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.tc-p3-narrator .tc-roster-chips-row__title {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--tc-team-accent, var(--p1-gold-bright, #f0c66a));
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+.tc-p3-narrator .tc-roster-chips-row__count {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: rgba(232, 215, 175, 0.7);
+}
+
+.tc-p3-narrator .tc-roster-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.tc-p3-narrator .tc-roster-chips__empty {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 0.9rem;
+  color: rgba(232, 215, 175, 0.45);
+}
+
+.tc-p3-narrator .tc-roster-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.55rem;
+  background: linear-gradient(180deg, rgba(34, 24, 12, 0.85) 0%, rgba(20, 14, 8, 0.92) 100%);
+  border: 1px solid rgba(212, 166, 74, 0.35);
+  border-radius: 999px;
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-size: 0.88rem;
+  color: rgba(243, 226, 176, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.15),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.5);
+}
+
+.tc-p3-narrator .tc-roster-chip__dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+}
+
+.tc-p3-narrator .tc-roster-chip__icon {
+  font-size: 0.85rem;
+}
+
+.tc-p3-narrator .tc-roster-chip__mark {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.85rem;
+  color: rgba(200, 84, 106, 0.9);
+  margin-left: 0.1rem;
+}
+
+.tc-p3-narrator .tc-roster-chip--dead {
+  opacity: 0.45;
+  filter: grayscale(0.5);
+}
+
+.tc-p3-narrator .tc-roster-chip--dead .tc-roster-chip__name {
+  text-decoration: line-through;
+  text-decoration-color: rgba(120, 60, 40, 0.7);
+}
+
+/* expanded grid */
+.tc-p3-narrator .tc-roster-split__grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 720px) {
+  .tc-p3-narrator .tc-roster-split__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.tc-p3-narrator .tc-team-column {
+  padding: 0.85rem 0.9rem;
+  background: linear-gradient(180deg, rgba(50, 36, 20, 0.55) 0%, rgba(28, 20, 10, 0.7) 100%);
+  border: 1px solid rgba(138, 96, 40, 0.4);
+  border-radius: 4px;
+}
+
+.tc-p3-narrator .tc-team-column.tc-team--good {
+  --tc-team-accent: #6ec890;
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(110, 200, 144, 0.12) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(28, 50, 32, 0.7) 0%, rgba(14, 28, 18, 0.85) 100%);
+  border-color: rgba(110, 200, 144, 0.4);
+}
+
+.tc-p3-narrator .tc-team-column.tc-team--evil {
+  --tc-team-accent: #c8546a;
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(200, 84, 106, 0.12) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(52, 22, 26, 0.7) 0%, rgba(28, 12, 14, 0.85) 100%);
+  border-color: rgba(200, 84, 106, 0.4);
+}
+
+.tc-p3-narrator .tc-team-column__head {
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.65rem;
+  border-bottom: 1px dashed rgba(138, 96, 40, 0.4);
+}
+
+.tc-p3-narrator .tc-team-column__title {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: 1rem !important;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--tc-team-accent, var(--p1-gold-bright, #f0c66a));
+  margin: 0;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+.tc-p3-narrator .tc-team-column__sub {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: rgba(232, 215, 175, 0.7);
+  margin: 0.15rem 0 0;
+}
+
+.tc-p3-narrator .tc-team-column__count {
+  display: inline-block;
+  margin-top: 0.3rem;
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.65rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(232, 215, 175, 0.6);
+}
+
+.tc-p3-narrator .tc-team-column__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.tc-p3-narrator .tc-team-column__empty {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 0.9rem;
+  color: rgba(232, 215, 175, 0.5);
+}
+
+.tc-p3-narrator .tc-roster-card {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.6rem;
+  background: linear-gradient(180deg, rgba(34, 24, 12, 0.75) 0%, rgba(20, 14, 8, 0.85) 100%);
+  border: 1px solid rgba(138, 96, 40, 0.35);
+  border-radius: 3px;
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-size: 0.92rem;
+  color: rgba(243, 226, 176, 0.92);
+}
+
+.tc-p3-narrator .tc-roster-card .tc-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tc-p3-narrator .tc-roster-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.tc-p3-narrator .tc-roster-card__name {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(243, 226, 176, 0.95);
+}
+
+.tc-p3-narrator .tc-roster-card__role {
+  font-style: italic;
+  font-size: 0.85rem;
+  color: rgba(232, 215, 175, 0.7);
+}
+
+.tc-p3-narrator .tc-roster-card__badges {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.tc-p3-narrator .tc-roster-card--dead {
+  opacity: 0.55;
+  filter: grayscale(0.5);
+}
+
+.tc-p3-narrator .tc-roster-card--dead .tc-roster-card__name {
+  text-decoration: line-through;
+  text-decoration-color: rgba(120, 60, 40, 0.7);
+}
+
+/* badges (Dead / Oath / Ready) */
+.tc-p3-narrator .tc-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.45rem;
+  border-radius: 2px;
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+  border: 1px solid;
+}
+
+.tc-p3-narrator .tc-badge--dead {
+  background: linear-gradient(180deg, #5a1818 0%, #340b0b 100%);
+  border-color: rgba(200, 84, 106, 0.5);
+  color: #f8c8c8;
+}
+
+.tc-p3-narrator .tc-badge--pending {
+  background: linear-gradient(180deg, #5a4818 0%, #2e240a 100%);
+  border-color: rgba(212, 166, 74, 0.5);
+  color: var(--p1-gold-bright, #f0c66a);
+}
+
+.tc-p3-narrator .tc-badge--ok {
+  background: linear-gradient(180deg, #1f4a30 0%, #0f2818 100%);
+  border-color: rgba(110, 200, 144, 0.5);
+  color: #a8e0c0;
+}
+
+/* ════════════════════════════════════════════════════════════
+   ── 5.3  TARGET PICKER — TEAM-GROUPED CARDS ────────────────
+   ════════════════════════════════════════════════════════════ */
+
+.tc-p3-narrator .tc-target-picker {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.tc-p3-narrator .tc-target-picker__heading {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--p1-gold-bright, #f0c66a);
+  margin: 0 0 0.2rem;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+.tc-p3-narrator .tc-target-picker__heading::before {
+  content: '◆ ';
+  font-size: 0.6rem;
+  color: var(--p1-gold, #d4a64a);
+}
+
+.tc-p3-narrator .tc-target-team {
+  padding: 0.55rem 0.65rem;
+  background: linear-gradient(180deg, rgba(34, 24, 12, 0.7) 0%, rgba(20, 14, 8, 0.85) 100%);
+  border: 1px solid rgba(138, 96, 40, 0.35);
+  border-radius: 4px;
+}
+
+.tc-p3-narrator .tc-target-team.tc-team--good {
+  --tc-team-accent: #6ec890;
+  border-color: rgba(110, 200, 144, 0.4);
+}
+
+.tc-p3-narrator .tc-target-team.tc-team--evil {
+  --tc-team-accent: #c8546a;
+  border-color: rgba(200, 84, 106, 0.4);
+}
+
+.tc-p3-narrator .tc-target-team__label {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--tc-team-accent, var(--p1-gold-bright, #f0c66a));
+  margin: 0 0 0.4rem;
+}
+
+.tc-p3-narrator .tc-target-team__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: 0.4rem;
+}
+
+.tc-p3-narrator .tc-target-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.6rem;
+  background: linear-gradient(180deg, rgba(50, 36, 20, 0.7) 0%, rgba(28, 20, 10, 0.85) 100%);
+  border: 1px solid rgba(138, 96, 40, 0.45);
+  border-radius: 3px;
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-size: 0.92rem;
+  color: rgba(243, 226, 176, 0.95);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: left;
+}
+
+.tc-p3-narrator .tc-target-btn:hover:not(:disabled) {
+  border-color: rgba(212, 166, 74, 0.7);
+  background: linear-gradient(180deg, rgba(64, 46, 24, 0.85) 0%, rgba(38, 26, 12, 0.9) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -3px rgba(0, 0, 0, 0.5);
+}
+
+.tc-p3-narrator .tc-target-btn .tc-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tc-p3-narrator .tc-target-btn__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tc-p3-narrator .tc-target-btn__tag {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(200, 84, 106, 0.85);
+}
+
+.tc-p3-narrator .tc-target-btn--selected {
+  border-color: rgba(240, 198, 106, 0.85);
+  background:
+    linear-gradient(180deg, rgba(90, 64, 30, 0.85) 0%, rgba(54, 38, 16, 0.92) 100%),
+    radial-gradient(ellipse at 50% 0%, rgba(240, 198, 106, 0.25) 0%, transparent 70%);
+  color: var(--p1-gold-bright, #f0c66a);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.35),
+    0 0 18px -2px rgba(240, 198, 106, 0.55);
+}
+
+.tc-p3-narrator .tc-target-btn--dead {
+  opacity: 0.45;
+  filter: grayscale(0.5);
+}
+
+.tc-p3-narrator .tc-target-btn--blocked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tc-p3-narrator .tc-target-picker__skip {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+}
+
+/* ════════════════════════════════════════════════════════════
+   ── 5.4  ASK PROMPT — "WAKE THIS PLAYER" HERO ──────────────
+   ════════════════════════════════════════════════════════════ */
+
+.tc-p3-narrator .tc-ask-prompt {
+  margin: 0.85rem 0;
+  padding: 0.9rem 1rem;
+  background:
+    linear-gradient(180deg, rgba(18, 22, 48, 0.75) 0%, rgba(10, 12, 28, 0.85) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(110, 130, 200, 0.4);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(180, 200, 255, 0.12),
+    0 6px 18px -8px rgba(0, 0, 0, 0.7);
+}
+
+.tc-p3-narrator .tc-ask-prompt__label {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(180, 200, 255, 0.85);
+  margin: 0 0 0.2rem;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+.tc-p3-narrator .tc-ask-prompt__label::before {
+  content: '☾ ';
+  color: rgba(220, 230, 255, 0.95);
+}
+
+.tc-p3-narrator .tc-ask-prompt__hint {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 0.9rem;
+  color: rgba(220, 230, 250, 0.7);
+  margin: 0 0 0.75rem;
+}
+
+.tc-p3-narrator .tc-ask-prompt__empty {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  color: rgba(220, 230, 250, 0.6);
+  margin: 0;
+}
+
+/* hero summons card */
+.tc-p3-narrator .tc-ask-prompt__hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 0.95rem;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 220, 120, 0.18) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(40, 28, 14, 0.92) 0%, rgba(22, 14, 8, 0.96) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, normal, overlay;
+  border: 1px solid rgba(240, 198, 106, 0.55);
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.25),
+    0 0 22px -6px rgba(240, 198, 106, 0.45);
+}
+
+.tc-p3-narrator .tc-ask-prompt__pulse {
+  position: absolute;
+  inset: -2px;
+  border: 1px solid rgba(240, 198, 106, 0.5);
+  border-radius: 6px;
+  pointer-events: none;
+  animation: p5-summons-ring 2.4s ease-in-out infinite;
+}
+
+@keyframes p5-summons-ring {
+  0%, 100% { opacity: 0.4; box-shadow: 0 0 0 0 rgba(240, 198, 106, 0.35); }
+  50%      { opacity: 0.9; box-shadow: 0 0 0 6px rgba(240, 198, 106, 0); }
+}
+
+.tc-p3-narrator .tc-ask-prompt__avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid rgba(240, 198, 106, 0.65);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.4),
+    inset 0 -1px 3px rgba(0, 0, 0, 0.5),
+    0 0 14px -2px rgba(240, 198, 106, 0.55);
+}
+
+.tc-p3-narrator .tc-ask-prompt__avatar-icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+}
+
+.tc-p3-narrator .tc-ask-prompt__hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.tc-p3-narrator .tc-ask-prompt__wake {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(240, 198, 106, 0.9);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+.tc-p3-narrator .tc-ask-prompt__name {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: linear-gradient(
+    180deg, #fff6dc 0%, var(--p1-gold-bright, #f0c66a) 50%,
+    var(--p1-gold, #d4a64a) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tc-p3-narrator .tc-ask-prompt__role {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 0.92rem;
+  color: rgba(232, 215, 175, 0.75);
+}
+
+.tc-p3-narrator .tc-ask-prompt__hero--dead {
+  animation: none;
+  border-color: rgba(120, 80, 80, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(200, 150, 130, 0.18),
+    0 0 18px -8px rgba(120, 60, 60, 0.4);
+}
+
+.tc-p3-narrator .tc-ask-prompt__hero--dead .tc-ask-prompt__pulse {
+  display: none;
+}
+
+.tc-p3-narrator .tc-ask-prompt__hero--dead .tc-ask-prompt__name {
+  background: linear-gradient(180deg, #c8b8a8 0%, #807060 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.tc-p3-narrator .tc-ask-prompt__dead-badge {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.58rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.4rem;
+  background: linear-gradient(180deg, #5a1818 0%, #340b0b 100%);
+  border: 1px solid rgba(200, 84, 106, 0.5);
+  color: #f8c8c8;
+  border-radius: 2px;
+}
+
+.tc-p3-narrator .tc-ask-prompt__also {
+  margin-top: 0.65rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed rgba(138, 96, 40, 0.35);
+}
+
+.tc-p3-narrator .tc-ask-prompt__also-label {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.6rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(212, 166, 74, 0.7);
+  margin: 0 0 0.4rem;
+}
+
+.tc-p3-narrator .tc-ask-prompt__also-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tc-p3-narrator .tc-ask-prompt__also-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  background: linear-gradient(180deg, rgba(34, 24, 12, 0.85) 0%, rgba(20, 14, 8, 0.92) 100%);
+  border: 1px solid rgba(212, 166, 74, 0.35);
+  border-radius: 999px;
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-size: 0.85rem;
+  color: rgba(243, 226, 176, 0.9);
+}
+
+.tc-p3-narrator .tc-ask-prompt__also-chip .tc-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+
+.tc-p3-narrator .tc-ask-prompt__mini-dead {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(200, 84, 106, 0.85);
+}
+
+/* ════════════════════════════════════════════════════════════
+   ── 5.5  PLAYER ACTIVITY LOG — LEATHER DIARY ───────────────
+   ════════════════════════════════════════════════════════════ */
+
+.tc-p4-companion .tc-player-log {
+  position: relative;
+  padding: 1rem 1.05rem 1.15rem;
+  background:
+    linear-gradient(180deg, rgba(34, 24, 12, 0.9) 0%, rgba(20, 14, 8, 0.94) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(138, 96, 40, 0.55);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.22),
+    inset 0 -16px 32px -16px rgba(0, 0, 0, 0.7),
+    0 8px 24px -10px rgba(0, 0, 0, 0.7);
+}
+
+.tc-p4-companion .tc-player-log__title {
+  font-family: var(--p1-font-display, 'Cinzel', serif) !important;
+  font-size: 0.78rem !important;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--p1-gold-bright, #f0c66a);
+  margin: 0 0 0.35rem;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+.tc-p4-companion .tc-player-log__title::before {
+  content: '◆ ';
+  font-size: 0.55rem;
+  color: var(--p1-gold, #d4a64a);
+}
+
+.tc-p4-companion .tc-player-log__hint {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 0.88rem;
+  color: rgba(232, 215, 175, 0.6);
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid rgba(138, 96, 40, 0.35);
+}
+
+.tc-p4-companion .tc-player-log__empty {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 1rem;
+  color: rgba(232, 215, 175, 0.55);
+  text-align: center;
+  padding: 1rem 0.5rem;
+  margin: 0;
+}
+
+.tc-p4-companion .tc-player-log__empty::before,
+.tc-p4-companion .tc-player-log__empty::after {
+  content: '~';
+  display: inline-block;
+  margin: 0 0.4rem;
+  color: var(--p1-gold, #d4a64a);
+  opacity: 0.5;
+}
+
+.tc-p4-companion .tc-player-log__periods {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tc-p4-companion .tc-player-log-period {
+  background: linear-gradient(180deg, rgba(50, 36, 20, 0.55) 0%, rgba(28, 20, 10, 0.7) 100%);
+  border: 1px solid rgba(138, 96, 40, 0.4);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.tc-p4-companion .tc-player-log-period--open {
+  border-color: rgba(212, 166, 74, 0.6);
+  box-shadow: inset 0 1px 0 rgba(212, 166, 74, 0.2);
+}
+
+.tc-p4-companion .tc-player-log-period__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.tc-p4-companion .tc-player-log-period__toggle:hover {
+  background: rgba(212, 166, 74, 0.06);
+}
+
+.tc-p4-companion .tc-player-log-period__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 220, 160, 0.4), transparent 60%),
+    linear-gradient(180deg, #2a1d0c 0%, #14100a 100%);
+  border: 1px solid rgba(212, 166, 74, 0.45);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.tc-p4-companion .tc-player-log-period__label {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--p1-gold-bright, #f0c66a);
+  flex-shrink: 0;
+}
+
+.tc-p4-companion .tc-player-log-period__peek {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 0.88rem;
+  color: rgba(232, 215, 175, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tc-p4-companion .tc-player-log-period__chevron {
+  color: rgba(212, 166, 74, 0.75);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.tc-p4-companion .tc-player-log-period__entries {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0.85rem 0.85rem;
+  border-top: 1px solid rgba(138, 96, 40, 0.35);
+}
+
+.tc-p4-companion .tc-player-log-entry {
+  display: flex;
+  gap: 0.55rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed rgba(138, 96, 40, 0.25);
+  animation: p5-log-entry-in 0.35s ease-out backwards;
+  animation-delay: calc(var(--tc-entry-index, 0) * 60ms);
+}
+
+.tc-p4-companion .tc-player-log-entry:last-child {
+  border-bottom: none;
+}
+
+@keyframes p5-log-entry-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.tc-p4-companion .tc-player-log-entry__icon {
+  flex-shrink: 0;
+  width: 1.3rem;
+  font-size: 0.95rem;
+  text-align: center;
+  color: var(--p1-gold, #d4a64a);
+}
+
+.tc-p4-companion .tc-player-log-entry__text {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-size: 1rem;
+  line-height: 1.45;
+  color: rgba(243, 226, 176, 0.92);
+  margin: 0;
+}
+
+.tc-p4-companion .tc-player-log-entry__detail {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: rgba(232, 215, 175, 0.6);
+  margin: 0.15rem 0 0;
+}
+
+/* ── 5.6  REDUCED MOTION ──────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .tc-p3-narrator .tc-ask-prompt__pulse,
+  .tc-p4-companion .tc-player-log-entry {
+    animation: none !important;
+  }
+  .tc-p3-narrator .tc-target-btn {
+    transition: none;
+  }
+  .tc-p3-narrator .tc-target-btn:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ░░░  PHASE 6 — PHASE TRANSITION CEREMONY & LOBBY CONTROLS      ░░░
+   The full-screen heraldic banner that drops between Day / Night /
+   Morning / Role Reveal, plus the polished bronze form controls
+   (select + toggle) used in the lobby settings.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 6.1  PHASE TRANSITION OVERLAY ─────────────────────────────── */
+
+/* root overlay — full screen, centered, very brief (~1.2s) */
+.tc-phase-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+  animation: p6-overlay-life 1200ms ease-in-out forwards;
+}
+
+@keyframes p6-overlay-life {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  78%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* full-screen color flash behind the banner — phase-tinted */
+.tc-phase-transition .tc-phase-flash {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 50%, var(--p6-flash-core, transparent) 0%, transparent 65%),
+    var(--p6-flash-base, transparent);
+  filter: blur(2px);
+  opacity: 0;
+  animation: p6-flash 1200ms ease-out forwards;
+}
+
+@keyframes p6-flash {
+  0%   { opacity: 0; transform: scale(1.15); }
+  18%  { opacity: 0.85; transform: scale(1); }
+  60%  { opacity: 0.55; }
+  100% { opacity: 0; transform: scale(0.98); }
+}
+
+/* parchment-on-velvet banner card with twin chains/torches */
+.tc-phase-transition .tc-phase-banner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1.65rem 3rem 1.85rem;
+  min-width: min(28rem, 80vw);
+  background:
+    linear-gradient(180deg, rgba(40, 28, 14, 0.96) 0%, rgba(22, 14, 8, 0.98) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 2px solid var(--p6-banner-rim, rgba(212, 166, 74, 0.7));
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.3),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 18px 60px -10px rgba(0, 0, 0, 0.85),
+    0 0 60px -6px var(--p6-banner-glow, rgba(212, 166, 74, 0.55));
+  animation: p6-banner-drop 1200ms cubic-bezier(0.22, 1.2, 0.36, 1) forwards;
+}
+
+@keyframes p6-banner-drop {
+  0%   { opacity: 0; transform: translateY(-32px) scale(0.92); }
+  18%  { opacity: 1; transform: translateY(4px) scale(1.02); }
+  28%  { transform: translateY(0) scale(1); }
+  72%  { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(8px) scale(0.98); }
+}
+
+/* corner ornaments on the banner */
+.tc-phase-transition .tc-phase-banner::before,
+.tc-phase-transition .tc-phase-banner::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 1.8rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--p1-gold, #d4a64a), transparent);
+  transform: translateY(-50%);
+  opacity: 0.7;
+}
+
+.tc-phase-transition .tc-phase-banner::before {
+  left: -1.5rem;
+}
+
+.tc-phase-transition .tc-phase-banner::after {
+  right: -1.5rem;
+}
+
+.tc-phase-transition .tc-phase-banner__icon {
+  font-size: 3.2rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 8px var(--p6-banner-glow, rgba(212, 166, 74, 0.6)))
+          drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+  animation: p6-icon-pulse 1200ms ease-in-out;
+}
+
+@keyframes p6-icon-pulse {
+  0%   { transform: scale(0.6) rotate(-8deg); }
+  35%  { transform: scale(1.1) rotate(2deg); }
+  60%  { transform: scale(1) rotate(0); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.tc-phase-transition .tc-phase-banner__label {
+  font-family: var(--p1-font-decor, 'Cinzel Decorative', serif) !important;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--p6-banner-text, var(--p1-gold-bright, #f0c66a));
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.8),
+    0 0 14px var(--p6-banner-glow, rgba(212, 166, 74, 0.55));
+  white-space: nowrap;
+}
+
+/* small italic sub-line (no JSX support — using ::before on label for flourish) */
+.tc-phase-transition .tc-phase-banner__label::before,
+.tc-phase-transition .tc-phase-banner__label::after {
+  content: '✦';
+  display: inline-block;
+  margin: 0 0.65rem;
+  font-size: 0.7em;
+  color: var(--p1-gold, #d4a64a);
+  opacity: 0.75;
+  vertical-align: middle;
+}
+
+/* per-phase palettes */
+.tc-phase-transition--day {
+  --p6-flash-base: rgba(40, 28, 14, 0.7);
+  --p6-flash-core: rgba(255, 200, 110, 0.45);
+  --p6-banner-rim: rgba(240, 198, 106, 0.85);
+  --p6-banner-glow: rgba(255, 200, 110, 0.7);
+  --p6-banner-text: #ffe7a8;
+}
+
+.tc-phase-transition--night {
+  --p6-flash-base: rgba(8, 10, 22, 0.85);
+  --p6-flash-core: rgba(110, 130, 220, 0.4);
+  --p6-banner-rim: rgba(130, 150, 220, 0.7);
+  --p6-banner-glow: rgba(140, 160, 230, 0.6);
+  --p6-banner-text: #d8e0ff;
+}
+
+.tc-phase-transition--night .tc-phase-banner {
+  background:
+    linear-gradient(180deg, rgba(14, 18, 38, 0.96) 0%, rgba(8, 10, 22, 0.98) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+}
+
+.tc-phase-transition--morning {
+  --p6-flash-base: rgba(46, 28, 22, 0.75);
+  --p6-flash-core: rgba(255, 160, 110, 0.5);
+  --p6-banner-rim: rgba(255, 170, 120, 0.75);
+  --p6-banner-glow: rgba(255, 150, 100, 0.55);
+  --p6-banner-text: #ffd8b6;
+}
+
+.tc-phase-transition--role_reveal {
+  --p6-flash-base: rgba(30, 12, 28, 0.85);
+  --p6-flash-core: rgba(180, 110, 220, 0.45);
+  --p6-banner-rim: rgba(200, 140, 230, 0.75);
+  --p6-banner-glow: rgba(180, 110, 220, 0.6);
+  --p6-banner-text: #ecd0ff;
+}
+
+.tc-phase-transition--role_reveal .tc-phase-banner {
+  background:
+    linear-gradient(180deg, rgba(32, 16, 38, 0.96) 0%, rgba(18, 8, 22, 0.98) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+}
+
+/* ── 6.2  POLISHED LOBBY SELECT (within lobby scope) ──────────── */
+
+.tc-p2-lobby .tc-mafia-select-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.tc-p2-lobby .tc-mafia-select-field__label {
+  font-family: var(--p1-font-display, 'Cinzel', serif);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--p1-gold-bright, #f0c66a);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+.tc-p2-lobby .tc-mafia-select-field__label::before {
+  content: '◆ ';
+  font-size: 0.55rem;
+  color: var(--p1-gold, #d4a64a);
+}
+
+.tc-p2-lobby .tc-mafia-select {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 2.4rem 0.55rem 0.9rem;
+  background:
+    linear-gradient(180deg, rgba(50, 36, 20, 0.78) 0%, rgba(28, 20, 10, 0.88) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(138, 96, 40, 0.6);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.2),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.55);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tc-p2-lobby .tc-mafia-select:hover:not(.tc-mafia-select--disabled) {
+  border-color: rgba(212, 166, 74, 0.8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.25),
+    0 0 12px -2px rgba(212, 166, 74, 0.35);
+}
+
+.tc-p2-lobby .tc-mafia-select:has(.tc-mafia-select__native:focus-visible) {
+  border-color: var(--p1-gold-bright, #f0c66a);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.3),
+    0 0 0 2px rgba(240, 198, 106, 0.25),
+    0 0 14px -2px rgba(240, 198, 106, 0.5);
+}
+
+.tc-p2-lobby .tc-mafia-select--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tc-p2-lobby .tc-mafia-select__value {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-size: 1rem;
+  color: rgba(243, 226, 176, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tc-p2-lobby .tc-mafia-select__chevron {
+  position: absolute;
+  right: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: var(--p1-gold, #d4a64a);
+  pointer-events: none;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.6));
+}
+
+.tc-p2-lobby .tc-mafia-select__native {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  font: inherit;
+  width: 100%;
+}
+
+.tc-p2-lobby .tc-mafia-select__native:disabled {
+  cursor: not-allowed;
+}
+
+/* native dropdown options can't be styled extensively across browsers,
+   but we can at least set sane fallback colors */
+.tc-p2-lobby .tc-mafia-select__native option {
+  background: #1c140a;
+  color: #f3e2b0;
+}
+
+/* ── 6.3  POLISHED LOBBY TOGGLE (within lobby scope) ──────────── */
+
+.tc-p2-lobby .tc-mafia-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.35rem 0.1rem;
+}
+
+.tc-p2-lobby .tc-mafia-toggle--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tc-p2-lobby .tc-mafia-toggle__native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tc-p2-lobby .tc-mafia-toggle__box {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  background:
+    linear-gradient(180deg, rgba(34, 24, 12, 0.92) 0%, rgba(20, 14, 8, 0.96) 100%),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 1px solid rgba(138, 96, 40, 0.7);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 166, 74, 0.25),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.6);
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.tc-p2-lobby .tc-mafia-toggle:hover:not(.tc-mafia-toggle--disabled) .tc-mafia-toggle__box {
+  border-color: rgba(212, 166, 74, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.3),
+    0 0 10px -2px rgba(212, 166, 74, 0.4);
+}
+
+.tc-p2-lobby .tc-mafia-toggle:has(.tc-mafia-toggle__native:focus-visible) .tc-mafia-toggle__box {
+  border-color: var(--p1-gold-bright, #f0c66a);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.35),
+    0 0 0 2px rgba(240, 198, 106, 0.3);
+}
+
+.tc-p2-lobby .tc-mafia-toggle--checked .tc-mafia-toggle__box {
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(255, 220, 140, 0.5) 0%, transparent 60%),
+    linear-gradient(180deg, #5a4218 0%, #2e2008 100%);
+  border-color: rgba(240, 198, 106, 0.95);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.45),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.5),
+    0 0 12px -1px rgba(240, 198, 106, 0.55);
+}
+
+.tc-p2-lobby .tc-mafia-toggle__icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  color: #fff6dc;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.6));
+}
+
+.tc-p2-lobby .tc-mafia-toggle--checked .tc-mafia-toggle__label {
+  color: var(--p1-gold-bright, #f0c66a);
+}
+
+.tc-p2-lobby .tc-mafia-toggle__label {
+  font-family: var(--p1-font-script, 'Cormorant Garamond', serif);
+  font-size: 0.98rem;
+  line-height: 1.4;
+  color: rgba(243, 226, 176, 0.85);
+  transition: color 0.18s ease;
+}
+
+/* ── 6.4  RIM-LIGHT POLISH — subtle vignette over the whole arena
+        only when an active phase is running (not in lobby)        */
+
+.tc-p3-narrator::after,
+.tc-p4-companion::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
+  mix-blend-mode: multiply;
+}
+
+/* ── 6.5  REDUCED MOTION ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .tc-phase-transition,
+  .tc-phase-transition .tc-phase-flash,
+  .tc-phase-transition .tc-phase-banner,
+  .tc-phase-transition .tc-phase-banner__icon {
+    animation-duration: 600ms !important;
+    animation-timing-function: linear !important;
+  }
+  .tc-p2-lobby .tc-mafia-select,
+  .tc-p2-lobby .tc-mafia-toggle__box,
+  .tc-p2-lobby .tc-mafia-toggle__label {
+    transition: none;
+  }
+}
+

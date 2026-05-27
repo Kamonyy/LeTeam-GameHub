@@ -11,6 +11,7 @@ import {
   UserX,
   Mic,
   Bot,
+  Castle,
 } from 'lucide-react';
 import clsx from 'clsx';
 import {
@@ -139,43 +140,55 @@ export default function TavernCouncilLobby({
   };
 
   return (
-    <div className="tc-lobby p-4 md:p-8 max-w-3xl mx-auto">
-      <h1 className="text-2xl tc-font-display tc-display mb-1">Mafia</h1>
-      <p className="tc-body-sm mb-6">
-        Face-to-face social deduction — one narrator, everyone else checks roles on their
-        phone.
-      </p>
+    <div className="tc-lobby tc-p2-lobby">
+      <header className="tc-p2-lobby__crest">
+        <span className="tc-p2-lobby__crest-mark" aria-hidden>
+          <Castle className="w-7 h-7" />
+        </span>
+        <h1 className="tc-font-display tc-display">Tavern Council</h1>
+        <p>
+          A gathering at the long table — one Narrator weaves the tale,
+          the rest pledge their oaths in secret upon their own seal.
+        </p>
+      </header>
 
-      <div className="tc-stone-panel tc-lobby-panel p-4 mb-4" style={{ ['--tc-stagger' as string]: 0 }}>
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <span className="flex items-center gap-2 text-sm tc-muted">
-            <Users className="w-4 h-4" />
-            {connectedCount} / {lobby.maxPlayers} players
-          </span>
-          <code className="text-lg tracking-widest tc-display tc-font-display">
-            {lobby.roomId}
-          </code>
-        </div>
-        <button
-          type="button"
-          className="tc-btn-ghost text-sm w-full flex items-center justify-center gap-2"
-          onClick={copyLink}
-        >
-          {copied ?
-            <>
-              <Check className="w-4 h-4" /> Copied
-            </>
-          :	<>
-              <Copy className="w-4 h-4" /> Copy invite link
-            </>
-          }
-        </button>
+      <div className="tc-p2-divider" aria-hidden>
+        <span className="tc-p2-divider__glyph">◆</span>
       </div>
 
-      <ul
-        className="tc-stone-panel tc-lobby-panel p-4 mb-4 space-y-0"
+      <section className="tc-stone-panel tc-lobby-panel" style={{ ['--tc-stagger' as string]: 0 }}>
+        <h2 className="tc-p2-section-title">The Chamber</h2>
+        <div className="tc-p2-room">
+          <span className="tc-p2-room__count">
+            <Users className="w-4 h-4" />
+            <strong>{connectedCount}</strong> of {lobby.maxPlayers} seated
+          </span>
+          <code className="tc-p2-wax-seal" aria-label={`Room code ${lobby.roomId}`}>
+            {lobby.roomId}
+          </code>
+          <button
+            type="button"
+            className="tc-btn-ghost w-full sm:w-auto flex items-center justify-center gap-2"
+            onClick={copyLink}
+          >
+            {copied ?
+              <>
+                <Check className="w-4 h-4" /> Sealed to clipboard
+              </>
+            :	<>
+                <Copy className="w-4 h-4" /> Copy invitation
+              </>
+            }
+          </button>
+        </div>
+      </section>
+
+      <section
+        className="tc-stone-panel tc-lobby-panel"
         style={{ ['--tc-stagger' as string]: 1 }}
       >
+        <h2 className="tc-p2-section-title">The Roster</h2>
+        <ul className="tc-p2-roster-list">
         {lobby.players.map((p) => (
           <li key={p.id} className="tc-lobby-player">
             <span className="flex items-center gap-2 truncate min-w-0">
@@ -208,11 +221,18 @@ export default function TavernCouncilLobby({
             )}
           </li>
         ))}
-      </ul>
+        </ul>
+      </section>
 
       {showDevBots && (
-        <div
-          className="tc-stone-panel tc-lobby-panel tc-dev-panel p-4 mb-4"
+        <div className="tc-p2-divider" aria-hidden>
+          <span className="tc-p2-divider__glyph">◆</span>
+        </div>
+      )}
+
+      {showDevBots && (
+        <section
+          className="tc-stone-panel tc-lobby-panel tc-dev-panel"
           style={{ ['--tc-stagger' as string]: 2 }}
         >
           <div className="flex items-center gap-2 text-sm tc-display mb-2">
@@ -260,17 +280,21 @@ export default function TavernCouncilLobby({
               Remove bots
             </button>
           </div>
+        </section>
+      )}
+
+      {isHost && onSettingsChange && (
+        <div className="tc-p2-divider" aria-hidden>
+          <span className="tc-p2-divider__glyph">◆</span>
         </div>
       )}
 
       {isHost && onSettingsChange && (
-        <div
-          className="tc-stone-panel tc-lobby-panel p-4 mb-4 space-y-4"
+        <section
+          className="tc-stone-panel tc-lobby-panel space-y-4"
           style={{ ['--tc-stagger' as string]: showDevBots ? 3 : 2 }}
         >
-          <h2 className="text-sm tc-display tc-font-display uppercase tracking-widest">
-            Lobby settings
-          </h2>
+          <h2 className="tc-p2-section-title">Council Settings</h2>
 
           <MafiaSelect
             label="Narrator (only active controller)"
@@ -361,7 +385,7 @@ export default function TavernCouncilLobby({
               {ROLE_IDS.map((id) => {
                 const count = settings.roleCounts?.[id] ?? 0;
                 return (
-                  <li key={id} className="flex items-center justify-between text-sm">
+                  <li key={id} className="tc-p2-role-row text-sm">
                     <span className="tc-muted">
                       {ROLE_LABELS[id] ?? id}
                       <span className="text-xs opacity-60 ml-2">
@@ -371,7 +395,7 @@ export default function TavernCouncilLobby({
                     <span className="flex items-center gap-2">
                       <button
                         type="button"
-                        className="tc-btn-ghost px-2 py-0 text-lg leading-none"
+                        className="tc-btn-ghost tc-p2-coin"
                         disabled={count <= 0}
                         onClick={() => setRoleCount(id, -1)}
                         aria-label={`Decrease ${ROLE_LABELS[id] ?? id}`}
@@ -383,7 +407,7 @@ export default function TavernCouncilLobby({
                       </span>
                       <button
                         type="button"
-                        className="tc-btn-ghost px-2 py-0 text-lg leading-none"
+                        className="tc-btn-ghost tc-p2-coin"
                         disabled={!canIncrementRoles}
                         onClick={() => setRoleCount(id, 1)}
                         aria-label={`Increase ${ROLE_LABELS[id] ?? id}`}
@@ -396,12 +420,16 @@ export default function TavernCouncilLobby({
               })}
             </ul>
           </div>
-        </div>
+        </section>
       )}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="tc-p2-divider" aria-hidden>
+        <span className="tc-p2-divider__glyph">◆</span>
+      </div>
+
+      <div className="tc-p2-actions">
         {isHost && (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col items-center gap-1">
             <button
               type="button"
               className={clsx('tc-btn-royal flex items-center gap-2')}
@@ -409,7 +437,7 @@ export default function TavernCouncilLobby({
               onClick={onStartGame}
             >
               <Play className="w-4 h-4" />
-              {starting ? 'Starting…' : 'Deal roles & start'}
+              {starting ? 'Summoning…' : 'Deal Roles & Begin'}
             </button>
             {!lobbySetup.valid && lobbySetup.errors[0] && (
               <p className="text-xs text-rose-300/80">{lobbySetup.errors[0]}</p>
@@ -422,13 +450,13 @@ export default function TavernCouncilLobby({
           onClick={onLeave}
         >
           <LogOut className="w-4 h-4" />
-          Leave
+          Depart
         </button>
       </div>
 
       {!isHost && (
-        <p className="tc-muted text-sm mt-4">
-          Waiting for the host to start the council…
+        <p className="tc-p2-waiting">
+          Awaiting the host to call the council to order
         </p>
       )}
     </div>

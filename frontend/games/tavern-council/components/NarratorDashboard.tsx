@@ -140,11 +140,11 @@ export default function NarratorDashboard({
   };
 
   return (
-    <div className="tc-narrator-layout tc-narrator-layout--compact p-3 md:p-5 max-w-6xl mx-auto">
+    <div className="tc-p3-narrator tc-narrator-layout tc-narrator-layout--compact">
       <header className="tc-narrator-layout__header tc-narrator-layout__header--compact">
         <div>
           <h1 className="tc-narrator-console-title tc-font-display tc-display">
-            Narrator console
+            Loremaster's Codex
           </h1>
           <PhaseCeremony label={phaseLabel} />
         </div>
@@ -154,7 +154,7 @@ export default function NarratorDashboard({
           disabled={busy}
           onClick={() => onNarratorAction('reset_match')}
         >
-          Reset match
+          Adjourn Council
         </button>
       </header>
 
@@ -198,7 +198,7 @@ export default function NarratorDashboard({
         >
           <section className="tc-action-deck tc-action-deck--compact">
             <div className="tc-action-deck__head">
-              <h2 className="tc-action-deck__title tc-font-display">Your next action</h2>
+              <h2 className="tc-action-deck__title tc-font-display">Decree of the Hour</h2>
               <span className="tc-action-deck__phase">{phaseLabel}</span>
             </div>
 

@@ -35,16 +35,26 @@ function MafiaConnectionSeal({ connected }: { connected: boolean }) {
       className={clsx('tc-connection-seal', !connected && 'tc-connection-seal--off')}
       role="status"
     >
-      {connected ?
-        <>
-          <Wifi className="w-3.5 h-3.5" aria-hidden />
-          Connected
-        </>
-      :	<>
-          <WifiOff className="w-3.5 h-3.5" aria-hidden />
-          Reconnecting
-        </>
-      }
+      <span
+        className={clsx('tc-conn-seal', !connected && 'tc-conn-seal--off')}
+      >
+        <span
+          className="tc-conn-seal__claw tc-conn-seal__claw--left"
+          aria-hidden
+        />
+        <span className="tc-conn-seal__gem" aria-hidden>
+          {connected ?
+            <Wifi className="w-3.5 h-3.5" />
+          : <WifiOff className="w-3.5 h-3.5" />}
+        </span>
+        <span className="tc-conn-seal__label">
+          {connected ? 'Connected' : 'Reconnecting'}
+        </span>
+        <span
+          className="tc-conn-seal__claw tc-conn-seal__claw--right"
+          aria-hidden
+        />
+      </span>
     </div>
   );
 }

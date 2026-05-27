@@ -85,10 +85,10 @@ export default function PlayerCompanion({
   return (
     <div
       className={clsx(
-        'tc-companion flex flex-col p-6 max-w-lg mx-auto',
+        'tc-p4-companion tc-companion flex flex-col',
         roleReveal ?
-          'tc-companion--role-reveal items-center justify-center gap-6'
-        : 'tc-companion--play gap-4 items-stretch'
+          'tc-companion--role-reveal'
+        : 'tc-companion--play'
       )}
     >
       <PhaseCeremony label={phaseLabel} />
