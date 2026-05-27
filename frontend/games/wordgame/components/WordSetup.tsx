@@ -54,7 +54,7 @@ export default function WordSetup({
 
   if (iHaveSubmitted) {
     return (
-      <WordPanelFrame className="p-8 sm:p-10 text-center animate-fade-in">
+      <WordPanelFrame className="p-8 sm:p-10 text-center sw-animate-reveal">
         <div className="sw-seal">
           <span className="sw-seal__ring sw-seal__ring--outer" aria-hidden />
           <span className="sw-seal__ring" aria-hidden />
@@ -80,7 +80,7 @@ export default function WordSetup({
         {isLol && myChosenWord && (
           <p className="sw-word-reveal text-lg mb-5">{myChosenWord}</p>
         )}
-        <div className="sw-divider-gold max-w-xs mx-auto" />
+        <div className="sw-divider-gold sw-divider-gold--draw max-w-xs mx-auto" />
         <p className="sw-muted text-sm mt-4 leading-relaxed">
           {opponentHasSubmitted ?
             isLol ?
@@ -99,12 +99,12 @@ export default function WordSetup({
 
   if (isLol) {
     return (
-      <WordPanelFrame className="p-8 sm:p-10 animate-fade-in">
+      <WordPanelFrame className="p-8 sm:p-10">
         <div className="flex items-center gap-3 mb-2">
           <Shield className="w-5 h-5 text-[#f0d78c]" />
           <h3 className="sw-heading text-base">Choose Champion</h3>
         </div>
-        <div className="sw-divider-gold" />
+        <div className="sw-divider-gold sw-divider-gold--draw" />
         <p className="text-sm sw-muted mb-6 leading-relaxed">
           Pick a League champion for{' '}
           <span className="sw-text-accent font-medium">{opponentName}</span> to
@@ -139,12 +139,12 @@ export default function WordSetup({
   }
 
   return (
-    <WordPanelFrame className="p-8 sm:p-10 animate-fade-in">
+    <WordPanelFrame className="p-8 sm:p-10">
       <div className="flex items-center gap-3 mb-2">
         <PenLine className="w-5 h-5 text-[#f0d78c]" />
         <h3 className="sw-heading text-base">Inscribe Secret Word</h3>
       </div>
-      <div className="sw-divider-gold" />
+      <div className="sw-divider-gold sw-divider-gold--draw" />
       <p className="text-sm sw-muted mb-8 leading-relaxed">
         Choose a word for <span className="sw-text-accent font-medium">{opponentName}</span>{' '}
         to divine through voice. Once sealed, only you retain its memory until the round ends.

@@ -29,6 +29,11 @@ import { generateSessionToken } from "./session.js";
 import { sanitizeChatMessage, sanitizeDisplayName } from "./validate.js";
 import { MAX_ROOMS, RATE_LIMIT_WINDOW_MS } from "./constants.js";
 import { cryptoRandomInt } from "../games/dominoes/random.js";
+import {
+	isActiveWordGameSession,
+	isWordGameWon,
+	shouldPreserveWordGameRoom,
+} from "./wordgame-session.js";
 
 export class RoomManager {
 	/**
@@ -404,6 +409,10 @@ export class RoomManager {
 		if (this.useSocketRooms) socket.join(roomId);
 
 		this.broadcastLobbyState(roomId);
+		if (room.game) {
+			const state = room.game.serializeForPlayer(playerId);
+			socket.emit("game:state:update", { roomId, ...state });
+		}
 		return { roomId };
 	}
 
@@ -471,6 +480,23 @@ export class RoomManager {
 		const roomId = this.playerToRoom.get(playerId);
 		if (!roomId) return;
 
+		const room = this.rooms.get(roomId);
+		if (room && isActiveWordGameSession(room)) {
+			const player = room.players.find((p) => p.id === playerId);
+			if (player) {
+				if (player.disconnectTimer) {
+					clearTimeout(player.disconnectTimer);
+					player.disconnectTimer = null;
+				}
+				player.connected = false;
+			}
+			this.playerToRoom.delete(playerId);
+			if (this.useSocketRooms) socket.leave(roomId);
+			this.broadcastLobbyState(roomId);
+			this.broadcastGameState(roomId);
+			return;
+		}
+
 		if (this.useSocketRooms) socket.leave(roomId);
 		this._removePlayerFromRoom(playerId, roomId);
 	}
@@ -483,6 +509,16 @@ export class RoomManager {
 		const room = this.rooms.get(roomId);
 		if (!room) return { error: "Room not found" };
 		if (room.hostId !== playerId) return { error: "Only the host can start" };
+		if (
+			room.gameType === "wordgame" &&
+			room.status === "finished" &&
+			isWordGameWon(room)
+		) {
+			this._clearNextRoundTimer(room);
+			room.game = null;
+			room.status = "lobby";
+		}
+
 		if (room.status !== "lobby") return { error: "Game already started" };
 
 		const gameDef = getGame(room.gameType);
@@ -980,11 +1016,19 @@ export class RoomManager {
 
 		player.connected = false;
 
-		if (room.game && room.status === "playing") {
+		if (
+			room.game &&
+			(room.status === "playing" || isActiveWordGameSession(room))
+		) {
 			if (typeof room.game.pauseTurnTimer === "function") {
 				room.game.pauseTurnTimer();
 			}
 			this.broadcastGameState(roomId);
+			this.broadcastLobbyState(roomId);
+			return;
+		}
+
+		if (isWordGameWon(room)) {
 			this.broadcastLobbyState(roomId);
 			return;
 		}
@@ -1018,12 +1062,18 @@ export class RoomManager {
 		if (
 			room.status === "playing" &&
 			gameDef &&
-			room.players.length < gameDef.minPlayers
+			room.players.length < gameDef.minPlayers &&
+			!shouldPreserveWordGameRoom(room)
 		) {
 			room.status = "finished";
 		}
 
-		this.broadcastLobbyState(roomId);
+		if (room.players.length > 0) {
+			this.broadcastLobbyState(roomId);
+			if (room.game) {
+				this.broadcastGameState(roomId);
+			}
+		}
 	}
 
 	_removeSpectatorFromRoom(playerId, roomId) {
@@ -1163,7 +1213,7 @@ export class RoomManager {
 			isSpectator,
 		});
 
-		if (room.game && room.status === "playing") {
+		if (room.game) {
 			const state = room.game.serializeForPlayer(viewerId);
 			socket.emit("game:state:update", { roomId: room.id, ...state });
 		}
@@ -1228,6 +1278,7 @@ export class RoomManager {
 			const now = Date.now();
 			for (const [roomId, room] of this.rooms) {
 				if (room.status === "playing") continue;
+				if (shouldPreserveWordGameRoom(room)) continue;
 
 				const allDisconnected = room.players.every((p) => !p.connected);
 				if (allDisconnected && now - room.createdAt > ROOM_IDLE_CLEANUP_MS) {

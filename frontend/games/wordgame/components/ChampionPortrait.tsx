@@ -9,6 +9,8 @@ interface ChampionPortraitProps {
   size?: 'md' | 'lg' | 'xl';
   className?: string;
   showName?: boolean;
+  /** Dramatic hero entrance (reveals, large portraits) */
+  reveal?: boolean;
 }
 
 const SIZE_PX = { md: 64, lg: 96, xl: 140 } as const;
@@ -18,6 +20,7 @@ export default function ChampionPortrait({
   size = 'lg',
   className,
   showName = true,
+  reveal = false,
 }: ChampionPortraitProps) {
   const champ = getLolChampionById(championId);
   if (!champ) return null;
@@ -25,7 +28,14 @@ export default function ChampionPortrait({
   const px = SIZE_PX[size];
 
   return (
-    <div className={clsx('sw-champ-portrait', `sw-champ-portrait--${size}`, className)}>
+    <div
+      className={clsx(
+        'sw-champ-portrait',
+        `sw-champ-portrait--${size}`,
+        reveal && 'sw-champ-portrait--reveal',
+        className
+      )}
+    >
       <div className="sw-champ-portrait__frame">
         <Image
           src={championIconSrc(championId)}

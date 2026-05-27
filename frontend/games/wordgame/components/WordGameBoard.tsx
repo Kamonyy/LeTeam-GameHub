@@ -7,8 +7,8 @@ import WordSetup from './WordSetup';
 import GuessingBoard from './GuessingBoard';
 import Scratchpad from './Scratchpad';
 import RoundCeremony from './RoundCeremony';
-import WordGameAboutSidebar from './WordGameAboutSidebar';
 import { useScratchpadNotes } from '../hooks/useScratchpadNotes';
+import clsx from 'clsx';
 
 interface WordGameBoardProps {
   gameState: WordGameState;
@@ -54,7 +54,7 @@ export default function WordGameBoard({
   const wordCategory = gameState.wordCategory ?? 'custom';
 
   return (
-    <div className="animate-fade-in space-y-8">
+    <div className="sw-animate-ascend-slow space-y-8">
       <ScoreCard
         playerNames={playerNames}
         playerIds={gameState.playerIds}
@@ -65,8 +65,18 @@ export default function WordGameBoard({
 
       <RoundCeremony roundNumber={gameState.roundNumber} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 lg:gap-8 items-start lg:items-stretch">
-        <div className="min-w-0">
+      <div
+        className={clsx(
+          'items-start',
+          showScratchpad ?
+            'grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 lg:gap-8 lg:items-stretch'
+          :	'max-w-3xl mx-auto w-full'
+        )}
+      >
+        <div
+          key={`${gameState.phase}-${gameState.roundNumber}`}
+          className="min-w-0 sw-phase-mount"
+        >
           {gameState.phase === 'setup' && (
             <WordSetup
               wordCategory={wordCategory}
@@ -100,17 +110,16 @@ export default function WordGameBoard({
           )}
         </div>
 
-        <aside className="flex flex-col gap-6 w-full">
-          <WordGameAboutSidebar />
-          {showScratchpad && (
+        {showScratchpad && (
+          <aside className="w-full lg:sticky lg:top-24 lg:self-start">
             <Scratchpad
               notes={notes}
               onAdd={addNote}
               onUpdate={updateNote}
               onDelete={deleteNote}
             />
-          )}
-        </aside>
+          </aside>
+        )}
       </div>
     </div>
   );

@@ -135,6 +135,7 @@ export function SocketProvider({ children }) {
         if (payload?.status === 'lobby') {
           setGameState(null);
         }
+        // game:state:update follows for playing / finished Secret Word matches
       });
       socket.on('game:cancelled', () => setGameState(null));
       socket.on('room:kicked', (payload) => {

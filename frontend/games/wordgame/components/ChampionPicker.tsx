@@ -103,12 +103,19 @@ export default function ChampionPicker({
           </p>
 
           <ul
-            className="sw-champ-grid"
+            className={clsx('sw-champ-grid', !query.trim() && 'sw-stagger')}
             role="listbox"
             aria-label="Champion list"
           >
-            {filtered.map((champ) => (
-              <li key={champ.id}>
+            {filtered.map((champ, index) => (
+              <li
+                key={champ.id}
+                style={
+                  !query.trim() ?
+                    { animationDelay: `${Math.min(index, 24) * 0.025}s` }
+                  : undefined
+                }
+              >
                 <button
                   type="button"
                   role="option"

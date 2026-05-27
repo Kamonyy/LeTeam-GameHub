@@ -11,7 +11,6 @@ import PlayerNameControl from '@/components/hub/PlayerNameControl';
 import ErrorToast from '@/components/shared/ErrorToast';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import WordLobby from '@/games/wordgame/components/WordLobby';
-import WordGameAboutSidebar from '@/games/wordgame/components/WordGameAboutSidebar';
 import { getGameEntry } from '@/lib/hub/games-registry';
 import WordGameBoard from '@/games/wordgame/components/WordGameBoard';
 import WordGameAtmosphere from '@/games/wordgame/components/WordGameAtmosphere';
@@ -172,7 +171,7 @@ export default function WordGameClient() {
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {!lobby && inviteJoin && (
-          <div className="max-w-md mx-auto animate-fade-in">
+          <div className="max-w-md mx-auto sw-animate-ascend">
             <WordPanelFrame className="p-6 sm:p-8">
               <div className="flex items-center gap-2 mb-4">
                 <UserPlus className="w-5 h-5 text-[#f0d78c]" />
@@ -212,8 +211,8 @@ export default function WordGameClient() {
         )}
 
         {!lobby && !inviteJoin && (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 lg:gap-8 items-start animate-fade-in">
-            <div className="min-w-0 max-w-lg w-full mx-auto lg:max-w-none lg:mx-0">
+          <div className="max-w-md w-full mx-auto sw-animate-ascend-slow">
+            <div>
             {roomParam && loading && !autoJoined && (
               <p className="text-center text-sm sw-muted mb-4 animate-pulse-soft">
                 Crossing into room {roomParam}…
@@ -262,7 +261,6 @@ export default function WordGameClient() {
               </div>
             </WordPanelFrame>
             </div>
-            <WordGameAboutSidebar />
           </div>
         )}
 

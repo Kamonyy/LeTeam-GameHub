@@ -52,6 +52,9 @@ module.exports = {
 				"bara-vibrate": "baraVibrate 0.45s ease-in-out infinite",
 				"bara-shake": "baraShake 0.55s cubic-bezier(0.34, 1.56, 0.64, 1)",
 				"bara-explosion": "baraExplosion 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)",
+				"hub-drop-in": "hubDropIn 0.85s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+				"hub-slide-up": "hubSlideUp 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+				"hub-aura-breathe": "hubAuraBreathe 6s ease-in-out infinite",
 			},
 			keyframes: {
 				fadeIn: {
@@ -197,6 +200,18 @@ module.exports = {
 					"0%": { transform: "scale(0.85)", opacity: "0.5" },
 					"50%": { transform: "scale(1.08)", opacity: "1" },
 					"100%": { transform: "scale(1)", opacity: "1" },
+				},
+				hubDropIn: {
+					"0%": { opacity: "0", transform: "translateY(-36px)" },
+					"100%": { opacity: "1", transform: "translateY(0)" },
+				},
+				hubSlideUp: {
+					"0%": { opacity: "0", transform: "translateY(48px)" },
+					"100%": { opacity: "1", transform: "translateY(0)" },
+				},
+				hubAuraBreathe: {
+					"0%, 100%": { opacity: "0.45", transform: "scale(1)" },
+					"50%": { opacity: "0.75", transform: "scale(1.08)" },
 				},
 			},
 		},

@@ -93,8 +93,8 @@ export default function WordLobby({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 lg:gap-8 items-start animate-fade-in">
-      <WordPanelFrame className="w-full p-6 sm:p-8">
+    <div className="sw-lobby-layout sw-animate-ascend-slow">
+      <WordPanelFrame className="sw-lobby-layout__main w-full p-6 sm:p-8">
       <div className="flex items-center gap-3 mb-2">
         <Swords className="w-6 h-6 text-[#f0d78c]" />
         <h2 className="sw-heading text-lg">Secret Word Lobby</h2>

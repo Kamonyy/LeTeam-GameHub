@@ -53,6 +53,16 @@
 	background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M60 8 L68 40 L100 48 L68 56 L60 88 L52 56 L20 48 L52 40 Z' fill='none' stroke='%23c9a227' stroke-width='0.5'/%3E%3C/svg%3E");
 	background-size: 120px 120px;
 	mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+	animation: sw-runes-drift 48s linear infinite;
+}
+
+@keyframes sw-runes-drift {
+	from {
+		background-position: 0 0;
+	}
+	to {
+		background-position: 120px 120px;
+	}
 }
 
 .sw-atmosphere__silhouette-left,
@@ -124,10 +134,30 @@
 	font-weight: 600;
 	letter-spacing: 0.12em;
 	text-transform: uppercase;
-	background: linear-gradient(180deg, #f0d78c 0%, #c9a227 55%, #8a6d1f 100%);
+	background: linear-gradient(
+		180deg,
+		#fff8e7 0%,
+		#f0d78c 35%,
+		#c9a227 55%,
+		#8a6d1f 100%
+	);
+	background-size: 100% 200%;
 	-webkit-background-clip: text;
 	background-clip: text;
 	color: transparent;
+	animation: sw-title-shimmer 6s ease-in-out infinite;
+}
+
+@keyframes sw-title-shimmer {
+	0%,
+	100% {
+		background-position: 0% 0%;
+		filter: drop-shadow(0 0 8px rgba(201, 162, 39, 0.2));
+	}
+	50% {
+		background-position: 0% 100%;
+		filter: drop-shadow(0 0 14px rgba(201, 162, 39, 0.45));
+	}
 }
 
 .sw-back-link {
@@ -209,6 +239,36 @@
 		transparent
 	);
 	pointer-events: none;
+	animation: sw-panel-shine 4.5s ease-in-out infinite;
+}
+
+@keyframes sw-panel-shine {
+	0%,
+	100% {
+		opacity: 0.55;
+		filter: brightness(1);
+	}
+	50% {
+		opacity: 1;
+		filter: brightness(1.25);
+	}
+}
+
+.sw-panel--enter {
+	animation: sw-panel-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes sw-panel-rise {
+	0% {
+		opacity: 0;
+		transform: translateY(18px) scale(0.97);
+		filter: blur(4px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+		filter: blur(0);
+	}
 }
 
 .sw-panel__inner {
@@ -907,7 +967,12 @@
 	border-color: rgba(201, 162, 39, 0.45);
 	background: rgba(201, 162, 39, 0.08);
 	box-shadow: 0 0 12px rgba(201, 162, 39, 0.12);
-	transform: translateY(-1px);
+	transform: translateY(-2px) scale(1.02);
+}
+
+.sw-champ-option:active:not(:disabled) {
+	transform: translateY(0) scale(0.97);
+	transition-duration: 0.08s;
 }
 
 .sw-champ-option--active {
@@ -1004,13 +1069,409 @@
 	margin-bottom: 0.5rem;
 }
 
+/* ── Lobby layout (main + How to Play sidebar) ── */
+.sw-lobby-layout {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1.5rem;
+	align-items: start;
+	width: 100%;
+	max-width: 72rem;
+	margin-inline: auto;
+}
+
+@media (min-width: 1024px) {
+	.sw-lobby-layout {
+		grid-template-columns: minmax(0, 1fr) min(320px, 32%);
+		gap: 2rem;
+	}
+}
+
+.sw-lobby-layout__main {
+	min-width: 0;
+}
+
+.sw-lobby-aside {
+	width: 100%;
+	order: 2;
+	animation: sw-sidebar-in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (min-width: 1024px) {
+	.sw-lobby-aside {
+		order: 0;
+		position: sticky;
+		top: 6.5rem;
+		align-self: start;
+	}
+}
+
+.sw-lobby-aside__panel {
+	border-color: rgba(201, 162, 39, 0.32);
+	background: linear-gradient(
+		165deg,
+		rgba(28, 36, 58, 0.55) 0%,
+		rgba(8, 12, 26, 0.92) 55%,
+		rgba(14, 20, 40, 0.88) 100%
+	);
+	box-shadow:
+		0 20px 48px rgba(0, 0, 0, 0.45),
+		-4px 0 32px rgba(123, 92, 255, 0.06),
+		inset 1px 0 0 rgba(240, 215, 140, 0.08);
+}
+
+.sw-lobby-aside__header {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+}
+
+.sw-lobby-aside__icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.25rem;
+	height: 2.25rem;
+	flex-shrink: 0;
+	border-radius: 0.5rem;
+	border: 1px solid rgba(201, 162, 39, 0.35);
+	background: linear-gradient(
+		145deg,
+		rgba(201, 162, 39, 0.2),
+		rgba(157, 47, 15, 0.15)
+	);
+	color: #f0d78c;
+	box-shadow: 0 0 16px rgba(201, 162, 39, 0.15);
+}
+
+/* ── Cinematic transitions (LoL / Arcane) ── */
+.sw-ease-rite {
+	transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sw-animate-ascend {
+	animation: sw-ascend 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sw-animate-ascend-slow {
+	animation: sw-ascend 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sw-animate-sidebar {
+	animation: sw-sidebar-in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sw-animate-reveal {
+	animation: sw-reveal-slam 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sw-animate-victory {
+	animation: sw-victory-burst 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sw-phase-mount {
+	animation: sw-phase-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sw-reveal-box {
+	animation: sw-reveal-box-glow 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sw-champ-portrait--reveal .sw-champ-portrait__frame {
+	animation: sw-portrait-hero 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sw-champ-portrait--reveal .sw-champ-portrait__name {
+	animation: sw-ascend 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+.sw-victory-icon {
+	animation: sw-victory-icon-spin 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sw-round--live .sw-round__line {
+	transform-origin: center;
+	animation: sw-line-unfurl 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sw-round--live .sw-round__label {
+	animation: sw-ascend 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+}
+
+.sw-round--live .sw-round__number {
+	display: inline-block;
+	animation: sw-round-number-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+
+.sw-stagger > * {
+	animation: sw-ascend 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sw-stagger > *:nth-child(1) {
+	animation-delay: 0.03s;
+}
+.sw-stagger > *:nth-child(2) {
+	animation-delay: 0.06s;
+}
+.sw-stagger > *:nth-child(3) {
+	animation-delay: 0.09s;
+}
+.sw-stagger > *:nth-child(4) {
+	animation-delay: 0.12s;
+}
+.sw-stagger > *:nth-child(5) {
+	animation-delay: 0.15s;
+}
+.sw-stagger > *:nth-child(6) {
+	animation-delay: 0.18s;
+}
+
+.sw-champ-grid.sw-stagger > li {
+	animation: sw-champ-tile-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sw-champ-selected {
+	animation: sw-champ-lock 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sw-banner__score--pulse {
+	animation: sw-score-surge 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.sw-btn-primary:active:not(:disabled) {
+	transform: translateY(1px) scale(0.98);
+	transition-duration: 0.08s;
+}
+
+.sw-btn-confirm:active:not(:disabled) {
+	transform: translateY(0) scale(0.98);
+}
+
+.sw-divider-gold--draw {
+	transform-origin: center;
+	animation: sw-line-unfurl 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes sw-ascend {
+	0% {
+		opacity: 0;
+		transform: translateY(14px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes sw-sidebar-in {
+	0% {
+		opacity: 0;
+		transform: translateX(24px);
+		filter: blur(3px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateX(0);
+		filter: blur(0);
+	}
+}
+
+@keyframes sw-phase-in {
+	0% {
+		opacity: 0;
+		transform: translateY(10px) scale(0.99);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+@keyframes sw-reveal-slam {
+	0% {
+		opacity: 0;
+		transform: scale(0.88) translateY(12px);
+		filter: blur(6px) brightness(1.4);
+	}
+	55% {
+		opacity: 1;
+		transform: scale(1.03) translateY(-2px);
+		filter: blur(0) brightness(1.15);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+		filter: blur(0) brightness(1);
+	}
+}
+
+@keyframes sw-victory-burst {
+	0% {
+		opacity: 0;
+		transform: scale(0.75);
+	}
+	40% {
+		opacity: 1;
+		transform: scale(1.04);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes sw-victory-icon-spin {
+	0% {
+		opacity: 0;
+		transform: scale(0.5) rotate(-20deg);
+		box-shadow: 0 0 0 rgba(201, 162, 39, 0);
+	}
+	50% {
+		box-shadow: 0 0 48px rgba(201, 162, 39, 0.55);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1) rotate(0deg);
+		box-shadow: 0 0 32px rgba(201, 162, 39, 0.3);
+	}
+}
+
+@keyframes sw-reveal-box-glow {
+	0% {
+		opacity: 0;
+		transform: scale(0.92);
+		box-shadow: 0 0 0 rgba(201, 162, 39, 0);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+		box-shadow:
+			0 0 48px rgba(201, 162, 39, 0.22),
+			0 0 64px rgba(123, 92, 255, 0.08);
+	}
+}
+
+@keyframes sw-portrait-hero {
+	0% {
+		opacity: 0;
+		transform: scale(0.6);
+		box-shadow: 0 0 0 rgba(201, 162, 39, 0);
+	}
+	60% {
+		transform: scale(1.08);
+		box-shadow: 0 0 40px rgba(255, 159, 67, 0.5);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+		box-shadow:
+			0 0 32px rgba(201, 162, 39, 0.25),
+			0 0 48px rgba(123, 92, 255, 0.12);
+	}
+}
+
+@keyframes sw-champ-tile-in {
+	0% {
+		opacity: 0;
+		transform: scale(0.85) translateY(6px);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
+}
+
+@keyframes sw-champ-lock {
+	0% {
+		opacity: 0;
+		transform: scale(0.95);
+		box-shadow: 0 0 0 rgba(201, 162, 39, 0);
+	}
+	70% {
+		box-shadow: 0 0 28px rgba(201, 162, 39, 0.35);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes sw-line-unfurl {
+	0% {
+		opacity: 0;
+		transform: scaleX(0);
+	}
+	100% {
+		opacity: 1;
+		transform: scaleX(1);
+	}
+}
+
+@keyframes sw-round-number-pop {
+	0% {
+		opacity: 0;
+		transform: scale(0.5);
+		text-shadow: 0 0 0 transparent;
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+		text-shadow: 0 0 20px rgba(201, 162, 39, 0.45);
+	}
+}
+
+@keyframes sw-score-surge {
+	0% {
+		transform: scale(1);
+		filter: drop-shadow(0 0 12px rgba(201, 162, 39, 0.3));
+	}
+	35% {
+		transform: scale(1.18);
+		filter: drop-shadow(0 0 28px rgba(255, 159, 67, 0.85));
+	}
+	100% {
+		transform: scale(1);
+		filter: drop-shadow(0 0 18px rgba(201, 162, 39, 0.45));
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.sw-ember,
 	.sw-banner__pulse,
 	.sw-seal__ring,
 	.sw-round__rune,
 	.sw-word-reveal,
-	.sw-panel-embers span {
+	.sw-panel-embers span,
+	.sw-atmosphere__runes,
+	.sw-panel::after,
+	.sw-panel--enter,
+	.sw-animate-ascend,
+	.sw-animate-ascend-slow,
+	.sw-animate-sidebar,
+	.sw-lobby-aside,
+	.sw-animate-reveal,
+	.sw-animate-victory,
+	.sw-phase-mount,
+	.sw-reveal-box,
+	.sw-champ-portrait--reveal .sw-champ-portrait__frame,
+	.sw-champ-portrait--reveal .sw-champ-portrait__name,
+	.sw-victory-icon,
+	.sw-round--live .sw-round__line,
+	.sw-round--live .sw-round__label,
+	.sw-round--live .sw-round__number,
+	.sw-stagger > *,
+	.sw-champ-grid.sw-stagger > li,
+	.sw-champ-selected,
+	.sw-banner__score--pulse,
+	.sw-divider-gold--draw,
+	.sw-header__title {
 		animation: none !important;
+	}
+
+	.sw-banner,
+	.sw-btn-primary,
+	.sw-btn-confirm,
+	.sw-champ-option {
+		transition: none !important;
 	}
 }

@@ -16,7 +16,7 @@ export default function WordPanelFrame({
   embers = true,
 }: WordPanelFrameProps) {
   return (
-    <div className={clsx('sw-panel', className)}>
+    <div className={clsx('sw-panel', 'sw-panel--enter', className)}>
       {embers && (
         <div className="sw-panel-embers" aria-hidden>
           {[12, 28, 45, 62, 78, 88].map((left, i) => (

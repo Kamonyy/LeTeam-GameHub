@@ -40,7 +40,12 @@ function RevealContent({
       <p className="text-[10px] sw-muted uppercase tracking-[0.25em] mb-3">{label}</p>
       {isLol && (
         <div className="flex justify-center mb-4">
-          <ChampionPortrait championId={revealedChampionId} size="xl" showName={false} />
+          <ChampionPortrait
+            championId={revealedChampionId}
+            size="xl"
+            showName={false}
+            reveal
+          />
         </div>
       )}
       <p className={clsx('sw-word-reveal', isLol && 'text-2xl sm:text-3xl')}>
@@ -75,11 +80,11 @@ export default function GuessingBoard({
 
   if (phase === 'match_over' && winnerName) {
     return (
-      <WordPanelFrame className="p-8 sm:p-12 text-center animate-overlay-pop">
+      <WordPanelFrame className="p-8 sm:p-12 text-center sw-animate-victory">
         <div className="sw-victory-icon mx-auto mb-5">
           <Crown className="w-9 h-9" strokeWidth={1.5} />
         </div>
-        <h3 className="sw-heading-lg mb-3">Victory Claimed</h3>
+        <h3 className="sw-heading-lg mb-3 sw-animate-ascend">Victory Claimed</h3>
         <p className="sw-muted text-sm mb-6">
           <span className="sw-text-accent font-semibold">{winnerName}</span> reached{' '}
           {pointsToWin} points first
@@ -98,7 +103,7 @@ export default function GuessingBoard({
 
   if (phase === 'round_end' && revealedWord) {
     return (
-      <WordPanelFrame className="p-8 sm:p-12 text-center animate-overlay-pop">
+      <WordPanelFrame className="p-8 sm:p-12 text-center sw-animate-reveal">
         <div className="sw-victory-icon mx-auto mb-5">
           <Trophy className="w-8 h-8" strokeWidth={1.5} />
         </div>
@@ -123,7 +128,7 @@ export default function GuessingBoard({
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 sw-stagger">
       <WordPanelFrame className="p-6 sm:p-8 sw-accent-cyan" embers={false}>
         <div className="flex items-center gap-2 text-[#7ee8ff] mb-3">
           <Eye className="w-5 h-5" />

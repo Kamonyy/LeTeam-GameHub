@@ -9,16 +9,23 @@ interface WordGameAboutSidebarProps {
   className?: string;
 }
 
-/** Game rules & description — pinned on the right during lobby and play */
+/** Rules & description — waiting lobby only (right column on desktop) */
 export default function WordGameAboutSidebar({ className }: WordGameAboutSidebarProps) {
   return (
-    <aside className={clsx('w-full lg:max-w-[300px] lg:justify-self-end', className)}>
-      <WordPanelFrame className="p-4 sm:p-5 lg:sticky lg:top-24" embers={false}>
-        <div className="flex items-center gap-2 mb-3">
-          <BookOpen className="w-4 h-4 text-[#f0d78c]" aria-hidden />
-          <span className="sw-heading text-[10px]">How to Play</span>
+    <aside className={clsx('sw-lobby-aside', className)}>
+      <WordPanelFrame className="sw-lobby-aside__panel p-5 sm:p-6" embers={false}>
+        <div className="sw-lobby-aside__header">
+          <span className="sw-lobby-aside__icon" aria-hidden>
+            <BookOpen className="w-4 h-4" />
+          </span>
+          <div>
+            <p className="sw-heading text-[10px] tracking-[0.2em]">How to Play</p>
+            <p className="text-[10px] sw-muted mt-0.5 normal-case tracking-normal">
+              Secret Word · 2 players
+            </p>
+          </div>
         </div>
-        <div className="sw-divider-gold mb-4 opacity-60" />
+        <div className="sw-divider-gold sw-divider-gold--draw my-4 opacity-70" />
         <GameAboutPanel gameId="wordgame" variant="wordgame" />
       </WordPanelFrame>
     </aside>
