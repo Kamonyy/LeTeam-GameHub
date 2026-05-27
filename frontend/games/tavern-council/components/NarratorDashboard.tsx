@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import clsx from 'clsx';
-import type { TavernCouncilGameState, TavernNarratorAction } from '../types';
-import type { LobbyState } from '@/lib/hub/types';
-import NarratorTeamRoster from './NarratorTeamRoster';
-import NarratorChronicle from './NarratorChronicle';
-import NarratorTargetPicker from './NarratorTargetPicker';
-import NarratorAskPrompt from './NarratorAskPrompt';
-import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import { useEffect, useMemo, useState } from "react";
+import clsx from "clsx";
+import type { TavernCouncilGameState, TavernNarratorAction } from "../types";
+import type { LobbyState } from "@/lib/hub/types";
+import NarratorTeamRoster from "./NarratorTeamRoster";
+import NarratorChronicle from "./NarratorChronicle";
+import NarratorTargetPicker from "./NarratorTargetPicker";
+import NarratorAskPrompt from "./NarratorAskPrompt";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 
 interface NarratorDashboardProps {
   state: TavernCouncilGameState;
   lobby: LobbyState;
   onNarratorAction: (
     action: TavernNarratorAction,
-    targetPlayerId?: string | null
+    targetPlayerId?: string | null,
   ) => Promise<boolean>;
   busy?: boolean;
 }
 
-type MobileTab = 'actions' | 'roster' | 'log';
+type MobileTab = "actions" | "roster" | "log";
 
-const MOBILE_MQ = '(max-width: 959px)';
+const MOBILE_MQ = "(max-width: 959px)";
 
 function name(lobby: LobbyState, id: string) {
   return lobby.players.find((p) => p.id === id)?.displayName ?? id.slice(0, 8);
@@ -30,26 +30,26 @@ function name(lobby: LobbyState, id: string) {
 
 function roleName(roleId: string) {
   const labels: Record<string, string> = {
-    mafia: 'Mafia',
-    seer: 'Seer',
-    doctor: 'Doctor',
-    villager: 'Villager',
-    sniper: 'Sniper',
-    sheriff: 'Sheriff',
+    mafia: "Mafia",
+    seer: "Seer",
+    doctor: "Doctor",
+    villager: "Villager",
+    sniper: "Sniper",
+    sheriff: "Sheriff",
   };
   return labels[roleId] ?? roleId;
 }
 
 function currentPeriodKey(state: TavernCouncilGameState): string | undefined {
-  if (state.phase === 'role_reveal') return 'setup:0:0';
-  if (state.phase === 'day') return `day:${state.dayNumber}:0`;
-  if (state.phase === 'night') {
+  if (state.phase === "role_reveal") return "setup:0:0";
+  if (state.phase === "day") return `day:${state.dayNumber}:0`;
+  if (state.phase === "night") {
     return `night:${state.dayNumber}:${state.nightNumber}`;
   }
-  if (state.phase === 'morning') {
+  if (state.phase === "morning") {
     return `morning:${state.dayNumber}:${state.nightNumber}`;
   }
-  if (state.phase === 'match_over') {
+  if (state.phase === "match_over") {
     return `match_over:${state.dayNumber}:${state.nightNumber}`;
   }
   return undefined;
@@ -60,7 +60,10 @@ function PhaseCeremony({ label }: { label: string }) {
     <div className="tc-phase-ceremony tc-phase-ceremony--compact">
       <span className="tc-phase-ceremony__blade" aria-hidden />
       <span className="tc-phase-sigil">{label}</span>
-      <span className="tc-phase-ceremony__blade tc-phase-ceremony__blade--right" aria-hidden />
+      <span
+        className="tc-phase-ceremony__blade tc-phase-ceremony__blade--right"
+        aria-hidden
+      />
     </div>
   );
 }
@@ -85,9 +88,9 @@ function NightProgressPills({
         <span
           key={i}
           className={clsx(
-            'tc-night-progress__dot',
-            i < currentIndex && 'tc-night-progress__dot--done',
-            i === currentIndex && 'tc-night-progress__dot--current'
+            "tc-night-progress__dot",
+            i < currentIndex && "tc-night-progress__dot--done",
+            i === currentIndex && "tc-night-progress__dot--current",
           )}
           title={`Step ${i + 1}`}
         />
@@ -105,7 +108,7 @@ export default function NarratorDashboard({
   const panel = state.narratorPanel;
   const step = panel?.nightStep;
   const playerName = (id: string) => name(lobby, id);
-  const [mobileTab, setMobileTab] = useState<MobileTab>('actions');
+  const [mobileTab, setMobileTab] = useState<MobileTab>("actions");
   const [isMobile, setIsMobile] = useState(false);
   const [pendingElimination, setPendingElimination] = useState<{
     id: string;
@@ -116,18 +119,18 @@ export default function NarratorDashboard({
     const mq = window.matchMedia(MOBILE_MQ);
     const sync = () => setIsMobile(mq.matches);
     sync();
-    mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
   }, []);
 
   const showPanel = (tab: MobileTab) => !isMobile || mobileTab === tab;
 
   const phaseLabel = useMemo(() => {
-    if (state.phase === 'day') return `Day ${state.dayNumber}`;
-    if (state.phase === 'night') return `Night ${state.nightNumber}`;
-    if (state.phase === 'morning') return 'Morning';
-    if (state.phase === 'role_reveal') return 'Role reveal';
-    if (state.phase === 'match_over') return 'Match over';
+    if (state.phase === "day") return `Day ${state.dayNumber}`;
+    if (state.phase === "night") return `Night ${state.nightNumber}`;
+    if (state.phase === "morning") return "Morning";
+    if (state.phase === "role_reveal") return "Role reveal";
+    if (state.phase === "match_over") return "Match over";
     return state.phase;
   }, [state]);
 
@@ -136,7 +139,7 @@ export default function NarratorDashboard({
 
   const selectTarget = async (targetId: string | null) => {
     if (!step?.requiresTarget) return;
-    await onNarratorAction('set_night_target', targetId);
+    await onNarratorAction("set_night_target", targetId);
   };
 
   return (
@@ -152,7 +155,7 @@ export default function NarratorDashboard({
           type="button"
           className="tc-btn-ghost text-sm"
           disabled={busy}
-          onClick={() => onNarratorAction('reset_match')}
+          onClick={() => onNarratorAction("reset_match")}
         >
           Adjourn Council
         </button>
@@ -169,19 +172,19 @@ export default function NarratorDashboard({
       <nav className="tc-narrator-tabs" aria-label="Narrator panels">
         {(
           [
-            ['actions', 'Actions'],
-            ['roster', 'Roster'],
-            ['log', 'Log'],
+            ["actions", "Actions"],
+            ["roster", "Roster"],
+            ["log", "Log"],
           ] as const
         ).map(([id, label]) => (
           <button
             key={id}
             type="button"
             className={clsx(
-              'tc-narrator-tabs__btn',
-              mobileTab === id && 'tc-narrator-tabs__btn--active'
+              "tc-narrator-tabs__btn",
+              mobileTab === id && "tc-narrator-tabs__btn--active",
             )}
-            aria-current={mobileTab === id ? 'page' : undefined}
+            aria-current={mobileTab === id ? "page" : undefined}
             onClick={() => setMobileTab(id)}
           >
             {label}
@@ -192,34 +195,36 @@ export default function NarratorDashboard({
       <div className="tc-narrator-layout__grid">
         <div
           className={clsx(
-            'tc-narrator-layout__actions',
-            !showPanel('actions') && 'tc-narrator-layout__panel--hidden'
+            "tc-narrator-layout__actions",
+            !showPanel("actions") && "tc-narrator-layout__panel--hidden",
           )}
         >
           <section className="tc-action-deck tc-action-deck--compact">
             <div className="tc-action-deck__head">
-              <h2 className="tc-action-deck__title tc-font-display">Decree of the Hour</h2>
+              <h2 className="tc-action-deck__title tc-font-display">
+                Decree of the Hour
+              </h2>
               <span className="tc-action-deck__phase">{phaseLabel}</span>
             </div>
 
-            {state.phase === 'role_reveal' && panel?.canStartDay && (
+            {state.phase === "role_reveal" && panel?.canStartDay && (
               <div className="tc-action-card tc-action-card--compact">
                 <p className="tc-action-card__lead">
-                  Wait until every player has opened their role on their phone, then start
-                  the first day.
+                  Wait until every player has opened their role on their phone,
+                  then start the first day.
                 </p>
                 <button
                   type="button"
                   className="tc-btn-royal tc-btn-royal--wide"
                   disabled={busy}
-                  onClick={() => onNarratorAction('start_day')}
+                  onClick={() => onNarratorAction("start_day")}
                 >
                   ☀️ Begin day 1
                 </button>
               </div>
             )}
 
-            {state.phase === 'night' && step && (
+            {state.phase === "night" && step && (
               <div className="tc-action-card tc-action-card--night tc-action-card--compact">
                 <div className="tc-action-card__night-head">
                   <p className="tc-ritual__lock-label">Night ritual</p>
@@ -229,12 +234,17 @@ export default function NarratorDashboard({
                   />
                 </div>
 
-                <details className="tc-action-details tc-action-details--first" open>
+                <details
+                  className="tc-action-details tc-action-details--first"
+                  open
+                >
                   <summary className="tc-action-details__summary">
                     Instructions
-                    {step.instructionAr ? ' · تعليمات' : ''}
+                    {step.instructionAr ? " · تعليمات" : ""}
                   </summary>
-                  <p className="tc-action-card__instruction">{step.instructionEn}</p>
+                  <p className="tc-action-card__instruction">
+                    {step.instructionEn}
+                  </p>
                   {step.instructionAr && (
                     <p className="tc-action-card__instruction" dir="rtl">
                       {step.instructionAr}
@@ -242,7 +252,9 @@ export default function NarratorDashboard({
                   )}
                 </details>
 
-                <h3 className="tc-action-card__step tc-font-display">{step.titleEn}</h3>
+                <h3 className="tc-action-card__step tc-font-display">
+                  {step.titleEn}
+                </h3>
                 <p className="tc-action-card__step-ar" dir="rtl">
                   {step.titleAr}
                 </p>
@@ -272,7 +284,10 @@ export default function NarratorDashboard({
                 )}
 
                 {seerReveal && (
-                  <div className="tc-seer-result tc-seer-result--compact" role="status">
+                  <div
+                    className="tc-seer-result tc-seer-result--compact"
+                    role="status"
+                  >
                     <p className="tc-seer-result__label">🔮 RESULT</p>
                     <p className="tc-seer-result__line">
                       {playerName(seerReveal.playerId)} · {seerReveal.alignment}
@@ -288,7 +303,7 @@ export default function NarratorDashboard({
                     selectedId={step.selectedTargetId}
                     blockedIds={step.blockedTargetIds}
                     allowSkip={step.allowSkip}
-                    aliveOnly={step.key !== 'resolution'}
+                    aliveOnly={step.key !== "resolution"}
                     disabled={busy}
                     actionLabel="Record their choice"
                     onSelect={selectTarget}
@@ -306,7 +321,7 @@ export default function NarratorDashboard({
                     type="button"
                     className="tc-btn-royal tc-btn-royal--wide tc-action-card__confirm"
                     disabled={busy}
-                    onClick={() => onNarratorAction('confirm_night_step')}
+                    onClick={() => onNarratorAction("confirm_night_step")}
                   >
                     ✓ Confirm step &amp; continue
                   </button>
@@ -314,26 +329,29 @@ export default function NarratorDashboard({
               </div>
             )}
 
-            {state.phase === 'morning' && state.lastMorningSummary && (
+            {state.phase === "morning" && state.lastMorningSummary && (
               <div className="tc-action-card tc-action-card--compact">
-                <h3 className="tc-action-card__step tc-font-display">Announce the night</h3>
-                {state.lastMorningSummary.deaths.length === 0 ?
+                <h3 className="tc-action-card__step tc-font-display">
+                  Announce the night
+                </h3>
+                {state.lastMorningSummary.deaths.length === 0 ? (
                   <p className="tc-action-card__lead">No deaths to announce.</p>
-                :	<ul className="tc-action-card__list">
+                ) : (
+                  <ul className="tc-action-card__list">
                     {state.lastMorningSummary.deaths.map((d) => (
                       <li key={d.playerId}>
                         ⚰️ {playerName(d.playerId)}
-                        {d.roleId ? ` · ${roleName(d.roleId)}` : ''}
+                        {d.roleId ? ` · ${roleName(d.roleId)}` : ""}
                       </li>
                     ))}
                   </ul>
-                }
+                )}
                 {state.lastMorningSummary.saved.length > 0 && (
                   <p className="tc-muted text-sm mt-1">
-                    Saved:{' '}
+                    Saved:{" "}
                     {state.lastMorningSummary.saved
                       .map((s) => playerName(s.playerId))
-                      .join(', ')}
+                      .join(", ")}
                   </p>
                 )}
                 {panel?.canEndMorning && (
@@ -341,7 +359,7 @@ export default function NarratorDashboard({
                     type="button"
                     className="tc-btn-royal tc-btn-royal--wide mt-3"
                     disabled={busy}
-                    onClick={() => onNarratorAction('end_morning')}
+                    onClick={() => onNarratorAction("end_morning")}
                   >
                     ☀️ Start day {state.dayNumber + 1}
                   </button>
@@ -349,16 +367,19 @@ export default function NarratorDashboard({
               </div>
             )}
 
-            {state.phase === 'day' && panel?.canDayEliminate && (
+            {state.phase === "day" && panel?.canDayEliminate && (
               <div className="tc-action-card tc-action-card--compact">
-                <h3 className="tc-action-card__step tc-font-display">Day vote</h3>
+                <h3 className="tc-action-card__step tc-font-display">
+                  Day vote
+                </h3>
                 <p className="tc-action-card__lead">
-                  After discussion and the physical vote, tap who was eliminated.
+                  After discussion and the physical vote, tap who was
+                  eliminated.
                 </p>
                 <NarratorTargetPicker
                   players={panel.allPlayers}
                   playerIds={state.playerIds.filter(
-                    (id) => panel.allPlayers.find((p) => p.id === id)?.alive
+                    (id) => panel.allPlayers.find((p) => p.id === id)?.alive,
                   )}
                   playerName={playerName}
                   selectedId={null}
@@ -378,7 +399,7 @@ export default function NarratorDashboard({
                     type="button"
                     className="tc-btn-royal tc-btn-royal--wide mt-3"
                     disabled={busy}
-                    onClick={() => onNarratorAction('begin_night')}
+                    onClick={() => onNarratorAction("begin_night")}
                   >
                     🌙 Begin night {state.nightNumber + 1}
                   </button>
@@ -386,11 +407,11 @@ export default function NarratorDashboard({
               </div>
             )}
 
-            {state.phase === 'match_over' && (
+            {state.phase === "match_over" && (
               <div className="tc-action-card tc-action-card--compact">
                 <p className="tc-action-card__lead">
-                  Match over —{' '}
-                  {state.winnerTeam === 'good' ? 'Good' : 'Evil'} wins.
+                  Match over — {state.winnerTeam === "good" ? "Good" : "Evil"}{" "}
+                  wins.
                 </p>
               </div>
             )}
@@ -401,17 +422,20 @@ export default function NarratorDashboard({
           {panel && (
             <div
               className={clsx(
-                !showPanel('roster') && 'tc-narrator-layout__panel--hidden'
+                !showPanel("roster") && "tc-narrator-layout__panel--hidden",
               )}
             >
-              <NarratorTeamRoster players={panel.allPlayers} playerName={playerName} />
+              <NarratorTeamRoster
+                players={panel.allPlayers}
+                playerName={playerName}
+              />
             </div>
           )}
 
           {panel?.chronicle && (
             <div
               className={clsx(
-                !showPanel('log') && 'tc-narrator-layout__panel--hidden'
+                !showPanel("log") && "tc-narrator-layout__panel--hidden",
               )}
             >
               <NarratorChronicle
@@ -431,7 +455,7 @@ export default function NarratorDashboard({
         message={
           pendingElimination
             ? `${pendingElimination.name} will be removed from the day vote and marked dead. This cannot be undone.`
-            : ''
+            : ""
         }
         confirmLabel="Eliminate"
         variant="danger"
@@ -439,8 +463,8 @@ export default function NarratorDashboard({
         onConfirm={async () => {
           if (!pendingElimination) return;
           const ok = await onNarratorAction(
-            'day_eliminate',
-            pendingElimination.id
+            "day_eliminate",
+            pendingElimination.id,
           );
           if (ok) setPendingElimination(null);
         }}

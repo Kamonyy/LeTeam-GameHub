@@ -1,54 +1,66 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX, Loader2, Wifi, WifiOff } from 'lucide-react';
-import clsx from 'clsx';
-import { useSocket } from '@/hooks/useSocket';
-import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
-import { normalizeRoomCode } from '@/lib/hub/room';
-import PlayerNameControl from '@/components/hub/PlayerNameControl';
-import ErrorToast from '@/components/shared/ErrorToast';
-import ConfirmDialog from '@/components/shared/ConfirmDialog';
-import InactiveGameScreen from '@/components/hub/InactiveGameScreen';
-import { getGameEntry, isGameActive } from '@/lib/hub/games-registry';
-import MafiaAtmosphere from '@/games/tavern-council/components/MafiaAtmosphere';
-import MafiaAudioProvider from '@/games/tavern-council/components/MafiaAudioProvider';
-import MafiaPhaseTransition from '@/games/tavern-council/components/MafiaPhaseTransition';
-import { useMafiaPhaseTransition } from '@/games/tavern-council/hooks/useMafiaPhaseTransition';
-import TavernCouncilLobby from '@/games/tavern-council/components/TavernCouncilLobby';
-import NarratorDashboard from '@/games/tavern-council/components/NarratorDashboard';
-import PlayerCompanion from '@/games/tavern-council/components/PlayerCompanion';
-import { mafiaAtmosphereVariant } from '@/games/tavern-council/lib/atmosphereVariant';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Plus,
+  LogIn,
+  UserPlus,
+  OctagonX,
+  Loader2,
+  Wifi,
+  WifiOff,
+} from "lucide-react";
+import clsx from "clsx";
+import { useSocket } from "@/hooks/useSocket";
+import { setDisplayName, getDisplayName, hasDisplayName } from "@/lib/player";
+import { normalizeRoomCode } from "@/lib/hub/room";
+import PlayerNameControl from "@/components/hub/PlayerNameControl";
+import ErrorToast from "@/components/shared/ErrorToast";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import InactiveGameScreen from "@/components/hub/InactiveGameScreen";
+import { getGameEntry, isGameActive } from "@/lib/hub/games-registry";
+import MafiaAtmosphere from "@/games/tavern-council/components/MafiaAtmosphere";
+import MafiaAudioProvider from "@/games/tavern-council/components/MafiaAudioProvider";
+import MafiaPhaseTransition from "@/games/tavern-council/components/MafiaPhaseTransition";
+import { useMafiaPhaseTransition } from "@/games/tavern-council/hooks/useMafiaPhaseTransition";
+import TavernCouncilLobby from "@/games/tavern-council/components/TavernCouncilLobby";
+import NarratorDashboard from "@/games/tavern-council/components/NarratorDashboard";
+import PlayerCompanion from "@/games/tavern-council/components/PlayerCompanion";
+import { mafiaAtmosphereVariant } from "@/games/tavern-council/lib/atmosphereVariant";
 import type {
   TavernCouncilGameState,
   TavernCouncilSettings,
   TavernNarratorAction,
-} from '@/games/tavern-council/types';
-import GameLobbyPendingOverlay from '@/components/hub/GameLobbyPendingOverlay';
-import '@/games/tavern-council/tavern-council.css';
+} from "@/games/tavern-council/types";
+import GameLobbyPendingOverlay from "@/components/hub/GameLobbyPendingOverlay";
+import "@/games/tavern-council/tavern-council.css";
 
 function MafiaConnectionSeal({ connected }: { connected: boolean }) {
   return (
     <div
-      className={clsx('tc-connection-seal', !connected && 'tc-connection-seal--off')}
+      className={clsx(
+        "tc-connection-seal",
+        !connected && "tc-connection-seal--off",
+      )}
       role="status"
     >
-      <span
-        className={clsx('tc-conn-seal', !connected && 'tc-conn-seal--off')}
-      >
+      <span className={clsx("tc-conn-seal", !connected && "tc-conn-seal--off")}>
         <span
           className="tc-conn-seal__claw tc-conn-seal__claw--left"
           aria-hidden
         />
         <span className="tc-conn-seal__gem" aria-hidden>
-          {connected ?
+          {connected ? (
             <Wifi className="w-3.5 h-3.5" />
-          : <WifiOff className="w-3.5 h-3.5" />}
+          ) : (
+            <WifiOff className="w-3.5 h-3.5" />
+          )}
         </span>
         <span className="tc-conn-seal__label">
-          {connected ? 'Connected' : 'Reconnecting'}
+          {connected ? "Connected" : "Reconnecting"}
         </span>
         <span
           className="tc-conn-seal__claw tc-conn-seal__claw--right"
@@ -62,7 +74,7 @@ function MafiaConnectionSeal({ connected }: { connected: boolean }) {
 export default function TavernCouncilClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const roomParam = searchParams.get('room');
+  const roomParam = searchParams.get("room");
 
   const {
     connected,
@@ -84,8 +96,8 @@ export default function TavernCouncilClient() {
     removeDevBots,
   } = useSocket();
 
-  const [displayName, setDisplayNameState] = useState('');
-  const [joinCode, setJoinCode] = useState(roomParam || '');
+  const [displayName, setDisplayNameState] = useState("");
+  const [joinCode, setJoinCode] = useState(roomParam || "");
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -99,15 +111,15 @@ export default function TavernCouncilClient() {
     setInviteJoin(!!roomParam && !hasDisplayName());
   }, [roomParam]);
 
-  const enabled = isGameActive('mafia');
-  const tcLobby = lobby?.gameType === 'mafia' ? lobby : null;
+  const enabled = isGameActive("mafia");
+  const tcLobby = lobby?.gameType === "mafia" ? lobby : null;
   const tcState: TavernCouncilGameState | null =
     tcLobby &&
     gameState &&
-    'gameType' in gameState &&
-    gameState.gameType === 'mafia' ?
-      (gameState as TavernCouncilGameState)
-    :	null;
+    "gameType" in gameState &&
+    gameState.gameType === "mafia"
+      ? (gameState as TavernCouncilGameState)
+      : null;
 
   useEffect(() => {
     setDisplayNameState(getDisplayName());
@@ -118,12 +130,12 @@ export default function TavernCouncilClient() {
       !enabled ||
       !connected ||
       !roomParam ||
-      lobby?.gameType === 'mafia' ||
+      lobby?.gameType === "mafia" ||
       autoJoined ||
       inviteJoin
     )
       return;
-    if (lobby && lobby.gameType !== 'mafia') return;
+    if (lobby && lobby.gameType !== "mafia") return;
     const code = normalizeRoomCode(roomParam);
     if (!code) return;
 
@@ -156,7 +168,7 @@ export default function TavernCouncilClient() {
     if (!displayName.trim()) return;
     setLoading(true);
     setDisplayName(displayName);
-    const roomId = await createRoom(displayName.trim(), 'mafia');
+    const roomId = await createRoom(displayName.trim(), "mafia");
     if (roomId) router.push(`/mafia?room=${roomId}`);
     setLoading(false);
   };
@@ -189,34 +201,34 @@ export default function TavernCouncilClient() {
       setActionBusy(false);
       return ok;
     },
-    [tavernNarratorAction]
+    [tavernNarratorAction],
   );
 
   const isHost = tcLobby?.hostId === playerId;
   const isNarrator = tcState?.isNarrator ?? false;
-  const gameMeta = getGameEntry('mafia');
-  const inLobby = tcLobby?.status === 'lobby';
+  const gameMeta = getGameEntry("mafia");
+  const inLobby = tcLobby?.status === "lobby";
   const inGame =
     tcLobby &&
     tcState &&
-    (tcLobby.status === 'playing' || tcLobby.status === 'finished');
+    (tcLobby.status === "playing" || tcLobby.status === "finished");
 
   const atmosphere = useMemo(
     () => mafiaAtmosphereVariant(tcState?.phase, !!inLobby || !tcLobby),
-    [tcState?.phase, inLobby, tcLobby]
+    [tcState?.phase, inLobby, tcLobby],
   );
 
   const deathCount = tcState?.lastMorningSummary?.deaths.length ?? 0;
 
   const phaseTransition = useMafiaPhaseTransition(
-    tcState ?
-      {
-        phase: tcState.phase,
-        dayNumber: tcState.dayNumber,
-        nightNumber: tcState.nightNumber,
-      }
-    :	null,
-    !!inGame
+    tcState
+      ? {
+          phase: tcState.phase,
+          dayNumber: tcState.dayNumber,
+          nightNumber: tcState.nightNumber,
+        }
+      : null,
+    !!inGame,
   );
 
   const gameBody = (
@@ -238,7 +250,7 @@ export default function TavernCouncilClient() {
           }}
           onLeave={() => {
             leaveRoom();
-            router.push('/mafia');
+            router.push("/mafia");
           }}
           starting={starting}
         />
@@ -246,14 +258,15 @@ export default function TavernCouncilClient() {
 
       {inGame && tcLobby && tcState && (
         <>
-          {isNarrator ?
+          {isNarrator ? (
             <NarratorDashboard
               state={tcState}
               lobby={tcLobby}
               onNarratorAction={onNarratorAction}
               busy={actionBusy}
             />
-          :	<PlayerCompanion
+          ) : (
+            <PlayerCompanion
               state={tcState}
               lobby={tcLobby}
               playerId={playerId}
@@ -264,7 +277,7 @@ export default function TavernCouncilClient() {
               }}
               acknowledging={ackBusy}
             />
-          }
+          )}
         </>
       )}
     </>
@@ -277,7 +290,11 @@ export default function TavernCouncilClient() {
       <header className="tc-header">
         <div className="tc-header__inner">
           <div className="flex items-center gap-3 min-w-0">
-            <Link href="/" className="tc-header__back shrink-0" aria-label="Back to hub">
+            <Link
+              href="/"
+              className="tc-header__back shrink-0"
+              aria-label="Back to hub"
+            >
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div className="min-w-0">
@@ -318,8 +335,10 @@ export default function TavernCouncilClient() {
                 <h2 className="text-lg tc-font-display">Join Mafia</h2>
               </div>
               <p className="tc-body-sm mb-4">
-                Room{' '}
-                <span className="font-mono tracking-widest tc-display">{roomParam}</span>
+                Room{" "}
+                <span className="font-mono tracking-widest tc-display">
+                  {roomParam}
+                </span>
               </p>
               <label className="block tc-body-sm mb-2">Display name</label>
               <input
@@ -337,7 +356,7 @@ export default function TavernCouncilClient() {
                 onClick={handleInviteJoin}
               >
                 <LogIn className="w-4 h-4" />
-                {loading ? 'Joining…' : 'Join'}
+                {loading ? "Joining…" : "Join"}
               </button>
             </div>
           </div>
@@ -382,7 +401,12 @@ export default function TavernCouncilClient() {
               <button
                 type="button"
                 className="tc-btn-ghost w-full flex items-center justify-center gap-2"
-                disabled={!connected || loading || !joinCode.trim() || !displayName.trim()}
+                disabled={
+                  !connected ||
+                  loading ||
+                  !joinCode.trim() ||
+                  !displayName.trim()
+                }
                 onClick={handleJoin}
               >
                 <LogIn className="w-4 h-4" />
@@ -392,7 +416,7 @@ export default function TavernCouncilClient() {
           </div>
         )}
 
-        {inGame ?
+        {inGame ? (
           <MafiaAudioProvider
             phase={tcState?.phase}
             stateVersion={tcState?.stateVersion}
@@ -403,7 +427,9 @@ export default function TavernCouncilClient() {
               {gameBody}
             </div>
           </MafiaAudioProvider>
-        :	gameBody}
+        ) : (
+          gameBody
+        )}
       </div>
 
       <ErrorToast message={error} onDismiss={clearError} />

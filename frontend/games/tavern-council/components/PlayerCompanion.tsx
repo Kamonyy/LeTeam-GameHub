@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import clsx from 'clsx';
-import type { TavernCouncilGameState } from '../types';
-import type { LobbyState } from '@/lib/hub/types';
-import RoleRevealCard from './RoleRevealCard';
-import PlayerActivityLog from './PlayerActivityLog';
-import { roleThemeStyleFromRole } from '../lib/roleTheme';
+import clsx from "clsx";
+import type { TavernCouncilGameState } from "../types";
+import type { LobbyState } from "@/lib/hub/types";
+import RoleRevealCard from "./RoleRevealCard";
+import PlayerActivityLog from "./PlayerActivityLog";
+import { roleThemeStyleFromRole } from "../lib/roleTheme";
 
 interface PlayerCompanionProps {
   state: TavernCouncilGameState;
@@ -16,17 +16,17 @@ interface PlayerCompanionProps {
 }
 
 function displayName(lobby: LobbyState, id: string) {
-  return lobby.players.find((p) => p.id === id)?.displayName ?? 'Player';
+  return lobby.players.find((p) => p.id === id)?.displayName ?? "Player";
 }
 
 function roleName(roleId: string) {
   const labels: Record<string, string> = {
-    mafia: 'Mafia',
-    seer: 'Seer',
-    doctor: 'Doctor',
-    villager: 'Villager',
-    sniper: 'Sniper',
-    sheriff: 'Sheriff',
+    mafia: "Mafia",
+    seer: "Seer",
+    doctor: "Doctor",
+    villager: "Villager",
+    sniper: "Sniper",
+    sheriff: "Sheriff",
   };
   return labels[roleId] ?? roleId;
 }
@@ -36,7 +36,10 @@ function PhaseCeremony({ label }: { label: string }) {
     <div className="tc-phase-ceremony">
       <span className="tc-phase-ceremony__blade" aria-hidden />
       <span className="tc-phase-sigil">{label}</span>
-      <span className="tc-phase-ceremony__blade tc-phase-ceremony__blade--right" aria-hidden />
+      <span
+        className="tc-phase-ceremony__blade tc-phase-ceremony__blade--right"
+        aria-hidden
+      />
     </div>
   );
 }
@@ -44,11 +47,11 @@ function PhaseCeremony({ label }: { label: string }) {
 function CompactRoleBadge({
   role,
 }: {
-  role: NonNullable<TavernCouncilGameState['myRole']>;
+  role: NonNullable<TavernCouncilGameState["myRole"]>;
 }) {
   return (
     <div
-      className={clsx('tc-role-badge', `tc-team--${role.team}`)}
+      className={clsx("tc-role-badge", `tc-team--${role.team}`)}
       style={roleThemeStyleFromRole(role.id, role.accentColor)}
       aria-label={`Your role: ${role.nameEn}`}
     >
@@ -71,24 +74,27 @@ export default function PlayerCompanion({
   acknowledging,
 }: PlayerCompanionProps) {
   const phaseLabel =
-    state.phase === 'day' ? `Day ${state.dayNumber}`
-    : state.phase === 'night' ? `Night ${state.nightNumber}`
-    : state.phase === 'morning' ? 'Morning'
-    : state.phase === 'role_reveal' ? 'Role reveal'
-    : state.phase === 'match_over' ? 'Game over'
-    : state.phase;
+    state.phase === "day"
+      ? `Day ${state.dayNumber}`
+      : state.phase === "night"
+        ? `Night ${state.nightNumber}`
+        : state.phase === "morning"
+          ? "Morning"
+          : state.phase === "role_reveal"
+            ? "Role reveal"
+            : state.phase === "match_over"
+              ? "Game over"
+              : state.phase;
 
-  const roleReveal = state.phase === 'role_reveal';
+  const roleReveal = state.phase === "role_reveal";
   const hasChronicle =
     state.playerChronicle != null && state.playerChronicle.length > 0;
 
   return (
     <div
       className={clsx(
-        'tc-p4-companion tc-companion flex flex-col',
-        roleReveal ?
-          'tc-companion--role-reveal'
-        : 'tc-companion--play'
+        "tc-p4-companion tc-companion flex flex-col",
+        roleReveal ? "tc-companion--role-reveal" : "tc-companion--play",
       )}
     >
       <PhaseCeremony label={phaseLabel} />
@@ -107,12 +113,17 @@ export default function PlayerCompanion({
         <div className="tc-companion__stack">
           {state.myRole && <CompactRoleBadge role={state.myRole} />}
 
-          {state.phase === 'night' && state.nightCallout?.isYourTurn && (
-            <div className="tc-player-night-call tc-player-night-call--yours" role="status">
+          {state.phase === "night" && state.nightCallout?.isYourTurn && (
+            <div
+              className="tc-player-night-call tc-player-night-call--yours"
+              role="status"
+            >
               <span className="tc-player-night-call__icon" aria-hidden>
                 {state.nightCallout.roleIcon ?? state.myRole?.icon}
               </span>
-              <p className="tc-player-night-call__title tc-font-display">Narrator may call on you</p>
+              <p className="tc-player-night-call__title tc-font-display">
+                Narrator may call on you
+              </p>
               <p className="tc-player-night-call__step">
                 {state.nightCallout.stepTitleEn}
               </p>
@@ -122,21 +133,29 @@ export default function PlayerCompanion({
             </div>
           )}
 
-          {state.phase === 'night' && state.nightCallout && !state.nightCallout.isYourTurn && (
-            <div className="tc-player-night-call" role="status">
-              <p className="tc-player-night-call__title tc-font-display">Night {state.nightNumber}</p>
-              <p className="tc-player-night-call__hint">
-                Eyes closed. Wait for the narrator — do not speak.
-              </p>
-            </div>
+          {state.phase === "night" &&
+            state.nightCallout &&
+            !state.nightCallout.isYourTurn && (
+              <div className="tc-player-night-call" role="status">
+                <p className="tc-player-night-call__title tc-font-display">
+                  Night {state.nightNumber}
+                </p>
+                <p className="tc-player-night-call__hint">
+                  Eyes closed. Wait for the narrator — do not speak.
+                </p>
+              </div>
+            )}
+
+          {!state.iAmAlive && state.phase !== "match_over" && (
+            <p className="tc-body-sm text-center">
+              You have been eliminated. Follow the narrator.
+            </p>
           )}
 
-          {!state.iAmAlive && state.phase !== 'match_over' && (
-            <p className="tc-body-sm text-center">You have been eliminated. Follow the narrator.</p>
-          )}
-
-          {state.iAmSilenced && state.phase === 'day' && (
-            <p className="tc-body-sm text-center tc-display">You are silenced today.</p>
+          {state.iAmSilenced && state.phase === "day" && (
+            <p className="tc-body-sm text-center tc-display">
+              You are silenced today.
+            </p>
           )}
 
           <div className="tc-stone-panel p-4 w-full tc-companion__council">
@@ -148,9 +167,9 @@ export default function PlayerCompanion({
                 <li
                   key={card.id}
                   className={clsx(
-                    'tc-council-seat list-none',
-                    !card.alive && 'tc-council-seat--dead',
-                    card.id === playerId && 'tc-council-seat--self'
+                    "tc-council-seat list-none",
+                    !card.alive && "tc-council-seat--dead",
+                    card.id === playerId && "tc-council-seat--self",
                   )}
                 >
                   <span
@@ -160,10 +179,10 @@ export default function PlayerCompanion({
                   />
                   <span className="tc-council-seat__name truncate">
                     {displayName(lobby, card.id)}
-                    {card.id === playerId ? ' (you)' : ''}
+                    {card.id === playerId ? " (you)" : ""}
                   </span>
                   <span className="tc-council-seat__meta">
-                    {card.alive ? 'alive' : 'dead'}
+                    {card.alive ? "alive" : "dead"}
                   </span>
                 </li>
               ))}
@@ -180,15 +199,15 @@ export default function PlayerCompanion({
         </div>
       )}
 
-      {state.phase === 'match_over' && state.winnerTeam && (
+      {state.phase === "match_over" && state.winnerTeam && (
         <p className="tc-companion__outcome text-lg tc-font-display tc-display text-center">
-          {state.winnerTeam === 'good' ?
-            'The village prevails!'
-          : 'The shadows claim victory.'}
+          {state.winnerTeam === "good"
+            ? "The village prevails!"
+            : "The shadows claim victory."}
         </p>
       )}
 
-      {!roleReveal && state.phase !== 'match_over' && (
+      {!roleReveal && state.phase !== "match_over" && (
         <p className="tc-companion__hint">Listen to your narrator.</p>
       )}
     </div>
