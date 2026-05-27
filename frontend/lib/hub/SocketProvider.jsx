@@ -28,6 +28,15 @@ function mergeWordGameState(prev, next) {
   return next;
 }
 
+const BENIGN_WORD_GAME_ERRORS = new Set([
+  'You already chose a champion',
+  'You already submitted a word',
+  'Not in champion selection phase',
+  'Not in word selection phase',
+  'Not in active champion guessing phase',
+  'Not in active guessing phase',
+]);
+
 export function SocketProvider({ children }) {
   const socketRef = useRef(null);
   const socketInstRef = useRef(null);
@@ -427,6 +436,80 @@ export function SocketProvider({ children }) {
     });
   }, []);
 
+  const requestGameStateSync = useCallback(() => {
+    return new Promise((resolve) => {
+      const socket = socketRef.current;
+      if (!socket?.connected) {
+        resolve(null);
+        return;
+      }
+      socket.emit('game:state:request', {}, (res) => {
+        if (res?.state) {
+          setGameState((prev) => {
+            if (res.state.gameType === 'wordgame') {
+              return mergeWordGameState(prev, res.state);
+            }
+            return res.state;
+          });
+          resolve(res.state);
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  }, []);
+
+  const finishWordSubmitAck = useCallback(
+    async (res, resolve) => {
+      if (res?.state) {
+        setGameState((prev) => mergeWordGameState(prev, res.state));
+      }
+      if (!res?.error) {
+        resolve(true);
+        return;
+      }
+
+      const synced = await requestGameStateSync();
+      if (synced?.gameType === 'wordgame' && synced.iHaveSubmitted) {
+        resolve(true);
+        return;
+      }
+
+      if (!BENIGN_WORD_GAME_ERRORS.has(res.error)) {
+        setError(res.error);
+      }
+      resolve(false);
+    },
+    [requestGameStateSync]
+  );
+
+  const finishWordGuessedAck = useCallback(
+    async (res, resolve) => {
+      if (res?.state) {
+        setGameState((prev) => mergeWordGameState(prev, res.state));
+      }
+      if (!res?.error) {
+        resolve(true);
+        return;
+      }
+
+      const synced = await requestGameStateSync();
+      if (
+        synced?.gameType === 'wordgame' &&
+        (synced.phase === 'round_end' || synced.phase === 'match_over')
+      ) {
+        resolve(true);
+        return;
+      }
+
+      if (!BENIGN_WORD_GAME_ERRORS.has(res.error)) {
+        setError(res.error);
+      }
+      resolve(false);
+    },
+    [requestGameStateSync]
+  );
+
   const submitSecretWord = useCallback((word) => {
     return new Promise((resolve) => {
       (async () => {
@@ -443,19 +526,11 @@ export function SocketProvider({ children }) {
         wordActionInFlightRef.current = true;
         socket.emit('word:submit', { word }, (res) => {
           wordActionInFlightRef.current = false;
-          if (res?.error) {
-            setError(res.error);
-            resolve(false);
-          } else {
-            if (res?.state) {
-              setGameState((prev) => mergeWordGameState(prev, res.state));
-            }
-            resolve(true);
-          }
+          void finishWordSubmitAck(res, resolve);
         });
       })();
     });
-  }, [ensureRegistered]);
+  }, [ensureRegistered, finishWordSubmitAck]);
 
   const submitSecretChampion = useCallback((championId) => {
     return new Promise((resolve) => {
@@ -473,19 +548,11 @@ export function SocketProvider({ children }) {
         wordActionInFlightRef.current = true;
         socket.emit('word:champion:submit', { championId }, (res) => {
           wordActionInFlightRef.current = false;
-          if (res?.error) {
-            setError(res.error);
-            resolve(false);
-          } else {
-            if (res?.state) {
-              setGameState((prev) => mergeWordGameState(prev, res.state));
-            }
-            resolve(true);
-          }
+          void finishWordSubmitAck(res, resolve);
         });
       })();
     });
-  }, [ensureRegistered]);
+  }, [ensureRegistered, finishWordSubmitAck]);
 
   const sendChat = useCallback((message) => {
     const trimmed = typeof message === 'string' ? message.trim() : '';
@@ -514,19 +581,11 @@ export function SocketProvider({ children }) {
         wordActionInFlightRef.current = true;
         socket.emit('word:guessed', {}, (res) => {
           wordActionInFlightRef.current = false;
-          if (res?.error) {
-            setError(res.error);
-            resolve(false);
-          } else {
-            if (res?.state) {
-              setGameState((prev) => mergeWordGameState(prev, res.state));
-            }
-            resolve(true);
-          }
+          void finishWordGuessedAck(res, resolve);
         });
       })();
     });
-  }, [ensureRegistered]);
+  }, [ensureRegistered, finishWordGuessedAck]);
 
   const baraReveal = useCallback(() => {
     return new Promise((resolve) => {

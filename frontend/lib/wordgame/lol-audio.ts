@@ -36,6 +36,11 @@ class LolAudioEngine {
     sfx: null,
     voice: null,
   };
+  /** Per-channel gain passed to playUrl (before master volume). */
+  private readonly channelGain: Record<Channel, number> = {
+    sfx: 0.55,
+    voice: 0.88,
+  };
 
   constructor() {
     if (typeof window === 'undefined') return;
@@ -65,6 +70,21 @@ class LolAudioEngine {
     } catch {
       /* ignore */
     }
+    this.applyMasterVolumeToChannels();
+  }
+
+  private effectiveVolume(relative: number): number {
+    if (this.muted) return 0;
+    return clampVolume(relative * this.volumeScale);
+  }
+
+  private applyMasterVolumeToChannels(): void {
+    if (typeof window === 'undefined') return;
+    for (const channel of Object.keys(this.channels) as Channel[]) {
+      const el = this.channels[channel];
+      if (!el || el.paused) continue;
+      el.volume = this.effectiveVolume(this.channelGain[channel]);
+    }
   }
 
   isMuted(): boolean {
@@ -79,7 +99,11 @@ class LolAudioEngine {
     } catch {
       /* ignore */
     }
-    if (muted) this.stopAll();
+    if (muted) {
+      this.stopAll();
+      return;
+    }
+    this.applyMasterVolumeToChannels();
   }
 
   toggleMuted(): boolean {
@@ -143,7 +167,8 @@ class LolAudioEngine {
 
     this.warmUrl(url);
 
-    const vol = clampVolume(volume * this.volumeScale);
+    this.channelGain[channel] = volume;
+    const vol = this.effectiveVolume(volume);
     const warmed = this.warmed.get(url);
 
     if (channel === 'voice') {

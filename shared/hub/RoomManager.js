@@ -57,6 +57,11 @@ export class RoomManager {
 		this._startCleanupLoop();
 	}
 
+	/** Update Socket.io server after Cloudflare DO hibernation restore. */
+	setServer(io) {
+		this.io = io;
+	}
+
 	_findRoomForPlayer(playerId) {
 		let roomId = this.playerToRoom.get(playerId);
 		if (roomId) {
@@ -862,7 +867,9 @@ export class RoomManager {
 			roomId: room.id,
 			...room.game.serializeForPlayer(playerId),
 		};
-		this.broadcastGameState(room.id);
+		if (!result.duplicate) {
+			this.broadcastGameState(room.id);
+		}
 		return { success: true, state };
 	}
 
@@ -938,8 +945,8 @@ export class RoomManager {
 
 		const action = room.game.lastAction;
 		if (
-			action?.type === "word_guessed" ||
-			action?.type === "match_won"
+			!result.duplicate &&
+			(action?.type === "word_guessed" || action?.type === "match_won")
 		) {
 			this._emitToRoom(room, "word:guessed:celebration", {
 				wordCategory: room.game.wordCategory,
@@ -947,7 +954,25 @@ export class RoomManager {
 			});
 		}
 
-		this.broadcastGameState(room.id);
+		if (!result.duplicate) {
+			this.broadcastGameState(room.id);
+		}
+		return { success: true, state };
+	}
+
+	/** Push current game state to one player (e.g. after client/server desync). */
+	syncGameStateForPlayer(socket) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		if (!room.game) return { error: "No active game" };
+
+		const state = {
+			roomId: room.id,
+			...room.game.serializeForPlayer(playerId),
+		};
+		socket.emit("game:state:update", state);
 		return { success: true, state };
 	}
 

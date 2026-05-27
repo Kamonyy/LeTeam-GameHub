@@ -7,7 +7,7 @@ export const DEFAULT_SCORE_CAP = 100;
 export const SCORE_CAP_OPTIONS = [50, 100, 150, 200];
 export const DEFAULT_HAND_SIZE = 7;
 export const ROUND_RESTART_DELAY_MS = 4000;
-export const WORD_ROUND_RESET_DELAY_MS = 3500;
+export const WORD_ROUND_RESET_DELAY_MS = 6500;
 /** Secret Word matches are not ended by idle cleanup until won or host cancel. */
 export const WORD_GAME_PRESERVE_SESSION = true;
 export const WORD_GAME_MIN_PLAYERS = 2;

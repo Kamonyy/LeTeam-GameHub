@@ -102,7 +102,36 @@ export class WordGameEngine {
 			return { success: false, error: "Invalid player" };
 		}
 
+		const guesserId = this._opponentId(creatorId);
+		if (!guesserId) {
+			return { success: false, error: "Invalid player" };
+		}
+
 		if (this.submitted[creatorId]) {
+			if (this.wordCategory === "lol-champions") {
+				const id =
+					typeof payload === "object" && payload !== null ?
+						payload.championId
+					:	null;
+				if (
+					id &&
+					typeof id === "string" &&
+					this.championIdsForGuesser[guesserId] === id
+				) {
+					return { success: true, duplicate: true };
+				}
+			} else {
+				const raw =
+					typeof payload === "string" ? payload
+					: typeof payload === "object" && payload !== null ? payload.word
+					: "";
+				if (typeof raw === "string" && raw.trim()) {
+					const normalized = this._normalizeWord(raw);
+					if (this.wordsForGuesser[guesserId] === normalized) {
+						return { success: true, duplicate: true };
+					}
+				}
+			}
 			return {
 				success: false,
 				error:
@@ -112,10 +141,6 @@ export class WordGameEngine {
 			};
 		}
 
-		const guesserId = this._opponentId(creatorId);
-		if (!guesserId) {
-			return { success: false, error: "Invalid player" };
-		}
 		let secretWord = "";
 		let championId = null;
 
@@ -173,6 +198,14 @@ export class WordGameEngine {
 	 */
 	confirmGuessed(creatorId) {
 		if (this.phase !== "playing") {
+			if (
+				(this.phase === "round_end" || this.phase === "match_over") &&
+				(this.lastAction?.type === "word_guessed" ||
+					this.lastAction?.type === "match_won") &&
+				this.lastAction?.creatorId === creatorId
+			) {
+				return { success: true, duplicate: true };
+			}
 			return {
 				success: false,
 				error:

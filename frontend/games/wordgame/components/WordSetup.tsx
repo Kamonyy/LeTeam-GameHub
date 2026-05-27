@@ -63,7 +63,7 @@ export default function WordSetup({
     submitLockRef.current = true;
     setSubmitting(true);
     const ok = await onSubmitChampion(pendingChampion.id);
-    if (!ok) setPendingChampion(null);
+    if (!ok && !iHaveSubmitted) setPendingChampion(null);
     submitLockRef.current = false;
     setSubmitting(false);
   };
@@ -151,8 +151,11 @@ export default function WordSetup({
               if (e.button !== 0 || submitting) return;
               playChampionLockFeedback();
             }}
-            onClick={() => void handleChampionLock()}
-            disabled={submitting}
+            onClick={(e) => {
+              e.preventDefault();
+              void handleChampionLock();
+            }}
+            disabled={submitting || iHaveSubmitted}
             className="sw-btn-primary w-full mt-4"
           >
             {submitting ? 'Sealing…' : `Lock In ${pendingChampion.name}`}

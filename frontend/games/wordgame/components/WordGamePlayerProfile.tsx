@@ -2,20 +2,22 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
-import { ChevronDown, User, Check, Volume2, VolumeX } from 'lucide-react';
+import { ChevronDown, User, Check, Volume2 } from 'lucide-react';
 import { getDisplayName, setDisplayName } from '@/lib/player';
 import { useSocket } from '@/hooks/useSocket';
 import { useWordGameAudioOptional } from '../hooks/useWordGameAudio';
+import WordGameVolumeControl from './WordGameVolumeControl';
 
 type WordGamePlayerProfileProps = {
-  disabled?: boolean;
-  disabledReason?: string;
+  /** When true, display name cannot be edited (e.g. during a match). */
+  nameLocked?: boolean;
+  nameLockedReason?: string;
   audioEnabled?: boolean;
 };
 
 export default function WordGamePlayerProfile({
-  disabled = false,
-  disabledReason = 'Name is locked during a match',
+  nameLocked = false,
+  nameLockedReason = 'Name is locked during a match',
   audioEnabled = false,
 }: WordGamePlayerProfileProps) {
   const { connected, refreshDisplayName } = useSocket();
@@ -60,98 +62,89 @@ export default function WordGamePlayerProfile({
 
   const showName = !!savedName.trim();
   const label = showName ? savedName : 'Set Name';
-  const locked = disabled || !connected;
+  const panelDisabled = !connected;
   const showAudio = audioEnabled && audio?.enabled;
-  const volumePercent = Math.round((audio?.volume ?? 0.5) * 100);
 
   return (
     <div className="relative" ref={panelRef}>
       <button
         type="button"
-        onClick={() => !locked && setOpen((v) => !v)}
-        disabled={locked}
-        title={disabled ? disabledReason : undefined}
+        onClick={() => !panelDisabled && setOpen((v) => !v)}
+        disabled={panelDisabled}
+        title={
+          panelDisabled ? 'Connect to open settings'
+          : nameLocked && showAudio ? 'Sound & profile'
+          : undefined
+        }
         className={clsx(
           'flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all',
           showName ?
             'border-[rgba(201,162,39,0.25)] bg-[rgba(6,8,22,0.85)] text-[#e8edf7] hover:border-[rgba(201,162,39,0.45)]'
           : 'border-[rgba(201,162,39,0.4)] bg-[rgba(201,162,39,0.12)] text-[#f0d78c] hover:bg-[rgba(201,162,39,0.2)]',
-          locked && 'opacity-60 cursor-not-allowed'
+          panelDisabled && 'opacity-60 cursor-not-allowed'
         )}
       >
         <User className="w-4 h-4 shrink-0" />
         <span className="max-w-[120px] truncate">{label}</span>
+        {showAudio && (
+          <Volume2 className="w-3.5 h-3.5 shrink-0 text-[#f0d78c] opacity-80" aria-hidden />
+        )}
         <ChevronDown
           className={clsx(
             'w-3.5 h-3.5 sw-muted transition-transform',
-            open && 'rotate-180',
-            disabled && 'opacity-40'
+            open && 'rotate-180'
           )}
         />
       </button>
 
-      {open && !disabled && (
+      {open && !panelDisabled && (
         <div className="sw-player-profile absolute right-0 top-full mt-2 w-72 animate-overlay-pop z-50">
-          <p className="text-[10px] sw-muted uppercase tracking-[0.2em] mb-2">Display name</p>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && saveName()}
-            className="sw-input w-full py-2 text-sm normal-case tracking-normal mb-3"
-            placeholder="Champion name"
-            maxLength={32}
-            autoFocus
-          />
-          <button
-            type="button"
-            onClick={saveName}
-            disabled={!name.trim()}
-            className="sw-btn-primary w-full flex items-center justify-center gap-2 py-2 text-sm"
-          >
-            {saved ?
-              <>
-                <Check className="w-4 h-4" />
-                Saved
-              </>
-            : 'Save Name'}
-          </button>
+          {showAudio && audio && nameLocked && (
+            <>
+              <p className="text-[10px] sw-muted uppercase tracking-[0.2em] mb-3">Sound volume</p>
+              <WordGameVolumeControl audio={audio} />
+              <div className="sw-divider-gold my-4 opacity-70" />
+            </>
+          )}
 
-          {showAudio && (
+          <p className="text-[10px] sw-muted uppercase tracking-[0.2em] mb-2">Display name</p>
+          {nameLocked ?
+            <div className="mb-1 rounded-lg border border-[rgba(201,162,39,0.2)] bg-[rgba(8,12,24,0.6)] px-3 py-2.5">
+              <p className="text-sm font-medium text-[#e8edf7] truncate">{savedName || '—'}</p>
+              <p className="text-[10px] sw-muted mt-1.5 leading-relaxed">{nameLockedReason}</p>
+            </div>
+          : <>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && saveName()}
+                className="sw-input w-full py-2 text-sm normal-case tracking-normal mb-3"
+                placeholder="Champion name"
+                maxLength={32}
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={saveName}
+                disabled={!name.trim()}
+                className="sw-btn-primary w-full flex items-center justify-center gap-2 py-2 text-sm"
+              >
+                {saved ?
+                  <>
+                    <Check className="w-4 h-4" />
+                    Saved
+                  </>
+                : 'Save Name'}
+              </button>
+            </>
+          }
+
+          {showAudio && audio && !nameLocked && (
             <>
               <div className="sw-divider-gold my-4 opacity-70" />
               <p className="text-[10px] sw-muted uppercase tracking-[0.2em] mb-3">Sound volume</p>
-              <div className="sw-audio-volume">
-                <button
-                  type="button"
-                  onClick={audio.toggleMuted}
-                  className="sw-audio-volume__mute"
-                  aria-label={audio.muted ? 'Unmute game sounds' : 'Mute game sounds'}
-                  title={audio.muted ? 'Unmute' : 'Mute'}
-                >
-                  {audio.muted ?
-                    <VolumeX className="w-4 h-4" />
-                  : <Volume2 className="w-4 h-4" />}
-                </button>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={volumePercent}
-                  disabled={audio.muted}
-                  onChange={(e) => audio.setVolume(Number(e.target.value) / 100)}
-                  className="sw-audio-volume__slider"
-                  aria-label="Game sound volume"
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={volumePercent}
-                  aria-valuetext={`${volumePercent} percent`}
-                />
-                <span className="sw-audio-volume__label tabular-nums" aria-hidden>
-                  {volumePercent}%
-                </span>
-              </div>
+              <WordGameVolumeControl audio={audio} />
             </>
           )}
         </div>

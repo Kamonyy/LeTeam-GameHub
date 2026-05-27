@@ -166,15 +166,15 @@ export default function WordGameClient() {
                 type="button"
                 onClick={() => setCancelConfirmOpen(true)}
                 disabled={cancelling}
-                className="sw-btn-secondary sw-btn-danger flex items-center gap-2 text-sm py-2"
+                className="sw-btn-cancel-match"
               >
-                <OctagonX className="w-4 h-4" />
-                {cancelling ? 'Cancelling…' : 'Cancel'}
+                <OctagonX className="w-4 h-4 shrink-0" aria-hidden />
+                <span>{cancelling ? 'Cancelling…' : 'End match'}</span>
               </button>
             )}
             <WordConnectionBadge connected={connected} />
             <WordGamePlayerProfile
-              disabled={!!inGame}
+              nameLocked={!!inGame}
               audioEnabled={isLolAudioEnabled}
             />
           </div>

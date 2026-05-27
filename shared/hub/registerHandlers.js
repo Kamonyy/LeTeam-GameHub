@@ -269,6 +269,15 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true, state: result.state });
   });
 
+  socket.on('game:state:request', (_payload, ack) => {
+    const result = roomManager.syncGameStateForPlayer(socket);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, state: result.state });
+  });
+
   socket.on('bara:reveal', (_payload, ack) => {
     const result = roomManager.handleBaraReveal(socket);
     if (result?.error) {

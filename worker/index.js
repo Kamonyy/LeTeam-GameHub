@@ -14,8 +14,19 @@ import { isAllowedSocketRequest } from '../shared/hub/security.js';
 /** @type {RoomManager | null} */
 let roomManager = null;
 
+/** Prevent duplicate `connection` listeners on the same Socket.io server instance. */
+const serversWithHandlers = new WeakSet();
+
 function attachConnectionHandlers(server) {
-  roomManager = new RoomManager(server, { useSocketRooms: false });
+  if (!roomManager) {
+    roomManager = new RoomManager(server, { useSocketRooms: false });
+  } else {
+    roomManager.setServer(server);
+  }
+
+  if (serversWithHandlers.has(server)) return;
+  serversWithHandlers.add(server);
+
   server.on('connection', (socket) => {
     registerHandlers(socket, roomManager);
   });
