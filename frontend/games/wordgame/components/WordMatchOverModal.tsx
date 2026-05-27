@@ -109,19 +109,15 @@ export default function WordMatchOverModal({
             <p className="text-[10px] sw-muted uppercase tracking-[0.2em] mb-3">
               {isLol ? 'Final champion' : 'Final word'}
             </p>
-            {isLol && revealedChampionId && (
-              <div className="flex justify-center mb-3">
+            {isLol && revealedChampionId ?
+              <div className="flex justify-center">
                 <ChampionPortrait
                   championId={revealedChampionId}
                   size="lg"
-                  showName={false}
                   reveal
                 />
               </div>
-            )}
-            <p className={clsx('sw-word-reveal', isLol && 'text-2xl sm:text-3xl')}>
-              {revealedWord}
-            </p>
+            :	<p className="sw-word-reveal">{revealedWord}</p>}
           </div>
         )}
 

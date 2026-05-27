@@ -889,6 +889,12 @@
 
 /* ── Scratchpad ── */
 .sw-scratchpad {
+	--sw-scratchpad-height: 26rem;
+	flex: 0 0 auto;
+	height: var(--sw-scratchpad-height);
+	min-height: var(--sw-scratchpad-height);
+	max-height: min(var(--sw-scratchpad-height), calc(100dvh - 10rem));
+	width: 100%;
 	border: 1px solid rgba(201, 162, 39, 0.2);
 	background: linear-gradient(
 		180deg,
@@ -969,10 +975,10 @@
 	top: 0.35rem;
 	right: 0.2rem;
 	bottom: 0.35rem;
-	width: 13px;
+	width: 14px;
 	pointer-events: none;
 	border-radius: 7px;
-	border: 1px solid rgba(76, 201, 240, 0.18);
+	border: 1px solid rgba(76, 201, 240, 0.22);
 	background: linear-gradient(
 		180deg,
 		rgba(6, 14, 28, 0.95) 0%,
@@ -983,36 +989,64 @@
 		inset 0 0 14px rgba(0, 0, 0, 0.55),
 		inset 0 1px 0 rgba(76, 201, 240, 0.12),
 		0 0 12px rgba(76, 201, 240, 0.06);
+	opacity: 0.35;
+	transition: opacity 0.25s ease;
 	z-index: 0;
+}
+
+.sw-scratchpad__scroll-wrap--lol.sw-scratchpad__scroll-wrap--overflow::before {
+	opacity: 1;
 }
 
 .sw-scratchpad__scroll-wrap--lol::after {
 	content: '';
 	position: absolute;
-	top: 0.65rem;
-	right: 0.45rem;
-	bottom: 0.65rem;
-	width: 3px;
+	top: 0.5rem;
+	right: 0.35rem;
+	bottom: 0.5rem;
+	width: 4px;
 	pointer-events: none;
 	border-radius: 2px;
 	background: linear-gradient(
 		180deg,
 		transparent 0%,
-		rgba(76, 201, 240, 0.35) 20%,
-		rgba(201, 162, 39, 0.45) 50%,
-		rgba(76, 201, 240, 0.35) 80%,
+		rgba(76, 201, 240, 0.4) 18%,
+		rgba(201, 162, 39, 0.5) 50%,
+		rgba(76, 201, 240, 0.4) 82%,
 		transparent 100%
 	);
-	opacity: 0.5;
+	opacity: 0;
+	transition: opacity 0.25s ease;
 	z-index: 0;
+}
+
+.sw-scratchpad__scroll-wrap--lol.sw-scratchpad__scroll-wrap--overflow::after {
+	opacity: 0.65;
 }
 
 .sw-scratchpad__scroll--lol {
 	position: relative;
 	z-index: 1;
-	padding-right: 0.35rem;
+	padding-right: 1.15rem;
 	scrollbar-width: thin;
 	scrollbar-color: #d4b85c rgba(8, 18, 32, 0.95);
+}
+
+.sw-scratchpad__scroll--lol.sw-scratchpad__scroll--fade {
+	mask-image: linear-gradient(
+		180deg,
+		transparent 0%,
+		#000 10px,
+		#000 calc(100% - 10px),
+		transparent 100%
+	);
+	-webkit-mask-image: linear-gradient(
+		180deg,
+		transparent 0%,
+		#000 10px,
+		#000 calc(100% - 10px),
+		transparent 100%
+	);
 }
 
 .sw-scratchpad__scroll--lol::-webkit-scrollbar {
@@ -1908,28 +1942,19 @@
 	}
 }
 
-/* Playing view: scratchpad matches main column height (desktop) */
-.sw-game-with-scratchpad {
-	align-items: stretch;
-}
-
+/* Desktop: scratchpad height locked to measured game column (set in WordGameBoard) */
 @media (min-width: 1024px) {
 	.sw-game-with-scratchpad__aside {
-		display: flex;
-		flex-direction: column;
-		min-height: 0;
-		height: 100%;
-		max-height: 100%;
 		position: sticky;
 		top: 6.5rem;
-		align-self: stretch;
+		align-self: start;
 	}
 
-	.sw-game-with-scratchpad .sw-scratchpad {
-		flex: 1 1 auto;
-		height: 100%;
-		max-height: 100%;
-		min-height: 0;
+	.sw-game-with-scratchpad--height-locked .sw-scratchpad {
+		flex: 0 0 auto;
+		height: var(--sw-scratchpad-locked-height);
+		min-height: var(--sw-scratchpad-locked-height);
+		max-height: var(--sw-scratchpad-locked-height);
 	}
 }
 

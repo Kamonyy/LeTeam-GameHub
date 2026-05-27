@@ -95,17 +95,13 @@ export default function WordSetup({
         <p className="sw-muted text-sm uppercase tracking-widest mb-4">
           Arcane lock engaged
         </p>
-        {isLol && myChosenChampionId && (
-          <div className="flex justify-center mb-4">
+        {isLol && myChosenChampionId ?
+          <div className="flex justify-center mb-5">
             <ChampionPortrait championId={myChosenChampionId} size="md" />
           </div>
-        )}
-        {!isLol && myChosenWord && (
+        : myChosenWord ?
           <p className="sw-word-reveal mb-5">{myChosenWord}</p>
-        )}
-        {isLol && myChosenWord && (
-          <p className="sw-word-reveal text-lg mb-5">{myChosenWord}</p>
-        )}
+        : null}
         <div className="sw-divider-gold sw-divider-gold--draw max-w-xs mx-auto" />
         <p className="sw-muted text-sm mt-4 leading-relaxed">
           {opponentHasSubmitted ?

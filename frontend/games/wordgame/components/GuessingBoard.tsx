@@ -37,19 +37,15 @@ function RevealContent({
   return (
     <div className="sw-reveal-box">
       <p className="text-[10px] sw-muted uppercase tracking-[0.25em] mb-3">{label}</p>
-      {isLol && (
-        <div className="flex justify-center mb-4">
+      {isLol ?
+        <div className="flex justify-center">
           <ChampionPortrait
-            championId={revealedChampionId}
+            championId={revealedChampionId!}
             size="xl"
-            showName={false}
             reveal
           />
         </div>
-      )}
-      <p className={clsx('sw-word-reveal', isLol && 'text-2xl sm:text-3xl')}>
-        {revealedWord}
-      </p>
+      :	<p className="sw-word-reveal">{revealedWord}</p>}
     </div>
   );
 }
@@ -145,16 +141,15 @@ export default function GuessingBoard({
             <p className="text-[10px] sw-muted uppercase tracking-[0.2em] mb-3">
               {isLol ? 'You chose' : 'You inscribed'}
             </p>
-            {isLol && myChosenChampionId && (
-              <div className="flex justify-center mb-3">
+            {isLol && myChosenChampionId ?
+              <div className="flex justify-center">
                 <ChampionPortrait championId={myChosenChampionId} size="md" />
               </div>
-            )}
-            {myChosenWord && (
+            : myChosenWord ?
               <p className="text-xl font-semibold sw-text-accent tracking-wide text-center">
                 {myChosenWord}
               </p>
-            )}
+            : null}
           </div>
         )}
         <p className="text-sm sw-muted mb-6 leading-relaxed">

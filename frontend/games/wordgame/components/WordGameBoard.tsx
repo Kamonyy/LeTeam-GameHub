@@ -10,7 +10,7 @@ import Scratchpad from './Scratchpad';
 import RoundCeremony from './RoundCeremony';
 import { useScratchpadNotes } from '../hooks/useScratchpadNotes';
 import clsx from 'clsx';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useWordGameAudioOptional } from '../hooks/useWordGameAudio';
 
 interface WordGameBoardProps {
@@ -63,6 +63,12 @@ export default function WordGameBoard({
   const showScratchpad =
     gameState.phase === 'playing' || gameState.phase === 'round_end';
 
+  const mainColumnRef = useRef<HTMLDivElement>(null);
+  const lockedScratchpadHeightRef = useRef<number | null>(null);
+  const [lockedScratchpadPx, setLockedScratchpadPx] = useState<number | null>(
+    null
+  );
+
   const wordCategory = gameState.wordCategory ?? 'custom';
   const isLol = wordCategory === 'lol-champions';
   const audio = useWordGameAudioOptional();
@@ -73,6 +79,59 @@ export default function WordGameBoard({
   useEffect(() => {
     lastGuessCelebrationVersion.current = gameState.stateVersion ?? null;
   }, [lobby.roomId]);
+
+  useEffect(() => {
+    lockedScratchpadHeightRef.current = null;
+    setLockedScratchpadPx(null);
+  }, [gameState.roundNumber, showScratchpad]);
+
+  const layoutReadyToLockScratchpad =
+    gameState.phase === 'round_end' ||
+    (gameState.phase === 'playing' &&
+      Boolean(gameState.myChosenChampionId || gameState.myChosenWord));
+
+  /** Lock scratchpad to the main game column height (desktop) — notes scroll inside. */
+  useEffect(() => {
+    if (!showScratchpad || !layoutReadyToLockScratchpad) {
+      lockedScratchpadHeightRef.current = null;
+      setLockedScratchpadPx(null);
+      return;
+    }
+    const el = mainColumnRef.current;
+    if (!el) return;
+
+    let cancelled = false;
+
+    const tryLock = () => {
+      if (cancelled || lockedScratchpadHeightRef.current != null) return;
+      if (typeof window === 'undefined' || window.innerWidth < 1024) return;
+      const height = Math.ceil(el.getBoundingClientRect().height);
+      if (height < 280) return;
+      lockedScratchpadHeightRef.current = height;
+      setLockedScratchpadPx(height);
+    };
+
+    tryLock();
+    const timer = window.setTimeout(tryLock, 120);
+    const observer = new ResizeObserver(() => {
+      if (lockedScratchpadHeightRef.current == null) tryLock();
+    });
+    observer.observe(el);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [
+    showScratchpad,
+    layoutReadyToLockScratchpad,
+    gameState.phase,
+    gameState.roundNumber,
+    gameState.myChosenChampionId,
+    gameState.myChosenWord,
+    wordCategory,
+  ]);
 
   useEffect(() => {
     if (isLol && gameState.revealedChampionId) {
@@ -164,13 +223,25 @@ export default function WordGameBoard({
 
       <div
         className={clsx(
-          'items-start',
+          showScratchpad && 'sw-game-with-scratchpad',
+          showScratchpad && lockedScratchpadPx != null && 'sw-game-with-scratchpad--height-locked',
           showScratchpad ?
-            'sw-game-with-scratchpad grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 lg:gap-8'
+            'grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 lg:gap-8 items-start'
           :	'max-w-3xl mx-auto w-full'
         )}
+        style={
+          lockedScratchpadPx ?
+            ({
+              '--sw-scratchpad-locked-height': `${lockedScratchpadPx}px`,
+            } as CSSProperties)
+          : undefined
+        }
       >
-        <div key={gameState.phase} className="min-w-0 sw-phase-mount">
+        <div
+          ref={mainColumnRef}
+          key={gameState.phase}
+          className="min-w-0 sw-phase-mount"
+        >
           {gameState.phase === 'setup' && (
             <WordSetup
               wordCategory={wordCategory}
@@ -203,7 +274,7 @@ export default function WordGameBoard({
         </div>
 
         {showScratchpad && (
-          <aside className="sw-game-with-scratchpad__aside w-full flex flex-col min-h-0 sw-scratchpad-enter">
+          <aside className="sw-game-with-scratchpad__aside w-full min-h-0 flex flex-col sw-scratchpad-enter">
             <Scratchpad
               key={gameState.roundNumber}
               isLol={isLol}

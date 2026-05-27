@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { StickyNote, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
 import type { ScratchpadNote } from '../hooks/useScratchpadNotes';
@@ -24,6 +24,22 @@ export default function Scratchpad({
   const [draft, setDraft] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const listRef = useRef<HTMLUListElement>(null);
+  const [listOverflows, setListOverflows] = useState(false);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+
+    const checkOverflow = () => {
+      setListOverflows(el.scrollHeight > el.clientHeight + 2);
+    };
+
+    checkOverflow();
+    const observer = new ResizeObserver(checkOverflow);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [notes.length, editingId]);
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,8 +70,6 @@ export default function Scratchpad({
     <aside
       className={clsx(
         'sw-scratchpad flex flex-col w-full max-w-full overflow-hidden rounded-xl backdrop-blur-md',
-        'h-[26rem] sm:h-[min(26rem,55vh)]',
-        'lg:h-full lg:max-h-full lg:min-h-0',
         isLol && 'sw-scratchpad--lol'
       )}
     >
@@ -86,8 +100,21 @@ export default function Scratchpad({
         </div>
       </form>
 
-      <div className="sw-scratchpad__scroll-wrap sw-scratchpad__scroll-wrap--lol flex-1 min-h-0">
-        <ul className="sw-scratchpad__scroll sw-scratchpad__scroll--lol h-full overflow-y-auto overscroll-contain p-3 pr-1.5 space-y-2">
+      <div
+        className={clsx(
+          'sw-scratchpad__scroll-wrap flex-1 min-h-0',
+          isLol && 'sw-scratchpad__scroll-wrap--lol',
+          isLol && listOverflows && 'sw-scratchpad__scroll-wrap--overflow'
+        )}
+      >
+        <ul
+          ref={listRef}
+          className={clsx(
+            'sw-scratchpad__scroll h-full min-h-0 overflow-y-auto overscroll-contain p-3 space-y-2',
+            isLol && 'sw-scratchpad__scroll--lol',
+            isLol && listOverflows && 'sw-scratchpad__scroll--fade'
+          )}
+        >
         {notes.length === 0 && (
           <li className="text-center text-xs sw-muted py-8 px-4 leading-relaxed">
             Record clues and deductions. Notes persist locally if you refresh.
