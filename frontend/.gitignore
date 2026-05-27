@@ -1,0 +1,5 @@
+# Do not commit secrets — copy from .env.example
+.env
+.env.*
+!.env.example
+.env.local

@@ -14,13 +14,13 @@ Cloudflare Pages cannot run the Socket.io game server — it needs an always-on 
 ## 1. Deploy backend (Render)
 
 1. Push this repo to GitHub.
-2. Go to [render.com](https://render.com) → **New** → **Blueprint** → connect `LeTeam-GameHub`.
+2. Go to [render.com](https://render.com) → **New** → **Blueprint** → connect your repository.
 3. Render reads `render.yaml` and creates `leteam-gamehub-api`.
 4. Set **CLIENT_URL** in Render dashboard:
    ```
-   https://leteam-gamehub.pages.dev,https://your-custom-domain.com
+   https://your-project.pages.dev,https://your-custom-domain.com
    ```
-5. Note the service URL, e.g. `https://leteam-gamehub-api.onrender.com`.
+5. Note the service URL, e.g. `https://your-api.onrender.com`.
 
 > Free tier sleeps after inactivity (~50s cold start on first connect).
 
@@ -29,7 +29,7 @@ Cloudflare Pages cannot run the Socket.io game server — it needs an always-on 
 ## 2. Deploy frontend (Cloudflare Pages)
 
 1. [Cloudflare Dashboard](https://dash.cloudflare.com) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
-2. Select `Kamonyy/LeTeam-GameHub`.
+2. Select your repository.
 3. Build settings:
 
    | Setting | Value |
@@ -44,7 +44,7 @@ Cloudflare Pages cannot run the Socket.io game server — it needs an always-on 
 
    | Variable | Value |
    |----------|-------|
-   | `NEXT_PUBLIC_SERVER_URL` | `https://leteam-gamehub-api.onrender.com` |
+   | `NEXT_PUBLIC_SERVER_URL` | `https://your-api.onrender.com` |
 
 5. Deploy. Your site will be at `https://<project-name>.pages.dev`.
 
@@ -58,7 +58,7 @@ Cloudflare Pages cannot run the Socket.io game server — it needs an always-on 
 
 Share room links like:
 ```
-https://leteam-gamehub.pages.dev/dominoes/?room=A7B9
+https://your-project.pages.dev/dominoes/?room=A7B9
 ```
 
 ---
@@ -83,3 +83,14 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env.local
 npm run dev
 ```
+
+---
+
+## Secrets
+
+Never commit real environment files. Use platform dashboards for production values:
+
+- `backend/.env` — local only (gitignored)
+- `frontend/.env.local` — local only (gitignored)
+- Cloudflare Pages → `NEXT_PUBLIC_SERVER_URL`
+- Render → `CLIENT_URL`

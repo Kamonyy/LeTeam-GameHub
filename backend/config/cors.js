@@ -2,7 +2,7 @@
  * CORS origin resolver for production.
  *
  * CLIENT_URL — comma-separated allowed origins, e.g.:
- *   https://leteam-gamehub.pages.dev,https://yourdomain.com
+ *   https://your-project.pages.dev,https://yourdomain.com
  *
  * Automatically allows Cloudflare Pages preview/production URLs (*.pages.dev).
  */

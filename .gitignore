@@ -9,10 +9,19 @@ out/
 dist/
 build/
 
-# Environment
+# Environment & secrets (never commit)
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.*.example
+backend/.env
+frontend/.env.local
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json
 
 # Debug
 npm-debug.log*
