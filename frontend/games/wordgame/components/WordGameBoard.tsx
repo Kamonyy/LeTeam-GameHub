@@ -10,6 +10,7 @@ import RoundCeremony from './RoundCeremony';
 import { useScratchpadNotes } from '../hooks/useScratchpadNotes';
 import clsx from 'clsx';
 import { useEffect, useRef } from 'react';
+import { useSocket } from '@/hooks/useSocket';
 import { useWordGameAudioOptional } from '../hooks/useWordGameAudio';
 
 interface WordGameBoardProps {
@@ -56,7 +57,21 @@ export default function WordGameBoard({
   const wordCategory = gameState.wordCategory ?? 'custom';
   const isLol = wordCategory === 'lol-champions';
   const audio = useWordGameAudioOptional();
+  const { wordGuessedCelebration } = useSocket();
   const prevPhase = useRef(gameState.phase);
+
+  useEffect(() => {
+    if (!wordGuessedCelebration) return;
+    const isLolCelebration =
+      wordGuessedCelebration.wordCategory === 'lol-champions';
+    audio?.unlock();
+    if (isLolCelebration && wordGuessedCelebration.championId) {
+      audio?.playSfx('pickConfirm', 0.7);
+      void audio?.playChampionVoice(wordGuessedCelebration.championId);
+    } else {
+      audio?.playSfx('pickConfirm', 0.65);
+    }
+  }, [wordGuessedCelebration, audio]);
 
   useEffect(() => {
     const phase = gameState.phase;

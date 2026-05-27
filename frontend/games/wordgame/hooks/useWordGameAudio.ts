@@ -36,10 +36,10 @@ export function useLolAudioActions(enabled: boolean) {
   );
 
   const playChampionVoice = useCallback(
-    async (championId: string) => {
+    (championId: string) => {
       if (!enabled || lolAudio.isMuted() || !championId) return;
       lolAudio.unlock();
-      await playRandomChampionVoiceLine(championId);
+      playRandomChampionVoiceLine(championId);
     },
     [enabled]
   );
@@ -56,10 +56,15 @@ export function useLolAudioActions(enabled: boolean) {
   const preloadChampion = useCallback(
     (championId: string) => {
       if (!enabled || !championId) return;
-      void preloadChampionVoice(championId);
+      preloadChampionVoice(championId);
     },
     [enabled]
   );
+
+  useEffect(() => {
+    if (!enabled) return;
+    lolAudio.preloadUiSfx();
+  }, [enabled]);
 
   useEffect(() => {
     if (!enabled) return;

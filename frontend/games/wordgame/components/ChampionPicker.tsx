@@ -56,7 +56,10 @@ const ChampionGridItem = memo(function ChampionGridItem({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => onSelect(champ)}
+        onPointerDown={(e) => {
+          if (disabled || e.button !== 0) return;
+          onSelect(champ);
+        }}
         className={clsx(
           'sw-champ-option',
           selectedId === champ.id && 'sw-champ-option--active'
@@ -247,7 +250,10 @@ export default function ChampionPicker({
                   'sw-champ-filter-chip',
                   classFilter === null && 'sw-champ-filter-chip--active'
                 )}
-                onClick={() => selectClassFilter(null)}
+                onPointerDown={(e) => {
+                  if (disabled || e.button !== 0) return;
+                  selectClassFilter(null);
+                }}
               >
                 All
               </button>
@@ -257,9 +263,9 @@ export default function ChampionPicker({
                   tag={tag}
                   disabled={disabled}
                   active={classFilter === tag}
-                  onSelect={() =>
-                    selectClassFilter(classFilter === tag ? null : tag)
-                  }
+                  onSelect={() => {
+                    selectClassFilter(classFilter === tag ? null : tag);
+                  }}
                 />
               ))}
             </div>
@@ -351,7 +357,10 @@ function ClassFilterChip({
         `sw-champ-filter-chip--${tag.toLowerCase()}`,
         active && 'sw-champ-filter-chip--active sw-champ-filter-chip--pop'
       )}
-      onClick={onSelect}
+      onPointerDown={(e) => {
+        if (disabled || e.button !== 0) return;
+        onSelect();
+      }}
       title={championClassLabel(tag)}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}

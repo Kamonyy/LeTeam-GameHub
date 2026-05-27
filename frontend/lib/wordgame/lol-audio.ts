@@ -19,10 +19,19 @@ export type LolUiSfxKey = keyof typeof LOL_UI_SFX;
 type Channel = 'sfx' | 'voice';
 
 const STORAGE_KEY = 'sw-lol-audio-muted';
+export const LOL_AUDIO_VOLUME_STORAGE_KEY = 'sw-lol-audio-volume';
+const DEFAULT_VOLUME = 0.5;
+
+function clampVolume(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
 
 class LolAudioEngine {
   private unlocked = false;
   private muted = false;
+  private volumeScale = DEFAULT_VOLUME;
+  private uiSfxPreloaded = false;
+  private readonly warmed = new Map<string, HTMLAudioElement>();
   private readonly channels: Record<Channel, HTMLAudioElement | null> = {
     sfx: null,
     voice: null,
@@ -32,6 +41,27 @@ class LolAudioEngine {
     if (typeof window === 'undefined') return;
     try {
       this.muted = localStorage.getItem(STORAGE_KEY) === '1';
+      const raw = localStorage.getItem(LOL_AUDIO_VOLUME_STORAGE_KEY);
+      if (raw != null) {
+        const parsed = parseFloat(raw);
+        if (Number.isFinite(parsed)) {
+          this.volumeScale = clampVolume(parsed);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  getVolume(): number {
+    return this.volumeScale;
+  }
+
+  setVolume(scale: number): void {
+    this.volumeScale = clampVolume(scale);
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(LOL_AUDIO_VOLUME_STORAGE_KEY, String(this.volumeScale));
     } catch {
       /* ignore */
     }
@@ -60,10 +90,30 @@ class LolAudioEngine {
   /** Call once after user gesture so autoplay policies allow sound. */
   unlock(): void {
     this.unlocked = true;
+    this.preloadUiSfx();
   }
 
   get unlockedReady(): boolean {
     return this.unlocked;
+  }
+
+  /** Warm Community Dragon UI clips (idempotent). */
+  preloadUiSfx(): void {
+    if (typeof window === 'undefined' || this.uiSfxPreloaded) return;
+    this.uiSfxPreloaded = true;
+    for (const url of Object.values(LOL_UI_SFX)) {
+      this.warmUrl(url);
+    }
+  }
+
+  /** Decode a clip ahead of time so play() can start on the next frame. */
+  warmUrl(url: string): void {
+    if (typeof window === 'undefined' || !url || this.warmed.has(url)) return;
+    const el = new Audio();
+    el.preload = 'auto';
+    el.src = url;
+    el.load();
+    this.warmed.set(url, el);
   }
 
   stopAll(): void {
@@ -83,31 +133,41 @@ class LolAudioEngine {
   }
 
   playUiSfx(key: LolUiSfxKey, volume = 0.55): void {
-    void this.playUrl(LOL_UI_SFX[key], 'sfx', volume);
+    this.playUrl(LOL_UI_SFX[key], 'sfx', volume);
   }
 
-  playUrl(url: string, channel: Channel, volume: number): Promise<void> {
-    if (typeof window === 'undefined' || this.muted || !url) {
-      return Promise.resolve();
+  playUrl(url: string, channel: Channel, volume: number): void {
+    if (typeof window === 'undefined' || this.muted || !url || !this.unlocked) {
+      return;
     }
 
-    const el = this.getChannel(channel);
-    el.volume = Math.min(1, Math.max(0, volume));
-    el.src = url;
+    this.warmUrl(url);
 
-    const attempt = () =>
-      el.play().then(() => undefined).catch(() => undefined);
-
-    if (!this.unlocked) {
-      return Promise.resolve();
-    }
+    const vol = clampVolume(volume * this.volumeScale);
+    const warmed = this.warmed.get(url);
 
     if (channel === 'voice') {
+      const el = this.getChannel('voice');
+      el.volume = vol;
+      el.src = url;
       el.pause();
       el.currentTime = 0;
+      void el.play().catch(() => undefined);
+      return;
     }
 
-    return attempt();
+    if (warmed && warmed.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      const clone = warmed.cloneNode() as HTMLAudioElement;
+      clone.volume = vol;
+      void clone.play().catch(() => undefined);
+      return;
+    }
+
+    const el = this.getChannel('sfx');
+    el.volume = vol;
+    if (el.src !== url) el.src = url;
+    el.currentTime = 0;
+    void el.play().catch(() => undefined);
   }
 
   private getChannel(channel: Channel): HTMLAudioElement {

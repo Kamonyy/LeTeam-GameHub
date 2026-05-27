@@ -22,6 +22,12 @@ function linesFromAudio(audio: LolChampionAudio | undefined): string[] {
   return [...new Set(lines)];
 }
 
+function warmManifestLines(manifest: ChampionVoiceManifest): void {
+  for (const url of manifest.lines) {
+    lolAudio.warmUrl(url);
+  }
+}
+
 async function fetchManifestFromCdragon(
   champion: LolChampion
 ): Promise<ChampionVoiceManifest | null> {
@@ -64,11 +70,15 @@ export async function getChampionVoiceManifest(
     if (embedded.length > 0) {
       const manifest = { championId, lines: embedded };
       manifestCache.set(championId, manifest);
+      warmManifestLines(manifest);
       return manifest;
     }
 
     const remote = await fetchManifestFromCdragon(champ);
-    if (remote) manifestCache.set(championId, remote);
+    if (remote) {
+      manifestCache.set(championId, remote);
+      warmManifestLines(remote);
+    }
     return remote;
   })().finally(() => {
     inflight.delete(championId);
@@ -84,25 +94,50 @@ export function pickRandomVoiceLine(manifest: ChampionVoiceManifest): string | n
   return manifest.lines[i] ?? null;
 }
 
-/** Preload manifest (and warm HTTP cache) for a champion. */
-export async function preloadChampionVoice(championId: string): Promise<void> {
-  await getChampionVoiceManifest(championId);
+/** Preload manifest and audio clips for a champion. */
+export function preloadChampionVoice(championId: string): void {
+  if (!championId) return;
+
+  const champ = getLolChampionById(championId);
+  const embedded = linesFromAudio(champ?.audio);
+  if (embedded.length > 0) {
+    const manifest = { championId, lines: embedded };
+    manifestCache.set(championId, manifest);
+    warmManifestLines(manifest);
+    const stinger = champ?.audio?.stinger;
+    if (stinger) lolAudio.warmUrl(stinger);
+    return;
+  }
+
+  void getChampionVoiceManifest(championId);
 }
 
 /** Play a random champ-select style voice line for this champion. */
-export async function playRandomChampionVoiceLine(
+export function playRandomChampionVoiceLine(
   championId: string,
   volume = 0.88
-): Promise<void> {
-  const manifest = await getChampionVoiceManifest(championId);
-  if (!manifest) return;
-  const url = pickRandomVoiceLine(manifest);
-  if (!url) return;
-  lolAudio.stopVoice();
-  await lolAudio.playUrl(url, 'voice', volume);
+): void {
+  const cached = manifestCache.get(championId);
+  if (cached) {
+    const url = pickRandomVoiceLine(cached);
+    if (!url) return;
+    lolAudio.stopVoice();
+    lolAudio.playUrl(url, 'voice', volume);
+    return;
+  }
+
+  void getChampionVoiceManifest(championId).then((manifest) => {
+    if (!manifest) return;
+    const url = pickRandomVoiceLine(manifest);
+    if (!url) return;
+    lolAudio.stopVoice();
+    lolAudio.playUrl(url, 'voice', volume);
+  });
 }
 
 export function getChampionStingerUrl(championId: string): string | null {
   const champ = getLolChampionById(championId);
-  return champ?.audio?.stinger ?? null;
+  const url = champ?.audio?.stinger ?? null;
+  if (url) lolAudio.warmUrl(url);
+  return url;
 }

@@ -22,7 +22,11 @@ export class WordGameEngine {
 		this.pointsToWin = Number.isInteger(cap) && cap >= 1 && cap <= 99 ? cap : 5;
 		this.wordCategory = normalizeWordCategory(settings.wordCategory);
 
-		this.playerIds = [...playerIds];
+		const uniquePlayerIds = [...new Set(playerIds)];
+		if (uniquePlayerIds.length !== 2) {
+			throw new Error("Secret Word requires exactly 2 distinct players");
+		}
+		this.playerIds = uniquePlayerIds;
 		/** @type {'setup' | 'playing' | 'round_end' | 'match_over'} */
 		this.phase = "setup";
 		/** Words each player must guess: keyed by guesser id */
@@ -36,6 +40,8 @@ export class WordGameEngine {
 		this.roundNumber = 1;
 		this.lastAction = null;
 		this.winnerId = null;
+		/** Monotonic revision for client stale-update guards */
+		this.stateVersion = 0;
 
 		for (const id of playerIds) {
 			this.scores[id] = 0;
@@ -43,9 +49,14 @@ export class WordGameEngine {
 		}
 	}
 
+	_bumpStateVersion() {
+		this.stateVersion += 1;
+	}
+
 	/** @param {string} playerId */
 	_opponentId(playerId) {
-		return this.playerIds.find((id) => id !== playerId);
+		const opponentId = this.playerIds.find((id) => id !== playerId);
+		return opponentId ?? null;
 	}
 
 	/** @param {string} raw */
@@ -66,11 +77,25 @@ export class WordGameEngine {
 
 	/**
 	 * @param {string} creatorId
+	 * @param {string} championId
+	 */
+	submitChampion(creatorId, championId) {
+		return this.submitWord(creatorId, { championId });
+	}
+
+	/**
+	 * @param {string} creatorId
 	 * @param {string | { word?: string, championId?: string }} payload
 	 */
 	submitWord(creatorId, payload) {
 		if (this.phase !== "setup") {
-			return { success: false, error: "Not in word selection phase" };
+			return {
+				success: false,
+				error:
+					this.wordCategory === "lol-champions" ?
+						"Not in champion selection phase"
+					:	"Not in word selection phase",
+			};
 		}
 
 		if (!this.playerIds.includes(creatorId)) {
@@ -78,10 +103,19 @@ export class WordGameEngine {
 		}
 
 		if (this.submitted[creatorId]) {
-			return { success: false, error: "You already submitted a word" };
+			return {
+				success: false,
+				error:
+					this.wordCategory === "lol-champions" ?
+						"You already chose a champion"
+					:	"You already submitted a word",
+			};
 		}
 
 		const guesserId = this._opponentId(creatorId);
+		if (!guesserId) {
+			return { success: false, error: "Invalid player" };
+		}
 		let secretWord = "";
 		let championId = null;
 
@@ -121,11 +155,13 @@ export class WordGameEngine {
 		}
 		this.submitted[creatorId] = true;
 		this.lastAction = { type: "word_submitted", playerId: creatorId };
+		this._bumpStateVersion();
 
 		const allSubmitted = this.playerIds.every((id) => this.submitted[id]);
 		if (allSubmitted) {
 			this.phase = "playing";
 			this.lastAction = { type: "round_start", roundNumber: this.roundNumber };
+			this._bumpStateVersion();
 		}
 
 		return { success: true };
@@ -137,7 +173,17 @@ export class WordGameEngine {
 	 */
 	confirmGuessed(creatorId) {
 		if (this.phase !== "playing") {
-			return { success: false, error: "Not in active guessing phase" };
+			return {
+				success: false,
+				error:
+					this.phase === "setup" ?
+						this.wordCategory === "lol-champions" ?
+							"Both players must choose a champion first"
+						:	"Both players must submit a word first"
+					: this.wordCategory === "lol-champions" ?
+						"Not in active champion guessing phase"
+					:	"Not in active guessing phase",
+			};
 		}
 
 		if (!this.playerIds.includes(creatorId)) {
@@ -170,6 +216,7 @@ export class WordGameEngine {
 				roundNumber: this.roundNumber,
 				...revealMeta,
 			};
+			this._bumpStateVersion();
 		} else {
 			this.phase = "round_end";
 			this.lastAction = {
@@ -181,6 +228,7 @@ export class WordGameEngine {
 			};
 		}
 
+		this._bumpStateVersion();
 		return { success: true };
 	}
 
@@ -196,6 +244,7 @@ export class WordGameEngine {
 		}
 		this.phase = "setup";
 		this.lastAction = { type: "round_reset", roundNumber: this.roundNumber };
+		this._bumpStateVersion();
 		return true;
 	}
 
@@ -238,6 +287,7 @@ export class WordGameEngine {
 
 		return {
 			gameType: "wordgame",
+			stateVersion: this.stateVersion,
 			phase: this.phase,
 			playerIds: this.playerIds,
 			scores: { ...this.scores },

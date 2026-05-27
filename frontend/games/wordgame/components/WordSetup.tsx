@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { PenLine, Loader2, Flame, Shield } from 'lucide-react';
 import type { WordCategory } from '../types';
 import WordPanelFrame from './WordPanelFrame';
@@ -33,31 +33,46 @@ export default function WordSetup({
   const [word, setWord] = useState('');
   const [pendingChampion, setPendingChampion] = useState<LolChampion | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const submitLockRef = useRef(false);
   const audio = useWordGameAudioOptional();
 
   const isLol = wordCategory === 'lol-champions';
 
   const handleWordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!word.trim() || iHaveSubmitted) return;
+    if (!word.trim() || iHaveSubmitted || submitLockRef.current) return;
+    submitLockRef.current = true;
     setSubmitting(true);
     const ok = await onSubmitWord(word.trim());
     if (ok) setWord('');
+    submitLockRef.current = false;
     setSubmitting(false);
   };
 
-  const handleChampionLock = async () => {
+  const playChampionLockFeedback = () => {
     if (!pendingChampion || iHaveSubmitted) return;
     audio?.unlock();
+    audio?.playSfx('lockIn', 0.75);
+    audio?.playChampionStinger(pendingChampion.id);
+  };
+
+  const handleChampionLock = async () => {
+    if (!pendingChampion || iHaveSubmitted || submitting || submitLockRef.current) {
+      return;
+    }
+    submitLockRef.current = true;
     setSubmitting(true);
     const ok = await onSubmitChampion(pendingChampion.id);
-    if (ok) {
-      audio?.playSfx('lockIn', 0.75);
-      audio?.playChampionStinger(pendingChampion.id);
-    } else {
-      setPendingChampion(null);
-    }
+    if (!ok) setPendingChampion(null);
+    submitLockRef.current = false;
     setSubmitting(false);
+  };
+
+  const handleChampionPick = (champ: LolChampion) => {
+    audio?.unlock();
+    audio?.playSfx('click', 0.5);
+    audio?.preloadChampion(champ.id);
+    setPendingChampion(champ);
   };
 
   if (iHaveSubmitted) {
@@ -125,19 +140,18 @@ export default function WordSetup({
         <ChampionPicker
           disabled={submitting}
           selectedId={pendingChampion?.id ?? null}
-          onSelect={(champ) => {
-            audio?.unlock();
-            audio?.playSfx('click', 0.5);
-            audio?.preloadChampion(champ.id);
-            setPendingChampion(champ);
-          }}
+          onSelect={handleChampionPick}
           onClear={() => setPendingChampion(null)}
         />
 
         {pendingChampion && (
           <button
             type="button"
-            onClick={handleChampionLock}
+            onPointerDown={(e) => {
+              if (e.button !== 0 || submitting) return;
+              playChampionLockFeedback();
+            }}
+            onClick={() => void handleChampionLock()}
             disabled={submitting}
             className="sw-btn-primary w-full mt-4"
           >

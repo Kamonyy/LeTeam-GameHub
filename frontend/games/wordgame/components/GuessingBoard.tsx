@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Eye, Trophy, CheckCircle, Crown, Sparkles } from 'lucide-react';
 import WordPanelFrame from './WordPanelFrame';
 import ChampionPortrait from './ChampionPortrait';
@@ -74,16 +74,15 @@ export default function GuessingBoard({
   const isLol = wordCategory === 'lol-champions';
   const audio = useWordGameAudioOptional();
 
+  const confirmLockRef = useRef(false);
+
   const handleConfirm = async () => {
+    if (!canConfirmGuessed || confirming || confirmLockRef.current) return;
+    confirmLockRef.current = true;
     audio?.unlock();
     setConfirming(true);
-    const ok = await onConfirmGuessed();
-    if (ok && isLol && myChosenChampionId) {
-      audio?.playSfx('pickConfirm', 0.7);
-      await audio?.playChampionVoice(myChosenChampionId);
-    } else if (ok) {
-      audio?.playSfx('pickConfirm', 0.65);
-    }
+    await onConfirmGuessed();
+    confirmLockRef.current = false;
     setConfirming(false);
   };
 
@@ -188,7 +187,7 @@ export default function GuessingBoard({
         </p>
         <button
           type="button"
-          onClick={handleConfirm}
+          onClick={() => void handleConfirm()}
           disabled={!canConfirmGuessed || confirming}
           className="sw-btn-confirm"
         >

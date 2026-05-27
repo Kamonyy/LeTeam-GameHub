@@ -15,6 +15,8 @@ import { useLolAudioActions } from '../hooks/useWordGameAudio';
 export interface WordGameAudioContextValue {
   enabled: boolean;
   muted: boolean;
+  volume: number;
+  setVolume: (scale: number) => void;
   toggleMuted: () => void;
   unlock: () => void;
   playSfx: ReturnType<typeof useLolAudioActions>['playSfx'];
@@ -35,13 +37,23 @@ interface WordGameAudioProviderProps {
 export default function WordGameAudioProvider({
   enabled,
   children,
-  showMuteControl = true,
+  showMuteControl = false,
 }: WordGameAudioProviderProps) {
   const [muted, setMuted] = useState(() => lolAudio.isMuted());
+  const [volume, setVolumeState] = useState(() => lolAudio.getVolume());
   const actions = useLolAudioActions(enabled);
 
+  const setVolume = useCallback((scale: number) => {
+    lolAudio.setVolume(scale);
+    setVolumeState(lolAudio.getVolume());
+  }, []);
+
   useEffect(() => {
-    if (!enabled) lolAudio.stopAll();
+    if (!enabled) {
+      lolAudio.stopAll();
+      return;
+    }
+    lolAudio.preloadUiSfx();
   }, [enabled]);
 
   const toggleMuted = useCallback(() => {
@@ -65,6 +77,8 @@ export default function WordGameAudioProvider({
     () => ({
       enabled,
       muted,
+      volume,
+      setVolume,
       toggleMuted,
       unlock,
       playSfx: actions.playSfx,
@@ -72,7 +86,7 @@ export default function WordGameAudioProvider({
       playChampionStinger: actions.playChampionStinger,
       preloadChampion: actions.preloadChampion,
     }),
-    [enabled, muted, toggleMuted, unlock, actions]
+    [enabled, muted, volume, setVolume, toggleMuted, unlock, actions]
   );
 
   return (

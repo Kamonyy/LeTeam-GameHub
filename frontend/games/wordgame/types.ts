@@ -15,6 +15,8 @@ export interface WordGameLastAction {
 export interface WordGameState {
   roomId?: string;
   gameType: 'wordgame';
+  /** Server revision — ignore older broadcasts after a successful action */
+  stateVersion?: number;
   phase: WordGamePhase;
   playerIds: string[];
   scores: Record<string, number>;

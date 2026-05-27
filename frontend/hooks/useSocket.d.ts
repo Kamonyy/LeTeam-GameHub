@@ -11,6 +11,12 @@ import type { BaraGameState } from '@/games/bara-alsalafa/types';
 
 export type HubGameState = GameState | WordGameState | BaraGameState;
 
+export interface WordGuessedCelebrationEvent {
+  wordCategory: string;
+  championId: string | null;
+  at: number;
+}
+
 export interface UseSocketReturn {
   connected: boolean;
   playerId: string;
@@ -49,6 +55,7 @@ export interface UseSocketReturn {
   submitSecretWord: (word: string) => Promise<boolean>;
   submitSecretChampion: (championId: string) => Promise<boolean>;
   confirmWordGuessed: () => Promise<boolean>;
+  wordGuessedCelebration: WordGuessedCelebrationEvent | null;
   baraReveal: () => Promise<boolean>;
   baraAdvanceInterrogation: () => Promise<boolean>;
   baraVote: (targetPlayerId: string) => Promise<boolean>;

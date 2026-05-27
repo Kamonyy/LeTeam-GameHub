@@ -807,6 +807,30 @@ export class RoomManager {
 		return { success: true };
 	}
 
+	_normalizeWordSubmitPayload(payload, wordCategory) {
+		if (typeof payload === "string") {
+			const trimmed = payload.trim();
+			if (!trimmed) return null;
+			return wordCategory === "lol-champions" ?
+					{ championId: trimmed }
+				:	{ word: trimmed };
+		}
+
+		if (!payload || typeof payload !== "object") return null;
+
+		const championId =
+			typeof payload.championId === "string" ? payload.championId.trim() : "";
+		const word = typeof payload.word === "string" ? payload.word : "";
+
+		if (wordCategory === "lol-champions") {
+			if (championId) return { championId };
+			return null;
+		}
+
+		if (word.trim()) return { word };
+		return null;
+	}
+
 	handleWordSubmit(socket, payload) {
 		const ctx = this._getPlayerContext(socket);
 		if (ctx.error) return { error: ctx.error };
@@ -816,36 +840,38 @@ export class RoomManager {
 			return { error: "No active word game" };
 		}
 
-		const word =
-			typeof payload === "string" ? payload : (
-				typeof payload?.word === "string" ? payload.word : ""
-			);
-		const championId =
-			typeof payload === "object" && payload !== null ?
-				payload.championId
-			:	undefined;
+		const wordCategory = room.game.wordCategory;
+		const submitPayload = this._normalizeWordSubmitPayload(
+			payload,
+			wordCategory,
+		);
 
-		if (room.game.wordCategory === "lol-champions") {
-			if (!championId || typeof championId !== "string") {
-				return { error: "Select a champion" };
-			}
-		} else if (!word.trim()) {
-			return { error: "Word is required" };
+		if (!submitPayload) {
+			return {
+				error:
+					wordCategory === "lol-champions" ?
+						"Select a champion"
+					:	"Word is required",
+			};
 		}
-
-		const submitPayload =
-			room.game.wordCategory === "lol-champions" ?
-				{ championId }
-			:	{ word };
 
 		const result = room.game.submitWord(playerId, submitPayload);
 		if (!result.success) return { error: result.error };
 
-		this.broadcastGameState(room.id);
-		return {
-			success: true,
-			state: { roomId: room.id, ...room.game.serializeForPlayer(playerId) },
+		const state = {
+			roomId: room.id,
+			...room.game.serializeForPlayer(playerId),
 		};
+		this.broadcastGameState(room.id);
+		return { success: true, state };
+	}
+
+	handleWordChampionSubmit(socket, payload) {
+		const championId =
+			typeof payload === "string" ? payload
+			: typeof payload === "object" && payload !== null ? payload.championId
+			: undefined;
+		return this.handleWordSubmit(socket, { championId });
 	}
 
 	_getChatDisplayName(playerId, roomId) {
@@ -905,11 +931,24 @@ export class RoomManager {
 		const result = room.game.confirmGuessed(playerId);
 		if (!result.success) return { error: result.error };
 
-		this.broadcastGameState(room.id);
-		return {
-			success: true,
-			state: { roomId: room.id, ...room.game.serializeForPlayer(playerId) },
+		const state = {
+			roomId: room.id,
+			...room.game.serializeForPlayer(playerId),
 		};
+
+		const action = room.game.lastAction;
+		if (
+			action?.type === "word_guessed" ||
+			action?.type === "match_won"
+		) {
+			this._emitToRoom(room, "word:guessed:celebration", {
+				wordCategory: room.game.wordCategory,
+				championId: action.championId ?? null,
+			});
+		}
+
+		this.broadcastGameState(room.id);
+		return { success: true, state };
 	}
 
 	handleBaraReveal(socket) {
@@ -1014,7 +1053,13 @@ export class RoomManager {
 
 		this._removeHubPresence(playerId, socket.id);
 		this.socketToPlayer.delete(socket.id);
-		this.playerToSocket.delete(playerId);
+		// Keep playerToSocket during Secret Word sessions so reconnect can replace it;
+		// stale socket ids are overwritten in registerPlayer.
+		const roomId = this.playerToRoom.get(playerId);
+		const room = roomId ? this.rooms.get(roomId) : null;
+		if (!isActiveWordGameSession(room)) {
+			this.playerToSocket.delete(playerId);
+		}
 		this._scheduleBroadcastHubPresence();
 
 		const spectatorRoomId = this.spectatorToRoom.get(playerId);
@@ -1023,10 +1068,7 @@ export class RoomManager {
 			return;
 		}
 
-		const roomId = this.playerToRoom.get(playerId);
 		if (!roomId) return;
-
-		const room = this.rooms.get(roomId);
 		if (!room) return;
 
 		const player = room.players.find((p) => p.id === playerId);

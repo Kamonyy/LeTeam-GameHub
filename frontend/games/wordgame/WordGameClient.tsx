@@ -7,7 +7,7 @@ import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX } from 'lucide-react';
 import { useSocket } from '@/hooks/useSocket';
 import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
-import PlayerNameControl from '@/components/hub/PlayerNameControl';
+import WordGamePlayerProfile from '@/games/wordgame/components/WordGamePlayerProfile';
 import ErrorToast from '@/components/shared/ErrorToast';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import WordLobby from '@/games/wordgame/components/WordLobby';
@@ -173,9 +173,10 @@ export default function WordGameClient() {
               </button>
             )}
             <WordConnectionBadge connected={connected} />
-            <div className="[&_button]:border-[rgba(201,162,39,0.25)] [&_button]:text-[#e8edf7]">
-              <PlayerNameControl disabled={!!inGame} />
-            </div>
+            <WordGamePlayerProfile
+              disabled={!!inGame}
+              audioEnabled={isLolAudioEnabled}
+            />
           </div>
         </div>
       </header>
