@@ -41,6 +41,7 @@ export interface UseSocketReturn {
     displayName: string
   ) => Promise<{ ok: boolean; spectating: boolean }>;
   leaveRoom: () => void;
+  hardResetPlayer: () => Promise<void>;
   updateRoomSettings: (
     settings: Partial<MatchSettings | WordGameSettings | BaraGameSettings>
   ) => Promise<boolean>;

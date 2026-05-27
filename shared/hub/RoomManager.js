@@ -212,7 +212,43 @@ export class RoomManager {
 		}, 250);
 	}
 
+	/** Remove a prior player id tied to this socket (client identity reset). */
+	_detachSocketIdentity(socket, playerId) {
+		if (!playerId) return;
+
+		this._removeHubPresence(playerId, socket.id);
+		this.playerToSocket.delete(playerId);
+		this.playerSessions.delete(playerId);
+
+		const spectatorRoomId = this.spectatorToRoom.get(playerId);
+		if (spectatorRoomId) {
+			if (this.useSocketRooms) socket.leave(spectatorRoomId);
+			this._removeSpectatorFromRoom(playerId, spectatorRoomId);
+		}
+
+		const roomId = this.playerToRoom.get(playerId);
+		if (roomId) {
+			const room = this.rooms.get(roomId);
+			if (room) {
+				const player = room.players.find((p) => p.id === playerId);
+				if (player?.disconnectTimer) {
+					clearTimeout(player.disconnectTimer);
+					player.disconnectTimer = null;
+				}
+			}
+			if (this.useSocketRooms) socket.leave(roomId);
+			this._removePlayerFromRoom(playerId, roomId);
+		}
+
+		this._scheduleBroadcastHubPresence();
+	}
+
 	registerPlayer(socket, playerId, displayName, sessionToken) {
+		const previousPlayerId = this.socketToPlayer.get(socket.id);
+		if (previousPlayerId && previousPlayerId !== playerId) {
+			this._detachSocketIdentity(socket, previousPlayerId);
+		}
+
 		const session = this._resolvePlayerSession(playerId, sessionToken);
 		if (session.error) return { error: session.error };
 
@@ -385,6 +421,11 @@ export class RoomManager {
 		const gameDef = getGame(room.gameType);
 		if (!gameDef) return { error: "Invalid room game type" };
 
+		const alreadyInRoom = room.players.find((p) => p.id === playerId);
+		if (!isGameEnabled(room.gameType) && !alreadyInRoom) {
+			return { error: "This game is temporarily unavailable" };
+		}
+
 		const spectatingElsewhere = this.spectatorToRoom.get(playerId);
 		if (spectatingElsewhere && spectatingElsewhere !== roomId) {
 			return { error: "Leave current room first" };
@@ -445,6 +486,11 @@ export class RoomManager {
 		if (!room) return { error: "Room not found" };
 		if (room.gameType !== "dominoes") {
 			return { error: "Spectating is only available for dominoes" };
+		}
+
+		const alreadySpectating = room.spectators?.find((s) => s.id === playerId);
+		if (!isGameEnabled(room.gameType) && !alreadySpectating) {
+			return { error: "This game is temporarily unavailable" };
 		}
 
 		if (room.players.some((p) => p.id === playerId)) {
@@ -686,7 +732,15 @@ export class RoomManager {
 		if (!room) return { error: "Room not found" };
 		if (room.hostId !== playerId)
 			return { error: "Only the host can cancel the match" };
-		if (room.status !== "playing") return { error: "No match in progress" };
+
+		const finishedWordMatch =
+			room.gameType === "wordgame" &&
+			room.status === "finished" &&
+			room.game?.phase === "match_over";
+
+		if (room.status !== "playing" && !finishedWordMatch) {
+			return { error: "No match in progress" };
+		}
 
 		this._clearNextRoundTimer(room);
 		room.game = null;
@@ -785,8 +839,8 @@ export class RoomManager {
 		if (room.hostId !== playerId) {
 			return { error: "Only the host can start a rematch" };
 		}
-		if (!room.game || room.gameType !== "dominoes") {
-			return { error: "No dominoes match to rematch" };
+		if (!room.game) {
+			return { error: "No match to rematch" };
 		}
 		if (room.game.phase !== "match_over") {
 			return { error: "Match is not finished" };
@@ -794,10 +848,35 @@ export class RoomManager {
 
 		const gameDef = getGame(room.gameType);
 		if (!gameDef) return { error: "Invalid game type" };
+		if (!isGameEnabled(room.gameType)) {
+			return { error: "This game is temporarily unavailable" };
+		}
 
 		const connectedPlayers = room.players.filter((p) => p.connected);
 		if (connectedPlayers.length < gameDef.minPlayers) {
 			return { error: `Need at least ${gameDef.minPlayers} players` };
+		}
+
+		if (room.gameType === "dominoes") {
+			if (
+				room.settings.mode === "2v2" &&
+				connectedPlayers.length !== 4
+			) {
+				return { error: "2v2 Team Mode requires exactly 4 players" };
+			}
+		}
+
+		if (room.gameType === "wordgame" && connectedPlayers.length !== 2) {
+			return { error: "Secret Word requires exactly 2 players" };
+		}
+
+		if (room.gameType === "bara-alsalafa") {
+			room.settings.categoryPackageIds = normalizeCategoryPackageIds(
+				room.settings,
+			);
+			if (room.settings.categoryPackageIds.length === 0) {
+				return { error: "Select at least one category package" };
+			}
 		}
 
 		this._clearNextRoundTimer(room);

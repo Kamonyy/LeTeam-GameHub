@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import clsx from 'clsx';
 
 interface WordPanelFrameProps {
@@ -18,6 +18,12 @@ export default function WordPanelFrame({
   embers = true,
   panelEnter = true,
 }: WordPanelFrameProps) {
+  const [showEmbers, setShowEmbers] = useState(false);
+
+  useEffect(() => {
+    if (embers) setShowEmbers(true);
+  }, [embers]);
+
   return (
     <div
       className={clsx(
@@ -27,7 +33,7 @@ export default function WordPanelFrame({
         className
       )}
     >
-      {embers && (
+      {showEmbers && (
         <div className="sw-panel-embers" aria-hidden>
           {[12, 28, 45, 62, 78, 88].map((left, i) => (
             <span

@@ -900,6 +900,200 @@
 		inset 0 1px 0 rgba(201, 162, 39, 0.08);
 }
 
+.sw-scratchpad--lol {
+	border-color: rgba(94, 184, 212, 0.22);
+	background: linear-gradient(
+		180deg,
+		rgba(12, 28, 48, 0.9) 0%,
+		rgba(6, 10, 22, 0.96) 55%,
+		rgba(8, 14, 28, 0.98) 100%
+	);
+	box-shadow:
+		0 12px 40px rgba(0, 0, 0, 0.5),
+		inset 0 1px 0 rgba(200, 170, 110, 0.12),
+		inset 0 -1px 0 rgba(94, 184, 212, 0.06);
+}
+
+/* Scratchpad scroll region — fixed panel height, list scrolls inside */
+.sw-scratchpad__scroll-wrap {
+	position: relative;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.sw-scratchpad__scroll {
+	scrollbar-gutter: stable;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(201, 162, 39, 0.5) rgba(8, 12, 24, 0.75);
+}
+
+.sw-scratchpad__scroll::-webkit-scrollbar {
+	width: 8px;
+}
+
+.sw-scratchpad__scroll::-webkit-scrollbar-button {
+	display: none;
+	height: 0;
+	width: 0;
+}
+
+.sw-scratchpad__scroll::-webkit-scrollbar-track {
+	margin: 6px 0;
+	border-radius: 999px;
+	background: rgba(6, 8, 22, 0.75);
+	border: 1px solid rgba(201, 162, 39, 0.08);
+}
+
+.sw-scratchpad__scroll::-webkit-scrollbar-thumb {
+	border-radius: 999px;
+	background: linear-gradient(
+		180deg,
+		rgba(240, 215, 140, 0.75) 0%,
+		rgba(201, 162, 39, 0.55) 100%
+	);
+	border: 1px solid rgba(201, 162, 39, 0.35);
+}
+
+.sw-scratchpad__scroll::-webkit-scrollbar-thumb:hover {
+	background: linear-gradient(
+		180deg,
+		rgba(245, 225, 170, 0.9) 0%,
+		rgba(201, 162, 39, 0.7) 100%
+	);
+}
+
+/* LoL / Hextech scratchpad channel + scrollbar */
+.sw-scratchpad__scroll-wrap--lol::before {
+	content: '';
+	position: absolute;
+	top: 0.35rem;
+	right: 0.2rem;
+	bottom: 0.35rem;
+	width: 13px;
+	pointer-events: none;
+	border-radius: 7px;
+	border: 1px solid rgba(76, 201, 240, 0.18);
+	background: linear-gradient(
+		180deg,
+		rgba(6, 14, 28, 0.95) 0%,
+		rgba(10, 22, 40, 0.9) 45%,
+		rgba(6, 12, 24, 0.95) 100%
+	);
+	box-shadow:
+		inset 0 0 14px rgba(0, 0, 0, 0.55),
+		inset 0 1px 0 rgba(76, 201, 240, 0.12),
+		0 0 12px rgba(76, 201, 240, 0.06);
+	z-index: 0;
+}
+
+.sw-scratchpad__scroll-wrap--lol::after {
+	content: '';
+	position: absolute;
+	top: 0.65rem;
+	right: 0.45rem;
+	bottom: 0.65rem;
+	width: 3px;
+	pointer-events: none;
+	border-radius: 2px;
+	background: linear-gradient(
+		180deg,
+		transparent 0%,
+		rgba(76, 201, 240, 0.35) 20%,
+		rgba(201, 162, 39, 0.45) 50%,
+		rgba(76, 201, 240, 0.35) 80%,
+		transparent 100%
+	);
+	opacity: 0.5;
+	z-index: 0;
+}
+
+.sw-scratchpad__scroll--lol {
+	position: relative;
+	z-index: 1;
+	padding-right: 0.35rem;
+	scrollbar-width: thin;
+	scrollbar-color: #d4b85c rgba(8, 18, 32, 0.95);
+}
+
+.sw-scratchpad__scroll--lol::-webkit-scrollbar {
+	width: 10px;
+}
+
+.sw-scratchpad__scroll--lol::-webkit-scrollbar-button {
+	display: none;
+	height: 0;
+	width: 0;
+}
+
+.sw-scratchpad__scroll--lol::-webkit-scrollbar-track {
+	margin: 8px 2px;
+	border-radius: 6px;
+	background:
+		repeating-linear-gradient(
+			-28deg,
+			transparent,
+			transparent 3px,
+			rgba(76, 201, 240, 0.04) 3px,
+			rgba(76, 201, 240, 0.04) 4px
+		),
+		linear-gradient(
+			180deg,
+			rgba(5, 12, 24, 0.98) 0%,
+			rgba(14, 28, 48, 0.96) 48%,
+			rgba(5, 10, 22, 0.98) 100%
+		);
+	border: 1px solid rgba(76, 201, 240, 0.22);
+	box-shadow:
+		inset 0 0 10px rgba(0, 0, 0, 0.5),
+		inset 0 1px 0 rgba(201, 162, 39, 0.08);
+}
+
+.sw-scratchpad__scroll--lol::-webkit-scrollbar-thumb {
+	border-radius: 5px;
+	border: 1px solid rgba(255, 236, 180, 0.45);
+	background: linear-gradient(
+		180deg,
+		#f0e6b8 0%,
+		#e0c060 18%,
+		#c9a050 42%,
+		#6b5520 68%,
+		#1a6b8a 100%
+	);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.45),
+		inset 0 -1px 0 rgba(26, 107, 138, 0.5),
+		0 0 8px rgba(201, 162, 39, 0.25);
+}
+
+.sw-scratchpad__scroll--lol::-webkit-scrollbar-thumb:hover {
+	border-color: rgba(255, 248, 220, 0.6);
+	background: linear-gradient(
+		180deg,
+		#fff8dc 0%,
+		#f0d878 20%,
+		#dbb85a 45%,
+		#8a7028 65%,
+		#2a8aad 100%
+	);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.55),
+		0 0 14px rgba(76, 201, 240, 0.35),
+		0 0 10px rgba(201, 162, 39, 0.3);
+}
+
+.sw-scratchpad__scroll--lol::-webkit-scrollbar-thumb:active {
+	background: linear-gradient(
+		180deg,
+		#c9a050 0%,
+		#8a7028 50%,
+		#1a5a72 100%
+	);
+}
+
+.sw-scratchpad__scroll--lol::-webkit-scrollbar-corner {
+	background: transparent;
+}
+
 /* ── Victory / round end ── */
 .sw-victory-icon {
 	display: inline-flex;
@@ -912,6 +1106,41 @@
 	border: 1px solid rgba(201, 162, 39, 0.4);
 	box-shadow: 0 0 32px rgba(201, 162, 39, 0.3);
 	color: var(--sw-gold-bright);
+}
+
+.sw-match-over-actions {
+	margin-top: 2rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid rgba(201, 162, 39, 0.2);
+}
+
+.sw-match-over-actions__buttons {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	max-width: 20rem;
+	margin: 0 auto;
+}
+
+@media (min-width: 480px) {
+	.sw-match-over-actions__buttons {
+		flex-direction: row;
+		max-width: none;
+		justify-content: center;
+	}
+}
+
+.sw-match-over-actions__btn {
+	width: 100%;
+	min-width: 0;
+}
+
+@media (min-width: 480px) {
+	.sw-match-over-actions__btn {
+		width: auto;
+		flex: 1;
+		max-width: 11rem;
+	}
 }
 
 .sw-reveal-box {
@@ -1542,6 +1771,31 @@
 	to {
 		opacity: 1;
 		transform: translateY(0) scale(1);
+	}
+}
+
+/* Playing view: scratchpad matches main column height (desktop) */
+.sw-game-with-scratchpad {
+	align-items: stretch;
+}
+
+@media (min-width: 1024px) {
+	.sw-game-with-scratchpad__aside {
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		height: 100%;
+		max-height: 100%;
+		position: sticky;
+		top: 6.5rem;
+		align-self: stretch;
+	}
+
+	.sw-game-with-scratchpad .sw-scratchpad {
+		flex: 1 1 auto;
+		height: 100%;
+		max-height: 100%;
+		min-height: 0;
 	}
 }
 

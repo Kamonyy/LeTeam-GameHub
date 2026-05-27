@@ -11,7 +11,8 @@ import WordGamePlayerProfile from '@/games/wordgame/components/WordGamePlayerPro
 import ErrorToast from '@/components/shared/ErrorToast';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import WordLobby from '@/games/wordgame/components/WordLobby';
-import { getGameEntry } from '@/lib/hub/games-registry';
+import InactiveGameScreen from '@/components/hub/InactiveGameScreen';
+import { getGameEntry, isGameActive } from '@/lib/hub/games-registry';
 import WordGameBoard from '@/games/wordgame/components/WordGameBoard';
 import WordGameAtmosphere from '@/games/wordgame/components/WordGameAtmosphere';
 import WordConnectionBadge from '@/games/wordgame/components/WordConnectionBadge';
@@ -48,10 +49,16 @@ export default function WordGameClient() {
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [postMatchBusy, setPostMatchBusy] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [autoJoined, setAutoJoined] = useState(false);
+  /** Avoid SSR/client mismatch: localStorage is unavailable during server render. */
+  const [inviteJoin, setInviteJoin] = useState(false);
 
-  const inviteJoin = !!roomParam && !hasDisplayName();
+  useEffect(() => {
+    setInviteJoin(!!roomParam && !hasDisplayName());
+  }, [roomParam]);
+  const wordgameEnabled = isGameActive('wordgame');
   const wordState =
     lobby?.gameType === 'wordgame' &&
     gameState &&
@@ -65,7 +72,8 @@ export default function WordGameClient() {
   }, []);
 
   useEffect(() => {
-    if (!connected || !roomParam || lobby || autoJoined || inviteJoin) return;
+    if (!wordgameEnabled || !connected || !roomParam || lobby || autoJoined || inviteJoin)
+      return;
     const code = normalizeRoomCode(roomParam);
     if (!code) return;
 
@@ -80,7 +88,16 @@ export default function WordGameClient() {
     };
 
     attemptJoin();
-  }, [connected, roomParam, lobby, autoJoined, inviteJoin, joinRoom, router]);
+  }, [
+    wordgameEnabled,
+    connected,
+    roomParam,
+    lobby,
+    autoJoined,
+    inviteJoin,
+    joinRoom,
+    router,
+  ]);
 
   const handleCreate = async () => {
     if (!displayName.trim()) return;
@@ -124,12 +141,25 @@ export default function WordGameClient() {
   const isHost = lobby?.hostId === playerId;
   const wordGameMeta = getGameEntry('wordgame');
   const inLobby = lobby && lobby.status === 'lobby';
+  const matchFinished = wordState?.phase === 'match_over';
   const inGame =
     lobby &&
     wordState &&
     (lobby.status === 'playing' ||
       lobby.status === 'finished' ||
-      wordState.phase === 'match_over');
+      matchFinished);
+
+  const handlePlayAgain = async () => {
+    setPostMatchBusy(true);
+    await startGame();
+    setPostMatchBusy(false);
+  };
+
+  const handleReturnToLobby = async () => {
+    setPostMatchBusy(true);
+    await cancelMatch();
+    setPostMatchBusy(false);
+  };
 
   const lobbyWordCategory =
     lobby?.settings && 'wordCategory' in lobby.settings ?
@@ -161,7 +191,7 @@ export default function WordGameClient() {
             </div>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            {isHost && inGame && (
+            {isHost && inGame && !matchFinished && (
               <button
                 type="button"
                 onClick={() => setCancelConfirmOpen(true)}
@@ -182,7 +212,9 @@ export default function WordGameClient() {
       </header>
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        {!lobby && inviteJoin && (
+        {!lobby && !wordgameEnabled && <InactiveGameScreen gameId="wordgame" />}
+
+        {!lobby && wordgameEnabled && inviteJoin && (
           <div className="max-w-md mx-auto sw-animate-ascend">
             <WordPanelFrame className="p-6 sm:p-8">
               <div className="flex items-center gap-2 mb-4">
@@ -222,9 +254,8 @@ export default function WordGameClient() {
           </div>
         )}
 
-        {!lobby && !inviteJoin && (
+        {!lobby && wordgameEnabled && !inviteJoin && (
           <div className="max-w-md w-full mx-auto sw-animate-ascend-slow">
-            <div>
             {roomParam && loading && !autoJoined && (
               <p className="text-center text-sm sw-muted mb-4 animate-pulse-soft">
                 Crossing into room {roomParam}…
@@ -272,7 +303,6 @@ export default function WordGameClient() {
                 </button>
               </div>
             </WordPanelFrame>
-            </div>
           </div>
         )}
 
@@ -303,6 +333,10 @@ export default function WordGameClient() {
               gameState={wordState}
               lobby={lobby}
               playerId={playerId}
+              isHost={isHost}
+              postMatchBusy={postMatchBusy}
+              onHostPlayAgain={isHost ? handlePlayAgain : undefined}
+              onHostReturnToLobby={isHost ? handleReturnToLobby : undefined}
               onSubmitWord={submitSecretWord}
               onSubmitChampion={submitSecretChampion}
               onConfirmGuessed={confirmWordGuessed}

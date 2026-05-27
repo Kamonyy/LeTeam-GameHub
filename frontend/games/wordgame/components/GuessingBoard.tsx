@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Eye, Trophy, CheckCircle, Crown, Sparkles } from 'lucide-react';
+import { Eye, Trophy, CheckCircle, Crown, Sparkles, RotateCcw, DoorOpen } from 'lucide-react';
 import WordPanelFrame from './WordPanelFrame';
 import ChampionPortrait from './ChampionPortrait';
 import clsx from 'clsx';
@@ -21,6 +21,10 @@ interface GuessingBoardProps {
   pointsToWin: number;
   canConfirmGuessed: boolean;
   onConfirmGuessed: () => Promise<boolean>;
+  isHost?: boolean;
+  postMatchBusy?: boolean;
+  onHostPlayAgain?: () => void;
+  onHostReturnToLobby?: () => void;
 }
 
 function RevealContent({
@@ -69,6 +73,10 @@ export default function GuessingBoard({
   pointsToWin,
   canConfirmGuessed,
   onConfirmGuessed,
+  isHost = false,
+  postMatchBusy = false,
+  onHostPlayAgain,
+  onHostReturnToLobby,
 }: GuessingBoardProps) {
   const [confirming, setConfirming] = useState(false);
   const isLol = wordCategory === 'lol-champions';
@@ -105,6 +113,35 @@ export default function GuessingBoard({
             label={isLol ? 'Final champion' : 'Final word'}
           />
         )}
+
+        <div className="sw-match-over-actions">
+          {isHost ?
+            <div className="sw-match-over-actions__buttons">
+              <button
+                type="button"
+                className="sw-btn-primary sw-match-over-actions__btn"
+                disabled={postMatchBusy}
+                onClick={() => onHostPlayAgain?.()}
+              >
+                <RotateCcw className="w-4 h-4 shrink-0" aria-hidden />
+                {postMatchBusy ? 'Starting…' : 'Play again'}
+              </button>
+              <button
+                type="button"
+                className="sw-btn-secondary sw-match-over-actions__btn"
+                disabled={postMatchBusy}
+                onClick={() => onHostReturnToLobby?.()}
+              >
+                <DoorOpen className="w-4 h-4 shrink-0" aria-hidden />
+                Return to lobby
+              </button>
+            </div>
+          :	<p className="text-xs sw-muted flex items-center justify-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-[#c9a227]" />
+              Waiting for the host to continue…
+            </p>
+          }
+        </div>
       </WordPanelFrame>
     );
   }

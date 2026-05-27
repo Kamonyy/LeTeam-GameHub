@@ -54,6 +54,7 @@ export function setSessionToken(token: string): void {
 export function clearSessionToken(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(SESSION_TOKEN_KEY);
+  sessionStorage.removeItem(SESSION_TOKEN_KEY);
 }
 
 export function getDisplayName(): string {
@@ -72,4 +73,41 @@ export function setDisplayName(name: string): void {
   const trimmed = name.trim().slice(0, MAX_DISPLAY_NAME);
   if (!trimmed) return;
   writeStorage(DISPLAY_NAME_KEY, trimmed);
+}
+
+/** New random player id written to storage (does not read existing id). */
+export function createFreshPlayerId(): string {
+  const id = generatePlayerId();
+  writeStorage(PLAYER_ID_KEY, id);
+  sessionStorage.removeItem(PLAYER_ID_KEY);
+  return id;
+}
+
+/** Drop old identity locally: new id + session token, keep display name only. */
+export function resetPlayerSessionKeepingName(): string {
+  if (typeof window === 'undefined') return '';
+
+  const savedName = getDisplayName();
+
+  clearSessionToken();
+  localStorage.removeItem(PLAYER_ID_KEY);
+  sessionStorage.removeItem(PLAYER_ID_KEY);
+
+  const keysToRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key) continue;
+    if (key.startsWith('wordgame_notes_')) {
+      keysToRemove.push(key);
+    }
+  }
+  for (const key of keysToRemove) {
+    localStorage.removeItem(key);
+  }
+
+  const newId = createFreshPlayerId();
+  if (savedName) {
+    setDisplayName(savedName);
+  }
+  return newId;
 }

@@ -10,10 +10,19 @@ import {
   useState,
 } from 'react';
 import { io } from 'socket.io-client';
-import { getDisplayName, getOrCreatePlayerId, getSessionToken, setDisplayName, setSessionToken, clearSessionToken } from '@/lib/player';
+import {
+  getDisplayName,
+  getOrCreatePlayerId,
+  getSessionToken,
+  setDisplayName,
+  setSessionToken,
+  clearSessionToken,
+  resetPlayerSessionKeepingName,
+} from '@/lib/player';
 import { isSameOriginServer, resolveServerUrl } from '@/lib/socket-url';
 import { HubLiveProvider } from '@/lib/hub/HubLiveContext';
 import { hubPresenceEqual, lobbyStateEqual } from '@/lib/hub/hub-live';
+import { isGameActive } from '@/lib/hub/games-registry';
 
 const SocketContext = createContext(null);
 
@@ -53,6 +62,7 @@ export function SocketProvider({ children }) {
   const [wordGuessedCelebration, setWordGuessedCelebration] = useState(null);
   const chatChannelRef = useRef(null);
   const wordActionInFlightRef = useRef(false);
+  const skipNextConnectRegisterRef = useRef(false);
 
   const registerPlayer = useCallback((socket, id, isRetry = false) => {
     return new Promise((resolve) => {
@@ -127,6 +137,10 @@ export function SocketProvider({ children }) {
 
       socket.on('connect', () => {
         setConnected(true);
+        if (skipNextConnectRegisterRef.current) {
+          skipNextConnectRegisterRef.current = false;
+          return;
+        }
         registerReadyRef.current = registerPlayer(socket, playerIdRef.current).then(
           (ok) => {
             if (ok) socket.emit('hub:presence:request', {});
@@ -262,6 +276,11 @@ export function SocketProvider({ children }) {
         resolve(null);
         return;
       }
+      if (!isGameActive(gameType)) {
+        setError('This game is temporarily unavailable');
+        resolve(null);
+        return;
+      }
       socket.emit('room:create', { displayName, gameType }, (res) => {
         if (res?.error) {
           setError(res.error);
@@ -344,6 +363,62 @@ export function SocketProvider({ children }) {
       setIsSpectator(false);
     });
   }, []);
+
+  const hardResetPlayer = useCallback(async () => {
+    const socket = socketRef.current;
+
+    if (socket?.connected) {
+      await new Promise((resolve) => {
+        socket.emit('room:leave', {}, () => resolve());
+      });
+
+      await new Promise((resolve) => {
+        const onDisconnect = () => {
+          socket.off('disconnect', onDisconnect);
+          resolve();
+        };
+        socket.once('disconnect', onDisconnect);
+        socket.disconnect();
+      });
+    }
+
+    setLobby(null);
+    setGameState(null);
+    setChatMessages([]);
+    setError(null);
+    setWordGuessedCelebration(null);
+    setIsSpectator(false);
+    wordActionInFlightRef.current = false;
+
+    const newId = resetPlayerSessionKeepingName();
+    playerIdRef.current = newId;
+    setPlayerId(newId);
+
+    if (!socket) return;
+
+    skipNextConnectRegisterRef.current = true;
+
+    if (!socket.connected) {
+      await new Promise((resolve) => {
+        const onConnect = () => {
+          socket.off('connect', onConnect);
+          resolve();
+        };
+        socket.once('connect', onConnect);
+        socket.connect();
+      });
+    }
+
+    try {
+      registerReadyRef.current = registerPlayer(socket, newId).then((ok) => {
+        if (ok) socket.emit('hub:presence:request', {});
+        return ok;
+      });
+      await registerReadyRef.current;
+    } finally {
+      skipNextConnectRegisterRef.current = false;
+    }
+  }, [registerPlayer]);
 
   const updateRoomSettings = useCallback((settings) => {
     return new Promise((resolve) => {
@@ -692,6 +767,7 @@ export function SocketProvider({ children }) {
       spectateRoom,
       joinRoomOrSpectate,
       leaveRoom,
+      hardResetPlayer,
       updateRoomSettings,
       startGame,
       kickPlayer,
@@ -727,6 +803,7 @@ export function SocketProvider({ children }) {
       spectateRoom,
       joinRoomOrSpectate,
       leaveRoom,
+      hardResetPlayer,
       updateRoomSettings,
       startGame,
       kickPlayer,

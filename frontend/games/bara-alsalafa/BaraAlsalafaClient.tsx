@@ -12,7 +12,8 @@ import PlayerNameControl from '@/components/hub/PlayerNameControl';
 import ErrorToast from '@/components/shared/ErrorToast';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import GameAboutPanel from '@/components/hub/GameAboutPanel';
-import { getGameEntry } from '@/lib/hub/games-registry';
+import InactiveGameScreen from '@/components/hub/InactiveGameScreen';
+import { getGameEntry, isGameActive } from '@/lib/hub/games-registry';
 import BaraLobby from '@/games/bara-alsalafa/components/BaraLobby';
 import BaraGameBoard from '@/games/bara-alsalafa/components/BaraGameBoard';
 import type { BaraGameState } from '@/games/bara-alsalafa/types';
@@ -49,8 +50,12 @@ export default function BaraAlsalafaClient() {
   const [cancelling, setCancelling] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [autoJoined, setAutoJoined] = useState(false);
+  const [inviteJoin, setInviteJoin] = useState(false);
 
-  const inviteJoin = !!roomParam && !hasDisplayName();
+  useEffect(() => {
+    setInviteJoin(!!roomParam && !hasDisplayName());
+  }, [roomParam]);
+  const baraEnabled = isGameActive('bara-alsalafa');
   const baraState: BaraGameState | null =
     lobby?.gameType === 'bara-alsalafa' &&
     gameState &&
@@ -64,7 +69,8 @@ export default function BaraAlsalafaClient() {
   }, []);
 
   useEffect(() => {
-    if (!connected || !roomParam || lobby || autoJoined || inviteJoin) return;
+    if (!baraEnabled || !connected || !roomParam || lobby || autoJoined || inviteJoin)
+      return;
     const code = normalizeRoomCode(roomParam);
     if (!code) return;
 
@@ -77,7 +83,16 @@ export default function BaraAlsalafaClient() {
     };
 
     attemptJoin();
-  }, [connected, roomParam, lobby, autoJoined, inviteJoin, joinRoom, router]);
+  }, [
+    baraEnabled,
+    connected,
+    roomParam,
+    lobby,
+    autoJoined,
+    inviteJoin,
+    joinRoom,
+    router,
+  ]);
 
   const handleCreate = async () => {
     if (!displayName.trim()) return;
@@ -161,7 +176,9 @@ export default function BaraAlsalafaClient() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {!lobby && inviteJoin && (
+        {!lobby && !baraEnabled && <InactiveGameScreen gameId="bara-alsalafa" />}
+
+        {!lobby && baraEnabled && inviteJoin && (
           <div className="max-w-md mx-auto animate-fade-in" dir="rtl">
             <div className="card mb-6">
               <div className="flex items-center gap-2 text-hub-accent mb-4">
@@ -196,7 +213,7 @@ export default function BaraAlsalafaClient() {
           </div>
         )}
 
-        {!lobby && !inviteJoin && (
+        {!lobby && baraEnabled && !inviteJoin && (
           <div className="max-w-md mx-auto animate-fade-in space-y-6" dir="rtl">
             <GameAboutPanel gameId="bara-alsalafa" />
             {roomParam && loading && !autoJoined && (

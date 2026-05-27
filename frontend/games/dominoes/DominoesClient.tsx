@@ -17,6 +17,7 @@ import Lobby from '@/games/dominoes/components/Lobby';
 import GameBoard from '@/games/dominoes/components/GameBoard';
 import SpectatorBanner from '@/games/dominoes/components/SpectatorBanner';
 import GameAboutPanel from '@/components/hub/GameAboutPanel';
+import InactiveGameScreen from '@/components/hub/InactiveGameScreen';
 import { getGameEntry, isGameActive } from '@/lib/hub/games-registry';
 import type { GameState } from '@/games/dominoes/types';
 
@@ -57,8 +58,11 @@ export default function DominoesClient() {
   const [cancelling, setCancelling] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [autoJoined, setAutoJoined] = useState(false);
+  const [inviteJoin, setInviteJoin] = useState(false);
 
-  const inviteJoin = !!roomParam && !hasDisplayName();
+  useEffect(() => {
+    setInviteJoin(!!roomParam && !hasDisplayName());
+  }, [roomParam]);
   const dominoesEnabled = isGameActive('dominoes');
   const dominoesMeta = getGameEntry('dominoes');
 
@@ -107,7 +111,7 @@ export default function DominoesClient() {
     if (!displayName.trim()) return;
     setLoading(true);
     setDisplayName(displayName);
-    const roomId = await createRoom(displayName.trim());
+    const roomId = await createRoom(displayName.trim(), 'dominoes');
     if (roomId) router.push(`/dominoes?room=${roomId}`);
     setLoading(false);
   };
@@ -230,22 +234,7 @@ export default function DominoesClient() {
           showGameBoard ? 'max-w-none' : 'max-w-6xl',
         )}
       >
-        {!lobby && !dominoesEnabled && (
-          <div className="max-w-md mx-auto animate-fade-in space-y-6">
-            <div className="card text-center">
-              <h2 className="text-lg font-semibold mb-2">Dominoes is offline</h2>
-              <p className="text-sm text-hub-muted mb-6">
-                {dominoesMeta?.disabledReason ??
-                  'This game is temporarily unavailable.'}
-              </p>
-              <Link href="/" className="btn-primary inline-flex items-center gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                Back to games
-              </Link>
-            </div>
-            <GameAboutPanel gameId="dominoes" />
-          </div>
-        )}
+        {!lobby && !dominoesEnabled && <InactiveGameScreen gameId="dominoes" />}
 
         {!lobby && dominoesEnabled && inviteJoin && (
           <div className="max-w-md mx-auto animate-fade-in">

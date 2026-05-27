@@ -1,3 +1,5 @@
+import { isGameEnabled } from '@shared/games/availability.js';
+
 export interface GameCatalogEntry {
   id: string;
   name: string;
@@ -12,7 +14,7 @@ export interface GameCatalogEntry {
   icon?: string;
 }
 
-export const GAMES: GameCatalogEntry[] = [
+const CATALOG: Omit<GameCatalogEntry, 'active'>[] = [
   {
     id: 'dominoes',
     name: 'Dominoes',
@@ -23,7 +25,6 @@ export const GAMES: GameCatalogEntry[] = [
       'This mode is temporarily offline while we improve fairness, layout, and polish.',
     ],
     href: '/dominoes',
-    active: false,
     disabledReason: 'Temporarily unavailable while we improve the experience.',
     players: '2–4',
     icon: '🁢',
@@ -39,7 +40,6 @@ export const GAMES: GameCatalogEntry[] = [
       'Best with exactly 2 players in the same call (Discord, Zoom, etc.).',
     ],
     href: '/wordgame',
-    active: true,
     players: '2',
     icon: '🔤',
   },
@@ -53,16 +53,24 @@ export const GAMES: GameCatalogEntry[] = [
       'اختر الحزمة: أكلات، مهن، أماكن، بوب كالتشر، أو أغراض منزلية — حتى 12 لاعباً في الغرفة.',
     ],
     href: '/bara-alsalafa',
-    active: true,
     players: '3–12',
     icon: '🕵️',
   },
 ];
 
+/** Hub catalog with `active` derived from shared availability flags. */
+export const GAMES: GameCatalogEntry[] = CATALOG.map((entry) => ({
+  ...entry,
+  active: isGameEnabled(entry.id),
+}));
+
 export function getGameEntry(id: string): GameCatalogEntry | undefined {
   return GAMES.find((g) => g.id === id);
 }
 
+/** Whether the game can be played (hub cards, routes, room create). */
 export function isGameActive(id: string): boolean {
-  return getGameEntry(id)?.active ?? false;
+  return isGameEnabled(id);
 }
+
+export { isGameEnabled };

@@ -20,6 +20,10 @@ interface WordGameBoardProps {
   onSubmitWord: (word: string) => Promise<boolean>;
   onSubmitChampion: (championId: string) => Promise<boolean>;
   onConfirmGuessed: () => Promise<boolean>;
+  isHost?: boolean;
+  postMatchBusy?: boolean;
+  onHostPlayAgain?: () => void;
+  onHostReturnToLobby?: () => void;
 }
 
 export default function WordGameBoard({
@@ -29,6 +33,10 @@ export default function WordGameBoard({
   onSubmitWord,
   onSubmitChampion,
   onConfirmGuessed,
+  isHost = false,
+  postMatchBusy = false,
+  onHostPlayAgain,
+  onHostReturnToLobby,
 }: WordGameBoardProps) {
   const playerNames = Object.fromEntries(
     lobby.players.map((p) => [p.id, p.displayName])
@@ -36,9 +44,10 @@ export default function WordGameBoard({
   const opponentId = gameState.playerIds.find((id) => id !== playerId) ?? '';
   const opponentName = playerNames[opponentId] || 'Opponent';
 
-  const { notes, addNote, updateNote, deleteNote } = useScratchpadNotes(
+  const { notes, addNote, updateNote, deleteNote, clearNotes } = useScratchpadNotes(
     lobby.roomId,
-    playerId
+    playerId,
+    gameState.roundNumber
   );
 
   const guesserName =
@@ -92,11 +101,16 @@ export default function WordGameBoard({
     if (phase === 'match_over' && was !== 'match_over') {
       audio?.playSfx('roundFinalize', 0.65);
     }
+
+    if (was === 'playing' && (phase === 'round_end' || phase === 'match_over')) {
+      clearNotes();
+    }
   }, [
     gameState.phase,
     gameState.revealedChampionId,
     isLol,
     audio,
+    clearNotes,
   ]);
 
   return (
@@ -118,7 +132,7 @@ export default function WordGameBoard({
         className={clsx(
           'items-start',
           showScratchpad ?
-            'grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 lg:gap-8 lg:items-stretch'
+            'sw-game-with-scratchpad grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 lg:gap-8'
           :	'max-w-3xl mx-auto w-full'
         )}
       >
@@ -152,13 +166,19 @@ export default function WordGameBoard({
               pointsToWin={gameState.pointsToWin}
               canConfirmGuessed={gameState.canConfirmGuessed}
               onConfirmGuessed={onConfirmGuessed}
+              isHost={isHost}
+              postMatchBusy={postMatchBusy}
+              onHostPlayAgain={onHostPlayAgain}
+              onHostReturnToLobby={onHostReturnToLobby}
             />
           )}
         </div>
 
         {showScratchpad && (
-          <aside className="w-full lg:sticky lg:top-24 lg:self-start sw-scratchpad-enter">
+          <aside className="sw-game-with-scratchpad__aside w-full flex flex-col min-h-0 sw-scratchpad-enter">
             <Scratchpad
+              key={gameState.roundNumber}
+              isLol={isLol}
               notes={notes}
               onAdd={addNote}
               onUpdate={updateNote}

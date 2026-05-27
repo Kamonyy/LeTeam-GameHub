@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import clsx from 'clsx';
 import { StickyNote, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
 import type { ScratchpadNote } from '../hooks/useScratchpadNotes';
 
@@ -9,6 +10,8 @@ interface ScratchpadProps {
   onAdd: (text: string) => void;
   onUpdate: (id: string, text: string) => void;
   onDelete: (id: string) => void;
+  /** League of Legends mode — hextech scrollbar + panel accents */
+  isLol?: boolean;
 }
 
 export default function Scratchpad({
@@ -16,6 +19,7 @@ export default function Scratchpad({
   onAdd,
   onUpdate,
   onDelete,
+  isLol = false,
 }: ScratchpadProps) {
   const [draft, setDraft] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -47,7 +51,14 @@ export default function Scratchpad({
   };
 
   return (
-    <aside className="sw-scratchpad flex flex-col h-[420px] w-full max-w-full shrink-0 overflow-hidden rounded-xl backdrop-blur-md">
+    <aside
+      className={clsx(
+        'sw-scratchpad flex flex-col w-full max-w-full overflow-hidden rounded-xl backdrop-blur-md',
+        'h-[26rem] sm:h-[min(26rem,55vh)]',
+        'lg:h-full lg:max-h-full lg:min-h-0',
+        isLol && 'sw-scratchpad--lol'
+      )}
+    >
       <div className="flex shrink-0 items-center gap-2 px-4 py-3 border-b border-[rgba(201,162,39,0.15)]">
         <StickyNote className="w-4 h-4 text-[#f0d78c]" />
         <h3 className="sw-heading text-[11px]">Clue Scratchpad</h3>
@@ -75,7 +86,8 @@ export default function Scratchpad({
         </div>
       </form>
 
-      <ul className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-2">
+      <div className="sw-scratchpad__scroll-wrap sw-scratchpad__scroll-wrap--lol flex-1 min-h-0">
+        <ul className="sw-scratchpad__scroll sw-scratchpad__scroll--lol h-full overflow-y-auto overscroll-contain p-3 pr-1.5 space-y-2">
         {notes.length === 0 && (
           <li className="text-center text-xs sw-muted py-8 px-4 leading-relaxed">
             Record clues and deductions. Notes persist locally if you refresh.
@@ -142,7 +154,8 @@ export default function Scratchpad({
             }
           </li>
         ))}
-      </ul>
+        </ul>
+      </div>
     </aside>
   );
 }

@@ -28,29 +28,38 @@ function parseNotes(raw: string): ScratchpadNote[] {
     }));
 }
 
-function storageKey(roomId: string, playerId: string) {
-  return `wordgame_notes_${roomId}_${playerId}`;
+function storageKey(roomId: string, playerId: string, roundNumber: number) {
+  return `wordgame_notes_${roomId}_${playerId}_r${roundNumber}`;
 }
 
-export function useScratchpadNotes(roomId: string, playerId: string) {
+export function useScratchpadNotes(
+  roomId: string,
+  playerId: string,
+  roundNumber: number
+) {
   const [notes, setNotes] = useState<ScratchpadNote[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const round = Math.max(1, roundNumber || 1);
 
   useEffect(() => {
     if (!roomId || !playerId) return;
+    setLoaded(false);
     try {
-      const raw = localStorage.getItem(storageKey(roomId, playerId));
+      const raw = localStorage.getItem(storageKey(roomId, playerId, round));
       setNotes(raw ? parseNotes(raw) : []);
     } catch {
       setNotes([]);
     }
     setLoaded(true);
-  }, [roomId, playerId]);
+  }, [roomId, playerId, round]);
 
   useEffect(() => {
     if (!loaded || !roomId || !playerId) return;
-    localStorage.setItem(storageKey(roomId, playerId), JSON.stringify(notes));
-  }, [notes, loaded, roomId, playerId]);
+    localStorage.setItem(
+      storageKey(roomId, playerId, round),
+      JSON.stringify(notes)
+    );
+  }, [notes, loaded, roomId, playerId, round]);
 
   const addNote = useCallback((text: string) => {
     const trimmed = text.trim();

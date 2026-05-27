@@ -357,10 +357,190 @@
 	position: relative;
 	transform-style: preserve-3d;
 	transition:
-		transform 0.2s var(--hub-smooth),
+		transform 0.28s var(--hub-elastic),
+		box-shadow 0.35s var(--hub-smooth),
+		border-color 0.25s ease,
+		background 0.35s ease;
+	will-change: transform;
+}
+
+.hub-game-card--active:hover,
+.hub-game-card--active.hub-game-card--hovered,
+.hub-game-card--active:has(:focus-visible) {
+	transform: translateY(-6px) translateZ(0);
+}
+
+.hub-game-card__glow {
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.4s var(--hub-smooth);
+	z-index: 0;
+}
+
+.hub-game-card--dominoes .hub-game-card__glow {
+	background:
+		radial-gradient(ellipse 90% 70% at 50% 110%, rgba(52, 211, 153, 0.28), transparent 58%),
+		radial-gradient(ellipse 60% 50% at 20% 0%, rgba(59, 130, 246, 0.08), transparent 55%);
+}
+
+.hub-game-card--wordgame .hub-game-card__glow {
+	background:
+		radial-gradient(ellipse 90% 70% at 50% 110%, rgba(56, 189, 248, 0.3), transparent 58%),
+		radial-gradient(ellipse 55% 45% at 85% 15%, rgba(123, 92, 255, 0.12), transparent 50%);
+}
+
+.hub-game-card--bara-alsalafa .hub-game-card__glow {
+	background:
+		radial-gradient(ellipse 90% 70% at 50% 110%, rgba(244, 63, 94, 0.32), transparent 58%),
+		radial-gradient(ellipse 50% 40% at 10% 20%, rgba(251, 191, 36, 0.08), transparent 50%);
+}
+
+.hub-game-card--active:hover .hub-game-card__glow,
+.hub-game-card--active.hub-game-card--hovered .hub-game-card__glow,
+.hub-game-card--active:has(:focus-visible) .hub-game-card__glow {
+	opacity: 1;
+}
+
+.hub-game-card__shine {
+	position: absolute;
+	top: -60%;
+	left: -80%;
+	width: 60%;
+	height: 220%;
+	pointer-events: none;
+	z-index: 1;
+	opacity: 0;
+	background: linear-gradient(
+		105deg,
+		transparent 0%,
+		rgba(255, 255, 255, 0.03) 42%,
+		rgba(255, 255, 255, 0.14) 50%,
+		rgba(255, 255, 255, 0.03) 58%,
+		transparent 100%
+	);
+	transform: translateX(-120%) skewX(-18deg);
+}
+
+.hub-game-card--active:hover .hub-game-card__shine,
+.hub-game-card--active.hub-game-card--hovered .hub-game-card__shine {
+	opacity: 1;
+	animation: hub-card-shine 0.85s var(--hub-smooth) forwards;
+}
+
+@keyframes hub-card-shine {
+	to {
+		transform: translateX(280%) skewX(-18deg);
+	}
+}
+
+.hub-game-card__scanlines {
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	pointer-events: none;
+	z-index: 1;
+	opacity: 0;
+	background: repeating-linear-gradient(
+		0deg,
+		transparent,
+		transparent 2px,
+		rgba(0, 0, 0, 0.04) 2px,
+		rgba(0, 0, 0, 0.04) 4px
+	);
+	transition: opacity 0.35s ease;
+}
+
+.hub-game-card--active:hover .hub-game-card__scanlines,
+.hub-game-card--active.hub-game-card--hovered .hub-game-card__scanlines {
+	opacity: 1;
+}
+
+.hub-game-card__icon {
+	transition:
+		transform 0.35s var(--hub-elastic),
 		box-shadow 0.35s var(--hub-smooth),
 		border-color 0.25s ease;
-	will-change: transform;
+}
+
+.hub-game-card--active:hover .hub-game-card__icon,
+.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
+	transform: scale(1.08) translateZ(0);
+}
+
+.hub-game-card--dominoes.hub-game-card--active:hover .hub-game-card__icon,
+.hub-game-card--dominoes.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
+	border-color: rgba(52, 211, 153, 0.55);
+	box-shadow: 0 0 22px rgba(52, 211, 153, 0.35);
+}
+
+.hub-game-card--wordgame.hub-game-card--active:hover .hub-game-card__icon,
+.hub-game-card--wordgame.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
+	border-color: rgba(56, 189, 248, 0.55);
+	box-shadow: 0 0 22px rgba(56, 189, 248, 0.35);
+}
+
+.hub-game-card--bara-alsalafa.hub-game-card--active:hover .hub-game-card__icon,
+.hub-game-card--bara-alsalafa.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
+	border-color: rgba(244, 63, 94, 0.55);
+	box-shadow: 0 0 22px rgba(244, 63, 94, 0.38);
+}
+
+.hub-game-card__play {
+	color: rgba(147, 197, 253, 0.85);
+	transition:
+		color 0.25s ease,
+		text-shadow 0.25s ease,
+		transform 0.25s var(--hub-elastic);
+}
+
+.hub-game-card__play-arrow {
+	transition: transform 0.3s var(--hub-elastic);
+}
+
+.hub-game-card--dominoes.hub-game-card--active:hover .hub-game-card__play,
+.hub-game-card--dominoes.hub-game-card--active.hub-game-card--hovered .hub-game-card__play {
+	color: #6ee7b7;
+	text-shadow: 0 0 14px rgba(52, 211, 153, 0.55);
+}
+
+.hub-game-card--wordgame.hub-game-card--active:hover .hub-game-card__play,
+.hub-game-card--wordgame.hub-game-card--active.hub-game-card--hovered .hub-game-card__play {
+	color: #7dd3fc;
+	text-shadow: 0 0 14px rgba(56, 189, 248, 0.55);
+}
+
+.hub-game-card--bara-alsalafa.hub-game-card--active:hover .hub-game-card__play,
+.hub-game-card--bara-alsalafa.hub-game-card--active.hub-game-card--hovered .hub-game-card__play {
+	color: #fda4af;
+	text-shadow: 0 0 14px rgba(244, 63, 94, 0.5);
+}
+
+.hub-game-card--active:hover .hub-game-card__play-arrow,
+.hub-game-card--active.hub-game-card--hovered .hub-game-card__play-arrow,
+.hub-game-card--active:has(:focus-visible) .hub-game-card__play-arrow {
+	transform: translateX(4px);
+}
+
+.hub-game-card--active:hover .hub-game-card__play-label,
+.hub-game-card--active.hub-game-card--hovered .hub-game-card__play-label {
+	animation: hub-play-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes hub-play-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.72;
+	}
+}
+
+.hub-game-card--inactive:hover {
+	transform: none !important;
 }
 
 .hub-game-card::after {
@@ -373,8 +553,9 @@
 	transition: opacity 0.3s ease;
 }
 
-.hub-game-card--hovered::after,
-.hub-game-card:focus-visible::after {
+.hub-game-card--active:hover::after,
+.hub-game-card--active.hub-game-card--hovered::after,
+.hub-game-card--active:has(:focus-visible)::after {
 	opacity: 1;
 }
 
@@ -393,22 +574,42 @@
 	box-shadow: 0 0 20px rgba(244, 63, 94, 0.5);
 }
 
-.hub-game-card--hovered {
+.hub-game-card--active:hover,
+.hub-game-card--active.hub-game-card--hovered,
+.hub-game-card--active:has(:focus-visible) {
 	box-shadow:
 		0 28px 56px rgba(0, 0, 0, 0.55),
-		0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+		0 0 0 1px rgba(255, 255, 255, 0.06) inset;
 }
 
-.hub-game-card--dominoes.hub-game-card--hovered {
-	border-color: rgba(52, 211, 153, 0.35);
+.hub-game-card--dominoes.hub-game-card--active:hover,
+.hub-game-card--dominoes.hub-game-card--active.hub-game-card--hovered,
+.hub-game-card--dominoes.hub-game-card--active:has(:focus-visible) {
+	border-color: rgba(52, 211, 153, 0.5);
+	box-shadow:
+		0 28px 56px rgba(0, 0, 0, 0.55),
+		0 0 28px rgba(52, 211, 153, 0.18),
+		0 0 0 1px rgba(52, 211, 153, 0.2) inset;
 }
 
-.hub-game-card--wordgame.hub-game-card--hovered {
-	border-color: rgba(56, 189, 248, 0.35);
+.hub-game-card--wordgame.hub-game-card--active:hover,
+.hub-game-card--wordgame.hub-game-card--active.hub-game-card--hovered,
+.hub-game-card--wordgame.hub-game-card--active:has(:focus-visible) {
+	border-color: rgba(56, 189, 248, 0.5);
+	box-shadow:
+		0 28px 56px rgba(0, 0, 0, 0.55),
+		0 0 28px rgba(56, 189, 248, 0.2),
+		0 0 0 1px rgba(56, 189, 248, 0.18) inset;
 }
 
-.hub-game-card--bara-alsalafa.hub-game-card--hovered {
-	border-color: rgba(244, 63, 94, 0.4);
+.hub-game-card--bara-alsalafa.hub-game-card--active:hover,
+.hub-game-card--bara-alsalafa.hub-game-card--active.hub-game-card--hovered,
+.hub-game-card--bara-alsalafa.hub-game-card--active:has(:focus-visible) {
+	border-color: rgba(244, 63, 94, 0.55);
+	box-shadow:
+		0 28px 56px rgba(0, 0, 0, 0.55),
+		0 0 28px rgba(244, 63, 94, 0.22),
+		0 0 0 1px rgba(244, 63, 94, 0.2) inset;
 }
 
 .hub-game-card__surface {
@@ -701,6 +902,16 @@
 	}
 
 	.hub-bara-spotlight {
+		animation: none !important;
+	}
+
+	.hub-game-card--active:hover,
+	.hub-game-card--active.hub-game-card--hovered {
+		transform: translateY(-2px) translateZ(0);
+	}
+
+	.hub-game-card__shine,
+	.hub-game-card__play-label {
 		animation: none !important;
 	}
 

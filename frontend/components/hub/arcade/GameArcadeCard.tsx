@@ -76,6 +76,7 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
   const [transform, setTransform] = useState('');
 
   const handleMove = useCallback((e: React.MouseEvent) => {
+    if (!game.active) return;
     const el = cardRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -84,7 +85,7 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
     const rotateX = y * -14;
     const rotateY = x * 14;
     setTransform(
-      `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05) translateZ(0)`
+      `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05) translateY(-6px) translateZ(0)`
     );
   }, []);
 
@@ -98,17 +99,23 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
   const cardClass = clsx(
     'hub-game-card hub-enter-card block rounded-2xl border border-hub-border bg-hub-card p-6 overflow-hidden min-h-[220px]',
     `hub-game-card--${game.id}`,
-    hovered && 'hub-game-card--hovered',
-    !game.active && 'opacity-70 cursor-not-allowed'
+    game.active && 'hub-game-card--active',
+    !game.active && 'hub-game-card--inactive opacity-70 cursor-not-allowed',
+    game.active && hovered && 'hub-game-card--hovered'
   );
 
   const inner = (
   <>
+      <span className="hub-game-card__glow" aria-hidden />
+      <span className="hub-game-card__shine" aria-hidden />
+      <span className="hub-game-card__scanlines" aria-hidden />
+
       {game.id === 'dominoes' && (
         <>
           <HubDominoTile top={3} bottom={6} className="hub-domino-tile--a" />
           <HubDominoTile top={1} bottom={5} className="hub-domino-tile--b" />
-          {hovered &&
+          {game.active &&
+            hovered &&
             SPARKS.map((s, i) => (
               <span
                 key={i}
@@ -136,7 +143,7 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
         <div className="flex items-start justify-between mb-4">
           <div
             className={clsx(
-              'w-14 h-14 rounded-xl flex items-center justify-center text-2xl border',
+              'hub-game-card__icon w-14 h-14 rounded-xl flex items-center justify-center text-2xl border',
               game.id === 'dominoes' && 'bg-emerald-500/10 border-emerald-500/25',
               game.id === 'wordgame' && 'bg-sky-500/10 border-sky-500/25',
               game.id === 'bara-alsalafa' && 'bg-rose-500/10 border-rose-500/25'
@@ -162,7 +169,7 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
         </h4>
         <p className="text-hub-muted text-sm mb-3 leading-snug line-clamp-2">{game.tagline}</p>
 
-        {game.id === 'wordgame' && <WordPreview active={hovered} />}
+        {game.id === 'wordgame' && <WordPreview active={game.active && hovered} />}
 
         {!game.active && game.disabledReason && (
           <p className="text-xs text-hub-warning mb-3">{game.disabledReason}</p>
@@ -171,9 +178,9 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
         <div className="flex items-center justify-between mt-4 pt-2 border-t border-hub-border/50">
           <span className="text-xs text-hub-muted font-medium">{game.players} players</span>
           {game.active && (
-            <span className="flex items-center gap-1 text-sm text-hub-accent font-semibold">
-              Play
-              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            <span className="hub-game-card__play flex items-center gap-1.5 text-sm font-semibold">
+              <span className="hub-game-card__play-label">Play</span>
+              <ArrowRight className="hub-game-card__play-arrow w-4 h-4" />
             </span>
           )}
         </div>
@@ -190,10 +197,10 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
     ref: cardRef,
     className: clsx(cardClass, game.active && 'group'),
     style,
-    onMouseMove: handleMove,
-    onMouseEnter: handleEnter,
-    onMouseLeave: handleLeave,
-    'data-hub-cursor': CURSOR_BY_GAME[game.id] ?? 'default',
+    onMouseMove: game.active ? handleMove : undefined,
+    onMouseEnter: game.active ? handleEnter : undefined,
+    onMouseLeave: game.active ? handleLeave : undefined,
+    'data-hub-cursor': game.active ? (CURSOR_BY_GAME[game.id] ?? 'default') : undefined,
   };
 
   if (game.active) {
