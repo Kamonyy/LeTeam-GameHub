@@ -22,11 +22,19 @@ export function getOrCreatePlayerId(): string {
 }
 
 export function getDisplayName(): string {
-  if (typeof window === 'undefined') return 'Player';
-  return sessionStorage.getItem(DISPLAY_NAME_KEY) || 'Player';
+  if (typeof window === 'undefined') return '';
+  return sessionStorage.getItem(DISPLAY_NAME_KEY) || '';
+}
+
+export function hasDisplayName(): boolean {
+  if (typeof window === 'undefined') return false;
+  const name = sessionStorage.getItem(DISPLAY_NAME_KEY);
+  return !!name && name.trim().length > 0;
 }
 
 export function setDisplayName(name: string): void {
   if (typeof window === 'undefined') return;
-  sessionStorage.setItem(DISPLAY_NAME_KEY, name.trim() || 'Player');
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  sessionStorage.setItem(DISPLAY_NAME_KEY, trimmed);
 }

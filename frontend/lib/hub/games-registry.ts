@@ -18,4 +18,13 @@ export const GAMES: GameCatalogEntry[] = [
     players: '2–4',
     icon: '🁢',
   },
+  {
+    id: 'wordgame',
+    name: 'Secret Word',
+    description: '2-player guessing game for voice chat. Choose words, ask clues, score points.',
+    href: '/wordgame',
+    active: true,
+    players: '2',
+    icon: '🔤',
+  },
 ];

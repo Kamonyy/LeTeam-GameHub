@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Check, Users, Crown, LogOut, Play, Settings2, Swords, Handshake } from 'lucide-react';
+import { Copy, Check, Users, Crown, LogOut, Play, Settings2, Swords, Handshake, UserX } from 'lucide-react';
 import clsx from 'clsx';
 import type { LobbyState, MatchSettings } from '@/lib/hub/types';
 import { SCORE_CAP_OPTIONS } from '@/lib/hub/types';
@@ -12,6 +12,7 @@ interface LobbyProps {
   onStartGame: () => void;
   onLeave: () => void;
   onSettingsChange?: (settings: Partial<MatchSettings>) => void;
+  onKickPlayer?: (targetPlayerId: string) => void;
   starting?: boolean;
 }
 
@@ -21,9 +22,11 @@ export default function Lobby({
   onStartGame,
   onLeave,
   onSettingsChange,
+  onKickPlayer,
   starting = false,
 }: LobbyProps) {
   const [copied, setCopied] = useState(false);
+  const [kickingId, setKickingId] = useState<string | null>(null);
   const isHost = lobby.hostId === playerId;
   const connectedCount = lobby.players.filter((p) => p.connected).length;
   const settings = lobby.settings ?? { scoreCap: 100, mode: 'ffa', handSize: 7 };
@@ -46,6 +49,13 @@ export default function Lobby({
   };
 
   const teamModeBlocked = settings.mode === '2v2' && connectedCount !== 4;
+
+  const handleKick = async (targetId: string) => {
+    if (!onKickPlayer) return;
+    setKickingId(targetId);
+    await onKickPlayer(targetId);
+    setKickingId(null);
+  };
 
   return (
     <div className="card max-w-lg w-full mx-auto animate-fade-in">
@@ -214,16 +224,33 @@ export default function Lobby({
                     </span>
                   )}
                 </div>
-                <span
-                  className={clsx(
-                    'text-xs px-2 py-0.5 rounded-full',
-                    player.connected
-                      ? 'bg-hub-success/15 text-hub-success'
-                      : 'bg-hub-warning/15 text-hub-warning'
-                  )}
-                >
-                  {player.connected ? 'Online' : 'Away'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={clsx(
+                      'text-xs px-2 py-0.5 rounded-full',
+                      player.connected
+                        ? 'bg-hub-success/15 text-hub-success'
+                        : 'bg-hub-warning/15 text-hub-warning'
+                    )}
+                  >
+                    {player.connected ? 'Online' : 'Away'}
+                  </span>
+                  {isHost &&
+                    player.id !== playerId &&
+                    lobby.status === 'lobby' &&
+                    onKickPlayer && (
+                      <button
+                        type="button"
+                        onClick={() => handleKick(player.id)}
+                        disabled={kickingId === player.id}
+                        className="p-1.5 rounded-md text-hub-muted hover:text-hub-danger hover:bg-hub-danger/10 transition-colors disabled:opacity-40"
+                        title="Kick player"
+                        aria-label={`Kick ${player.displayName}`}
+                      >
+                        <UserX className="w-4 h-4" />
+                      </button>
+                    )}
+                </div>
               </li>
             );
           })}

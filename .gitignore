@@ -1,3 +1,6 @@
+# Legacy (removed — use server/ + shared/)
+backend/
+
 # Dependencies
 node_modules/
 .pnp

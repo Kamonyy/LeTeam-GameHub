@@ -50,6 +50,28 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true, settings: result.settings });
   });
 
+  socket.on('room:kick', ({ targetPlayerId }, ack) => {
+    if (!targetPlayerId) {
+      ack?.({ error: 'Target player required' });
+      return;
+    }
+    const result = roomManager.kickPlayer(socket, targetPlayerId);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
+  socket.on('game:cancel', (_payload, ack) => {
+    const result = roomManager.cancelMatch(socket);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
   socket.on('game:start', (_payload, ack) => {
     const result = roomManager.startGame(socket);
     if (result?.error) {
@@ -86,6 +108,26 @@ export function registerHandlers(socket, roomManager) {
 
   socket.on('game:pass:request', (_payload, ack) => {
     const result = roomManager.handlePass(socket);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
+  socket.on('word:submit', ({ word }, ack) => {
+    const result = roomManager.handleWordSubmit(socket, word);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
+  socket.on('word:guessed', (_payload, ack) => {
+    const result = roomManager.handleWordGuessed(socket);
     if (result?.error) {
       socket.emit('game:error', { message: result.error });
       ack?.({ error: result.error });

@@ -16,7 +16,7 @@ export function useSocket() {
   const registerPlayer = useCallback((socket, id) => {
     socket.emit(
       'player:register',
-      { playerId: id, displayName: getDisplayName() },
+      { playerId: id, displayName: getDisplayName() || 'Player' },
       () => {}
     );
   }, []);
@@ -54,6 +54,12 @@ export function useSocket() {
       socket.on('lobby:state', (state) => setLobby(state));
       socket.on('game:state:update', (state) => setGameState(state));
       socket.on('reconnect:sync', (payload) => setLobby(payload));
+      socket.on('game:cancelled', () => setGameState(null));
+      socket.on('room:kicked', (payload) => {
+        setLobby(null);
+        setGameState(null);
+        setError(payload?.message || 'You were removed from the room');
+      });
       socket.on('game:error', (err) => setError(err.message));
     })();
 
@@ -69,14 +75,14 @@ export function useSocket() {
 
   const clearError = useCallback(() => setError(null), []);
 
-  const createRoom = useCallback((displayName) => {
+  const createRoom = useCallback((displayName, gameType = 'dominoes') => {
     return new Promise((resolve) => {
       const socket = socketRef.current;
       if (!socket?.connected) {
         resolve(null);
         return;
       }
-      socket.emit('room:create', { displayName, gameType: 'dominoes' }, (res) => {
+      socket.emit('room:create', { displayName, gameType }, (res) => {
         if (res?.error) {
           setError(res.error);
           resolve(null);
@@ -142,6 +148,33 @@ export function useSocket() {
     });
   }, []);
 
+  const kickPlayer = useCallback((targetPlayerId) => {
+    return new Promise((resolve) => {
+      socketRef.current?.emit('room:kick', { targetPlayerId }, (res) => {
+        if (res?.error) {
+          setError(res.error);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  }, []);
+
+  const cancelMatch = useCallback(() => {
+    return new Promise((resolve) => {
+      socketRef.current?.emit('game:cancel', {}, (res) => {
+        if (res?.error) {
+          setError(res.error);
+          resolve(false);
+        } else {
+          setGameState(null);
+          resolve(true);
+        }
+      });
+    });
+  }, []);
+
   const playMove = useCallback((tile, end) => {
     socketRef.current?.emit('game:move:request', { tile, end });
   }, []);
@@ -152,6 +185,32 @@ export function useSocket() {
 
   const passTurn = useCallback(() => {
     socketRef.current?.emit('game:pass:request', {});
+  }, []);
+
+  const submitSecretWord = useCallback((word) => {
+    return new Promise((resolve) => {
+      socketRef.current?.emit('word:submit', { word }, (res) => {
+        if (res?.error) {
+          setError(res.error);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  }, []);
+
+  const confirmWordGuessed = useCallback(() => {
+    return new Promise((resolve) => {
+      socketRef.current?.emit('word:guessed', {}, (res) => {
+        if (res?.error) {
+          setError(res.error);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
   }, []);
 
   return {
@@ -166,8 +225,12 @@ export function useSocket() {
     leaveRoom,
     updateRoomSettings,
     startGame,
+    kickPlayer,
+    cancelMatch,
     playMove,
     drawTile,
     passTurn,
+    submitSecretWord,
+    confirmWordGuessed,
   };
 }

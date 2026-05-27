@@ -8,11 +8,10 @@ import { useSocket } from '@/hooks/useSocket';
 import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
 import ErrorToast from '@/components/shared/ErrorToast';
-import Lobby from '@/games/dominoes/components/Lobby';
-import GameBoard from '@/games/dominoes/components/GameBoard';
-import type { GameState } from '@/games/dominoes/types';
+import WordLobby from '@/games/wordgame/components/WordLobby';
+import WordGameBoard from '@/games/wordgame/components/WordGameBoard';
 
-export default function DominoesClient() {
+export default function WordGameClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const roomParam = searchParams.get('room');
@@ -27,13 +26,11 @@ export default function DominoesClient() {
     createRoom,
     joinRoom,
     leaveRoom,
-    updateRoomSettings,
     startGame,
     kickPlayer,
     cancelMatch,
-    playMove,
-    drawTile,
-    passTurn,
+    submitSecretWord,
+    confirmWordGuessed,
   } = useSocket();
 
   const [displayName, setDisplayNameState] = useState('');
@@ -44,6 +41,13 @@ export default function DominoesClient() {
   const [autoJoined, setAutoJoined] = useState(false);
 
   const inviteJoin = !!roomParam && !hasDisplayName();
+  const wordState =
+    lobby?.gameType === 'wordgame' &&
+    gameState &&
+    'gameType' in gameState &&
+    gameState.gameType === 'wordgame'
+      ? gameState
+      : null;
 
   useEffect(() => {
     setDisplayNameState(getDisplayName());
@@ -54,10 +58,9 @@ export default function DominoesClient() {
 
     const attemptJoin = async () => {
       setLoading(true);
-      const name = getDisplayName();
-      const ok = await joinRoom(roomParam, name);
+      const ok = await joinRoom(roomParam, getDisplayName());
       if (ok) {
-        router.replace(`/dominoes?room=${roomParam.toUpperCase()}`, { scroll: false });
+        router.replace(`/wordgame?room=${roomParam.toUpperCase()}`, { scroll: false });
       }
       setAutoJoined(true);
       setLoading(false);
@@ -70,8 +73,8 @@ export default function DominoesClient() {
     if (!displayName.trim()) return;
     setLoading(true);
     setDisplayName(displayName);
-    const roomId = await createRoom(displayName.trim());
-    if (roomId) router.push(`/dominoes?room=${roomId}`);
+    const roomId = await createRoom(displayName.trim(), 'wordgame');
+    if (roomId) router.push(`/wordgame?room=${roomId}`);
     setLoading(false);
   };
 
@@ -80,7 +83,7 @@ export default function DominoesClient() {
     setLoading(true);
     setDisplayName(displayName);
     const ok = await joinRoom(joinCode.trim(), displayName.trim());
-    if (ok) router.push(`/dominoes?room=${joinCode.trim().toUpperCase()}`);
+    if (ok) router.push(`/wordgame?room=${joinCode.trim().toUpperCase()}`);
     setLoading(false);
   };
 
@@ -90,33 +93,22 @@ export default function DominoesClient() {
     setDisplayName(displayName);
     const ok = await joinRoom(roomParam, displayName.trim());
     if (ok) {
-      router.replace(`/dominoes?room=${roomParam.toUpperCase()}`, { scroll: false });
+      router.replace(`/wordgame?room=${roomParam.toUpperCase()}`, { scroll: false });
     }
     setAutoJoined(true);
     setLoading(false);
   };
 
   const handleCancelMatch = async () => {
-    if (!confirm('Cancel the match and return everyone to the lobby?')) return;
+    if (!confirm('Cancel the match and return to the lobby? Scores will reset.')) return;
     setCancelling(true);
     await cancelMatch();
     setCancelling(false);
   };
 
   const isHost = lobby?.hostId === playerId;
-  const dominoesState =
-    lobby?.gameType === 'dominoes' && gameState && 'board' in gameState
-      ? (gameState as GameState)
-      : null;
-  const inGame =
-    lobby?.status === 'playing' &&
-    dominoesState &&
-    dominoesState.phase === 'playing';
-  const inPostGame =
-    dominoesState &&
-    (dominoesState.phase === 'round_over' || dominoesState.phase === 'match_over');
   const inLobby = lobby && lobby.status === 'lobby';
-  const inActiveMatch = lobby?.status === 'playing' && (inGame || inPostGame);
+  const inGame = lobby?.status === 'playing' && wordState;
 
   return (
     <main className="min-h-screen">
@@ -126,10 +118,10 @@ export default function DominoesClient() {
             <Link href="/" className="text-hub-muted hover:text-white transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <h1 className="text-lg font-semibold">Dominoes</h1>
+            <h1 className="text-lg font-semibold">Secret Word</h1>
           </div>
           <div className="flex items-center gap-3">
-            {isHost && inActiveMatch && (
+            {isHost && inGame && (
               <button
                 onClick={handleCancelMatch}
                 disabled={cancelling}
@@ -150,14 +142,14 @@ export default function DominoesClient() {
             <div className="card mb-6">
               <div className="flex items-center gap-2 text-hub-accent mb-4">
                 <UserPlus className="w-5 h-5" />
-                <h2 className="text-lg font-semibold">Join Room</h2>
+                <h2 className="text-lg font-semibold">Join Secret Word</h2>
               </div>
               <p className="text-sm text-hub-muted mb-4">
-                You&apos;ve been invited to room{' '}
+                Invited to room{' '}
                 <span className="font-mono font-bold text-white tracking-widest">
                   {roomParam}
                 </span>
-                . Choose a display name to continue.
+                . Choose a display name first.
               </p>
               <label className="block text-sm text-hub-muted mb-2">Display Name</label>
               <input
@@ -178,11 +170,6 @@ export default function DominoesClient() {
                 {loading ? 'Joining…' : 'Join Room'}
               </button>
             </div>
-            {!connected && (
-              <p className="text-center text-sm text-hub-warning animate-pulse-soft">
-                Connecting to server…
-              </p>
-            )}
           </div>
         )}
 
@@ -231,19 +218,13 @@ export default function DominoesClient() {
                 </button>
               </div>
             </div>
-            {!connected && (
-              <p className="text-center text-sm text-hub-warning animate-pulse-soft">
-                Connecting to server…
-              </p>
-            )}
           </div>
         )}
 
         {inLobby && (
-          <Lobby
+          <WordLobby
             lobby={lobby}
             playerId={playerId}
-            onSettingsChange={updateRoomSettings}
             onKickPlayer={kickPlayer}
             onStartGame={async () => {
               setStarting(true);
@@ -252,20 +233,19 @@ export default function DominoesClient() {
             }}
             onLeave={() => {
               leaveRoom();
-              router.push('/dominoes');
+              router.push('/wordgame');
             }}
             starting={starting}
           />
         )}
 
-        {(inGame || inPostGame || (lobby?.status === 'finished' && dominoesState)) && (
-          <GameBoard
-            gameState={dominoesState!}
-            lobby={lobby!}
+        {inGame && wordState && (
+          <WordGameBoard
+            gameState={wordState}
+            lobby={lobby}
             playerId={playerId}
-            onPlayMove={playMove}
-            onDraw={drawTile}
-            onPass={passTurn}
+            onSubmitWord={submitSecretWord}
+            onConfirmGuessed={confirmWordGuessed}
           />
         )}
       </div>

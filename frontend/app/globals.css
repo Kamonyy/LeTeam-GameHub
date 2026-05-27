@@ -112,4 +112,12 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   }
+
+  .word-panel {
+    @apply rounded-xl border border-hub-border bg-hub-card/90 backdrop-blur-sm;
+  }
+
+  .word-scratchpad {
+    @apply rounded-xl border border-hub-border bg-hub-surface/90 overflow-hidden;
+  }
 }
