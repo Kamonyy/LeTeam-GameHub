@@ -1,64 +1,11 @@
-/**
- * LeTeam Game Hub — Authoritative Game Server
- *
- * HTTP + WebSocket upgrade via Express + Socket.io.
- * All game logic is server-side; clients are render-only.
- *
- * Environment:
- *   PORT          — HTTP/WS port (default 3001)
- *   CLIENT_URL    — Comma-separated allowed frontend origins for CORS
- */
+/** Hub + dominoes socket event wiring (shared by Worker and local server). */
 
-import express from 'express';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
-import cors from 'cors';
-import { RoomManager } from './managers/RoomManager.js';
-import {
-  createCorsOriginChecker,
-  parseAllowedOrigins,
-} from './config/cors.js';
-
-const PORT = parseInt(process.env.PORT || '3001', 10);
-const HOST = process.env.HOST || '0.0.0.0';
-const allowedOrigins = parseAllowedOrigins(process.env.CLIENT_URL);
-const corsOrigin = createCorsOriginChecker(allowedOrigins);
-
-const app = express();
-
-app.use(
-  cors({
-    origin: corsOrigin,
-    credentials: true,
-  })
-);
-
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: Date.now() });
-});
-
-const httpServer = createServer(app);
-
-const io = new Server(httpServer, {
-  cors: {
-    origin: corsOrigin,
-    methods: ['GET', 'POST'],
-    credentials: true,
-  },
-  pingInterval: 10_000,
-  pingTimeout: 5_000,
-  transports: ['websocket', 'polling'],
-});
-
-const roomManager = new RoomManager(io);
-
-io.on('connection', (socket) => {
+export function registerHandlers(socket, roomManager) {
   socket.on('player:register', ({ playerId, displayName }, ack) => {
     if (!playerId || typeof playerId !== 'string') {
       ack?.({ error: 'Invalid playerId' });
       return;
     }
-
     const result = roomManager.registerPlayer(
       socket,
       playerId,
@@ -67,8 +14,8 @@ io.on('connection', (socket) => {
     ack?.({ success: true, ...result });
   });
 
-  socket.on('room:create', ({ displayName }, ack) => {
-    const result = roomManager.createRoom(socket, displayName);
+  socket.on('room:create', ({ displayName, gameType }, ack) => {
+    const result = roomManager.createRoom(socket, displayName, gameType);
     if (result.error) {
       ack?.({ error: result.error });
       return;
@@ -94,6 +41,15 @@ io.on('connection', (socket) => {
     ack?.({ success: true });
   });
 
+  socket.on('room:settings:update', (settings, ack) => {
+    const result = roomManager.updateRoomSettings(socket, settings);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, settings: result.settings });
+  });
+
   socket.on('game:start', (_payload, ack) => {
     const result = roomManager.startGame(socket);
     if (result?.error) {
@@ -109,7 +65,6 @@ io.on('connection', (socket) => {
       ack?.({ error: 'Invalid move payload' });
       return;
     }
-
     const result = roomManager.handleMove(socket, tile, end);
     if (result?.error) {
       socket.emit('game:error', { message: result.error });
@@ -142,9 +97,4 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     roomManager.handleDisconnect(socket);
   });
-});
-
-httpServer.listen(PORT, HOST, () => {
-  console.log(`Game Hub server listening on ${HOST}:${PORT}`);
-  console.log(`CORS allowed origins: ${allowedOrigins.join(', ')} (+ *.pages.dev)`);
-});
+}

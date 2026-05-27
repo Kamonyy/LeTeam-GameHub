@@ -5,17 +5,14 @@ import clsx from 'clsx';
 interface DominoTileProps {
   left: number;
   right: number;
-  /** Horizontal layout on the board */
   horizontal?: boolean;
-  /** Highlight as playable */
   playable?: boolean;
-  /** Selected state in hand */
   selected?: boolean;
-  /** Smaller tile for board display */
   compact?: boolean;
+  placed?: boolean;
   onClick?: () => void;
-  /** Which end this tile would connect to (for preview) */
   connectEnd?: 'left' | 'right' | null;
+  className?: string;
 }
 
 function Pip({ value }: { value: number }) {
@@ -57,11 +54,11 @@ function Pip({ value }: { value: number }) {
   const dots = positions[value] || [];
 
   return (
-    <div className="relative w-full h-full grid grid-cols-3 grid-rows-3 p-0.5">
+    <div className="relative w-full h-full">
       {dots.map(([row, col], i) => (
         <span
           key={i}
-          className="absolute w-[22%] h-[22%] rounded-full bg-gray-800"
+          className="domino-pip absolute rounded-full"
           style={{
             top: `${row * 33 + 16}%`,
             left: `${col * 33 + 16}%`,
@@ -75,8 +72,8 @@ function Pip({ value }: { value: number }) {
 
 function Half({ value }: { value: number }) {
   return (
-    <div className="flex-1 flex items-center justify-center bg-[#f5f0e8] rounded-sm min-w-0">
-      <div className="w-full h-full max-w-[90%] max-h-[90%] aspect-square">
+    <div className="domino-face flex-1 flex items-center justify-center min-w-0 relative overflow-hidden">
+      <div className="w-[88%] h-[88%] aspect-square relative z-[1]">
         <Pip value={value} />
       </div>
     </div>
@@ -90,17 +87,26 @@ export default function DominoTile({
   playable = false,
   selected = false,
   compact = false,
+  placed = false,
   onClick,
   connectEnd = null,
+  className,
 }: DominoTileProps) {
   const isDouble = left === right;
+  const boardHorizontal = horizontal && !isDouble;
+  const boardVertical = isDouble && compact;
+
   const size = compact
-    ? horizontal
-      ? 'w-14 h-7'
-      : 'w-7 h-14'
+    ? boardVertical
+      ? 'w-8 h-16'
+      : boardHorizontal
+        ? 'w-14 h-7'
+        : 'w-7 h-14'
     : horizontal
       ? 'w-20 h-10'
-      : 'w-10 h-20';
+      : 'w-11 h-[5.5rem]';
+
+  const layoutHorizontal = compact ? boardHorizontal : horizontal;
 
   return (
     <button
@@ -108,25 +114,28 @@ export default function DominoTile({
       onClick={onClick}
       disabled={!onClick}
       className={clsx(
-        'relative flex bg-[#e8e0d4] rounded-md border-2 shadow-md transition-all duration-200',
+        'domino-tile relative flex rounded-md transition-all duration-300 ease-out',
         size,
-        horizontal ? 'flex-row' : 'flex-col',
-        isDouble && 'border-hub-accent/40',
-        playable && 'ring-2 ring-hub-success/60 hover:scale-105 cursor-pointer',
-        selected && 'ring-2 ring-hub-accent scale-105 -translate-y-1 shadow-lg',
-        onClick && !playable && 'hover:scale-102 cursor-pointer hover:-translate-y-0.5',
+        layoutHorizontal ? 'flex-row' : 'flex-col',
+        placed && 'domino-placed animate-tile-snap',
+        playable && 'domino-playable cursor-pointer',
+        selected && 'domino-selected',
+        onClick && !playable && 'cursor-pointer domino-hover',
         !onClick && 'cursor-default',
-        connectEnd === 'left' && 'ring-2 ring-hub-accent/50',
-        connectEnd === 'right' && 'ring-2 ring-hub-accent/50'
+        connectEnd && 'ring-2 ring-emerald-400/70',
+        className
       )}
     >
+      <div className="domino-body absolute inset-0 rounded-md" />
       <Half value={left} />
       <div
         className={clsx(
-          'bg-gray-400 shrink-0',
-          horizontal ? 'w-px h-full' : 'h-px w-full'
+          'domino-spine shrink-0 relative z-[2]',
+          layoutHorizontal ? 'w-[2px] h-full' : 'h-[2px] w-full'
         )}
-      />
+      >
+        <div className="domino-rivet absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+      </div>
       <Half value={right} />
     </button>
   );

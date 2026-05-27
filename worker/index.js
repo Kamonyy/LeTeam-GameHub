@@ -1,9 +1,5 @@
 /**
- * Cloudflare Worker — static frontend + Socket.io game server on one domain.
- *
- * /socket.io/*  → Durable Objects (socket.io-serverless)
- * /health       → health check
- * everything else → frontend/out static assets
+ * Cloudflare Worker — static frontend + Socket.io on one domain.
  */
 
 import {
@@ -11,8 +7,8 @@ import {
   createSioActor,
   generateBase64id,
 } from 'socket.io-serverless/dist/cf';
-import { RoomManager } from './roomManager.js';
-import { registerGameHandlers } from './handlers.js';
+import { RoomManager } from '../shared/hub/RoomManager.js';
+import { registerHandlers } from '../shared/hub/registerHandlers.js';
 
 /** @type {RoomManager | null} */
 let roomManager = null;
@@ -25,15 +21,15 @@ export const EngineActor = createEioActor({
 
 export const SocketActor = createSioActor({
   async onServerCreated(server) {
-    roomManager = new RoomManager(server);
+    roomManager = new RoomManager(server, { useSocketRooms: false });
     server.on('connection', (socket) => {
-      registerGameHandlers(socket, roomManager);
+      registerHandlers(socket, roomManager);
     });
   },
 
   async onServerStateRestored(server) {
     if (!roomManager) {
-      roomManager = new RoomManager(server);
+      roomManager = new RoomManager(server, { useSocketRooms: false });
     }
   },
 
@@ -43,7 +39,6 @@ export const SocketActor = createSioActor({
 });
 
 export default {
-  /** @param {Request} req @param {Record<string, DurableObjectNamespace>} env */
   async fetch(req, env) {
     const url = new URL(req.url);
 

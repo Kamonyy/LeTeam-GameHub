@@ -1,67 +1,34 @@
 /**
- * RoomManager — Room lifecycle, player sessions, disconnect grace periods,
- * and socket event routing to game engines.
- *
- * Reconnection flow:
- *   1. Client stores playerId in sessionStorage and sends it on connect
- *   2. On disconnect, player slot is marked disconnected (not removed)
- *   3. Room state + game engine persist for DISCONNECT_GRACE_MS (60s)
- *   4. Reconnecting socket with same playerId rebinds to the slot
- *   5. Client receives reconnect:sync with full lobby/game state
+ * Hub room manager — game-agnostic lobby/session layer.
+ * useSocketRooms: true for Node (socket.join); false for Cloudflare DO (direct emit).
  */
 
-import { randomBytes } from 'crypto';
-import { DominoEngine } from '../games/DominoEngine.js';
-
-/** Grace period before evicting a disconnected player's slot. */
-export const DISCONNECT_GRACE_MS = 60_000;
-
-/** Turn timer tick interval on the server. */
-const TURN_TIMER_TICK_MS = 1000;
-
-/** Max players per room. */
-const MAX_PLAYERS = 4;
-
-/** Min players to start. */
-const MIN_PLAYERS = 2;
-
-/**
- * Generate a short readable room code (4–6 alphanumeric chars).
- * @returns {string}
- */
-export function generateRoomId() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const length = 4 + Math.floor(Math.random() * 3); // 4–6
-  const bytes = randomBytes(length);
-  let code = '';
-  for (let i = 0; i < length; i++) {
-    code += chars[bytes[i] % chars.length];
-  }
-  return code;
-}
+import {
+  DEFAULT_MATCH_SETTINGS,
+  DISCONNECT_GRACE_MS,
+  ROUND_RESTART_DELAY_MS,
+  SCORE_CAP_OPTIONS,
+  TURN_TIMER_TICK_MS,
+} from './constants.js';
+import { generateRoomId } from './generateRoomId.js';
+import { getGame } from '../games/registry.js';
 
 export class RoomManager {
-  constructor(io) {
+  /**
+   * @param {import('socket.io').Server} io
+   * @param {{ useSocketRooms?: boolean }} options
+   */
+  constructor(io, { useSocketRooms = false } = {}) {
     this.io = io;
-    /** @type {Map<string, Room>} */
+    this.useSocketRooms = useSocketRooms;
     this.rooms = new Map();
-    /** @type {Map<string, string>} socketId → playerId */
     this.socketToPlayer = new Map();
-    /** @type {Map<string, string>} playerId → socketId */
     this.playerToSocket = new Map();
-    /** @type {Map<string, string>} playerId → roomId */
     this.playerToRoom = new Map();
-
     this._startTurnTimerLoop();
     this._startCleanupLoop();
   }
 
-  /**
-   * Register or restore a player session.
-   * @param {import('socket.io').Socket} socket
-   * @param {string} playerId
-   * @param {string} displayName
-   */
   registerPlayer(socket, playerId, displayName) {
     this.socketToPlayer.set(socket.id, playerId);
 
@@ -71,7 +38,6 @@ export class RoomManager {
       if (room) {
         const player = room.players.find((p) => p.id === playerId);
         if (player) {
-          // Rebind socket — reconnection path
           if (player.disconnectTimer) {
             clearTimeout(player.disconnectTimer);
             player.disconnectTimer = null;
@@ -79,7 +45,7 @@ export class RoomManager {
           player.connected = true;
           player.displayName = displayName || player.displayName;
           this.playerToSocket.set(playerId, socket.id);
-          socket.join(existingRoomId);
+          if (this.useSocketRooms) socket.join(existingRoomId);
 
           if (room.game && room.status === 'playing') {
             room.game.resumeTurnTimer();
@@ -96,28 +62,22 @@ export class RoomManager {
     return { reconnected: false };
   }
 
-  /**
-   * @param {import('socket.io').Socket} socket
-   * @param {string} displayName
-   */
-  createRoom(socket, displayName) {
+  createRoom(socket, displayName, gameType = 'dominoes') {
     const playerId = this.socketToPlayer.get(socket.id);
     if (!playerId) return { error: 'Not registered' };
+    if (this.playerToRoom.has(playerId)) return { error: 'Already in a room' };
 
-    if (this.playerToRoom.has(playerId)) {
-      return { error: 'Already in a room' };
-    }
+    const game = getGame(gameType);
+    if (!game) return { error: 'Unknown game type' };
 
     let roomId = generateRoomId();
-    while (this.rooms.has(roomId)) {
-      roomId = generateRoomId();
-    }
+    while (this.rooms.has(roomId)) roomId = generateRoomId();
 
     const room = {
       id: roomId,
       hostId: playerId,
-      status: 'lobby', // lobby | playing | finished
-      gameType: 'dominoes',
+      status: 'lobby',
+      gameType,
       players: [
         {
           id: playerId,
@@ -127,28 +87,28 @@ export class RoomManager {
         },
       ],
       game: null,
+      settings: { ...DEFAULT_MATCH_SETTINGS },
+      nextRoundTimer: null,
       createdAt: Date.now(),
     };
 
     this.rooms.set(roomId, room);
     this.playerToRoom.set(playerId, roomId);
-    socket.join(roomId);
+    if (this.useSocketRooms) socket.join(roomId);
 
     this.broadcastLobbyState(roomId);
     return { roomId };
   }
 
-  /**
-   * @param {import('socket.io').Socket} socket
-   * @param {string} roomId
-   * @param {string} displayName
-   */
   joinRoom(socket, roomId, displayName) {
     const playerId = this.socketToPlayer.get(socket.id);
     if (!playerId) return { error: 'Not registered' };
 
     const room = this.rooms.get(roomId.toUpperCase());
     if (!room) return { error: 'Room not found' };
+
+    const gameDef = getGame(room.gameType);
+    if (!gameDef) return { error: 'Invalid room game type' };
 
     if (room.status === 'playing') {
       const existing = room.players.find((p) => p.id === playerId);
@@ -164,7 +124,7 @@ export class RoomManager {
       alreadyIn.connected = true;
       alreadyIn.displayName = displayName || alreadyIn.displayName;
     } else {
-      if (room.players.length >= MAX_PLAYERS) {
+      if (room.players.length >= gameDef.maxPlayers) {
         return { error: 'Room is full' };
       }
       room.players.push({
@@ -176,15 +136,12 @@ export class RoomManager {
     }
 
     this.playerToRoom.set(playerId, roomId.toUpperCase());
-    socket.join(roomId.toUpperCase());
+    if (this.useSocketRooms) socket.join(roomId.toUpperCase());
 
     this.broadcastLobbyState(roomId.toUpperCase());
     return { roomId: roomId.toUpperCase() };
   }
 
-  /**
-   * @param {import('socket.io').Socket} socket
-   */
   leaveRoom(socket) {
     const playerId = this.socketToPlayer.get(socket.id);
     if (!playerId) return;
@@ -192,13 +149,10 @@ export class RoomManager {
     const roomId = this.playerToRoom.get(playerId);
     if (!roomId) return;
 
+    if (this.useSocketRooms) socket.leave(roomId);
     this._removePlayerFromRoom(playerId, roomId);
-    socket.leave(roomId);
   }
 
-  /**
-   * @param {import('socket.io').Socket} socket
-   */
   startGame(socket) {
     const playerId = this.socketToPlayer.get(socket.id);
     const roomId = this.playerToRoom.get(playerId);
@@ -209,25 +163,50 @@ export class RoomManager {
     if (room.hostId !== playerId) return { error: 'Only the host can start' };
     if (room.status !== 'lobby') return { error: 'Game already started' };
 
+    const gameDef = getGame(room.gameType);
+    if (!gameDef) return { error: 'Invalid game type' };
+
     const connectedPlayers = room.players.filter((p) => p.connected);
-    if (connectedPlayers.length < MIN_PLAYERS) {
-      return { error: `Need at least ${MIN_PLAYERS} players` };
+    if (connectedPlayers.length < gameDef.minPlayers) {
+      return { error: `Need at least ${gameDef.minPlayers} players` };
     }
 
-    const playerIds = connectedPlayers.map((p) => p.id);
-    room.game = new DominoEngine(playerIds);
-    room.status = 'playing';
+    if (room.settings.mode === '2v2' && connectedPlayers.length !== 4) {
+      return { error: '2v2 Team Mode requires exactly 4 players' };
+    }
 
+    room.game = gameDef.createEngine(
+      connectedPlayers.map((p) => p.id),
+      room.settings
+    );
+    room.status = 'playing';
     this.broadcastGameState(roomId);
     this.broadcastLobbyState(roomId);
     return { success: true };
   }
 
-  /**
-   * @param {import('socket.io').Socket} socket
-   * @param {{ left: number, right: number }} tile
-   * @param {'left' | 'right'} end
-   */
+  updateRoomSettings(socket, settings) {
+    const playerId = this.socketToPlayer.get(socket.id);
+    const roomId = this.playerToRoom.get(playerId);
+    if (!roomId) return { error: 'Not in a room' };
+
+    const room = this.rooms.get(roomId);
+    if (!room) return { error: 'Room not found' };
+    if (room.hostId !== playerId) return { error: 'Only the host can change settings' };
+    if (room.status !== 'lobby') return { error: 'Cannot change settings after start' };
+
+    if (settings?.scoreCap && SCORE_CAP_OPTIONS.includes(settings.scoreCap)) {
+      room.settings.scoreCap = settings.scoreCap;
+    }
+
+    if (settings?.mode === 'ffa' || settings?.mode === '2v2') {
+      room.settings.mode = settings.mode;
+    }
+
+    this.broadcastLobbyState(roomId);
+    return { success: true, settings: room.settings };
+  }
+
   handleMove(socket, tile, end) {
     const playerId = this.socketToPlayer.get(socket.id);
     const roomId = this.playerToRoom.get(playerId);
@@ -237,17 +216,12 @@ export class RoomManager {
     if (!room?.game) return { error: 'No active game' };
 
     const result = room.game.playMove(playerId, tile, end);
-    if (!result.success) {
-      return { error: result.error };
-    }
+    if (!result.success) return { error: result.error };
 
     this.broadcastGameState(roomId);
     return { success: true };
   }
 
-  /**
-   * @param {import('socket.io').Socket} socket
-   */
   handleDraw(socket) {
     const playerId = this.socketToPlayer.get(socket.id);
     const roomId = this.playerToRoom.get(playerId);
@@ -257,17 +231,12 @@ export class RoomManager {
     if (!room?.game) return { error: 'No active game' };
 
     const result = room.game.drawTile(playerId);
-    if (!result.success) {
-      return { error: result.error };
-    }
+    if (!result.success) return { error: result.error };
 
     this.broadcastGameState(roomId);
     return { success: true };
   }
 
-  /**
-   * @param {import('socket.io').Socket} socket
-   */
   handlePass(socket) {
     const playerId = this.socketToPlayer.get(socket.id);
     const roomId = this.playerToRoom.get(playerId);
@@ -277,18 +246,12 @@ export class RoomManager {
     if (!room?.game) return { error: 'No active game' };
 
     const result = room.game.passTurn(playerId);
-    if (!result.success) {
-      return { error: result.error };
-    }
+    if (!result.success) return { error: result.error };
 
     this.broadcastGameState(roomId);
     return { success: true };
   }
 
-  /**
-   * Handle socket disconnect — mark player offline, start grace timer.
-   * @param {import('socket.io').Socket} socket
-   */
   handleDisconnect(socket) {
     const playerId = this.socketToPlayer.get(socket.id);
     if (!playerId) return;
@@ -318,10 +281,6 @@ export class RoomManager {
     this.broadcastLobbyState(roomId);
   }
 
-  /**
-   * @param {string} playerId
-   * @param {string} roomId
-   */
   _removePlayerFromRoom(playerId, roomId) {
     const room = this.rooms.get(roomId);
     if (!room) return;
@@ -338,21 +297,23 @@ export class RoomManager {
       room.hostId = room.players[0].id;
     }
 
-    if (room.status === 'playing' && room.players.length < MIN_PLAYERS) {
+    const gameDef = getGame(room.gameType);
+    if (
+      room.status === 'playing' &&
+      gameDef &&
+      room.players.length < gameDef.minPlayers
+    ) {
       room.status = 'finished';
     }
 
     this.broadcastLobbyState(roomId);
   }
 
-  /**
-   * Emit lobby:state to all clients in a room.
-   * @param {string} roomId
-   */
   broadcastLobbyState(roomId) {
     const room = this.rooms.get(roomId);
     if (!room) return;
 
+    const gameDef = getGame(room.gameType);
     const payload = {
       roomId: room.id,
       hostId: room.hostId,
@@ -363,23 +324,25 @@ export class RoomManager {
         displayName: p.displayName,
         connected: p.connected,
       })),
-      minPlayers: MIN_PLAYERS,
-      maxPlayers: MAX_PLAYERS,
+      minPlayers: gameDef?.minPlayers ?? 2,
+      maxPlayers: gameDef?.maxPlayers ?? 4,
+      settings: { ...room.settings },
     };
 
-    this.io.to(roomId).emit('lobby:state', payload);
+    this._emitToRoom(room, 'lobby:state', payload);
   }
 
-  /**
-   * Emit personalized game:state:update to each player in the room.
-   * @param {string} roomId
-   */
   broadcastGameState(roomId) {
     const room = this.rooms.get(roomId);
     if (!room?.game) return;
 
-    if (room.game.phase === 'finished') {
+    if (room.game.phase === 'match_over') {
       room.status = 'finished';
+      this._clearNextRoundTimer(room);
+    } else if (room.game.phase === 'round_over') {
+      this._scheduleNextRound(roomId, room);
+    } else {
+      this._clearNextRoundTimer(room);
     }
 
     for (const player of room.players) {
@@ -388,25 +351,35 @@ export class RoomManager {
       if (!socketId) continue;
 
       const state = room.game.serializeForPlayer(player.id);
-      this.io.to(socketId).emit('game:state:update', {
-        roomId,
-        ...state,
-      });
+      this.io.to(socketId).emit('game:state:update', { roomId, ...state });
     }
 
-    if (room.game.phase === 'finished') {
+    if (room.game.phase === 'match_over') {
       this.broadcastLobbyState(roomId);
     }
   }
 
-  /**
-   * Full resync payload for reconnecting clients.
-   * @param {import('socket.io').Socket} socket
-   * @param {object} room
-   * @param {string} playerId
-   */
+  _scheduleNextRound(roomId, room) {
+    if (room.nextRoundTimer) return;
+
+    room.nextRoundTimer = setTimeout(() => {
+      room.nextRoundTimer = null;
+      if (room.game?.phase === 'round_over') {
+        room.game.startNextRound();
+        this.broadcastGameState(roomId);
+      }
+    }, ROUND_RESTART_DELAY_MS);
+  }
+
+  _clearNextRoundTimer(room) {
+    if (room.nextRoundTimer) {
+      clearTimeout(room.nextRoundTimer);
+      room.nextRoundTimer = null;
+    }
+  }
+
   _emitReconnectSync(socket, room, playerId) {
-    const payload = {
+    socket.emit('reconnect:sync', {
       roomId: room.id,
       hostId: room.hostId,
       status: room.status,
@@ -416,9 +389,10 @@ export class RoomManager {
         displayName: p.displayName,
         connected: p.connected,
       })),
-    };
-
-    socket.emit('reconnect:sync', payload);
+      settings: { ...room.settings },
+      minPlayers: getGame(room.gameType)?.minPlayers ?? 2,
+      maxPlayers: getGame(room.gameType)?.maxPlayers ?? 4,
+    });
 
     if (room.game && room.status === 'playing') {
       const state = room.game.serializeForPlayer(playerId);
@@ -426,7 +400,18 @@ export class RoomManager {
     }
   }
 
-  /** Server-side turn timer loop — auto-play on timeout. */
+  _emitToRoom(room, event, payload) {
+    if (this.useSocketRooms) {
+      this.io.to(room.id).emit(event, payload);
+      return;
+    }
+    for (const player of room.players) {
+      const socketId = this.playerToSocket.get(player.id);
+      if (!socketId) continue;
+      this.io.to(socketId).emit(event, payload);
+    }
+  }
+
   _startTurnTimerLoop() {
     setInterval(() => {
       for (const [roomId, room] of this.rooms) {
@@ -446,7 +431,6 @@ export class RoomManager {
     }, TURN_TIMER_TICK_MS);
   }
 
-  /** Evict empty/stale rooms periodically. */
   _startCleanupLoop() {
     setInterval(() => {
       const now = Date.now();

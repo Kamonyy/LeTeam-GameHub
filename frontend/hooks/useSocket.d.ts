@@ -1,4 +1,5 @@
-import type { GameState, LobbyState } from '@/lib/types';
+import type { LobbyState, MatchSettings } from '@/lib/hub/types';
+import type { GameState, Tile } from '@/games/dominoes/types';
 
 export interface UseSocketReturn {
   connected: boolean;
@@ -10,8 +11,9 @@ export interface UseSocketReturn {
   createRoom: (displayName: string) => Promise<string | null>;
   joinRoom: (roomId: string, displayName: string) => Promise<boolean>;
   leaveRoom: () => void;
+  updateRoomSettings: (settings: Partial<MatchSettings>) => Promise<boolean>;
   startGame: () => Promise<boolean>;
-  playMove: (tile: { left: number; right: number }, end: 'left' | 'right') => void;
+  playMove: (tile: Tile, end: 'left' | 'right') => void;
   drawTile: () => void;
   passTurn: () => void;
 }

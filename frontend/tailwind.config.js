@@ -3,6 +3,7 @@ module.exports = {
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './games/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
@@ -27,6 +28,9 @@ module.exports = {
         'fade-in': 'fadeIn 0.3s ease-out',
         'slide-up': 'slideUp 0.3s ease-out',
         'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+        'tile-snap': 'tileSnap 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'drop-glow': 'dropGlow 1.5s ease-in-out infinite',
+        'overlay-pop': 'overlayPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
       },
       keyframes: {
         fadeIn: {
@@ -40,6 +44,24 @@ module.exports = {
         pulseSoft: {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.6' },
+        },
+        tileSnap: {
+          '0%': { opacity: '0.6', transform: 'scale(0.85) translateY(12px)' },
+          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        dropGlow: {
+          '0%, 100%': {
+            boxShadow: '0 0 12px rgba(52, 211, 153, 0.25)',
+            borderColor: 'rgba(52, 211, 153, 0.5)',
+          },
+          '50%': {
+            boxShadow: '0 0 24px rgba(52, 211, 153, 0.55)',
+            borderColor: 'rgba(52, 211, 153, 0.85)',
+          },
+        },
+        overlayPop: {
+          '0%': { opacity: '0', transform: 'scale(0.7)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
         },
       },
     },

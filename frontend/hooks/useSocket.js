@@ -1,19 +1,9 @@
 'use client';
 
-/**
- * useSocket — React hook for Socket.io connection lifecycle.
- *
- * Resolves server URL at runtime via /config.json (production) before connecting.
- */
-
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
-import {
-  getDisplayName,
-  getOrCreatePlayerId,
-  isSameOriginServer,
-  resolveServerUrl,
-} from '@/lib/player';
+import { getDisplayName, getOrCreatePlayerId } from '@/lib/player';
+import { isSameOriginServer, resolveServerUrl } from '@/lib/socket-url';
 
 export function useSocket() {
   const socketRef = useRef(null);
@@ -22,26 +12,18 @@ export function useSocket() {
   const [lobby, setLobby] = useState(null);
   const [gameState, setGameState] = useState(null);
   const [error, setError] = useState(null);
-  const [serverOffline, setServerOffline] = useState(false);
-  const connectAttempts = useRef(0);
 
   const registerPlayer = useCallback((socket, id) => {
-    const name = getDisplayName();
     socket.emit(
       'player:register',
-      { playerId: id, displayName: name },
-      (res) => {
-        if (res?.reconnected && res.roomId) {
-          // Server restored session — lobby/game events will follow
-        }
-      }
+      { playerId: id, displayName: getDisplayName() },
+      () => {}
     );
   }, []);
 
   useEffect(() => {
     let cancelled = false;
     let socket = null;
-
     const id = getOrCreatePlayerId();
     setPlayerId(id);
 
@@ -49,16 +31,15 @@ export function useSocket() {
       const serverUrl = await resolveServerUrl();
       if (cancelled) return;
 
-      // Cloudflare Worker uses WebSocket-only; Node dev server supports polling too
-      const sameOrigin = isSameOriginServer(serverUrl);
-
       socket = io(serverUrl, {
         autoConnect: true,
         reconnection: true,
         reconnectionAttempts: Infinity,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
-        transports: sameOrigin ? ['websocket'] : ['websocket', 'polling'],
+        transports: isSameOriginServer(serverUrl)
+          ? ['websocket']
+          : ['websocket', 'polling'],
       });
 
       socketRef.current = socket;
@@ -68,29 +49,12 @@ export function useSocket() {
         registerPlayer(socket, id);
       });
 
-      socket.on('disconnect', () => {
-        setConnected(false);
-      });
-
-      socket.on('connect_error', () => {
-        setConnected(false);
-      });
-
-      socket.on('lobby:state', (state) => {
-        setLobby(state);
-      });
-
-      socket.on('game:state:update', (state) => {
-        setGameState(state);
-      });
-
-      socket.on('reconnect:sync', (payload) => {
-        setLobby(payload);
-      });
-
-      socket.on('game:error', (err) => {
-        setError(err.message);
-      });
+      socket.on('disconnect', () => setConnected(false));
+      socket.on('connect_error', () => setConnected(false));
+      socket.on('lobby:state', (state) => setLobby(state));
+      socket.on('game:state:update', (state) => setGameState(state));
+      socket.on('reconnect:sync', (payload) => setLobby(payload));
+      socket.on('game:error', (err) => setError(err.message));
     })();
 
     return () => {
@@ -112,18 +76,14 @@ export function useSocket() {
         resolve(null);
         return;
       }
-      socket.emit(
-        'room:create',
-        { displayName },
-        (res) => {
-          if (res?.error) {
-            setError(res.error);
-            resolve(null);
-          } else {
-            resolve(res.roomId ?? null);
-          }
+      socket.emit('room:create', { displayName, gameType: 'dominoes' }, (res) => {
+        if (res?.error) {
+          setError(res.error);
+          resolve(null);
+        } else {
+          resolve(res.roomId ?? null);
         }
-      );
+      });
     });
   }, []);
 
@@ -156,20 +116,29 @@ export function useSocket() {
     });
   }, []);
 
+  const updateRoomSettings = useCallback((settings) => {
+    return new Promise((resolve) => {
+      socketRef.current?.emit('room:settings:update', settings, (res) => {
+        if (res?.error) {
+          setError(res.error);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  }, []);
+
   const startGame = useCallback(() => {
     return new Promise((resolve) => {
-      socketRef.current?.emit(
-        'game:start',
-        {},
-        (res) => {
-          if (res?.error) {
-            setError(res.error);
-            resolve(false);
-          } else {
-            resolve(true);
-          }
+      socketRef.current?.emit('game:start', {}, (res) => {
+        if (res?.error) {
+          setError(res.error);
+          resolve(false);
+        } else {
+          resolve(true);
         }
-      );
+      });
     });
   }, []);
 
@@ -195,6 +164,7 @@ export function useSocket() {
     createRoom,
     joinRoom,
     leaveRoom,
+    updateRoomSettings,
     startGame,
     playMove,
     drawTile,

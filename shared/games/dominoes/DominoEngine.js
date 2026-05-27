@@ -1,26 +1,12 @@
 /**
- * DominoEngine — Authoritative Draw/Block Dominoes (Double-Six)
- *
- * All game state mutations happen here on the server. Clients receive
- * sanitized snapshots via RoomManager → socket broadcasts.
- *
- * State sync flow:
- *   1. initialize() → deal tiles, pick first player (highest double)
- *   2. validateMove() / drawTile() / passTurn() → mutate internal state
- *   3. getPublicState() → strip hidden info (other players' hands, boneyard)
- *   4. RoomManager broadcasts game:state:update to room
+ * DominoEngine — Authoritative Block Dominoes (Double-Six)
+ * Supports FFA and 2v2 team mode with match scoring to a configurable cap.
  */
 
 /** @typedef {{ left: number, right: number }} Tile */
-
 /** @typedef {{ tile: Tile, isDouble: boolean, displayLeft: number, displayRight: number }} BoardTile */
+/** @typedef {{ scoreCap: number, mode: 'ffa' | '2v2', handSize: number }} MatchSettings */
 
-const TILE_SET_SIZE = 28;
-
-/**
- * Generate the full double-six tile set [0|0] … [6|6].
- * @returns {Tile[]}
- */
 export function createTileSet() {
   /** @type {Tile[]} */
   const tiles = [];
@@ -32,10 +18,6 @@ export function createTileSet() {
   return tiles;
 }
 
-/**
- * Fisher-Yates shuffle (in-place).
- * @param {Tile[]} arr
- */
 export function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -44,28 +26,14 @@ export function shuffle(arr) {
   return arr;
 }
 
-/**
- * Sum pips on a tile.
- * @param {Tile} tile
- */
 export function tilePips(tile) {
   return tile.left + tile.right;
 }
 
-/**
- * Compare two tiles for equality.
- * @param {Tile} a
- * @param {Tile} b
- */
 export function tilesEqual(a, b) {
   return a.left === b.left && a.right === b.right;
 }
 
-/**
- * Find tile index in hand by value match (order-independent).
- * @param {Tile[]} hand
- * @param {Tile} tile
- */
 export function findTileIndex(hand, tile) {
   return hand.findIndex(
     (t) =>
@@ -76,49 +44,91 @@ export function findTileIndex(hand, tile) {
 
 export class DominoEngine {
   /**
-   * @param {string[]} playerIds - Ordered list of player IDs (2–4)
+   * @param {string[]} playerIds
+   * @param {Partial<MatchSettings>} settings
    */
-  constructor(playerIds) {
+  constructor(playerIds, settings = {}) {
     if (playerIds.length < 2 || playerIds.length > 4) {
       throw new Error('Dominoes requires 2–4 players');
     }
 
     this.playerIds = [...playerIds];
+    this.settings = {
+      scoreCap: settings.scoreCap ?? 100,
+      mode: settings.mode ?? 'ffa',
+      handSize: settings.handSize ?? 7,
+    };
+
+    if (this.settings.mode === '2v2' && playerIds.length !== 4) {
+      throw new Error('2v2 Team Mode requires exactly 4 players');
+    }
+
+    /** @type {Record<string, 'team1' | 'team2'>} */
+    this.teamIds = {};
+    if (this.settings.mode === '2v2') {
+      for (let i = 0; i < playerIds.length; i++) {
+        this.teamIds[playerIds[i]] = i % 2 === 0 ? 'team1' : 'team2';
+      }
+    }
+
     this.hands = /** @type {Record<string, Tile[]>} */ ({});
     this.boneyard = /** @type {Tile[]} */ ([]);
     /** @type {BoardTile[]} */
     this.board = [];
     this.currentPlayerIndex = 0;
-    this.phase = 'playing'; // 'playing' | 'finished'
-    this.winnerId = null;
+    /** @type {'playing' | 'round_over' | 'match_over'} */
+    this.phase = 'playing';
+    this.roundWinnerId = null;
+    this.matchWinnerId = null;
     this.lastAction = null;
     this.consecutivePasses = 0;
-    this.scores = /** @type {Record<string, number>} */ ({});
+    /** @type {Record<string, number>} */
+    this.matchScores = {};
+    this.roundNumber = 1;
     this.turnStartedAt = Date.now();
     this.turnTimerPaused = false;
     this.turnTimerPausedAt = null;
     this.turnTimerRemainingMs = 30000;
 
-    for (const id of playerIds) {
-      this.scores[id] = 0;
-    }
-
-    this._deal();
-    this._determineFirstPlayer();
+    this._initMatchScores();
+    this._startRound();
+    this._processAutoPassChain();
   }
 
-  /** Deal tiles based on player count. */
-  _deal() {
-    const tilesPerPlayer = this.playerIds.length === 2 ? 7 : 5;
-    const deck = shuffle(createTileSet());
+  _initMatchScores() {
+    if (this.settings.mode === '2v2') {
+      this.matchScores = { team1: 0, team2: 0 };
+    } else {
+      for (const id of this.playerIds) {
+        this.matchScores[id] = 0;
+      }
+    }
+  }
 
+  _startRound() {
+    this.hands = {};
+    this.boneyard = [];
+    this.board = [];
+    this.consecutivePasses = 0;
+    this.roundWinnerId = null;
+    this.lastAction = null;
+    this.phase = 'playing';
+    this._deal();
+    this._determineFirstPlayer();
+    this.turnStartedAt = Date.now();
+    this.turnTimerRemainingMs = 30000;
+    this.turnTimerPaused = false;
+  }
+
+  /** Deal fixed hand size (7 tiles per player). */
+  _deal() {
+    const deck = shuffle(createTileSet());
     for (const id of this.playerIds) {
-      this.hands[id] = deck.splice(0, tilesPerPlayer);
+      this.hands[id] = deck.splice(0, this.settings.handSize);
     }
     this.boneyard = deck;
   }
 
-  /** First turn goes to the player holding the highest double. */
   _determineFirstPlayer() {
     let bestDouble = -1;
     let bestPlayerIndex = 0;
@@ -150,26 +160,14 @@ export class DominoEngine {
     return { left: first.displayLeft, right: last.displayRight };
   }
 
-  /**
-   * Check whether a tile can be played on the given end.
-   * @param {Tile} tile
-   * @param {'left' | 'right'} end
-   */
   canPlayOnEnd(tile, end) {
     if (this.board.length === 0) return true;
-
     const openEnds = this.getOpenEnds();
     if (!openEnds) return false;
-
     const target = end === 'left' ? openEnds.left : openEnds.right;
     return tile.left === target || tile.right === target;
   }
 
-  /**
-   * Find all legal moves for a player.
-   * @param {string} playerId
-   * @returns {{ tile: Tile, end: 'left' | 'right' }[]}
-   */
   getValidMoves(playerId) {
     const hand = this.hands[playerId];
     if (!hand) return [];
@@ -189,14 +187,7 @@ export class DominoEngine {
         moves.push({ tile, end: 'left' });
       }
       if (this.canPlayOnEnd(tile, 'right')) {
-        const alreadyLeft =
-          this.canPlayOnEnd(tile, 'left') &&
-          tile.left === tile.right;
-        if (!alreadyLeft || this.canPlayOnEnd(tile, 'left') !== this.canPlayOnEnd(tile, 'right')) {
-          if (!moves.some((m) => tilesEqual(m.tile, tile) && m.end === 'right')) {
-            moves.push({ tile, end: 'right' });
-          }
-        } else if (!moves.some((m) => tilesEqual(m.tile, tile))) {
+        if (!moves.some((m) => tilesEqual(m.tile, tile) && m.end === 'right')) {
           moves.push({ tile, end: 'right' });
         }
       }
@@ -205,11 +196,6 @@ export class DominoEngine {
     return moves;
   }
 
-  /**
-   * Place a tile on the board with correct orientation.
-   * @param {Tile} tile
-   * @param {'left' | 'right'} end
-   */
   _placeTile(tile, end) {
     const isDouble = tile.left === tile.right;
 
@@ -228,7 +214,8 @@ export class DominoEngine {
 
     if (end === 'right') {
       const target = openEnds.right;
-      let displayLeft, displayRight;
+      let displayLeft;
+      let displayRight;
       if (tile.left === target) {
         displayLeft = tile.left;
         displayRight = tile.right;
@@ -236,15 +223,11 @@ export class DominoEngine {
         displayLeft = tile.right;
         displayRight = tile.left;
       }
-      this.board.push({
-        tile: { ...tile },
-        isDouble,
-        displayLeft,
-        displayRight,
-      });
+      this.board.push({ tile: { ...tile }, isDouble, displayLeft, displayRight });
     } else {
       const target = openEnds.left;
-      let displayLeft, displayRight;
+      let displayLeft;
+      let displayRight;
       if (tile.right === target) {
         displayLeft = tile.left;
         displayRight = tile.right;
@@ -252,24 +235,13 @@ export class DominoEngine {
         displayLeft = tile.right;
         displayRight = tile.left;
       }
-      this.board.unshift({
-        tile: { ...tile },
-        isDouble,
-        displayLeft,
-        displayRight,
-      });
+      this.board.unshift({ tile: { ...tile }, isDouble, displayLeft, displayRight });
     }
   }
 
-  /**
-   * Execute a move. Returns { success, error? }.
-   * @param {string} playerId
-   * @param {Tile} tile
-   * @param {'left' | 'right'} end
-   */
   playMove(playerId, tile, end) {
     if (this.phase !== 'playing') {
-      return { success: false, error: 'Game is already finished' };
+      return { success: false, error: 'Round is not in progress' };
     }
 
     if (playerId !== this.currentPlayerId) {
@@ -284,10 +256,7 @@ export class DominoEngine {
 
     const actualTile = hand[idx];
 
-    if (this.board.length === 0) {
-      // First tile of the game — must be a double if highest-double rule applies,
-      // but any tile from hand is valid for an empty board in draw dominoes.
-    } else if (!this.canPlayOnEnd(actualTile, end)) {
+    if (this.board.length > 0 && !this.canPlayOnEnd(actualTile, end)) {
       return { success: false, error: 'Tile does not match the open end' };
     }
 
@@ -297,21 +266,18 @@ export class DominoEngine {
     this.lastAction = { type: 'play', playerId, tile: actualTile, end };
 
     if (hand.length === 0) {
-      this._finishGame(playerId, 'domino');
+      this._finishRound(playerId, 'domino');
       return { success: true };
     }
 
     this._advanceTurn();
+    this._processAutoPassChain();
     return { success: true };
   }
 
-  /**
-   * Draw one tile from the boneyard for the current player.
-   * @param {string} playerId
-   */
   drawTile(playerId) {
     if (this.phase !== 'playing') {
-      return { success: false, error: 'Game is already finished' };
+      return { success: false, error: 'Round is not in progress' };
     }
 
     if (playerId !== this.currentPlayerId) {
@@ -327,25 +293,18 @@ export class DominoEngine {
     this.lastAction = { type: 'draw', playerId, tile: drawn };
     this.consecutivePasses = 0;
 
-    // After drawing, player keeps turn if they now have a valid move; otherwise auto-pass
     const moves = this.getValidMoves(playerId);
-    if (moves.length === 0) {
-      if (this.boneyard.length === 0) {
-        return this.passTurn(playerId);
-      }
+    if (moves.length === 0 && this.boneyard.length === 0) {
+      return this.passTurn(playerId);
     }
 
     this.turnStartedAt = Date.now();
     return { success: true, drawn };
   }
 
-  /**
-   * Pass turn when no valid moves and boneyard empty.
-   * @param {string} playerId
-   */
   passTurn(playerId) {
     if (this.phase !== 'playing') {
-      return { success: false, error: 'Game is already finished' };
+      return { success: false, error: 'Round is not in progress' };
     }
 
     if (playerId !== this.currentPlayerId) {
@@ -361,7 +320,7 @@ export class DominoEngine {
       return { success: false, error: 'You must draw from the boneyard first' };
     }
 
-    this.lastAction = { type: 'pass', playerId };
+    this.lastAction = { type: 'pass', playerId, auto: false };
     this.consecutivePasses += 1;
 
     if (this.consecutivePasses >= this.playerIds.length) {
@@ -370,13 +329,38 @@ export class DominoEngine {
     }
 
     this._advanceTurn();
+    this._processAutoPassChain();
     return { success: true };
   }
 
-  /**
-   * Auto-action when turn timer expires: play random valid tile, else draw/pass.
-   * @param {string} playerId
-   */
+  /** Auto-pass when blocked with empty boneyard; chain until someone can play or table locks. */
+  _processAutoPassChain() {
+    if (this.phase !== 'playing') return;
+
+    let safety = 0;
+    while (this.phase === 'playing' && safety < this.playerIds.length + 1) {
+      safety += 1;
+      const playerId = this.currentPlayerId;
+      const moves = this.getValidMoves(playerId);
+
+      if (moves.length > 0) break;
+      if (this.boneyard.length > 0) break;
+
+      this.lastAction = { type: 'pass', playerId, auto: true };
+      this.consecutivePasses += 1;
+
+      if (this.consecutivePasses >= this.playerIds.length) {
+        this._finishBlocked();
+        return;
+      }
+
+      this.currentPlayerIndex =
+        (this.currentPlayerIndex + 1) % this.playerIds.length;
+      this.turnStartedAt = Date.now();
+      this.turnTimerRemainingMs = 30000;
+    }
+  }
+
   autoPlay(playerId) {
     if (this.phase !== 'playing' || playerId !== this.currentPlayerId) {
       return { success: false };
@@ -402,45 +386,118 @@ export class DominoEngine {
     this.turnTimerRemainingMs = 30000;
   }
 
+  _handPips(playerId) {
+    let pips = 0;
+    for (const tile of this.hands[playerId]) {
+      pips += tilePips(tile);
+    }
+    return pips;
+  }
+
+  _calculateRoundPoints(winnerId) {
+    if (this.settings.mode === '2v2') {
+      const winTeam = this.teamIds[winnerId];
+      let total = 0;
+      for (const id of this.playerIds) {
+        if (this.teamIds[id] === winTeam) continue;
+        total += this._handPips(id);
+      }
+      return total;
+    }
+
+    let total = 0;
+    for (const id of this.playerIds) {
+      if (id === winnerId) continue;
+      total += this._handPips(id);
+    }
+    return total;
+  }
+
+  _checkMatchWinner(winnerId) {
+    if (this.settings.mode === '2v2') {
+      const winTeam = this.teamIds[winnerId];
+      if ((this.matchScores[winTeam] ?? 0) >= this.settings.scoreCap) {
+        this.matchWinnerId = winTeam;
+        this.phase = 'match_over';
+        return;
+      }
+    } else if ((this.matchScores[winnerId] ?? 0) >= this.settings.scoreCap) {
+      this.matchWinnerId = winnerId;
+      this.phase = 'match_over';
+      return;
+    }
+
+    this.phase = 'round_over';
+  }
+
   /**
    * @param {string} winnerId
    * @param {'domino' | 'blocked'} reason
    */
-  _finishGame(winnerId, reason) {
-    this.phase = 'finished';
-    this.winnerId = winnerId;
+  _finishRound(winnerId, reason) {
+    this.roundWinnerId = winnerId;
+    const points = this._calculateRoundPoints(winnerId);
 
-    let totalPips = 0;
-    for (const id of this.playerIds) {
-      if (id === winnerId) continue;
-      for (const tile of this.hands[id]) {
-        totalPips += tilePips(tile);
-      }
+    if (this.settings.mode === '2v2') {
+      const winTeam = this.teamIds[winnerId];
+      this.matchScores[winTeam] = (this.matchScores[winTeam] || 0) + points;
+    } else {
+      this.matchScores[winnerId] = (this.matchScores[winnerId] || 0) + points;
     }
 
-    this.scores[winnerId] = (this.scores[winnerId] || 0) + totalPips;
-    this.lastAction = { type: 'gameover', winnerId, reason, points: totalPips };
+    this.lastAction = {
+      type: 'gameover',
+      winnerId,
+      reason,
+      points,
+      roundNumber: this.roundNumber,
+    };
+
+    this._checkMatchWinner(winnerId);
   }
 
   _finishBlocked() {
+    if (this.settings.mode === '2v2') {
+      /** @type {Record<'team1' | 'team2', number>} */
+      const teamPips = { team1: 0, team2: 0 };
+      for (const id of this.playerIds) {
+        teamPips[this.teamIds[id]] += this._handPips(id);
+      }
+
+      let winnerTeam = teamPips.team1 <= teamPips.team2 ? 'team1' : 'team2';
+      if (teamPips.team1 === teamPips.team2) {
+        winnerTeam = 'team1';
+      }
+
+      const winnerId =
+        this.playerIds.find((id) => this.teamIds[id] === winnerTeam) ??
+        this.playerIds[0];
+      this._finishRound(winnerId, 'blocked');
+      return;
+    }
+
     let lowestPips = Infinity;
     let winnerId = this.playerIds[0];
 
     for (const id of this.playerIds) {
-      let pips = 0;
-      for (const tile of this.hands[id]) {
-        pips += tilePips(tile);
-      }
+      const pips = this._handPips(id);
       if (pips < lowestPips) {
         lowestPips = pips;
         winnerId = id;
       }
     }
 
-    this._finishGame(winnerId, 'blocked');
+    this._finishRound(winnerId, 'blocked');
   }
 
-  /** Pause turn timer (e.g. on disconnect). */
+  startNextRound() {
+    if (this.phase !== 'round_over') return false;
+    this.roundNumber += 1;
+    this._startRound();
+    this._processAutoPassChain();
+    return true;
+  }
+
   pauseTurnTimer() {
     if (this.turnTimerPaused || this.phase !== 'playing') return;
     this.turnTimerPaused = true;
@@ -449,7 +506,6 @@ export class DominoEngine {
     this.turnTimerRemainingMs = Math.max(0, 30000 - elapsed);
   }
 
-  /** Resume turn timer after reconnect. */
   resumeTurnTimer() {
     if (!this.turnTimerPaused) return;
     this.turnTimerPaused = false;
@@ -457,21 +513,12 @@ export class DominoEngine {
     this.turnTimerPausedAt = null;
   }
 
-  /**
-   * Remaining ms on current turn (respects pause).
-   * @returns {number}
-   */
   getTurnTimeRemaining() {
     if (this.phase !== 'playing') return 0;
     if (this.turnTimerPaused) return this.turnTimerRemainingMs;
     return Math.max(0, 30000 - (Date.now() - this.turnStartedAt));
   }
 
-  /**
-   * Build a public state snapshot for a specific viewer.
-   * Hides other players' tiles and the boneyard contents.
-   * @param {string} viewerId
-   */
   getPublicState(viewerId) {
     return {
       phase: this.phase,
@@ -488,20 +535,18 @@ export class DominoEngine {
         this.playerIds.map((id) => [id, this.hands[id].length])
       ),
       boneyardCount: this.boneyard.length,
-      scores: { ...this.scores },
-      winnerId: this.winnerId,
+      matchScores: { ...this.matchScores },
+      roundWinnerId: this.roundWinnerId,
+      matchWinnerId: this.matchWinnerId,
+      roundNumber: this.roundNumber,
+      settings: { ...this.settings },
+      teamIds: { ...this.teamIds },
       lastAction: this.lastAction,
       turnTimeRemaining: this.getTurnTimeRemaining(),
       turnTimerPaused: this.turnTimerPaused,
-      validMoves: playerId =>
-        viewerId === playerId ? this.getValidMoves(viewerId) : [],
     };
   }
 
-  /**
-   * Sanitized state payload sent over the wire.
-   * @param {string} viewerId
-   */
   serializeForPlayer(viewerId) {
     const state = this.getPublicState(viewerId);
     return {
@@ -513,13 +558,17 @@ export class DominoEngine {
       myHand: state.myHand,
       tileCounts: state.tileCounts,
       boneyardCount: state.boneyardCount,
-      scores: state.scores,
-      winnerId: state.winnerId,
+      matchScores: state.matchScores,
+      roundWinnerId: state.roundWinnerId,
+      matchWinnerId: state.matchWinnerId,
+      roundNumber: state.roundNumber,
+      settings: state.settings,
+      teamIds: state.teamIds,
       lastAction: state.lastAction,
       turnTimeRemaining: state.turnTimeRemaining,
       turnTimerPaused: state.turnTimerPaused,
       validMoves:
-        viewerId === this.currentPlayerId
+        viewerId === this.currentPlayerId && this.phase === 'playing'
           ? this.getValidMoves(viewerId).map((m) => ({
               tile: m.tile,
               end: m.end,
