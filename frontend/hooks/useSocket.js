@@ -3,15 +3,7 @@
 /**
  * useSocket — React hook for Socket.io connection lifecycle.
  *
- * State sync flows:
- *   Connect → player:register(playerId) → ack with reconnection info
- *   lobby:state → update lobby UI
- *   game:state:update → update board, hand, turn indicator
- *   reconnect:sync → full state after disconnect/reconnect
- *   game:error → toast to requesting client only
- *
- * Reconnection: on disconnect, socket.io auto-reconnects;
- * on 'connect' we re-register with the same playerId from sessionStorage.
+ * Resolves server URL at runtime via /config.json (production) before connecting.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -19,7 +11,7 @@ import { io } from 'socket.io-client';
 import {
   getDisplayName,
   getOrCreatePlayerId,
-  SERVER_URL,
+  resolveServerUrl,
 } from '@/lib/player';
 
 export function useSocket() {
@@ -44,56 +36,63 @@ export function useSocket() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    let socket = null;
+
     const id = getOrCreatePlayerId();
     setPlayerId(id);
 
-    const socket = io(SERVER_URL, {
-      autoConnect: true,
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      transports: ['websocket', 'polling'],
-    });
+    (async () => {
+      const serverUrl = await resolveServerUrl();
+      if (cancelled) return;
 
-    socketRef.current = socket;
+      socket = io(serverUrl, {
+        autoConnect: true,
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        transports: ['websocket', 'polling'],
+      });
 
-    socket.on('connect', () => {
-      setConnected(true);
-      registerPlayer(socket, id);
-    });
+      socketRef.current = socket;
 
-    socket.on('disconnect', () => {
-      setConnected(false);
-    });
+      socket.on('connect', () => {
+        setConnected(true);
+        registerPlayer(socket, id);
+      });
 
-    socket.on('connect_error', () => {
-      setConnected(false);
-    });
+      socket.on('disconnect', () => {
+        setConnected(false);
+      });
 
-    /** Real-time lobby sync */
-    socket.on('lobby:state', (state) => {
-      setLobby(state);
-    });
+      socket.on('connect_error', () => {
+        setConnected(false);
+      });
 
-    /** Authoritative game state — personalized per player */
-    socket.on('game:state:update', (state) => {
-      setGameState(state);
-    });
+      socket.on('lobby:state', (state) => {
+        setLobby(state);
+      });
 
-    /** Full resync after reconnection */
-    socket.on('reconnect:sync', (payload) => {
-      setLobby(payload);
-    });
+      socket.on('game:state:update', (state) => {
+        setGameState(state);
+      });
 
-    /** Silent error — only sent to the requesting client */
-    socket.on('game:error', (err) => {
-      setError(err.message);
-    });
+      socket.on('reconnect:sync', (payload) => {
+        setLobby(payload);
+      });
+
+      socket.on('game:error', (err) => {
+        setError(err.message);
+      });
+    })();
 
     return () => {
-      socket.removeAllListeners();
-      socket.disconnect();
+      cancelled = true;
+      if (socket) {
+        socket.removeAllListeners();
+        socket.disconnect();
+      }
       socketRef.current = null;
     };
   }, [registerPlayer]);
