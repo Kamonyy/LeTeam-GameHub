@@ -50,3 +50,6 @@ next-env.d.ts
 
 # Design system reference (local / agent context)
 DESIGN.md
+
+# Local docs (not published with the repo)
+docs/
