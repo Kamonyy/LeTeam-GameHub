@@ -27,6 +27,8 @@ export interface UseSocketReturn {
   gameState: HubGameState | null;
   isSpectator: boolean;
   error: string | null;
+  /** True while كموني ساعندي is clearing lobby/game state (suppresses join errors). */
+  hardResetInFlight: boolean;
   hubPresence: HubPresenceState;
   chatMessages: ChatMessage[];
   sendChat: (message: string) => void;
@@ -44,6 +46,7 @@ export interface UseSocketReturn {
     displayName: string
   ) => Promise<{ ok: boolean; spectating: boolean }>;
   leaveRoom: () => void;
+  /** Leave room/game, clear client session; keeps player id and display name. */
   hardResetPlayer: () => Promise<void>;
   updateRoomSettings: (
     settings: Partial<

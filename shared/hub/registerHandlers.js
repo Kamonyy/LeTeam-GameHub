@@ -171,8 +171,10 @@ export function registerHandlers(socket, roomManager) {
     });
   }
 
-  socket.on('room:leave', (_payload, ack) => {
-    roomManager.leaveRoom(socket);
+  socket.on('room:leave', (payload, ack) => {
+    const options =
+      payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : {};
+    roomManager.leaveRoom(socket, options);
     ack?.({ success: true });
   });
 

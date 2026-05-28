@@ -33,6 +33,7 @@ export default function WordGameClient() {
     lobby,
     gameState,
     error,
+    hardResetInFlight,
     clearError,
     createRoom,
     joinRoom,
@@ -79,6 +80,7 @@ export default function WordGameClient() {
     if (
       !wordgameEnabled ||
       !connected ||
+      hardResetInFlight ||
       !roomParam ||
       lobby?.gameType === 'wordgame' ||
       autoJoined ||
@@ -108,6 +110,7 @@ export default function WordGameClient() {
   }, [
     wordgameEnabled,
     connected,
+    hardResetInFlight,
     roomParam,
     lobby,
     autoJoined,

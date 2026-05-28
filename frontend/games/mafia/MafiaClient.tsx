@@ -88,6 +88,7 @@ export default function MafiaClient() {
     clearError,
     createRoom,
     joinRoom,
+    hardResetInFlight,
     leaveRoom,
     updateRoomSettings,
     startGame,
@@ -145,6 +146,7 @@ export default function MafiaClient() {
     if (
       !enabled ||
       !connected ||
+      hardResetInFlight ||
       !roomParam ||
       lobby?.gameType === "mafia" ||
       autoJoined ||
@@ -172,6 +174,7 @@ export default function MafiaClient() {
   }, [
     enabled,
     connected,
+    hardResetInFlight,
     roomParam,
     lobby,
     autoJoined,

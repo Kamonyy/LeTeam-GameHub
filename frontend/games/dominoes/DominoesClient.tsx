@@ -35,6 +35,7 @@ export default function DominoesClient() {
     gameState,
     isSpectator,
     error,
+    hardResetInFlight,
     clearError,
     createRoom,
     joinRoomOrSpectate,
@@ -74,6 +75,7 @@ export default function DominoesClient() {
     if (
       !dominoesEnabled ||
       !connected ||
+      hardResetInFlight ||
       !roomParam ||
       lobby?.gameType === 'dominoes' ||
       autoJoined ||
@@ -113,6 +115,7 @@ export default function DominoesClient() {
     };
   }, [
     connected,
+    hardResetInFlight,
     roomParam,
     lobby,
     autoJoined,

@@ -62,7 +62,6 @@ export interface BaraGameState {
   selectedCategoryCount: number;
   secretWord: string | null;
   roleView: BaraRoleView | null;
-  cheatSheetWords: string[];
   currentInterviewerId: string | null;
   currentTargetId: string | null;
   phaseEndsAt: number | null;
@@ -74,6 +73,7 @@ export interface BaraGameState {
   canReveal: boolean;
   canVote: boolean;
   canGuess: boolean;
+  canAdvanceInterrogation: boolean;
   eliminatedThisRound: string | null;
   roundOutcome: BaraRoundOutcome | null;
   outcastId: string | null;

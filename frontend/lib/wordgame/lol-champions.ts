@@ -60,6 +60,35 @@ export function championClassLabel(tag: string): string {
   return CLASS_LABELS[tag] ?? tag;
 }
 
+const CLASS_SET = new Set<string>(LOL_CHAMPION_CLASSES);
+
+/** Primary class — Riot Data Dragon `tags[0]` (matches LoL client filters). */
+export function championPrimaryClass(
+  champ: Pick<LolChampion, 'tags'>
+): LolChampionClass | null {
+  const primary = champ.tags[0];
+  return primary && CLASS_SET.has(primary) ? (primary as LolChampionClass) : null;
+}
+
+/** Secondary class when Riot assigns a second tag. */
+export function championSecondaryClass(
+  champ: Pick<LolChampion, 'tags'>
+): LolChampionClass | null {
+  const secondary = champ.tags[1];
+  return secondary && CLASS_SET.has(secondary) ?
+      (secondary as LolChampionClass)
+    : null;
+}
+
+/** Filter buckets use primary class only so each champion appears once. */
+export function championMatchesClassFilter(
+  champ: Pick<LolChampion, 'tags'>,
+  filter: LolChampionClass | null
+): boolean {
+  if (!filter) return true;
+  return champ.tags[0] === filter;
+}
+
 const DDRAGON_CDN = 'https://ddragon.leagueoflegends.com/cdn';
 
 const CDRAGON_ROLE_ICON_BASE =

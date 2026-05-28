@@ -17,6 +17,7 @@ interface PlayerGridProps {
   playerId: string;
   votingActive?: boolean;
   spotlightId?: string | null;
+  compact?: boolean;
   onVote?: (targetId: string) => void;
 }
 
@@ -38,6 +39,7 @@ export default function PlayerGrid({
   playerId,
   votingActive = false,
   spotlightId = null,
+  compact = false,
   onVote,
 }: PlayerGridProps) {
   const count = gameState.playerIds.length;
@@ -46,8 +48,8 @@ export default function PlayerGrid({
   return (
     <div
       className={clsx(
-        'bara-player-grid',
-        layoutClass(count),
+        compact ? 'bara-player-strip' : 'bara-player-grid',
+        !compact && layoutClass(count),
         votingActive && 'bara-player-grid--voting'
       )}
       dir="rtl"
@@ -71,7 +73,9 @@ export default function PlayerGrid({
             disabled={!canClickVote}
             onClick={() => canClickVote && onVote?.(card.id)}
             className={clsx(
-              'bara-seat glass-card animate-bara-seat-entry',
+              'bara-seat',
+              !compact && 'glass-card animate-bara-seat-entry',
+              compact && 'bara-seat--compact',
               isMe && 'bara-seat--me',
               card.eliminated && 'bara-seat--eliminated',
               spotlightId === card.id && 'bara-seat--spotlight',
@@ -79,14 +83,16 @@ export default function PlayerGrid({
               gameState.currentInterviewerId === card.id && 'bara-seat--interviewer',
               gameState.currentTargetId === card.id && 'bara-seat--target'
             )}
-            style={{ animationDelay: `${index * 45}ms` }}
+            style={compact ? undefined : { animationDelay: `${index * 45}ms` }}
           >
             {canClickVote && <span className="bara-vote-crosshair" aria-hidden />}
             <div
               className={clsx(
                 'bara-avatar rounded-full flex items-center justify-center font-bold border-2',
-                avatarClass(count),
-                isMe ? 'border-hub-accent bg-hub-accent/20' : 'border-white/15 bg-hub-surface'
+                compact ? 'w-11 h-11 text-sm' : avatarClass(count),
+                isMe ?
+                  'border-rose-400/60 bg-rose-500/15'
+                : 'border-white/15 bg-white/5'
               )}
             >
               {initial}

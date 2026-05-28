@@ -83,15 +83,9 @@ export function createFreshPlayerId(): string {
   return id;
 }
 
-/** Drop old identity locally: new id + session token, keep display name only. */
-export function resetPlayerSessionKeepingName(): string {
-  if (typeof window === 'undefined') return '';
-
-  const savedName = getDisplayName();
-
-  clearSessionToken();
-  localStorage.removeItem(PLAYER_ID_KEY);
-  sessionStorage.removeItem(PLAYER_ID_KEY);
+/** Clear per-game local data; keep player id, session token, and display name. */
+export function clearPlayerLocalGameDataKeepingIdentity(): void {
+  if (typeof window === 'undefined') return;
 
   const keysToRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
@@ -105,9 +99,5 @@ export function resetPlayerSessionKeepingName(): string {
     localStorage.removeItem(key);
   }
 
-  const newId = createFreshPlayerId();
-  if (savedName) {
-    setDisplayName(savedName);
-  }
-  return newId;
+  sessionStorage.removeItem('hub-navigating-game');
 }

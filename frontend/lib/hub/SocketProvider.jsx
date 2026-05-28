@@ -17,7 +17,7 @@ import {
   setDisplayName,
   setSessionToken,
   clearSessionToken,
-  resetPlayerSessionKeepingName,
+  clearPlayerLocalGameDataKeepingIdentity,
 } from '@/lib/player';
 import { isSameOriginServer, resolveServerUrl } from '@/lib/socket-url';
 import { HubLiveProvider } from '@/lib/hub/HubLiveContext';
@@ -95,6 +95,8 @@ function waitForSocketEvent(socket, event, timeoutMs = 8000) {
 }
 
 const WORD_ACTION_TIMEOUT_MS = 12000;
+/** Max wait for reconnect + register during كموني ساعندي hard reset. */
+const HARD_RESET_REGISTER_MS = 2500;
 
 const BENIGN_WORD_GAME_ERRORS = new Set([
   'You already chose a champion',
@@ -114,14 +116,21 @@ export function SocketProvider({ children }) {
   const [playerId, setPlayerId] = useState('');
   const [lobby, setLobby] = useState(null);
   const [gameState, setGameState] = useState(null);
-  const [error, setError] = useState(null);
+  const [error, setErrorRaw] = useState(null);
   const [hubPresence, setHubPresence] = useState({ total: 0, players: [] });
   const [chatMessages, setChatMessages] = useState([]);
   const [isSpectator, setIsSpectator] = useState(false);
   const [wordGuessedCelebration, setWordGuessedCelebration] = useState(null);
+  const [hardResetInFlight, setHardResetInFlight] = useState(false);
   const chatChannelRef = useRef(null);
   const wordActionInFlightRef = useRef(false);
   const skipNextConnectRegisterRef = useRef(false);
+  const hardResetInFlightRef = useRef(false);
+
+  const setError = useCallback((message) => {
+    if (message != null && hardResetInFlightRef.current) return;
+    setErrorRaw(message);
+  }, []);
 
   const registerPlayer = useCallback((socket, id, isRetry = false) => {
     return new Promise((resolve) => {
@@ -414,6 +423,10 @@ export function SocketProvider({ children }) {
         };
         const event = spectate ? 'room:spectate' : 'room:join';
         socket.emit(event, payload, (res) => {
+          if (hardResetInFlightRef.current) {
+            resolve(false);
+            return;
+          }
           if (res?.error) {
             setError(res.error);
             resolve(false);
@@ -440,6 +453,10 @@ export function SocketProvider({ children }) {
       }
       const code = roomId.toUpperCase();
       socket.emit('room:join', { roomId: code, displayName }, (res) => {
+        if (hardResetInFlightRef.current) {
+          resolve({ ok: false, spectating: false });
+          return;
+        }
         if (!res?.error) {
           setIsSpectator(false);
           resolve({ ok: true, spectating: false });
@@ -451,6 +468,10 @@ export function SocketProvider({ children }) {
           return;
         }
         socket.emit('room:spectate', { roomId: code, displayName }, (specRes) => {
+          if (hardResetInFlightRef.current) {
+            resolve({ ok: false, spectating: false });
+            return;
+          }
           if (specRes?.error) {
             setError(specRes.error);
             resolve({ ok: false, spectating: false });
@@ -472,24 +493,7 @@ export function SocketProvider({ children }) {
     });
   }, []);
 
-  const hardResetPlayer = useCallback(async () => {
-    const socket = socketRef.current;
-
-    registerReadyRef.current = createUnsettledRegistration();
-
-    if (socket?.connected) {
-      await new Promise((resolve) => {
-        socket.emit('room:leave', {}, () => resolve());
-      });
-
-      socket.disconnect();
-      try {
-        await waitForSocketEvent(socket, 'disconnect', 8000);
-      } catch {
-        /* proceed — local state reset still runs */
-      }
-    }
-
+  const clearClientSessionState = useCallback(() => {
     setLobby(null);
     setGameState(null);
     setChatMessages([]);
@@ -497,34 +501,70 @@ export function SocketProvider({ children }) {
     setWordGuessedCelebration(null);
     setIsSpectator(false);
     wordActionInFlightRef.current = false;
+    chatChannelRef.current = null;
+  }, []);
 
-    const newId = resetPlayerSessionKeepingName();
-    playerIdRef.current = newId;
-    setPlayerId(newId);
+  const hardResetPlayer = useCallback(async () => {
+    hardResetInFlightRef.current = true;
+    setHardResetInFlight(true);
 
-    if (!socket) return;
-
-    skipNextConnectRegisterRef.current = true;
-
-    if (!socket.connected) {
-      socket.connect();
-      try {
-        await waitForSocketEvent(socket, 'connect', 8000);
-      } catch {
-        return;
-      }
-    }
+    const socket = socketRef.current;
+    const id = playerIdRef.current || getOrCreatePlayerId();
 
     try {
-      registerReadyRef.current = registerPlayer(socket, newId).then((ok) => {
-        if (ok) socket.emit('hub:presence:request', {});
-        return ok;
-      });
+      clearClientSessionState();
+      clearPlayerLocalGameDataKeepingIdentity();
+
+      if (socket?.connected) {
+        await Promise.race([
+          new Promise((resolve) => {
+            socket.emit('room:leave', { force: true }, () => resolve());
+          }),
+          new Promise((resolve) => {
+            setTimeout(resolve, 1200);
+          }),
+        ]);
+      }
+
+      if (!socket) {
+        registerReadyRef.current = Promise.resolve(false);
+        return;
+      }
+
+      skipNextConnectRegisterRef.current = true;
+
+      const registerSameIdentity = () =>
+        Promise.race([
+          registerPlayer(socket, id).then((ok) => {
+            if (ok && socket.connected) {
+              socket.emit('hub:presence:request', {});
+            }
+            return ok;
+          }),
+          new Promise((resolve) => {
+            setTimeout(() => resolve(false), HARD_RESET_REGISTER_MS);
+          }),
+        ]);
+
+      if (!socket.connected) {
+        socket.connect();
+        await Promise.race([
+          waitForSocketEvent(socket, 'connect', HARD_RESET_REGISTER_MS),
+          new Promise((resolve) => {
+            setTimeout(resolve, HARD_RESET_REGISTER_MS);
+          }),
+        ]).catch(() => {});
+      }
+
+      registerReadyRef.current = registerSameIdentity();
       await registerReadyRef.current;
     } finally {
       skipNextConnectRegisterRef.current = false;
+      hardResetInFlightRef.current = false;
+      setHardResetInFlight(false);
+      setError(null);
     }
-  }, [registerPlayer]);
+  }, [registerPlayer, clearClientSessionState, setError]);
 
   const updateRoomSettings = useCallback((settings) => {
     return new Promise((resolve) => {
@@ -987,6 +1027,7 @@ export function SocketProvider({ children }) {
       gameState,
       isSpectator,
       error,
+      hardResetInFlight,
       hubPresence,
       chatMessages,
       sendChat,
@@ -1027,6 +1068,7 @@ export function SocketProvider({ children }) {
       gameState,
       isSpectator,
       error,
+      hardResetInFlight,
       hubPresence,
       chatMessages,
       sendChat,

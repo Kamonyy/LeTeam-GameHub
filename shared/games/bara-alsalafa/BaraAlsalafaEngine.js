@@ -6,12 +6,8 @@ import {
   getCategoryPackage,
   normalizeCategoryPackageIds,
   formatCategoryNamesAr,
-  pickRandomWords,
 } from "./categories/index.js";
-
-const INTERROGATION_MS = 45_000;
-const DEFEND_MS = 30_000;
-const CHEAT_SHEET_SIZE = 10;
+import { BARA_INTERROGATION_MS, BARA_DEFEND_MS } from "./timing.js";
 
 /** @typedef {'reveal'|'interrogation'|'voting'|'defend'|'revote'|'outcast_guess'|'round_end'|'match_over'} BaraPhase */
 
@@ -42,7 +38,6 @@ export class BaraAlsalafaEngine {
     this.activeCategoryId = null;
     this.secretWord = "";
     this.outcastId = null;
-    this.cheatSheetWords = [];
     this.interviewerIndex = 0;
     this.currentInterviewerId = null;
     this.currentTargetId = null;
@@ -87,11 +82,6 @@ export class BaraAlsalafaEngine {
     this.secretWord = wordPool[Math.floor(Math.random() * wordPool.length)];
     this.outcastId = active[Math.floor(Math.random() * active.length)];
 
-    const decoys = pickRandomWords(
-      wordPool.filter((w) => w !== this.secretWord),
-      CHEAT_SHEET_SIZE,
-    );
-    this.cheatSheetWords = decoys.slice(0, CHEAT_SHEET_SIZE).sort();
   }
 
   _startRound() {
@@ -126,7 +116,7 @@ export class BaraAlsalafaEngine {
 
     this.currentInterviewerId = interviewer;
     this.currentTargetId = target;
-    this.phaseEndsAt = Date.now() + INTERROGATION_MS;
+    this.phaseEndsAt = Date.now() + BARA_INTERROGATION_MS;
 
     for (const id of active) {
       if (id !== interviewer && id !== target) {
@@ -190,7 +180,7 @@ export class BaraAlsalafaEngine {
     if (top.length > 1) {
       this.phase = "defend";
       this.tiedPlayerIds = top;
-      this.phaseEndsAt = Date.now() + DEFEND_MS;
+      this.phaseEndsAt = Date.now() + BARA_DEFEND_MS;
       for (const id of active) {
         this.playerMeta[id].microStatus = "thinking";
       }
@@ -281,13 +271,16 @@ export class BaraAlsalafaEngine {
     return { success: true };
   }
 
-  /** @param {string} actorId — must match hostId (set from room at game start) */
+  /** @param {string} actorId — current interviewer may skip to the next pair */
   advanceInterrogation(actorId) {
     if (this.phase !== "interrogation") {
       return { success: false, error: "Not in interrogation phase" };
     }
-    if (!this.hostId || actorId !== this.hostId) {
-      return { success: false, error: "Only the host can advance interrogation" };
+    if (actorId !== this.currentInterviewerId) {
+      return {
+        success: false,
+        error: "Only the current questioner can skip this turn",
+      };
     }
 
     return this._advanceInterrogationStep(actorId);
@@ -495,10 +488,6 @@ export class BaraAlsalafaEngine {
             outcastMessage: isOutcast ? "أنت برا السالفة!" : null,
           }
         :	null,
-      cheatSheetWords:
-        this.phase === "interrogation" || this.phase === "voting" ?
-          this.cheatSheetWords
-        :	[],
       currentInterviewerId: this.currentInterviewerId,
       currentTargetId: this.currentTargetId,
       phaseEndsAt: this.phaseEndsAt,
@@ -514,6 +503,9 @@ export class BaraAlsalafaEngine {
         !this.votes[viewerId] &&
         (this.phase !== "revote" || !this.tiedPlayerIds.includes(viewerId)),
       canGuess: this.phase === "outcast_guess" && isOutcast,
+      canAdvanceInterrogation:
+        this.phase === "interrogation" &&
+        viewerId === this.currentInterviewerId,
       eliminatedThisRound: this.eliminatedThisRound,
       roundOutcome: this.roundOutcome,
       outcastId:

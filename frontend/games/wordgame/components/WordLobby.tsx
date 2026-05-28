@@ -103,9 +103,9 @@ export default function WordLobby({
         <Swords className="w-6 h-6 text-[#f0d78c]" />
         <h2 className="sw-heading text-lg">Secret Word Lobby</h2>
       </div>
-      <div className="sw-divider-gold mb-6" />
+      <div className="sw-divider-gold mb-5" />
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-5">
         <div>
           <p className="sw-muted text-[10px] uppercase tracking-[0.25em] mb-1">Summon Code</p>
           <h3 className="text-3xl font-mono font-bold tracking-[0.35em] text-[#fff8e7] drop-shadow-[0_0_12px_rgba(201,162,39,0.3)]">
@@ -120,125 +120,104 @@ export default function WordLobby({
         </button>
       </div>
 
-      <div className="mb-8 p-4 rounded-xl border border-[rgba(201,162,39,0.15)] bg-[rgba(8,12,24,0.5)]">
-        <div className="flex items-center gap-2 text-sm font-medium sw-text-accent mb-4">
-          <Settings2 className="w-4 h-4 text-[#f0d78c]" />
-          <span className="sw-heading text-xs">Match Settings</span>
-        </div>
+      <section className="sw-match-settings" aria-labelledby="sw-match-settings-title">
+        <header className="sw-match-settings__head">
+          <Settings2 className="w-4 h-4 text-[#f0d78c]" aria-hidden />
+          <h3 id="sw-match-settings-title" className="sw-match-settings__title">
+            Match settings
+          </h3>
+        </header>
 
-        <label className="block text-[10px] sw-muted mb-2 uppercase tracking-[0.2em]">
-          Word category
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
-          {categoryOptions.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              disabled={!isHost}
-              onClick={() => onSettingsChange?.({ wordCategory: opt.id })}
-              className={clsx(
-                'text-left px-3 py-2.5 rounded-lg border transition-all duration-200',
-                settings.wordCategory === opt.id ?
-                  'border-[rgba(201,162,39,0.55)] bg-[rgba(201,162,39,0.18)] shadow-[0_0_16px_rgba(201,162,39,0.12)]'
-                :	'border-[rgba(201,162,39,0.15)] bg-[rgba(6,8,22,0.6)] hover:border-[rgba(201,162,39,0.35)]',
-                !isHost && 'opacity-70 cursor-default'
-              )}
-            >
-              <span className="block text-sm font-semibold sw-text-accent">{opt.label}</span>
-              <span className="block text-[10px] sw-muted mt-0.5 leading-snug">{opt.hint}</span>
-            </button>
-          ))}
-        </div>
-
-        <label className="block text-[10px] sw-muted mb-2 uppercase tracking-[0.2em]">
-          Points to win
-        </label>
-        <p
-          className="mb-3 px-3 py-2.5 rounded-lg border border-[rgba(201,162,39,0.35)] bg-[rgba(201,162,39,0.12)] text-center"
-          aria-live="polite"
-        >
-          <span className="text-[10px] sw-muted uppercase tracking-[0.2em] block mb-1">
-            Match target
-          </span>
-          <span className="text-2xl font-bold tabular-nums text-[#fff8e7]">
-            {settings.pointsToWin}
-          </span>
-          <span className="text-sm sw-muted ml-1">points</span>
-          {!isPresetPoints && (
-            <span className="block text-[10px] sw-text-accent mt-1 uppercase tracking-wider">
-              Custom target
-            </span>
-          )}
-        </p>
-        <div
-          className={clsx(
-            'grid gap-2 mb-3',
-            isPresetPoints ? 'grid-cols-3' : 'grid-cols-3 sm:grid-cols-4'
-          )}
-        >
-          {WORD_POINTS_OPTIONS.map((pts) => (
-            <button
-              key={pts}
-              type="button"
-              disabled={!isHost}
-              onClick={() => onSettingsChange?.({ pointsToWin: pts })}
-              className={clsx(
-                'py-2 rounded-lg text-sm font-semibold border transition-all duration-200',
-                settings.pointsToWin === pts ?
-                  'border-[rgba(201,162,39,0.55)] bg-[rgba(201,162,39,0.18)] text-[#fff8e7] shadow-[0_0_16px_rgba(201,162,39,0.12)]'
-                :	'border-[rgba(201,162,39,0.15)] bg-[rgba(6,8,22,0.6)] sw-muted hover:border-[rgba(201,162,39,0.35)]',
-                !isHost && 'opacity-70 cursor-default'
-              )}
-            >
-              {pts}
-            </button>
-          ))}
-          {!isPresetPoints && (
-            <button
-              type="button"
-              disabled
-              className="py-2 rounded-lg text-sm font-semibold border border-[rgba(201,162,39,0.55)] bg-[rgba(201,162,39,0.18)] text-[#fff8e7] shadow-[0_0_16px_rgba(201,162,39,0.12)] col-span-3 sm:col-span-1"
-              aria-current="true"
-            >
-              {settings.pointsToWin}
-            </button>
-          )}
-        </div>
-        {isHost && (
-          <div className="space-y-2">
-            <p className="text-[10px] sw-muted uppercase tracking-[0.15em]">
-              Or set a custom target (1–99 points)
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                min={1}
-                max={99}
-                value={customPoints}
-                onChange={(e) => setCustomPoints(e.target.value)}
-                placeholder={`e.g. ${settings.pointsToWin}`}
-                className="sw-input flex-1 py-2 text-sm normal-case tracking-normal"
-                aria-label="Custom points to win"
-              />
-              <button
-                type="button"
-                onClick={applyCustomPoints}
-                disabled={!customPoints.trim()}
-                className="sw-btn-secondary py-2 text-sm px-4 shrink-0"
-              >
-                Apply
-              </button>
+        <div className="sw-match-settings__grid">
+          <div className="sw-match-settings__block">
+            <p className="sw-match-settings__label">Word category</p>
+            <div className="sw-match-settings__category" role="group" aria-label="Word category">
+              {categoryOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  disabled={!isHost}
+                  onClick={() => onSettingsChange?.({ wordCategory: opt.id })}
+                  className={clsx(
+                    'sw-match-settings__cat',
+                    settings.wordCategory === opt.id && 'sw-match-settings__cat--active',
+                    !isHost && 'sw-match-settings__cat--locked'
+                  )}
+                >
+                  <span className="sw-match-settings__cat-label">{opt.label}</span>
+                  <span className="sw-match-settings__cat-hint">{opt.hint}</span>
+                </button>
+              ))}
             </div>
           </div>
-        )}
-        {!isHost && (
-          <p className="text-xs sw-muted mt-2 text-center">
-            {isPresetPoints ?
-              `First player to ${settings.pointsToWin} points wins the match.`
-            :	`Custom match — first to ${settings.pointsToWin} points wins.`}
-          </p>
-        )}
-      </div>
+
+          <div className="sw-match-settings__block">
+            <div className="sw-match-settings__points-head">
+              <p className="sw-match-settings__label">First to</p>
+              <p className="sw-match-settings__target" aria-live="polite">
+                <span className="sw-match-settings__target-num">
+                  {settings.pointsToWin}
+                </span>
+                <span className="sw-match-settings__target-unit">pts</span>
+                {!isPresetPoints && (
+                  <span className="sw-match-settings__target-badge">Custom</span>
+                )}
+              </p>
+            </div>
+
+            <div
+              className="sw-match-settings__presets"
+              role="group"
+              aria-label="Points to win"
+            >
+              {WORD_POINTS_OPTIONS.map((pts) => (
+                <button
+                  key={pts}
+                  type="button"
+                  disabled={!isHost}
+                  onClick={() => onSettingsChange?.({ pointsToWin: pts })}
+                  className={clsx(
+                    'sw-match-settings__preset',
+                    settings.pointsToWin === pts && 'sw-match-settings__preset--active',
+                    !isHost && 'sw-match-settings__preset--locked'
+                  )}
+                >
+                  {pts}
+                </button>
+              ))}
+            </div>
+
+            {isHost && (
+              <div className="sw-match-settings__custom">
+                <input
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={customPoints}
+                  onChange={(e) => setCustomPoints(e.target.value)}
+                  placeholder="1–99"
+                  className="sw-input sw-match-settings__custom-input"
+                  aria-label="Custom points to win"
+                />
+                <button
+                  type="button"
+                  onClick={applyCustomPoints}
+                  disabled={!customPoints.trim()}
+                  className="sw-btn-secondary sw-match-settings__custom-btn"
+                >
+                  Set
+                </button>
+              </div>
+            )}
+
+            {!isHost && (
+              <p className="sw-match-settings__guest-note">
+                Host sets the rules · first to {settings.pointsToWin} wins
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
 
       <div className="mb-8">
         <div className="flex items-center gap-2 sw-muted text-sm mb-3">

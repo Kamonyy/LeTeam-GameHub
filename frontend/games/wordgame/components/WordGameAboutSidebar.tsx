@@ -2,8 +2,8 @@
 
 import clsx from 'clsx';
 import { BookOpen } from 'lucide-react';
-import GameAboutPanel from '@/components/hub/GameAboutPanel';
 import WordPanelFrame from './WordPanelFrame';
+import WordGameHowToPlay from './WordGameHowToPlay';
 
 interface WordGameAboutSidebarProps {
   className?: string;
@@ -26,7 +26,7 @@ export default function WordGameAboutSidebar({ className }: WordGameAboutSidebar
           </div>
         </div>
         <div className="sw-divider-gold sw-divider-gold--draw my-4 opacity-70" />
-        <GameAboutPanel gameId="wordgame" variant="wordgame" />
+        <WordGameHowToPlay />
       </WordPanelFrame>
     </aside>
   );

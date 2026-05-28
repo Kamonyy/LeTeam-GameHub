@@ -8,6 +8,14 @@ interface CountdownRingProps {
   label?: string;
 }
 
+function formatRemaining(ms: number): string {
+  const totalSec = Math.ceil(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  if (m > 0) return `${m}:${s.toString().padStart(2, '0')}`;
+  return String(s);
+}
+
 export default function CountdownRing({
   phaseEndsAt,
   totalMs,
@@ -33,12 +41,13 @@ export default function CountdownRing({
   const progress = Math.min(1, remaining / totalMs);
   const circumference = 2 * Math.PI * 42;
   const dash = circumference * progress;
-  const seconds = Math.ceil(remaining / 1000);
+  const display = formatRemaining(remaining);
+  const urgent = progress < 0.2;
 
   return (
-    <div className="flex flex-col items-center gap-2" aria-live="polite">
-      <div className="relative w-24 h-24">
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 96 96">
+    <div className="bara-countdown" aria-live="polite">
+      <div className="bara-countdown__ring">
+        <svg className="bara-countdown__svg" viewBox="0 0 96 96" aria-hidden>
           <circle
             cx="48"
             cy="48"
@@ -52,18 +61,16 @@ export default function CountdownRing({
             cy="48"
             r="42"
             fill="none"
-            stroke={progress < 0.25 ? '#ef4444' : '#34d399'}
+            stroke={urgent ? '#f43f5e' : '#fb7185'}
             strokeWidth="6"
             strokeLinecap="round"
             strokeDasharray={`${dash} ${circumference}`}
-            className="transition-all duration-200"
+            className="bara-countdown__arc"
           />
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-2xl font-bold tabular-nums">
-          {seconds}
-        </span>
+        <span className="bara-countdown__value tabular-nums">{display}</span>
       </div>
-      <span className="text-xs text-hub-muted">{label}</span>
+      <span className="bara-countdown__label">{label}</span>
     </div>
   );
 }

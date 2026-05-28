@@ -2,16 +2,16 @@
 
 import { useState } from 'react';
 import clsx from 'clsx';
-import { FastForward, Target } from 'lucide-react';
+import { Target, SkipForward } from 'lucide-react';
+import {
+  BARA_DEFEND_MS,
+  BARA_INTERROGATION_MS,
+} from '@shared/games/bara-alsalafa/timing.js';
 import type { BaraGameState } from '@/games/bara-alsalafa/types';
 import type { LobbyState } from '@/lib/hub/types';
 import PlayerGrid from './PlayerGrid';
 import RevealCard from './RevealCard';
 import CountdownRing from './CountdownRing';
-import CheatSheetDrawer from './CheatSheetDrawer';
-
-const INTERROGATION_MS = 45_000;
-const DEFEND_MS = 30_000;
 
 interface BaraGameBoardProps {
   gameState: BaraGameState;
@@ -28,11 +28,21 @@ function displayName(lobby: LobbyState, id: string) {
   return lobby.players.find((p) => p.id === id)?.displayName ?? 'لاعب';
 }
 
+const PHASE_LABELS: Record<string, string> = {
+  reveal: 'كشف الأدوار',
+  interrogation: 'استجواب',
+  defend: 'دفاع سريع',
+  voting: 'تصويت',
+  revote: 'إعادة تصويت',
+  outcast_guess: 'تخمين برا السالفة',
+  round_end: 'نهاية الجولة',
+  match_over: 'نهاية المباراة',
+};
+
 export default function BaraGameBoard({
   gameState,
   lobby,
   playerId,
-  isHost,
   onReveal,
   onAdvanceInterrogation,
   onVote,
@@ -43,9 +53,9 @@ export default function BaraGameBoard({
   const [submittingGuess, setSubmittingGuess] = useState(false);
 
   const phase = gameState.phase;
-  const isEmerald =
+  const isCalm =
     phase === 'reveal' || phase === 'interrogation' || phase === 'defend';
-  const isCrimson =
+  const isIntense =
     phase === 'voting' ||
     phase === 'revote' ||
     phase === 'outcast_guess' ||
@@ -54,8 +64,8 @@ export default function BaraGameBoard({
   const votingActive = phase === 'voting' || phase === 'revote';
   const spotlightId =
     phase === 'outcast_guess' || phase === 'round_end' ?
-      gameState.eliminatedThisRound ?? gameState.outcastId
-    :	null;
+      (gameState.eliminatedThisRound ?? gameState.outcastId)
+    : null;
 
   const handleReveal = async () => {
     setRevealing(true);
@@ -70,73 +80,89 @@ export default function BaraGameBoard({
     setSubmittingGuess(false);
   };
 
+  const interviewerName =
+    gameState.currentInterviewerId ?
+      displayName(lobby, gameState.currentInterviewerId)
+    : null;
+  const targetName =
+    gameState.currentTargetId ?
+      displayName(lobby, gameState.currentTargetId)
+    : null;
+
+  const isReveal = phase === 'reveal';
+
   return (
     <div
       className={clsx(
-        'bara-board min-h-[calc(100vh-5rem)] rounded-2xl border transition-colors duration-500 p-4 md:p-8',
-        isEmerald && 'bara-board--emerald',
-        isCrimson && 'bara-board--crimson',
+        'bara-board',
+        isReveal && 'bara-board--reveal',
+        isCalm && 'bara-board--calm',
+        isIntense && 'bara-board--intense',
         phase === 'round_end' &&
           gameState.roundOutcome?.type === 'outcast_stole_win' &&
           'animate-bara-shake'
       )}
       dir="rtl"
     >
-      {(phase === 'interrogation' || phase === 'defend') && (
-        <CheatSheetDrawer
-          categoryName={gameState.categoryName}
-          words={gameState.cheatSheetWords}
-        />
-      )}
-
-      <header className="text-center mb-6 space-y-2">
-        <p className="text-xs uppercase tracking-widest text-hub-muted">
-          الجولة {gameState.roundNumber} · فئة الجولة: {gameState.categoryName}
+      <header className="bara-board__head">
+        <div className="bara-board__meta">
+          <span className="bara-board__round">الجولة {gameState.roundNumber}</span>
+          <span className="bara-board__dot" aria-hidden />
+          <span className="bara-board__phase">{PHASE_LABELS[phase] ?? phase}</span>
+        </div>
+        <p className="bara-board__category">
+          فئة الجولة: <strong>{gameState.categoryName}</strong>
         </p>
         {gameState.selectedCategoryCount > 1 && (
-          <p className="text-[11px] text-hub-muted max-w-lg mx-auto">
-            الفئات المفعّلة ({gameState.selectedCategoryCount}): {gameState.categoryNamesSummary}
+          <p className="bara-board__categories-extra">
+            الفئات المفعّلة ({gameState.selectedCategoryCount}):{' '}
+            {gameState.categoryNamesSummary}
           </p>
-        )}
-        {phase === 'interrogation' && gameState.currentInterviewerId && (
-          <div className="bara-interrogation-banner animate-fade-in">
-            <span>
-              {displayName(lobby, gameState.currentInterviewerId)} يسأل{' '}
-              {displayName(lobby, gameState.currentTargetId ?? '')}
-            </span>
-          </div>
-        )}
-        {phase === 'defend' && (
-          <div className="bara-defend-banner animate-fade-in">
-            دفاع سريع! أعيدوا التصويت بين المتعادلين (
-            {gameState.tiedPlayerIds.map((id) => displayName(lobby, id)).join(' · ')})
-          </div>
-        )}
-        {votingActive && (
-          <div className="bara-voting-banner flex flex-col items-center gap-2">
-            <Target className="w-6 h-6 text-hub-danger animate-pulse" />
-            <span>صوّت سراً — اختر من تشتبه به</span>
-            <span className="text-sm text-hub-muted tabular-nums">
-              {gameState.votesCast}/{gameState.votesExpected} أصوات مُقفلة
-            </span>
-          </div>
         )}
       </header>
 
-      <div className="bara-board-layout grid gap-8 lg:grid-cols-[1fr_minmax(280px,360px)_1fr] items-start">
-        <div className="lg:col-span-3">
-          <PlayerGrid
-            gameState={gameState}
-            players={lobby.players}
-            playerId={playerId}
-            votingActive={votingActive}
-            spotlightId={spotlightId}
-            onVote={(id) => void onVote(id)}
-          />
+      {phase === 'interrogation' && interviewerName && targetName && (
+        <div className="bara-interrogation-hero" role="status">
+          <span className="bara-interrogation-hero__who">{interviewerName}</span>
+          <span className="bara-interrogation-hero__arrow" aria-hidden>
+            ←
+          </span>
+          <span className="bara-interrogation-hero__who bara-interrogation-hero__who--target">
+            {targetName}
+          </span>
+          {gameState.currentInterviewerId === playerId && (
+            <span className="bara-interrogation-hero__you">دورك للسؤال</span>
+          )}
         </div>
+      )}
 
-        <div className="lg:col-start-2 flex flex-col items-center gap-6">
-          {phase === 'reveal' && (
+      {phase === 'defend' && (
+        <p className="bara-phase-callout bara-phase-callout--warn">
+          دفاع سريع بين المتعادلين:{' '}
+          {gameState.tiedPlayerIds.map((id) => displayName(lobby, id)).join(' · ')}
+        </p>
+      )}
+
+      {votingActive && (
+        <div className="bara-phase-callout bara-phase-callout--vote">
+          <Target className="w-5 h-5 shrink-0" aria-hidden />
+          <div>
+            <p className="font-semibold">صوّت سراً — اختر من تشتبه به</p>
+            <p className="text-xs opacity-80 tabular-nums">
+              {gameState.votesCast} / {gameState.votesExpected} أصوات
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div
+        className={clsx(
+          'bara-board__main',
+          isReveal && 'bara-board__main--reveal'
+        )}
+      >
+        <section className="bara-board__stage" aria-label="منطقة اللعب">
+          {isReveal && (
             <RevealCard
               gameState={gameState}
               onReveal={() => void handleReveal()}
@@ -145,43 +171,45 @@ export default function BaraGameBoard({
           )}
 
           {phase === 'interrogation' && (
-            <div className="flex flex-col items-center gap-4">
+            <div className="bara-stage-panel">
               <CountdownRing
                 phaseEndsAt={gameState.phaseEndsAt}
-                totalMs={INTERROGATION_MS}
-                label="ثوانٍ للسؤال"
+                totalMs={BARA_INTERROGATION_MS}
+                label="وقت السؤال (١:٣٠)"
               />
-              {isHost && (
+              {gameState.canAdvanceInterrogation && (
                 <button
                   type="button"
                   onClick={() => void onAdvanceInterrogation()}
-                  className="btn-secondary text-sm flex items-center gap-2"
+                  className="bara-btn-secondary bara-skip-btn"
                 >
-                  <FastForward className="w-4 h-4" />
-                  تخطي للسؤال التالي
+                  <SkipForward className="w-4 h-4" aria-hidden />
+                  تخطي السؤال
                 </button>
               )}
             </div>
           )}
 
           {phase === 'defend' && (
-            <CountdownRing
-              phaseEndsAt={gameState.phaseEndsAt}
-              totalMs={DEFEND_MS}
-              label="وقت الدفاع"
-            />
+            <div className="bara-stage-panel">
+              <CountdownRing
+                phaseEndsAt={gameState.phaseEndsAt}
+                totalMs={BARA_DEFEND_MS}
+                label="وقت الدفاع"
+              />
+            </div>
           )}
 
           {phase === 'outcast_guess' && gameState.canGuess && (
-            <div className="card w-full max-w-md border-amber-500/40 bg-amber-950/30 animate-overlay-pop">
-              <h3 className="text-lg font-bold text-amber-200 mb-2">
-                لقد كشفوك! خمن الكلمة السرية لتسرق الفوز
+            <div className="bara-guess-panel">
+              <h3 className="bara-guess-panel__title">
+                كُشفت! خمّن الكلمة السرية لتسرق الفوز
               </h3>
               <input
                 type="text"
                 value={guessInput}
                 onChange={(e) => setGuessInput(e.target.value)}
-                className="input-field normal-case tracking-normal mb-4"
+                className="bara-input bara-guess-panel__input"
                 placeholder="اكتب تخمينك"
                 dir="rtl"
                 autoFocus
@@ -190,7 +218,7 @@ export default function BaraGameBoard({
                 type="button"
                 onClick={() => void handleGuess()}
                 disabled={submittingGuess || !guessInput.trim()}
-                className="btn-primary w-full"
+                className="bara-btn-primary w-full"
               >
                 {submittingGuess ? 'جاري الإرسال…' : 'أرسل التخمين'}
               </button>
@@ -198,43 +226,52 @@ export default function BaraGameBoard({
           )}
 
           {phase === 'round_end' && gameState.roundOutcome && (
-            <RoundOutcomePanel
-              gameState={gameState}
-              lobby={lobby}
-            />
+            <RoundOutcomePanel gameState={gameState} lobby={lobby} />
           )}
 
           {phase === 'match_over' && (
-            <div className="card text-center animate-overlay-pop max-w-md">
-              <p className="text-2xl font-bold text-hub-success mb-2">انتهت المباراة!</p>
+            <div className="bara-outcome-card bara-outcome-card--win">
+              <p className="bara-outcome-card__title">انتهت المباراة!</p>
               {gameState.winnerId && (
-                <p className="text-lg">
+                <p className="bara-outcome-card__body">
                   الفائز:{' '}
-                  <span className="text-white font-semibold">
-                    {displayName(lobby, gameState.winnerId)}
-                  </span>
+                  <strong>{displayName(lobby, gameState.winnerId)}</strong>
                 </p>
               )}
-              <p className="text-sm text-hub-muted mt-4">
+              <p className="bara-outcome-card__hint">
                 الكلمة كانت: {gameState.revealedSecretWord}
               </p>
             </div>
           )}
-        </div>
+        </section>
+
+        <section className="bara-board__seats" aria-label="اللاعبون">
+          {isReveal && (
+            <h2 className="bara-board__seats-label">حالة الكشف</h2>
+          )}
+          <PlayerGrid
+            gameState={gameState}
+            players={lobby.players}
+            playerId={playerId}
+            votingActive={votingActive}
+            spotlightId={spotlightId}
+            compact={isReveal}
+            onVote={(id) => void onVote(id)}
+          />
+        </section>
       </div>
 
-      <footer className="mt-8 flex flex-wrap justify-center gap-4 text-sm">
+      <footer className="bara-board__scores">
         {Object.entries(gameState.scores).map(([id, score]) => (
           <span
             key={id}
             className={clsx(
-              'px-3 py-1 rounded-full border',
-              id === playerId ?
-                'border-hub-accent/50 bg-hub-accent/10'
-              :	'border-hub-border bg-hub-surface/50'
+              'bara-score-chip',
+              id === playerId && 'bara-score-chip--me'
             )}
           >
-            {displayName(lobby, id)}: {score}
+            <span className="bara-score-chip__name">{displayName(lobby, id)}</span>
+            <span className="bara-score-chip__pts">{score}</span>
           </span>
         ))}
       </footer>
@@ -255,20 +292,16 @@ function RoundOutcomePanel({
 
   if (outcome.type === 'wrong_accusation') {
     return (
-      <div className="card max-w-md border-hub-danger/50 bg-red-950/40 text-center animate-bara-shake">
-        <p className="text-xl font-black text-hub-danger mb-2">
-          وقع الاختيار على شخص خطأ!
-        </p>
-        <p className="text-sm text-hub-muted">
+      <div className="bara-outcome-card bara-outcome-card--danger animate-bara-shake">
+        <p className="bara-outcome-card__title">وقع الاختيار على شخص خطأ!</p>
+        <p className="bara-outcome-card__body">
           {outcome.eliminatedId && name(outcome.eliminatedId)} كان من الداخلين
         </p>
-        <p className="mt-3 text-hub-success">
-          نقاط إضافية لـ {gameState.outcastId && name(gameState.outcastId)} (برا السالفة)
+        <p className="bara-outcome-card__hint">
+          نقاط لـ {gameState.outcastId && name(gameState.outcastId)} (برا السالفة)
         </p>
         {gameState.revealedSecretWord && (
-          <p className="mt-2 text-white font-semibold">
-            الكلمة: {gameState.revealedSecretWord}
-          </p>
+          <p className="bara-outcome-card__word">الكلمة: {gameState.revealedSecretWord}</p>
         )}
       </div>
     );
@@ -276,19 +309,19 @@ function RoundOutcomePanel({
 
   if (outcome.type === 'outcast_stole_win') {
     return (
-      <div className="card max-w-md border-amber-400/60 bg-amber-950/50 text-center animate-bara-explosion">
-        <p className="text-2xl font-black text-amber-300">سرق برا السالفة الفوز!</p>
-        <p className="text-sm mt-2">التخمين: {outcome.guess}</p>
+      <div className="bara-outcome-card bara-outcome-card--gold animate-bara-explosion">
+        <p className="bara-outcome-card__title">سرق برا السالفة الفوز!</p>
+        <p className="bara-outcome-card__hint">التخمين: {outcome.guess}</p>
       </div>
     );
   }
 
   if (outcome.type === 'insiders_win') {
     return (
-      <div className="card max-w-md border-emerald-500/40 bg-emerald-950/40 text-center">
-        <p className="text-2xl font-bold text-emerald-300">فوز الداخلين!</p>
-        <p className="text-sm text-hub-muted mt-2">
-          الكلمة الصحيحة: {outcome.secretWord ?? gameState.revealedSecretWord}
+      <div className="bara-outcome-card bara-outcome-card--success">
+        <p className="bara-outcome-card__title">فوز الداخلين!</p>
+        <p className="bara-outcome-card__hint">
+          الكلمة: {outcome.secretWord ?? gameState.revealedSecretWord}
         </p>
       </div>
     );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import clsx from 'clsx';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX, Loader2 } from 'lucide-react';
@@ -31,6 +32,7 @@ export default function BaraAlsalafaClient() {
     lobby,
     gameState,
     error,
+    hardResetInFlight,
     clearError,
     createRoom,
     joinRoom,
@@ -76,6 +78,7 @@ export default function BaraAlsalafaClient() {
     if (
       !baraEnabled ||
       !connected ||
+      hardResetInFlight ||
       !roomParam ||
       lobby?.gameType === 'bara-alsalafa' ||
       autoJoined ||
@@ -105,6 +108,7 @@ export default function BaraAlsalafaClient() {
   }, [
     baraEnabled,
     connected,
+    hardResetInFlight,
     roomParam,
     lobby,
     autoJoined,
@@ -193,7 +197,7 @@ export default function BaraAlsalafaClient() {
         </div>
       </header>
 
-      <div className="bara-content">
+      <div className={clsx('bara-content', inGame && 'bara-content--game')}>
         {!baraLobby && !baraEnabled && <InactiveGameScreen gameId="bara-alsalafa" />}
 
         {!baraLobby && baraEnabled && inviteJoin && (

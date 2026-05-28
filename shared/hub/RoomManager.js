@@ -572,7 +572,8 @@ export class RoomManager {
 		return { roomId, isSpectator: true };
 	}
 
-	leaveRoom(socket) {
+	leaveRoom(socket, payload = {}) {
+		const force = payload?.force === true;
 		const playerId = this.socketToPlayer.get(socket.id);
 		if (!playerId) return;
 
@@ -583,17 +584,24 @@ export class RoomManager {
 			return;
 		}
 
-		const roomId = this.playerToRoom.get(playerId);
+		let roomId = this.playerToRoom.get(playerId);
+		if (!roomId) {
+			const found = this._findRoomForPlayer(playerId);
+			roomId = found?.roomId;
+		}
 		if (!roomId) return;
 
 		const room = this.rooms.get(roomId);
-		if (room && isActiveWordGameSession(room)) {
-			const player = room.players.find((p) => p.id === playerId);
+		if (!room) return;
+
+		const player = room.players.find((p) => p.id === playerId);
+		if (player?.disconnectTimer) {
+			clearTimeout(player.disconnectTimer);
+			player.disconnectTimer = null;
+		}
+
+		if (room && isActiveWordGameSession(room) && !force) {
 			if (player) {
-				if (player.disconnectTimer) {
-					clearTimeout(player.disconnectTimer);
-					player.disconnectTimer = null;
-				}
 				player.connected = false;
 			}
 			this.playerToRoom.delete(playerId);
@@ -1406,10 +1414,6 @@ export class RoomManager {
 		if (!room.game || room.gameType !== "bara-alsalafa") {
 			return { error: "No active برا السالفة game" };
 		}
-		if (room.hostId !== playerId) {
-			return { error: "Only the host can skip the timer" };
-		}
-
 		const result = room.game.advanceInterrogation(playerId);
 		if (!result.success) return { error: result.error };
 

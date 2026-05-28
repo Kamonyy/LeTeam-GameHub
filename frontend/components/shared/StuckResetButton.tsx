@@ -1,25 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useHardResetPlayer } from '@/lib/hub/HardResetContext';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 
 export default function StuckResetButton() {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const hardResetPlayer = useHardResetPlayer();
   const router = useRouter();
 
-  const handleConfirm = async () => {
-    setLoading(true);
-    try {
-      await hardResetPlayer();
+  useEffect(() => {
+    router.prefetch('/');
+  }, [router]);
+
+  const handleConfirm = () => {
+    setOpen(false);
+    void hardResetPlayer().finally(() => {
       router.replace('/');
-      setOpen(false);
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   return (
@@ -38,15 +37,12 @@ export default function StuckResetButton() {
       <ConfirmDialog
         open={open}
         title="كموني ساعندي"
-        message="دوس هاي الدكمة من تعصة بيك الدنيا. راح تطلع من اللوبي وتنضف الجلسة، بس اسمك يبقى."
+        message="دوس هاي الدكمة من تعصة بيك الدنيا. راح تنظف اللوبي واللعبة وترجع للصفحة الرئيسية — اسمك ونفس حسابك يبقون."
         confirmLabel="نعم، نضّف كلشي"
         cancelLabel="إلغاء"
         variant="danger"
-        loading={loading}
         onConfirm={handleConfirm}
-        onCancel={() => {
-          if (!loading) setOpen(false);
-        }}
+        onCancel={() => setOpen(false)}
       />
     </>
   );

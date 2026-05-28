@@ -33,63 +33,72 @@ export default function RevealCard({ gameState, onReveal, revealing = false }: R
   };
 
   return (
-    <div className="bara-reveal-stage flex flex-col items-center gap-6" dir="rtl">
-      <div
-        className={clsx(
-          'bara-flip-card',
-          flipped && 'bara-flip-card--flipped',
-          !lockLifted && 'bara-flip-card--locked'
-        )}
-      >
-        {!lockLifted && (
-          <div className="bara-lock-layer absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-2xl bg-black/70 backdrop-blur-md">
-            <Lock className="w-10 h-10 text-hub-muted" />
-            <p className="text-sm text-hub-muted px-6 text-center">
-              اضغط للكشف — لا تُظهر الشاشة للآخرين
-            </p>
-          </div>
-        )}
-
-        <div className="bara-flip-card__inner">
-          <div className="bara-flip-card__face bara-flip-card__back flex flex-col items-center justify-center gap-4 p-8">
-            <span className="text-6xl">🂠</span>
-            <p className="text-lg font-semibold text-hub-muted">بطاقة سرية</p>
-            {gameState.canReveal && (
+    <div className="bara-reveal-stage" dir="rtl">
+      <div className="bara-stage-panel bara-reveal-panel">
+        <p className="bara-reveal-panel__hint">بطاقة سرية — لا تُظهر الشاشة للآخرين</p>
+        <div
+          className={clsx('bara-flip-card', flipped && 'bara-flip-card--flipped')}
+        >
+          <div className="bara-flip-card__inner">
+            {!lockLifted && (
               <button
                 type="button"
+                className="bara-lock-layer flex flex-col items-center justify-center gap-3 rounded-2xl bg-black/75 backdrop-blur-md border-0 cursor-pointer"
                 onClick={handleReveal}
-                disabled={revealing}
-                className="btn-primary flex items-center gap-2 mt-2"
+                disabled={!gameState.canReveal || revealing}
+                aria-label="اكشف هويتك"
               >
-                <Eye className="w-4 h-4" />
-                {revealing ? 'جاري الكشف…' : 'اكشف هويتك'}
+                <Lock className="w-9 h-9 text-rose-200/80" aria-hidden />
+                <span className="text-sm text-rose-100/90 px-4 text-center leading-relaxed">
+                  {gameState.canReveal ?
+                    'اضغط للكشف'
+                  :	'انتظر بقية اللاعبين…'}
+                </span>
               </button>
             )}
-            {!gameState.canReveal && !role && (
-              <p className="text-sm text-hub-success">انتظر بقية اللاعبين…</p>
-            )}
-          </div>
 
-          <div className="bara-flip-card__face bara-flip-card__front flex flex-col items-center justify-center gap-4 p-8 text-center">
-            {role && (
-              <>
-                <span className="bara-category-badge">{role.categoryName}</span>
-                {role.isOutcast ? (
-                  <div className="bara-outcast-block animate-bara-vibrate">
-                    {role.outcastMessage}
-                  </div>
-                ) : (
-                  <p className="text-3xl font-black text-white tracking-wide">
-                    {role.secretWord}
+            <div className="bara-flip-card__face bara-flip-card__back flex flex-col items-center justify-center gap-3 p-6">
+              <span className="bara-reveal-panel__icon" aria-hidden>
+                🂠
+              </span>
+              <p className="text-base font-semibold text-hub-muted">بطاقة سرية</p>
+              {gameState.canReveal && lockLifted && (
+                <button
+                  type="button"
+                  onClick={handleReveal}
+                  disabled={revealing}
+                  className="bara-btn-primary flex items-center gap-2 mt-1"
+                >
+                  <Eye className="w-4 h-4" aria-hidden />
+                  {revealing ? 'جاري الكشف…' : 'اكشف هويتك'}
+                </button>
+              )}
+              {!gameState.canReveal && !role && (
+                <p className="text-sm text-emerald-300/90">انتظر بقية اللاعبين…</p>
+              )}
+            </div>
+
+            <div className="bara-flip-card__face bara-flip-card__front flex flex-col items-center justify-center gap-3 p-6 text-center">
+              {role && (
+                <>
+                  <span className="bara-category-badge">{role.categoryName}</span>
+                  {role.isOutcast ? (
+                    <div className="bara-outcast-block animate-bara-vibrate">
+                      {role.outcastMessage}
+                    </div>
+                  ) : (
+                    <p className="text-2xl sm:text-3xl font-black text-white tracking-wide">
+                      {role.secretWord}
+                    </p>
+                  )}
+                  <p className="text-xs text-hub-muted max-w-xs leading-relaxed">
+                    {role.isOutcast ?
+                      'اندمج مع الإجابات دون أن تُفضح نفسك'
+                    :	'تذكّر الكلمة — لا تُفضحها أثناء الأسئلة'}
                   </p>
-                )}
-                <p className="text-xs text-hub-muted max-w-xs">
-                  {role.isOutcast ?
-                    'اندمج مع الإجابات دون أن تُفضح نفسك'
-                  :	'تذكّر الكلمة — لا تُفضحها أثناء الأسئلة'}
-                </p>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -9,6 +9,9 @@ import {
   LOL_CHAMPION_CLASSES,
   championClassIconSrc,
   championClassLabel,
+  championMatchesClassFilter,
+  championPrimaryClass,
+  championSecondaryClass,
   getLolChampionById,
   type LolChampion,
   type LolChampionClass,
@@ -28,6 +31,7 @@ function normalizeQuery(q: string) {
 }
 
 const STAGGER_CAP = 30;
+const SEARCH_DEBOUNCE_MS = 120;
 
 const ChampionGridItem = memo(function ChampionGridItem({
   champ,
@@ -73,6 +77,16 @@ const ChampionGridItem = memo(function ChampionGridItem({
           className="sw-champ-option__icon"
         />
         <span className="sw-champ-option__name">{champ.name}</span>
+        {(championPrimaryClass(champ) || championSecondaryClass(champ)) && (
+          <span className="sw-champ-option__role" aria-hidden>
+            {championPrimaryClass(champ) ?
+              championClassLabel(championPrimaryClass(champ)!)
+            : ''}
+            {championSecondaryClass(champ) ?
+              ` · ${championClassLabel(championSecondaryClass(champ)!)}`
+            : ''}
+          </span>
+        )}
       </button>
     </li>
   );
@@ -85,6 +99,7 @@ export default function ChampionPicker({
   onClear,
 }: ChampionPickerProps) {
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [classFilter, setClassFilter] = useState<LolChampionClass | null>(null);
   const [preloadProgress, setPreloadProgress] = useState(0);
   const [filterWave, setFilterWave] = useState(false);
@@ -116,14 +131,22 @@ export default function ChampionPicker({
     };
   }, [allIds]);
 
+  useEffect(() => {
+    const t = window.setTimeout(
+      () => setDebouncedQuery(query),
+      SEARCH_DEBOUNCE_MS
+    );
+    return () => window.clearTimeout(t);
+  }, [query]);
+
   const filtered = useMemo(() => {
     let list = LOL_CHAMPIONS;
 
     if (classFilter) {
-      list = list.filter((c) => c.tags.includes(classFilter));
+      list = list.filter((c) => championMatchesClassFilter(c, classFilter));
     }
 
-    const n = normalizeQuery(query);
+    const n = normalizeQuery(debouncedQuery);
     if (n) {
       list = list.filter(
         (c) =>
@@ -133,12 +156,9 @@ export default function ChampionPicker({
     }
 
     return list;
-  }, [query, classFilter]);
+  }, [debouncedQuery, classFilter]);
 
-  const filterSignature = useMemo(
-    () => `${query}|${classFilter ?? ''}`,
-    [query, classFilter]
-  );
+  const isSearchPending = query.trim() !== debouncedQuery.trim();
 
   const resetGridScroll = () => {
     const el = scrollRef.current;
@@ -150,7 +170,7 @@ export default function ChampionPicker({
     setFilterWave(true);
     const t = window.setTimeout(() => setFilterWave(false), 700);
     return () => window.clearTimeout(t);
-  }, [filterSignature]);
+  }, [classFilter]);
 
   const hasActiveFilters = classFilter !== null || query.trim().length > 0;
 
@@ -237,10 +257,10 @@ export default function ChampionPicker({
               filterWave && 'sw-champ-filters--wave'
             )}
             role="radiogroup"
-            aria-label="Champion class"
+            aria-label="Champion primary class"
           >
-            <span className="sw-champ-filter-label">Class</span>
-            <div className="sw-champ-filter-chips">
+            <span className="sw-champ-filter-label">Primary class</span>
+            <div className="sw-champ-filter-chips sw-champ-filter-chips--wrap">
               <button
                 type="button"
                 disabled={disabled}
@@ -273,8 +293,11 @@ export default function ChampionPicker({
 
           <div className="sw-champ-picker-meta">
             <p
-              key={filterSignature}
-              className="text-[10px] sw-muted tabular-nums sw-champ-count"
+              className={clsx(
+                'text-[10px] sw-muted tabular-nums sw-champ-count',
+                isSearchPending && 'sw-champ-count--pending'
+              )}
+              aria-live="polite"
             >
               {filtered.length} of {LOL_CHAMPIONS.length} champions
             </p>
@@ -304,7 +327,11 @@ export default function ChampionPicker({
           >
             {filtered.length > 0 ? (
               <ul
-                className="sw-champ-grid sw-champ-grid--cascade"
+                className={clsx(
+                  'sw-champ-grid',
+                  filterWave ? 'sw-champ-grid--cascade' : 'sw-champ-grid--live',
+                  isSearchPending && 'sw-champ-grid--pending'
+                )}
                 role="listbox"
                 aria-label="Champion list"
               >
@@ -320,10 +347,7 @@ export default function ChampionPicker({
                 ))}
               </ul>
             ) : (
-              <p
-                key={filterSignature}
-                className="text-sm sw-muted text-center py-6 sw-champ-empty"
-              >
+              <p className="text-sm sw-muted text-center py-6 sw-champ-empty">
                 No champions match these filters.
               </p>
             )}
