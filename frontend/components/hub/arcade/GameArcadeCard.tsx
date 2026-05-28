@@ -22,6 +22,29 @@ const CURSOR_BY_GAME: Record<string, string> = {
 	mafia: "mask",
 };
 
+/** Uniform index in [0, max) — crypto.getRandomValues when available */
+function randomIndex(max: number): number {
+	if (max <= 1) return 0;
+	if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+		const bucket = new Uint32Array(1);
+		crypto.getRandomValues(bucket);
+		return bucket[0] % max;
+	}
+	return Math.floor(Math.random() * max);
+}
+
+function pickRandomFromPool<T extends string>(
+	words: readonly T[],
+	exclude?: T,
+): T {
+	const pool =
+		exclude && words.length > 1 ? words.filter((w) => w !== exclude) : words;
+	if (pool.length === 0) {
+		return words[randomIndex(words.length)]!;
+	}
+	return pool[randomIndex(pool.length)]!;
+}
+
 interface GameArcadeCardProps {
 	game: GameCatalogEntry;
 	staggerIndex: number;
@@ -61,16 +84,11 @@ const WORD_PREVIEW_LETTER_STEP_MS = 52;
 const WORD_PREVIEW_HOLD_MS = 2200;
 
 function randomMatrixChar(): string {
-	return WORD_MATRIX_CHARSET[
-		Math.floor(Math.random() * WORD_MATRIX_CHARSET.length)
-	];
+	return WORD_MATRIX_CHARSET[randomIndex(WORD_MATRIX_CHARSET.length)]!;
 }
 
 function pickRandomWordPreview(exclude?: string): string {
-	const pool = exclude
-		? WORD_PREVIEW_WORDS.filter((w) => w !== exclude)
-		: [...WORD_PREVIEW_WORDS];
-	return pool[Math.floor(Math.random() * pool.length)] ?? WORD_PREVIEW_WORDS[0];
+	return pickRandomFromPool(WORD_PREVIEW_WORDS, exclude);
 }
 
 function emptyWordSlots(length: number): { slots: string[]; locked: boolean[] } {
@@ -81,13 +99,14 @@ function emptyWordSlots(length: number): { slots: string[]; locked: boolean[] } 
 }
 
 function WordPreview({ active }: { active: boolean }) {
-	const [target, setTarget] = useState<string>(WORD_PREVIEW_WORDS[0]);
-	const [slots, setSlots] = useState<string[]>(() =>
-		emptyWordSlots(WORD_PREVIEW_WORDS[0].length).slots,
-	);
-	const [lockedMask, setLockedMask] = useState<boolean[]>(() =>
-		emptyWordSlots(WORD_PREVIEW_WORDS[0].length).locked,
-	);
+	const [initial] = useState(() => {
+		const word = pickRandomWordPreview();
+		const empty = emptyWordSlots(word.length);
+		return { word, slots: empty.slots, locked: empty.locked };
+	});
+	const [target, setTarget] = useState(initial.word);
+	const [slots, setSlots] = useState(initial.slots);
+	const [lockedMask, setLockedMask] = useState(initial.locked);
 	const [complete, setComplete] = useState(false);
 	const activeRef = useRef(false);
 	const timersRef = useRef<{
@@ -124,7 +143,7 @@ function WordPreview({ active }: { active: boolean }) {
 				setSlots(
 					letters.map((letter, i) => {
 						if (i < lockIndex) return letter;
-						return Math.random() > 0.04 ? randomMatrixChar() : "·";
+						return randomIndex(100) > 3 ? randomMatrixChar() : "·";
 					}),
 				);
 			};
@@ -269,14 +288,11 @@ const BARA_PREVIEW_LETTER_STEP_MS = 65;
 const BARA_PREVIEW_HOLD_MS = 2400;
 
 function randomBaraGlyph(): string {
-	return BARA_SCAN_CHARS[Math.floor(Math.random() * BARA_SCAN_CHARS.length)];
+	return BARA_SCAN_CHARS[randomIndex(BARA_SCAN_CHARS.length)]!;
 }
 
 function pickRandomBaraWord(exclude?: string): string {
-	const pool = exclude
-		? BARA_PREVIEW_WORDS.filter((w) => w !== exclude)
-		: [...BARA_PREVIEW_WORDS];
-	return pool[Math.floor(Math.random() * pool.length)] ?? BARA_PREVIEW_WORDS[0];
+	return pickRandomFromPool(BARA_PREVIEW_WORDS, exclude);
 }
 
 function BaraPreview({ active }: { active: boolean }) {
@@ -316,7 +332,7 @@ function BaraPreview({ active }: { active: boolean }) {
 					letters
 						.map((ch, i) => {
 							if (i < lockIndex) return ch;
-							return Math.random() > 0.1 ? randomBaraGlyph() : "·";
+							return randomIndex(10) > 0 ? randomBaraGlyph() : "·";
 						})
 						.join(""),
 				);
