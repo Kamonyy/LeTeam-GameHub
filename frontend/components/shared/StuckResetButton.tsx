@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSocket } from '@/hooks/useSocket';
+import { useHardResetPlayer } from '@/lib/hub/HardResetContext';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 
 export default function StuckResetButton() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { hardResetPlayer } = useSocket();
+  const hardResetPlayer = useHardResetPlayer();
   const router = useRouter();
 
   const handleConfirm = async () => {

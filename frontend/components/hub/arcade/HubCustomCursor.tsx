@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
-type CursorMode = 'default' | 'grab' | 'crosshair' | 'letter';
+type CursorMode = 'default' | 'grab' | 'crosshair' | 'letter' | 'mask';
 
 export default function HubCustomCursor() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -25,6 +25,7 @@ export default function HubCustomCursor() {
       root.classList.toggle('hub-cursor--grab', mode === 'grab');
       root.classList.toggle('hub-cursor--crosshair', mode === 'crosshair');
       root.classList.toggle('hub-cursor--letter', mode === 'letter');
+      root.classList.toggle('hub-cursor--mask', mode === 'mask');
       root.textContent = mode === 'letter' ? '?' : '';
     };
 

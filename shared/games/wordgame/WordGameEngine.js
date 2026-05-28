@@ -300,6 +300,18 @@ export class WordGameEngine {
 		};
 	}
 
+	/** Strip secret word fields from lastAction outside reveal phases. */
+	_sanitizeLastActionForClient() {
+		if (!this.lastAction) return null;
+		const isReveal =
+			(this.phase === "round_end" || this.phase === "match_over") &&
+			(this.lastAction.type === "word_guessed" ||
+				this.lastAction.type === "match_won");
+		if (isReveal) return this.lastAction;
+		const { word, championId, ...safe } = this.lastAction;
+		return safe;
+	}
+
 	/**
 	 * @param {string} viewerId
 	 */
@@ -342,7 +354,7 @@ export class WordGameEngine {
 					(this.lastAction.guesserId ?? this.lastAction.winnerId)
 				:	null,
 			canConfirmGuessed: this.phase === "playing",
-			lastAction: this.lastAction,
+			lastAction: this._sanitizeLastActionForClient(),
 		};
 	}
 }

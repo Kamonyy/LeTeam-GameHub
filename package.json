@@ -2,6 +2,9 @@
   "name": "leteam-gamehub",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix frontend\"",
     "dev:server": "npm run dev --prefix server",

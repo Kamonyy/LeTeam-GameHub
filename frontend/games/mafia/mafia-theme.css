@@ -1,0 +1,329 @@
+/* Mafia — motion + reduced-motion only (UI is Tailwind / shadcn) */
+
+@keyframes mf-fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mf-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Phase transition — parchment banner (ported from test / tavern-council) */
+
+@keyframes mf-phase-overlay-life {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes mf-phase-flash {
+  0% {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+  18% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  60% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes mf-phase-banner-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-32px) scale(0.92);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(4px) scale(1.02);
+  }
+  28% {
+    transform: translateY(0) scale(1);
+  }
+  72% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes mf-phase-icon-pulse {
+  0% {
+    transform: scale(0.6) rotate(-8deg);
+  }
+  35% {
+    transform: scale(1.1) rotate(2deg);
+  }
+  60%,
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+.mf-phase-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+  animation: mf-phase-overlay-life 1200ms ease-in-out forwards;
+}
+
+.mf-phase-transition .mf-phase-flash {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse at 50% 50%,
+      var(--mf-phase-flash-core, transparent) 0%,
+      transparent 65%
+    ),
+    var(--mf-phase-flash-base, transparent);
+  filter: blur(2px);
+  opacity: 0;
+  animation: mf-phase-flash 1200ms ease-out forwards;
+}
+
+.mf-phase-transition .mf-phase-banner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1.65rem 3rem 1.85rem;
+  min-width: min(28rem, 80vw);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(40, 28, 14, 0.96) 0%,
+      rgba(22, 14, 8, 0.98) 100%
+    ),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+  border: 2px solid var(--mf-phase-banner-rim, rgba(212, 166, 74, 0.7));
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 180, 0.3),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 18px 60px -10px rgba(0, 0, 0, 0.85),
+    0 0 60px -6px var(--mf-phase-banner-glow, rgba(212, 166, 74, 0.55));
+  animation: mf-phase-banner-drop 1200ms cubic-bezier(0.22, 1.2, 0.36, 1) forwards;
+}
+
+.mf-phase-transition .mf-phase-banner::before,
+.mf-phase-transition .mf-phase-banner::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 1.8rem;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--p1-gold, #d4a64a),
+    transparent
+  );
+  transform: translateY(-50%);
+  opacity: 0.7;
+}
+
+.mf-phase-transition .mf-phase-banner::before {
+  left: -1.5rem;
+}
+
+.mf-phase-transition .mf-phase-banner::after {
+  right: -1.5rem;
+}
+
+.mf-phase-transition .mf-phase-banner__icon {
+  font-size: 3.2rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 8px var(--mf-phase-banner-glow, rgba(212, 166, 74, 0.6)))
+    drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+  animation: mf-phase-icon-pulse 1200ms ease-in-out;
+}
+
+.mf-phase-transition .mf-phase-banner__label {
+  font-family: var(--p1-font-decor, "Cinzel Decorative", serif);
+  font-size: clamp(1.35rem, 5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--mf-phase-banner-text, var(--p1-gold-bright, #f0c66a));
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.8),
+    0 0 14px var(--mf-phase-banner-glow, rgba(212, 166, 74, 0.55));
+  white-space: nowrap;
+}
+
+.mf-phase-transition .mf-phase-banner__label::before,
+.mf-phase-transition .mf-phase-banner__label::after {
+  content: "✦";
+  display: inline-block;
+  margin: 0 0.65rem;
+  font-size: 0.7em;
+  color: var(--p1-gold, #d4a64a);
+  opacity: 0.75;
+  vertical-align: middle;
+}
+
+.mf-phase-transition--day {
+  --mf-phase-flash-base: rgba(40, 28, 14, 0.7);
+  --mf-phase-flash-core: rgba(255, 200, 110, 0.45);
+  --mf-phase-banner-rim: rgba(240, 198, 106, 0.85);
+  --mf-phase-banner-glow: rgba(255, 200, 110, 0.7);
+  --mf-phase-banner-text: #ffe7a8;
+}
+
+.mf-phase-transition--night {
+  --mf-phase-flash-base: rgba(8, 10, 22, 0.85);
+  --mf-phase-flash-core: rgba(110, 130, 220, 0.4);
+  --mf-phase-banner-rim: rgba(130, 150, 220, 0.7);
+  --mf-phase-banner-glow: rgba(140, 160, 230, 0.6);
+  --mf-phase-banner-text: #d8e0ff;
+}
+
+.mf-phase-transition--night .mf-phase-banner {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(14, 18, 38, 0.96) 0%,
+      rgba(8, 10, 22, 0.98) 100%
+    ),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+}
+
+.mf-phase-transition--morning {
+  --mf-phase-flash-base: rgba(46, 28, 22, 0.75);
+  --mf-phase-flash-core: rgba(255, 160, 110, 0.5);
+  --mf-phase-banner-rim: rgba(255, 170, 120, 0.75);
+  --mf-phase-banner-glow: rgba(255, 150, 100, 0.55);
+  --mf-phase-banner-text: #ffd8b6;
+}
+
+.mf-phase-transition--role_reveal {
+  --mf-phase-flash-base: rgba(30, 12, 28, 0.85);
+  --mf-phase-flash-core: rgba(180, 110, 220, 0.45);
+  --mf-phase-banner-rim: rgba(200, 140, 230, 0.75);
+  --mf-phase-banner-glow: rgba(180, 110, 220, 0.6);
+  --mf-phase-banner-text: #ecd0ff;
+}
+
+.mf-phase-transition--role_reveal .mf-phase-banner {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(32, 16, 38, 0.96) 0%,
+      rgba(18, 8, 22, 0.98) 100%
+    ),
+    var(--p1-noise);
+  background-blend-mode: normal, overlay;
+}
+
+@keyframes mf-night-step-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 14px rgba(251, 191, 36, 0.75),
+      0 0 4px rgba(255, 255, 255, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  }
+  50% {
+    box-shadow:
+      0 0 22px rgba(251, 191, 36, 0.95),
+      0 0 8px rgba(255, 248, 200, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  }
+}
+
+.mf-night-step-active {
+  animation: mf-night-step-glow 2s ease-in-out infinite;
+}
+
+[data-mafia-narrator] [data-narrator-ask] {
+  animation: mf-scale-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (max-width: 959px) {
+  [data-mafia-narrator] [data-narrator-panel][data-visible] {
+    animation: mf-fade-rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-mf-fade-rise,
+  .animate-mf-scale-in,
+  .mf-night-step-active {
+    animation: none !important;
+    box-shadow:
+      0 0 16px rgba(251, 191, 36, 0.8),
+      inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  }
+
+  .mf-phase-transition,
+  .mf-phase-transition .mf-phase-flash,
+  .mf-phase-transition .mf-phase-banner,
+  .mf-phase-transition .mf-phase-banner__icon,
+  [data-mafia-narrator] [data-narrator-ask],
+  [data-mafia-narrator] [data-narrator-panel][data-visible] {
+    animation-duration: 600ms !important;
+    animation-timing-function: linear !important;
+  }
+
+  .mf-atmosphere,
+  .mf-atmosphere--transitioning {
+    transition: none;
+    opacity: 1;
+  }
+
+  .mf-atmosphere__torch,
+  .mf-atmosphere__fog,
+  .mf-atmosphere__moonlight,
+  .mf-atmo-windows,
+  .mf-atmo-clock__hand {
+    animation: none !important;
+    transition: none;
+  }
+
+  .mf-ember {
+    animation: none !important;
+    opacity: 0.28;
+  }
+}

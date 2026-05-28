@@ -2,7 +2,7 @@ import type {
   MatchSettings,
   WordGameSettings,
   BaraGameSettings,
-  TavernCouncilSettings,
+  MafiaSettings,
   HubPresenceState,
   ChatMessage,
 } from '@/lib/hub/types';
@@ -10,22 +10,15 @@ import type { GameState, Tile } from '@/games/dominoes/types';
 import type { WordGameState } from '@/games/wordgame/types';
 import type { BaraGameState } from '@/games/bara-alsalafa/types';
 import type {
-  TavernCouncilGameState,
-  TavernNarratorAction,
-} from '@/games/tavern-council/types';
+  MafiaGameState,
+  MafiaNarratorAction,
+} from '@/games/mafia/types';
 
 export type HubGameState =
   | GameState
   | WordGameState
   | BaraGameState
-  | TavernCouncilGameState;
-
-export interface WordGuessedCelebrationEvent {
-  wordCategory: string;
-  championId: string | null;
-  stateVersion: number | null;
-  at: number;
-}
+  | MafiaGameState;
 
 export interface UseSocketReturn {
   connected: boolean;
@@ -54,7 +47,7 @@ export interface UseSocketReturn {
   hardResetPlayer: () => Promise<void>;
   updateRoomSettings: (
     settings: Partial<
-      MatchSettings | WordGameSettings | BaraGameSettings | TavernCouncilSettings
+      MatchSettings | WordGameSettings | BaraGameSettings | MafiaSettings
     >
   ) => Promise<boolean>;
   startGame: () => Promise<boolean>;
@@ -69,14 +62,13 @@ export interface UseSocketReturn {
   submitSecretChampion: (championId: string) => Promise<boolean>;
   confirmWordGuessed: () => Promise<boolean>;
   reportWordTabFocus: (focused: boolean) => void;
-  wordGuessedCelebration: WordGuessedCelebrationEvent | null;
   baraReveal: () => Promise<boolean>;
   baraAdvanceInterrogation: () => Promise<boolean>;
   baraVote: (targetPlayerId: string) => Promise<boolean>;
   baraGuess: (guess: string) => Promise<boolean>;
-  tavernAcknowledgeRole: () => Promise<boolean>;
-  tavernNarratorAction: (
-    action: TavernNarratorAction,
+  mafiaAcknowledgeRole: () => Promise<boolean>;
+  mafiaNarratorAction: (
+    action: MafiaNarratorAction,
     targetPlayerId?: string | null
   ) => Promise<boolean>;
   /** Dev only — fill lobby with fake players */

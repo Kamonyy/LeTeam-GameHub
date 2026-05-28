@@ -30,6 +30,10 @@ export class BaraAlsalafaEngine {
       Number.isInteger(rounds) && rounds >= 1 && rounds <= 10 ? rounds : 3;
 
     this.playerIds = [...playerIds];
+    this.hostId =
+      typeof settings.hostId === "string" && settings.hostId ?
+        settings.hostId
+      : null;
     /** @type {BaraPhase} */
     this.phase = "reveal";
     this.roundNumber = 1;
@@ -87,9 +91,6 @@ export class BaraAlsalafaEngine {
       wordPool.filter((w) => w !== this.secretWord),
       CHEAT_SHEET_SIZE,
     );
-    if (!decoys.includes(this.secretWord) && decoys.length < CHEAT_SHEET_SIZE) {
-      decoys.push(this.secretWord);
-    }
     this.cheatSheetWords = decoys.slice(0, CHEAT_SHEET_SIZE).sort();
   }
 
@@ -266,12 +267,7 @@ export class BaraAlsalafaEngine {
     return { success: true };
   }
 
-  /** @param {string} playerId */
-  advanceInterrogation(playerId) {
-    if (this.phase !== "interrogation") {
-      return { success: false, error: "Not in interrogation phase" };
-    }
-
+  _advanceInterrogationStep(by) {
     const active = this._activePlayerIds();
     this.interviewerIndex += 1;
 
@@ -281,14 +277,26 @@ export class BaraAlsalafaEngine {
     }
 
     this._setInterrogationPair();
-    this.lastAction = { type: "interrogation_next", by: playerId };
+    this.lastAction = { type: "interrogation_next", by };
     return { success: true };
+  }
+
+  /** @param {string} actorId — must match hostId (set from room at game start) */
+  advanceInterrogation(actorId) {
+    if (this.phase !== "interrogation") {
+      return { success: false, error: "Not in interrogation phase" };
+    }
+    if (!this.hostId || actorId !== this.hostId) {
+      return { success: false, error: "Only the host can advance interrogation" };
+    }
+
+    return this._advanceInterrogationStep(actorId);
   }
 
   /** Called when interrogation timer expires */
   onInterrogationTimerExpired() {
     if (this.phase !== "interrogation") return { changed: false };
-    this.advanceInterrogation("system");
+    this._advanceInterrogationStep("system");
     return { changed: true };
   }
 

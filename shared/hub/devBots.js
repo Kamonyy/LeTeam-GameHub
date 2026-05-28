@@ -1,5 +1,6 @@
 /**
- * Dev-only fake players for solo local testing (never enabled in production by default).
+ * Dev-only fake players for solo local testing.
+ * Enabled only when ALLOW_DEV_BOTS=true or NODE_ENV=development (and not DISABLE_DEV_BOTS).
  */
 
 /** @returns {boolean} */
@@ -8,8 +9,6 @@ export function isDevBotsEnabled() {
 	if (process.env.DISABLE_DEV_BOTS === "true") return false;
 	if (process.env.ALLOW_DEV_BOTS === "true") return true;
 	if (process.env.NODE_ENV === "development") return true;
-	// Local hub (`node --watch index.js`) often runs without NODE_ENV set
-	if (process.env.NODE_ENV !== "production") return true;
 	return false;
 }
 

@@ -276,6 +276,9 @@ export class DominoEngine {
 		}
 
 		const hand = this.hands[playerId];
+		if (!hand) {
+			return { success: false, error: "Invalid player" };
+		}
 		const idx = findTileIndex(hand, tile);
 		if (idx === -1) {
 			return { success: false, error: "Tile not in your hand" };
@@ -311,13 +314,18 @@ export class DominoEngine {
 			return { success: false, error: "Not your turn" };
 		}
 
+		const hand = this.hands[playerId];
+		if (!hand) {
+			return { success: false, error: "Invalid player" };
+		}
+
 		if (this.boneyard.length === 0) {
 			return { success: false, error: "Boneyard is empty" };
 		}
 
 		const drawIndex = cryptoRandomInt(this.boneyard.length);
 		const drawn = this.boneyard.splice(drawIndex, 1)[0];
-		this.hands[playerId].push(drawn);
+		hand.push(drawn);
 		this.lastAction = { type: "draw", playerId, tile: drawn };
 		this.consecutivePasses = 0;
 

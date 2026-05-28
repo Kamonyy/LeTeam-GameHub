@@ -10,10 +10,14 @@ export function hubPresenceEqual(
   const ap = a.players ?? [];
   const bp = b.players ?? [];
   if (ap.length !== bp.length) return false;
-  const bById = new Map(bp.map((p) => [p.id, p]));
-  for (const p of ap) {
-    const q = bById.get(p.id);
-    if (!q || p.displayName !== q.displayName || !!p.isYou !== !!q.isYou) {
+  for (let i = 0; i < ap.length; i++) {
+    const p = ap[i];
+    const q = bp[i];
+    if (
+      p.displayName !== q.displayName ||
+      !!p.isYou !== !!q.isYou ||
+      (p.id !== undefined && q.id !== undefined && p.id !== q.id)
+    ) {
       return false;
     }
   }

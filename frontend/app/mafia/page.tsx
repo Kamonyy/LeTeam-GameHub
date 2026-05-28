@@ -3,8 +3,8 @@ import { Suspense } from 'react';
 import HubGameLoadingScreen from '@/components/hub/arcade/HubGameLoadingScreen';
 import '@/app/hub-arcade.css';
 
-const TavernCouncilClient = dynamic(
-  () => import('@/games/tavern-council/TavernCouncilClient'),
+const MafiaClient = dynamic(
+  () => import('@/games/mafia/MafiaClient'),
   {
     loading: () => <HubGameLoadingScreen gameId="mafia" />,
   }
@@ -13,7 +13,7 @@ const TavernCouncilClient = dynamic(
 export default function MafiaPage() {
   return (
     <Suspense fallback={<HubGameLoadingScreen gameId="mafia" />}>
-      <TavernCouncilClient />
+      <MafiaClient />
     </Suspense>
   );
 }

@@ -15,6 +15,11 @@ export function isAllowedSocketRequest(req) {
     return ALLOWED_ORIGINS.has(origin);
   }
 
+  // Production requires Origin; do not trust Host alone (CSRF / origin confusion).
+  if (process.env.NODE_ENV !== 'development') {
+    return false;
+  }
+
   const host = req.headers.get('Host') || '';
   if (host === 'gamehub.mohamed-hussein.net') return true;
   if (host.startsWith('localhost:') || host.startsWith('127.0.0.1:')) return true;

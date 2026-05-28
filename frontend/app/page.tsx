@@ -14,6 +14,8 @@ import './hub-arcade.css';
 
 export default function HomePage() {
   const { connected, hubPresence, error, clearError } = useHubLive();
+  const liveGames = GAMES.filter((game) => game.active);
+  const soonGames = GAMES.filter((game) => !game.active);
 
   return (
     <main className="hub-arcade min-h-screen relative overflow-x-hidden">
@@ -35,30 +37,59 @@ export default function HomePage() {
       </header>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-6 lg:py-10">
-        <div className="flex flex-col lg:flex-row gap-10 lg:gap-12">
-          <div className="flex-1 min-w-0">
+        <div className="flex flex-col gap-10 lg:gap-12">
+          <div className="flex flex-col lg:flex-row gap-10 lg:gap-12 lg:items-stretch mb-10">
             <HubHero connected={connected} hubPresence={hubPresence} />
 
-            <section className="pb-16">
-              <h3 className="text-xs uppercase tracking-[0.3em] text-hub-muted mb-6 font-semibold hub-enter-card" style={{ ['--hub-stagger' as string]: 0 }}>
-                Game Cabinets
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {GAMES.map((game, index) => (
-                  <GameArcadeCard key={game.id} game={game} staggerIndex={index + 1} />
-                ))}
-              </div>
-              <p
-                className="text-center lg:text-left text-hub-muted text-sm mt-10 hub-enter-card"
-                style={{ ['--hub-stagger' as string]: GAMES.length + 2 }}
-              >
-                More cabinets dropping soon — the workshop never sleeps.
-              </p>
-            </section>
+            <div className="w-full lg:w-72 shrink-0 hub-enter-sidebar flex flex-col min-h-[260px] lg:min-h-0">
+              <OnlinePlayersPanel />
+            </div>
           </div>
 
-          <div className="w-full lg:w-72 shrink-0 hub-enter-sidebar">
-            <OnlinePlayersPanel />
+          <div className="flex-1 min-w-0">
+            <section className="pb-10">
+              <h3
+                className="text-xs uppercase tracking-[0.3em] text-hub-success mb-6 font-semibold hub-enter-card"
+                style={{ ['--hub-stagger' as string]: 0 }}
+              >
+                Live now
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {liveGames.map((game, index) => (
+                  <GameArcadeCard
+                    key={game.id}
+                    game={game}
+                    staggerIndex={index + 1}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {soonGames.length > 0 && (
+              <section className="pb-16 pt-4 border-t border-hub-border/40">
+                <h3
+                  className="text-xs uppercase tracking-[0.3em] text-hub-muted mb-2 font-semibold hub-enter-card"
+                  style={{ ['--hub-stagger' as string]: liveGames.length + 1 }}
+                >
+                  Coming soon
+                </h3>
+                <p
+                  className="text-hub-muted text-sm mb-6 hub-enter-card"
+                  style={{ ['--hub-stagger' as string]: liveGames.length + 2 }}
+                >
+                  In the workshop — not playable yet.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {soonGames.map((game, index) => (
+                    <GameArcadeCard
+                      key={game.id}
+                      game={game}
+                      staggerIndex={liveGames.length + index + 3}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         </div>
       </div>

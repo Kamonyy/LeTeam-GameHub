@@ -187,9 +187,10 @@ export default function GameBoard({
 		if (!isSelfDraw) {
 			setOpponentDrawPulse(drawerId);
 		}
-		const pulseTimer = !isSelfDraw ?
-			setTimeout(() => setOpponentDrawPulse(null), 700)
-		:	undefined;
+		const pulseTimer =
+			!isSelfDraw ?
+				setTimeout(() => setOpponentDrawPulse(null), 700)
+			:	undefined;
 
 		const runFly = () => {
 			const origin = boneyardOriginRef.current;
@@ -306,9 +307,7 @@ export default function GameBoard({
 
 		const handIndex = gameState.myHand.findIndex((t) => tilesMatch(t, tile));
 		const handEl =
-			handIndex >= 0 ?
-				handTileRefs.current[tileKey(tile, handIndex)]
-			:	null;
+			handIndex >= 0 ? handTileRefs.current[tileKey(tile, handIndex)] : null;
 		const target = chainRef.current?.getEndClientPoint(end);
 
 		const finish = () => {
@@ -510,12 +509,7 @@ export default function GameBoard({
 					);
 				})}
 
-				<div
-					className={clsx(
-						"domino-table-square relative",
-						tableGlowClass,
-					)}
-				>
+				<div className={clsx("domino-table-square relative", tableGlowClass)}>
 					<GameActionOverlay
 						lastAction={gameState.lastAction}
 						playerNames={playerNames}
@@ -596,93 +590,93 @@ export default function GameBoard({
 				</div>
 
 				{!isSpectator && (
-				<>
-				<span className="domino-hand-pip-badge domino-hand-pip-badge--player">
-					{myPips} pips · {handCount} tiles
-				</span>
-				<p className="domino-player-hand-hint text-[10px] uppercase tracking-widest text-hub-muted/90">
-					{isMyTurn ?
-						"Drag to the table or tap a tile"
-					:	"Your hand · waiting"}
-					{selectedTile &&
-						isMyTurn &&
-						isPlayable(selectedTile).length > 1 &&
-						!dragTile && (
-							<span className="block text-emerald-400/90 normal-case tracking-normal text-xs mt-0.5 animate-pulse-soft">
-								Tap left / right on the table
-							</span>
-						)}
-					{canDraw && (
-						<span className="block text-hub-muted normal-case tracking-normal text-xs mt-0.5">
-							No moves — draw from the boneyard
+					<>
+						<span className="domino-hand-pip-badge domino-hand-pip-badge--player">
+							{myPips} pips · {handCount} tiles
 						</span>
-					)}
-				</p>
-
-				<div
-					ref={playerHandRef}
-					key={gameState.roundNumber}
-					className="domino-hand-arc domino-hand-arc--bottom domino-player-hand"
-				>
-					{gameState.myHand.map((tile, i) => {
-						const playable = isPlayable(tile).length > 0;
-						const isSelected =
-							selectedTile !== null && tilesMatch(selectedTile, tile);
-						const isDragging =
-							dragTile !== null && tilesMatch(dragTile, tile);
-						const unplayable = isMyTurn && !playable;
-						const key = tileKey(tile, i);
-						const fanTransform = arcFanTransform(i, handCount, "bottom", {
-							selected: isSelected,
-							dragging: isDragging,
-						});
-						const isHandDrawTarget = i === handCount - 1;
-						const hideDuringFly =
-							drawFly && !drawFly.faceDown && isHandDrawTarget;
-						const hideDuringPlace =
-							placeFly !== null && tilesMatch(placeFly.tile, tile);
-
-						return (
-							<div
-								key={key}
-								ref={(el) => {
-									handTileRefs.current[key] = el;
-								}}
-								data-draw-target={isHandDrawTarget ? "hand" : undefined}
-								className={clsx(
-									"domino-hand-slot origin-bottom",
-									hideDuringFly && "opacity-0",
-									hideDuringPlace && "opacity-0",
+						<p className="domino-player-hand-hint text-[10px] uppercase tracking-widest text-hub-muted/90">
+							{isMyTurn ?
+								"Drag to the table or tap a tile"
+							:	"Your hand · waiting"}
+							{selectedTile &&
+								isMyTurn &&
+								isPlayable(selectedTile).length > 1 &&
+								!dragTile && (
+									<span className="block text-emerald-400/90 normal-case tracking-normal text-xs mt-0.5 animate-pulse-soft">
+										Tap left / right on the table
+									</span>
 								)}
-								style={{
-									transform: fanTransform,
-									zIndex: isSelected || isDragging ? 40 : i + 1,
-								}}
-							>
-								<DominoTile
-									left={tile.left}
-									right={tile.right}
-									playable={playable && isMyTurn}
-									unplayable={unplayable}
-									selected={isSelected}
-									dragging={isDragging}
-									draggable={playable && isMyTurn}
-									inHand
-									onDragStart={handleDragStart(tile)}
-									onDragEnd={handleDragEnd}
-									onClick={() => handleTileClick(tile)}
-									className="animate-hand-deal"
-									style={{
-										animationDelay: `${i * 65}ms`,
-										["--deal-from-x" as string]: `${(i - (handCount - 1) / 2) * -12}px`,
-										["--fan-rotate" as string]: "0deg",
-									}}
-								/>
-							</div>
-						);
-					})}
-				</div>
-				</>
+							{canDraw && (
+								<span className="block text-hub-muted normal-case tracking-normal text-xs mt-0.5">
+									No moves — draw from the boneyard
+								</span>
+							)}
+						</p>
+
+						<div
+							ref={playerHandRef}
+							key={gameState.roundNumber}
+							className="domino-hand-arc domino-hand-arc--bottom domino-player-hand"
+						>
+							{gameState.myHand.map((tile, i) => {
+								const playable = isPlayable(tile).length > 0;
+								const isSelected =
+									selectedTile !== null && tilesMatch(selectedTile, tile);
+								const isDragging =
+									dragTile !== null && tilesMatch(dragTile, tile);
+								const unplayable = isMyTurn && !playable;
+								const key = tileKey(tile, i);
+								const fanTransform = arcFanTransform(i, handCount, "bottom", {
+									selected: isSelected,
+									dragging: isDragging,
+								});
+								const isHandDrawTarget = i === handCount - 1;
+								const hideDuringFly =
+									drawFly && !drawFly.faceDown && isHandDrawTarget;
+								const hideDuringPlace =
+									placeFly !== null && tilesMatch(placeFly.tile, tile);
+
+								return (
+									<div
+										key={key}
+										ref={(el) => {
+											handTileRefs.current[key] = el;
+										}}
+										data-draw-target={isHandDrawTarget ? "hand" : undefined}
+										className={clsx(
+											"domino-hand-slot origin-bottom",
+											hideDuringFly && "opacity-0",
+											hideDuringPlace && "opacity-0",
+										)}
+										style={{
+											transform: fanTransform,
+											zIndex: isSelected || isDragging ? 40 : i + 1,
+										}}
+									>
+										<DominoTile
+											left={tile.left}
+											right={tile.right}
+											playable={playable && isMyTurn}
+											unplayable={unplayable}
+											selected={isSelected}
+											dragging={isDragging}
+											draggable={playable && isMyTurn}
+											inHand
+											onDragStart={handleDragStart(tile)}
+											onDragEnd={handleDragEnd}
+											onClick={() => handleTileClick(tile)}
+											className="animate-hand-deal"
+											style={{
+												animationDelay: `${i * 65}ms`,
+												["--deal-from-x" as string]: `${(i - (handCount - 1) / 2) * -12}px`,
+												["--fan-rotate" as string]: "0deg",
+											}}
+										/>
+									</div>
+								);
+							})}
+						</div>
+					</>
 				)}
 			</div>
 
@@ -708,7 +702,11 @@ export default function GameBoard({
 			)}
 
 			{placeFly && (
-				<div className="domino-tile-fly-layer" style={placeFly.style} aria-hidden>
+				<div
+					className="domino-tile-fly-layer"
+					style={placeFly.style}
+					aria-hidden
+				>
 					<DominoTile
 						left={placeFly.tile.left}
 						right={placeFly.tile.right}

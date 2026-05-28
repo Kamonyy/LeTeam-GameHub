@@ -1,0 +1,95 @@
+/* Design tokens — scoped to Mafia routes */
+[data-mafia-theme],
+.mf-shell {
+  --p1-ink: #f3ead8;
+  --p1-ink-soft: rgba(243, 234, 216, 0.94);
+  --p1-ink-dim: rgba(243, 234, 216, 0.74);
+
+  --mf-text-on-panel: var(--p1-ink);
+  --mf-text-muted-on-panel: var(--p1-ink-soft);
+
+  --p1-abyss: #07080b;
+  --p1-deep: #0b0d12;
+  --p1-night: #090b10;
+  --p1-mid: #14161c;
+
+  --mf-glass-bg: rgba(12, 10, 8, 0.88);
+  --mf-glass-border: rgba(154, 116, 40, 0.38);
+  --mf-glass-blur: 14px;
+
+  --mf-shadow-panel:
+    0 10px 36px -8px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(248, 228, 168, 0.14),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.55);
+  --mf-shadow-glow-gold: 0 0 22px -4px rgba(201, 162, 39, 0.45);
+  --mf-shadow-glow-torch: 0 0 40px -8px rgba(180, 90, 40, 0.32);
+
+  --p1-bronze: #9a7428;
+  --p1-bronze-bright: #e0b85a;
+  --p1-bronze-glint: #f8e4a8;
+  --p1-bronze-dark: #3d2e0c;
+
+  --p1-gold: #c9a227;
+  --p1-gold-bright: #ffd97a;
+  --p1-gold-glow: rgba(255, 217, 122, 0.5);
+
+  --p1-jade: #4ad895;
+  --p1-jade-deep: #186c4d;
+  --p1-jade-glow: rgba(74, 216, 149, 0.55);
+
+  --p1-rust: #c46a2e;
+  --p1-rust-deep: #6a2e10;
+  --p1-rust-glow: rgba(196, 106, 46, 0.45);
+
+  --p1-font-display: "Cinzel", Georgia, serif;
+  --p1-font-decor: "Cinzel Decorative", "Cinzel", Georgia, serif;
+  --p1-font-script: "Cormorant Garamond", "Cinzel", Georgia, serif;
+
+  --p1-noise: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 0.85  0 0 0 0 0.6  0 0 0 0.08 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+
+  --mf-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --mf-ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+  --mf-duration-fast: 0.18s;
+  --mf-duration-medium: 0.32s;
+  --mf-duration-slow: 0.48s;
+
+  /* shadcn semantic bridge (warm medieval, not zinc hub) */
+  --background: 30 8% 4%;
+  --foreground: 43 35% 92%;
+  --card: 25 14% 9%;
+  --card-foreground: 43 35% 92%;
+  --border: 32 24% 26%;
+  --primary: 38 72% 42%;
+  --primary-foreground: 48 96% 92%;
+  --secondary: 25 12% 12%;
+  --secondary-foreground: 43 30% 88%;
+  --muted: 25 10% 8%;
+  --muted-foreground: 38 24% 72%;
+  --accent: 32 28% 18%;
+  --accent-foreground: 43 35% 92%;
+  --destructive: 343 75% 18%;
+  --destructive-foreground: 0 85% 97%;
+  --ring: 38 72% 42%;
+  --input: 32 22% 22%;
+  --popover: 25 14% 9%;
+  --popover-foreground: 43 35% 92%;
+
+  color: var(--p1-ink);
+
+  /* shadcn primitives (in-tree; portaled overlays use dialog overlayVariant) */
+  --mf-dialog-overlay: rgba(7, 5, 4, 0.78);
+  --mf-dialog-overlay-glow: rgba(120, 53, 15, 0.12);
+}
+
+[data-mafia-theme] [data-mf-card-description] {
+  color: var(--mf-text-muted-on-panel);
+}
+
+/* Portaled Radix surfaces (tooltip/dialog) when Mafia shell is mounted */
+:root:has([data-mafia-theme]) .mf-tooltip-content {
+  border-color: var(--mf-glass-border);
+  background-color: var(--mf-glass-bg);
+  color: var(--p1-ink-soft);
+  box-shadow: var(--mf-shadow-panel);
+  backdrop-filter: blur(var(--mf-glass-blur));
+}

@@ -22,6 +22,8 @@ cp frontend/.env.example frontend/.env.local
 npm run dev
 ```
 
+The `server/` Socket.io process is for **local/LAN development only** (`HOST=0.0.0.0` in `.env.example`). Do not expose it to the public internet. If you must run it on a reachable host, set `NODE_ENV=production` and `DISABLE_DEV_BOTS=true` (and avoid permissive `CLIENT_URL` / `DEV_LAN_CORS`).
+
 ## Deploy
 
 ```bash

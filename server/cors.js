@@ -5,6 +5,13 @@ export function parseAllowedOrigins(raw) {
   return raw.split(',').map((o) => o.trim()).filter(Boolean);
 }
 
+function isLanCorsEnabled() {
+  return (
+    process.env.NODE_ENV === 'development' ||
+    process.env.DEV_LAN_CORS === 'true'
+  );
+}
+
 /** Allow phone/tablet access via http://192.168.x.x:3000 during local dev. */
 function isPrivateNetworkDevOrigin(origin) {
   try {
@@ -25,22 +32,27 @@ function isPrivateNetworkDevOrigin(origin) {
 }
 
 export function createCorsOriginChecker(allowedOrigins) {
-  const allowAny = allowedOrigins.includes('*');
+  const hadWildcard = allowedOrigins.includes('*');
+  const origins = allowedOrigins.filter((o) => o !== '*');
+  if (hadWildcard) {
+    console.warn(
+      'CORS: CLIENT_URL wildcard (*) is ignored when credentials are enabled'
+    );
+  }
+
+  const allowMissingOrigin = process.env.NODE_ENV === 'development';
+  const allowLanBypass = isLanCorsEnabled();
 
   return (origin, callback) => {
-    if (allowAny) {
-      callback(null, true);
-      return;
-    }
     if (!origin) {
+      callback(null, allowMissingOrigin);
+      return;
+    }
+    if (origins.includes(origin)) {
       callback(null, true);
       return;
     }
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-      return;
-    }
-    if (isPrivateNetworkDevOrigin(origin)) {
+    if (allowLanBypass && isPrivateNetworkDevOrigin(origin)) {
       callback(null, true);
       return;
     }

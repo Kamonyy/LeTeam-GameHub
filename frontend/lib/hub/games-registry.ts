@@ -41,7 +41,7 @@ const CATALOG: Omit<GameCatalogEntry, 'active'>[] = [
     ],
     href: '/wordgame',
     players: '2',
-    icon: '🔤',
+    icon: '🔮',
   },
   {
     id: 'bara-alsalafa',

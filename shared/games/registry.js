@@ -1,7 +1,7 @@
 import { DominoEngine } from './dominoes/DominoEngine.js';
 import { WordGameEngine } from './wordgame/WordGameEngine.js';
 import { BaraAlsalafaEngine } from './bara-alsalafa/BaraAlsalafaEngine.js';
-import { TavernCouncilEngine } from './tavern-council/TavernCouncilEngine.js';
+import { MafiaEngine } from './mafia/MafiaEngine.js';
 import { GAME_ENABLED } from './availability.js';
 import {
   DEFAULT_MAX_PLAYERS,
@@ -42,7 +42,7 @@ export const GAMES = {
     enabled: GAME_ENABLED.mafia,
     minPlayers: MAFIA_MIN_PLAYERS,
     maxPlayers: MAFIA_MAX_PLAYERS,
-    createEngine: (playerIds, settings) => new TavernCouncilEngine(playerIds, settings),
+    createEngine: (playerIds, settings) => new MafiaEngine(playerIds, settings),
   },
 };
 

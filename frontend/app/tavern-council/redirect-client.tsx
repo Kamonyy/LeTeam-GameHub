@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 /** Legacy route — game is now `/mafia`. */
-export default function TavernCouncilLegacyRedirect() {
+export default function MafiaLegacyRedirect() {
   const router = useRouter();
   const searchParams = useSearchParams();
 

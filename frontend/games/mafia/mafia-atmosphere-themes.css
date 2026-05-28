@@ -1,0 +1,360 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Mafia — thematic silhouettes, decals (2–5% opacity ceiling)
+   Sits above stone texture, below moon/torch/fog/vignette
+   ═══════════════════════════════════════════════════════════════════ */
+
+.mf-atmosphere {
+  --mf-atmo-prop-opacity: 0.065;
+  --mf-atmo-decal-opacity: 0.022;
+  --mf-atmo-parchment-opacity: 0.032;
+  --mf-atmo-window-opacity: 0.045;
+  --mf-atmo-clock-hour: 45deg;
+  --mf-atmo-clock-minute: 140deg;
+  --mf-atmo-clock-glow: rgba(186, 204, 228, 0.15);
+}
+
+.mf-atmosphere--day {
+  --mf-atmo-prop-opacity: 0.06;
+  --mf-atmo-decal-opacity: 0.018;
+  --mf-atmo-parchment-opacity: 0.028;
+  --mf-atmo-window-opacity: 0.042;
+  --mf-atmo-clock-hour: 75deg;
+  --mf-atmo-clock-minute: 200deg;
+  --mf-atmo-clock-glow: rgba(200, 210, 225, 0.12);
+}
+
+.mf-atmosphere--night {
+  --mf-atmo-prop-opacity: 0.075;
+  --mf-atmo-decal-opacity: 0.035;
+  --mf-atmo-parchment-opacity: 0.025;
+  --mf-atmo-window-opacity: 0.05;
+  --mf-atmo-clock-hour: 300deg;
+  --mf-atmo-clock-minute: 30deg;
+  --mf-atmo-clock-glow: rgba(170, 200, 240, 0.35);
+}
+
+.mf-atmosphere--morning {
+  --mf-atmo-prop-opacity: 0.055;
+  --mf-atmo-decal-opacity: 0.024;
+  --mf-atmo-clock-hour: 120deg;
+  --mf-atmo-clock-minute: 250deg;
+  --mf-atmo-clock-glow: rgba(210, 185, 160, 0.2);
+}
+
+.mf-atmosphere__thematic {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  contain: layout style paint;
+  color: #1a1510;
+  transition:
+    opacity 0.6s var(--mf-ease-in-out, ease),
+    color 0.6s ease;
+}
+
+.mf-atmosphere--night .mf-atmosphere__thematic {
+  color: #06080c;
+}
+
+.mf-atmosphere__thematic--dim {
+  opacity: 0.55;
+}
+
+/* ── Parchment & Latin calligraphy overlay ─────────────────────── */
+.mf-atmo-parchment {
+  position: absolute;
+  inset: 0;
+  opacity: var(--mf-atmo-parchment-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='320' viewBox='0 0 400 320'%3E%3Crect fill='%23e8dcc8' fill-opacity='0.12' x='40' y='30' width='140' height='180' rx='4' transform='rotate(-6 110 120)'/%3E%3Ctext x='52' y='58' fill='%231a1510' fill-opacity='0.35' font-family='Georgia,serif' font-size='11' font-weight='700' letter-spacing='2'%3EWANTED%3C/text%3E%3Ctext x='52' y='78' fill='%231a1510' fill-opacity='0.22' font-family='Georgia,serif' font-size='7'%3ETRAITOR%3C/text%3E%3Ctext x='48' y='100' fill='%231a1510' fill-opacity='0.18' font-family='Georgia,serif' font-size='6' font-style='italic'%3ENOLI ME TANGERE%3C/text%3E%3Ctext x='48' y='118' fill='%231a1510' fill-opacity='0.15' font-family='Georgia,serif' font-size='5.5'%3EQUI TACET CONSENTIRE VIDETUR%3C/text%3E%3Crect fill='%23e8dcc8' fill-opacity='0.08' x='260' y='180' width='110' height='90' rx='3' transform='rotate(8 315 225)'/%3E%3Ctext x='272' y='205' fill='%231a1510' fill-opacity='0.2' font-family='Georgia,serif' font-size='6' font-style='italic'%3EIN NOCTE VERITAS%3C/text%3E%3C/svg%3E");
+  background-size: 420px 340px;
+  background-repeat: repeat;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  transition: opacity 0.6s var(--mf-ease-in-out, ease);
+}
+
+/* ── Iron-barred dungeon windows (flickering torchlight inside) ── */
+.mf-atmo-windows {
+  position: absolute;
+  inset: 0;
+  opacity: var(--mf-atmo-window-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='140' viewBox='0 0 180 140'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='70%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23c87830' stop-opacity='0.45'/%3E%3Cstop offset='100%25' stop-color='%23c87830' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cg fill='none' stroke='%230a0c10' stroke-width='1.2' stroke-opacity='0.55'%3E%3Cpath d='M20 30 Q45 10 70 30 L70 110 Q45 130 20 110 Z'/%3E%3Cpath d='M110 20 Q135 5 160 20 L160 100 Q135 115 110 100 Z'/%3E%3C/g%3E%3Crect fill='url(%23g)' x='24' y='38' width='42' height='68' rx='2'/%3E%3Crect fill='url(%23g)' x='114' y='28' width='42' height='68' rx='2'/%3E%3Cpath stroke='%230a0c10' stroke-width='1' stroke-opacity='0.5' d='M45 32v76M20 70h50M135 22v76M110 60h50'/%3E%3C/svg%3E");
+  background-size: 200px 155px;
+  background-repeat: repeat;
+  animation: mf-window-flicker 7s ease-in-out infinite;
+  pointer-events: none;
+  transition: opacity 0.6s var(--mf-ease-in-out, ease);
+}
+
+@keyframes mf-window-flicker {
+  0%,
+  100% {
+    filter: brightness(0.92);
+  }
+  33% {
+    filter: brightness(1.08);
+  }
+  66% {
+    filter: brightness(0.96);
+  }
+}
+
+/* ── Blood splatter / claw decals (corners) ────────────────────── */
+.mf-atmo-decals {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.mf-atmo-decal {
+  position: absolute;
+  width: min(28vw, 200px);
+  height: min(28vw, 200px);
+  opacity: var(--mf-atmo-decal-opacity);
+  background-repeat: no-repeat;
+  background-size: contain;
+  transition: opacity 0.6s var(--mf-ease-in-out, ease);
+  mix-blend-mode: multiply;
+}
+
+.mf-atmo-decal--tl {
+  top: 0;
+  left: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cpath fill='%234a0810' fill-opacity='0.9' d='M10 20 Q40 5 65 35 Q90 60 75 95 Q50 110 25 85 Q5 55 10 20z'/%3E%3Cpath fill='%234a0810' fill-opacity='0.5' d='M55 15 Q80 25 70 50 Q60 70 40 55z'/%3E%3C/svg%3E");
+  background-position: top left;
+}
+
+.mf-atmo-decal--br {
+  bottom: 0;
+  right: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cpath fill='%234a0810' fill-opacity='0.85' d='M95 100 Q70 115 45 90 Q20 65 35 40 Q55 15 85 25 Q110 45 95 100z'/%3E%3C/svg%3E");
+  background-position: bottom right;
+}
+
+.mf-atmo-decal--claw {
+  top: 12%;
+  right: 8%;
+  width: min(18vw, 120px);
+  height: min(18vw, 120px);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='none' stroke='%234a0810' stroke-width='2' stroke-opacity='0.7' d='M20 80 Q35 40 50 55 Q65 70 80 25 M25 70 Q40 50 55 60'/%3E%3Cpath fill='none' stroke='%234a0810' stroke-width='1.5' stroke-opacity='0.5' d='M30 75 L45 45 M50 65 L62 35'/%3E%3C/svg%3E");
+  background-position: center;
+}
+
+/* ── Clock tower (upper center) ────────────────────────────────── */
+.mf-atmo-clock {
+  position: absolute;
+  top: 2%;
+  left: 50%;
+  width: min(22vw, 200px);
+  height: min(28vh, 240px);
+  transform: translateX(-50%);
+  opacity: var(--mf-atmo-prop-opacity);
+  color: inherit;
+  pointer-events: none;
+  transition:
+    opacity 0.6s var(--mf-ease-in-out, ease),
+    transform 0.6s var(--mf-ease-in-out, ease);
+}
+
+.mf-atmo-clock__tower {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.mf-atmo-clock__hand {
+  transform-origin: 100px 145px;
+  transition: transform 0.8s var(--mf-ease-in-out, cubic-bezier(0.45, 0, 0.55, 1));
+  filter: drop-shadow(0 0 4px var(--mf-atmo-clock-glow));
+}
+
+.mf-atmo-clock__hand--hour {
+  transform: rotate(var(--mf-atmo-clock-hour));
+  animation: mf-clock-pulse 4s ease-in-out infinite;
+}
+
+.mf-atmo-clock__hand--minute {
+  transform: rotate(var(--mf-atmo-clock-minute));
+  animation: mf-clock-pulse 4s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+.mf-atmosphere--transitioning .mf-atmo-clock__hand--hour,
+.mf-atmosphere--transitioning .mf-atmo-clock__hand--minute {
+  animation: mf-clock-phase-pulse 0.6s ease-out;
+}
+
+@keyframes mf-clock-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px var(--mf-atmo-clock-glow));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px var(--mf-atmo-clock-glow));
+  }
+}
+
+@keyframes mf-clock-phase-pulse {
+  0% {
+    filter: drop-shadow(0 0 2px var(--mf-atmo-clock-glow));
+  }
+  40% {
+    filter: drop-shadow(0 0 14px var(--mf-atmo-clock-glow));
+  }
+  100% {
+    filter: drop-shadow(0 0 4px var(--mf-atmo-clock-glow));
+  }
+}
+
+/* ── Gallows (top-right, moonlit) ──────────────────────────────── */
+.mf-atmo-gallows {
+  position: absolute;
+  top: 4%;
+  right: 5%;
+  width: min(14vw, 110px);
+  height: min(18vh, 130px);
+  opacity: calc(var(--mf-atmo-prop-opacity) * 1.1);
+  color: inherit;
+  pointer-events: none;
+  transition: opacity 0.6s var(--mf-ease-in-out, ease);
+}
+
+.mf-atmo-gallows__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.mf-atmosphere--day .mf-atmo-gallows {
+  opacity: calc(var(--mf-atmo-prop-opacity) * 1.25);
+}
+
+/* ── Cloaked figures (lower periphery) ─────────────────────────── */
+.mf-atmo-cloak {
+  position: absolute;
+  bottom: 0;
+  margin: 0;
+  width: min(12vw, 90px);
+  height: min(22vh, 140px);
+  opacity: var(--mf-atmo-prop-opacity);
+  color: inherit;
+  pointer-events: none;
+  transition: opacity 0.6s var(--mf-ease-in-out, ease);
+}
+
+.mf-atmo-cloak__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.mf-atmo-cloak--1 {
+  left: 3%;
+  transform: scaleX(-1);
+}
+
+.mf-atmo-cloak--2 {
+  left: 14%;
+  bottom: -2%;
+  opacity: calc(var(--mf-atmo-prop-opacity) * 0.85);
+}
+
+.mf-atmo-cloak--3 {
+  right: 6%;
+  bottom: 1%;
+}
+
+/* ── Chains, shackles, dagger crests ────────────────────────────── */
+.mf-atmo-ironmongery {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.mf-atmo-chain,
+.mf-atmo-crest,
+.mf-atmo-shackle {
+  position: absolute;
+  color: inherit;
+  opacity: calc(var(--mf-atmo-prop-opacity) * 0.9);
+  transition: opacity 0.6s var(--mf-ease-in-out, ease);
+}
+
+.mf-atmo-chain {
+  width: 36px;
+  height: 100px;
+}
+
+.mf-atmo-chain--left {
+  top: 22%;
+  left: 2%;
+}
+
+.mf-atmo-chain--right {
+  top: 38%;
+  right: 3%;
+  transform: scaleX(-1);
+}
+
+.mf-atmo-crest {
+  width: 48px;
+  height: 54px;
+}
+
+.mf-atmo-crest--a {
+  top: 48%;
+  left: 6%;
+}
+
+.mf-atmo-crest--b {
+  bottom: 28%;
+  right: 4%;
+  opacity: calc(var(--mf-atmo-prop-opacity) * 0.75);
+}
+
+.mf-atmo-shackle {
+  width: 52px;
+  height: 36px;
+  bottom: 22%;
+  left: 42%;
+  opacity: calc(var(--mf-atmo-prop-opacity) * 0.7);
+}
+
+@media (max-width: 720px) {
+  .mf-atmo-gallows {
+    right: 2%;
+    width: min(18vw, 80px);
+  }
+
+  .mf-atmo-cloak--2 {
+    display: none;
+  }
+
+  .mf-atmo-clock {
+    width: min(28vw, 140px);
+    top: 1%;
+  }
+
+  .mf-atmo-crest--a,
+  .mf-atmo-shackle {
+    display: none;
+  }
+}
+
+.mf-atmosphere--reduced .mf-atmo-windows,
+.mf-atmosphere--reduced .mf-atmo-clock__hand {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mf-atmo-windows,
+  .mf-atmo-clock__hand {
+    animation: none !important;
+  }
+
+  .mf-atmosphere--transitioning .mf-atmo-clock__hand--hour,
+  .mf-atmosphere--transitioning .mf-atmo-clock__hand--minute {
+    animation: none !important;
+  }
+}

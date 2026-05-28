@@ -1,0 +1,287 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Mafia — immersive courtyard / tavern atmosphere (CSS-only)
+   Phase variables on .mf-atmosphere--{day|night|morning}
+   ═══════════════════════════════════════════════════════════════════ */
+
+.mf-atmosphere {
+  --mf-atmo-base-0: #07080b;
+  --mf-atmo-base-1: #0b0d12;
+  --mf-atmo-base-2: #14161c;
+  --mf-atmo-torch-color: rgba(200, 120, 50, 0.22);
+  --mf-atmo-torch-opacity: 1;
+  --mf-atmo-moon-color: rgba(186, 204, 228, 0.06);
+  --mf-atmo-moon-opacity: 0.85;
+  --mf-atmo-vignette-hole: 46%;
+  --mf-atmo-vignette-strength: 0.84;
+  --mf-atmo-fog-opacity: 0.055;
+  --mf-atmo-texture-opacity: 0.038;
+
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--mf-atmo-base-0);
+  background-image: linear-gradient(
+    180deg,
+    var(--mf-atmo-base-0) 0%,
+    var(--mf-atmo-base-1) 45%,
+    var(--mf-atmo-base-2) 100%
+  );
+  transition:
+    background-color 0.6s var(--mf-ease-in-out),
+    background-image 0.6s var(--mf-ease-in-out);
+}
+
+/* Day — muted cold gray-gold */
+.mf-atmosphere--day {
+  --mf-atmo-base-0: #08090c;
+  --mf-atmo-base-1: #0e1018;
+  --mf-atmo-base-2: #151820;
+  --mf-atmo-torch-color: rgba(195, 125, 55, 0.24);
+  --mf-atmo-torch-opacity: 0.95;
+  --mf-atmo-moon-color: rgba(200, 210, 225, 0.05);
+  --mf-atmo-moon-opacity: 0.7;
+  --mf-atmo-vignette-hole: 48%;
+  --mf-atmo-vignette-strength: 0.82;
+  --mf-atmo-fog-opacity: 0.05;
+  --mf-atmo-texture-opacity: 0.035;
+}
+
+/* Night — colder, tighter vignette, stronger moon */
+.mf-atmosphere--night {
+  --mf-atmo-base-0: #050608;
+  --mf-atmo-base-1: #080a10;
+  --mf-atmo-base-2: #0c0e14;
+  --mf-atmo-torch-color: rgba(175, 95, 40, 0.2);
+  --mf-atmo-torch-opacity: 0.82;
+  --mf-atmo-moon-color: rgba(190, 215, 245, 0.1);
+  --mf-atmo-moon-opacity: 1;
+  --mf-atmo-vignette-hole: 38%;
+  --mf-atmo-vignette-strength: 0.9;
+  --mf-atmo-fog-opacity: 0.06;
+  --mf-atmo-texture-opacity: 0.04;
+}
+
+/* Morning — between day and night */
+.mf-atmosphere--morning {
+  --mf-atmo-base-0: #090a0e;
+  --mf-atmo-base-1: #0d0f16;
+  --mf-atmo-base-2: #10141c;
+  --mf-atmo-torch-color: rgba(180, 110, 48, 0.13);
+  --mf-atmo-torch-opacity: 0.8;
+  --mf-atmo-moon-color: rgba(210, 185, 160, 0.06);
+  --mf-atmo-moon-opacity: 0.9;
+  --mf-atmo-vignette-hole: 36%;
+  --mf-atmo-vignette-strength: 0.94;
+}
+
+/* Cobblestone / flagstone texture (1–2% effective opacity) */
+.mf-atmosphere__texture {
+  position: absolute;
+  inset: 0;
+  opacity: var(--mf-atmo-texture-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='%23c8cdd8' fill-opacity='0.55'%3E%3Cellipse cx='28' cy='24' rx='20' ry='12'/%3E%3Cellipse cx='62' cy='32' rx='18' ry='11'/%3E%3Cellipse cx='98' cy='22' rx='19' ry='12'/%3E%3Cellipse cx='132' cy='34' rx='17' ry='10'/%3E%3Cellipse cx='18' cy='58' rx='16' ry='10'/%3E%3Cellipse cx='48' cy='68' rx='20' ry='12'/%3E%3Cellipse cx='82' cy='56' rx='18' ry='11'/%3E%3Cellipse cx='118' cy='64' rx='19' ry='11'/%3E%3Cellipse cx='145' cy='52' rx='15' ry='9'/%3E%3Cellipse cx='32' cy='96' rx='21' ry='12'/%3E%3Cellipse cx='68' cy='104' rx='17' ry='10'/%3E%3Cellipse cx='104' cy='92' rx='20' ry='12'/%3E%3Cellipse cx='138' cy='100' rx='16' ry='10'/%3E%3Cellipse cx='22' cy='132' rx='18' ry='11'/%3E%3Cellipse cx='58' cy='140' rx='19' ry='11'/%3E%3Cellipse cx='94' cy='128' rx='17' ry='10'/%3E%3Cellipse cx='128' cy='136' rx='18' ry='11'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* Icy moonlight — top-left (above thematic silhouettes) */
+.mf-atmosphere__moonlight {
+  z-index: 2;
+  position: absolute;
+  width: min(90vw, 520px);
+  height: min(70vh, 480px);
+  top: -18%;
+  left: -12%;
+  opacity: var(--mf-atmo-moon-opacity);
+  background: radial-gradient(
+    circle at 35% 35%,
+    var(--mf-atmo-moon-color) 0%,
+    transparent 68%
+  );
+  filter: blur(160px);
+  pointer-events: none;
+  transition:
+    opacity 0.6s var(--mf-ease-in-out),
+    filter 0.6s var(--mf-ease-in-out);
+}
+
+/* Torch pools — bottom sides, heavy blur */
+.mf-atmosphere__torch {
+  z-index: 2;
+  position: absolute;
+  width: min(55vw, 380px);
+  height: min(50vh, 340px);
+  bottom: -8%;
+  --mf-torch-base: var(--mf-atmo-torch-opacity);
+  background: radial-gradient(
+    circle at 50% 80%,
+    var(--mf-atmo-torch-color) 0%,
+    transparent 70%
+  );
+  filter: blur(120px);
+  pointer-events: none;
+  animation: mf-torch-flicker 5.8s ease-in-out infinite;
+  transition: opacity 0.6s var(--mf-ease-in-out);
+}
+
+.mf-atmosphere__torch--left {
+  left: -14%;
+  animation-delay: 0s;
+}
+
+.mf-atmosphere__torch--right {
+  right: -14%;
+  animation-delay: 2.4s;
+}
+
+@keyframes mf-torch-flicker {
+  0%,
+  100% {
+    opacity: calc(var(--mf-torch-base) * 0.72);
+    transform: scale(0.96);
+  }
+  14% {
+    opacity: calc(var(--mf-torch-base) * 0.98);
+    transform: scale(1.04);
+  }
+  28% {
+    opacity: calc(var(--mf-torch-base) * 0.52);
+    transform: scale(0.98);
+  }
+  41% {
+    opacity: calc(var(--mf-torch-base) * 1);
+    transform: scale(1.05);
+  }
+  58% {
+    opacity: calc(var(--mf-torch-base) * 0.65);
+    transform: scale(0.95);
+  }
+  73% {
+    opacity: calc(var(--mf-torch-base) * 0.88);
+    transform: scale(1.02);
+  }
+  87% {
+    opacity: calc(var(--mf-torch-base) * 0.45);
+    transform: scale(0.97);
+  }
+}
+
+/* Low-lying fog bands */
+.mf-atmosphere__fog {
+  z-index: 3;
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  height: 28%;
+  opacity: var(--mf-atmo-fog-opacity);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(120, 65, 28, 0.28) 25%,
+    rgba(160, 85, 35, 0.42) 50%,
+    rgba(120, 65, 28, 0.28) 75%,
+    transparent 100%
+  );
+  filter: blur(28px);
+  pointer-events: none;
+  transition: opacity 0.6s var(--mf-ease-in-out);
+}
+
+.mf-atmosphere__fog--a {
+  bottom: 18%;
+  animation: mf-fog-drift 25s linear infinite;
+}
+
+.mf-atmosphere__fog--b {
+  bottom: 38%;
+  height: 22%;
+  opacity: calc(var(--mf-atmo-fog-opacity) * 0.85);
+  animation: mf-fog-drift 40s linear infinite reverse;
+}
+
+.mf-atmosphere__fog--c {
+  bottom: 8%;
+  height: 18%;
+  opacity: calc(var(--mf-atmo-fog-opacity) * 0.7);
+  animation: mf-fog-drift 32s linear infinite;
+  animation-delay: -8s;
+}
+
+@keyframes mf-fog-drift {
+  0% {
+    transform: translateX(-8%);
+  }
+  100% {
+    transform: translateX(8%);
+  }
+}
+
+/* Claustrophobic vignette */
+.mf-atmosphere__vignette {
+  z-index: 4;
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 48%,
+    transparent var(--mf-atmo-vignette-hole),
+    rgba(0, 0, 0, var(--mf-atmo-vignette-strength)) 100%
+  );
+  pointer-events: none;
+  transition: background 0.6s var(--mf-ease-in-out);
+}
+
+/* Subtle hearth sparks */
+.mf-ember {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(220, 160, 80, 0.9);
+  box-shadow: 0 0 6px 1px rgba(185, 115, 50, 0.5);
+  opacity: 0;
+  animation: mf-ember-rise 10s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes mf-ember-rise {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  15% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--mf-drift, 0), calc(-1 * var(--mf-lift, 24vh)))
+      scale(0.1);
+  }
+}
+
+.mf-atmosphere--reduced .mf-ember {
+  display: none;
+}
+
+.mf-atmosphere--reduced .mf-atmosphere__torch,
+.mf-atmosphere--reduced .mf-atmosphere__fog {
+  animation: none !important;
+}
+
+.mf-atmosphere--transitioning {
+  opacity: 0.94;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mf-atmosphere--transitioning {
+    opacity: 1;
+  }
+
+  .mf-atmosphere__torch,
+  .mf-atmosphere__fog,
+  .mf-ember {
+    animation: none !important;
+  }
+}

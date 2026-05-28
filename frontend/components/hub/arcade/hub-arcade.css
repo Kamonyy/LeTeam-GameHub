@@ -235,6 +235,68 @@
 	animation: hub-slide-up 0.75s var(--hub-elastic) 0.35s both;
 }
 
+/* Players panel — matches hero row height, arcade scroll */
+.hub-players-panel {
+	height: 100%;
+	min-height: 0;
+	border-radius: 1rem;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	background: linear-gradient(
+		165deg,
+		rgba(18, 24, 38, 0.94) 0%,
+		rgba(10, 12, 22, 0.98) 100%
+	);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.06),
+		inset 0 0 24px rgba(59, 130, 246, 0.06),
+		0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.hub-players-panel__header {
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+	background: linear-gradient(180deg, rgba(59, 130, 246, 0.1), transparent);
+}
+
+.hub-players-panel__footer {
+	border-top: 1px solid rgba(255, 255, 255, 0.08);
+	background: rgba(0, 0, 0, 0.2);
+}
+
+.hub-arcade-scroll {
+	scrollbar-width: thin;
+	scrollbar-color: rgba(59, 130, 246, 0.55) rgba(255, 255, 255, 0.05);
+}
+
+.hub-arcade-scroll::-webkit-scrollbar {
+	width: 7px;
+}
+
+.hub-arcade-scroll::-webkit-scrollbar-track {
+	margin: 6px 0;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.04);
+	box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.35);
+}
+
+.hub-arcade-scroll::-webkit-scrollbar-thumb {
+	border-radius: 999px;
+	background: linear-gradient(
+		180deg,
+		rgba(56, 189, 248, 0.75) 0%,
+		rgba(59, 130, 246, 0.9) 100%
+	);
+	border: 1px solid rgba(147, 197, 253, 0.25);
+	box-shadow: 0 0 10px rgba(59, 130, 246, 0.35);
+}
+
+.hub-arcade-scroll::-webkit-scrollbar-thumb:hover {
+	background: linear-gradient(
+		180deg,
+		rgba(125, 211, 252, 0.9) 0%,
+		rgba(96, 165, 250, 1) 100%
+	);
+}
+
 @keyframes hub-player-in {
 	from {
 		opacity: 0;
@@ -461,18 +523,18 @@
 	position: relative;
 	transform-style: preserve-3d;
 	transition:
-		transform 0.28s var(--hub-elastic),
-		box-shadow 0.35s var(--hub-smooth),
-		border-color 0.25s ease,
+		transform 0.32s var(--hub-elastic),
+		box-shadow 0.38s var(--hub-smooth),
+		border-color 0.28s ease,
 		background 0.35s ease;
-	will-change: transform;
+	will-change: transform, box-shadow;
 }
 
 @media (hover: hover) and (pointer: fine) {
 	.hub-game-card--active:hover,
 	.hub-game-card--active.hub-game-card--hovered,
 	.hub-game-card--active:focus-visible {
-		transform: translateY(-2px) translateZ(0);
+		transform: translateY(-4px) scale(1.015) translateZ(0);
 	}
 }
 
@@ -508,7 +570,7 @@
 	.hub-game-card--active:hover .hub-game-card__glow,
 	.hub-game-card--active.hub-game-card--hovered .hub-game-card__glow,
 	.hub-game-card--active:focus-visible .hub-game-card__glow {
-		opacity: 0.55;
+		opacity: 0.5;
 	}
 }
 
@@ -535,14 +597,14 @@
 @media (hover: hover) and (pointer: fine) {
 	.hub-game-card--active:hover .hub-game-card__shine,
 	.hub-game-card--active.hub-game-card--hovered .hub-game-card__shine {
-		opacity: 0.35;
-		animation: hub-card-shine 1.4s var(--hub-smooth) forwards;
+		opacity: 0.32;
+		animation: hub-card-shine 1.1s var(--hub-smooth) forwards;
 	}
 }
 
 @keyframes hub-card-shine {
 	to {
-		transform: translateX(280%) skewX(-18deg);
+		transform: translateX(320%) skewX(-18deg);
 	}
 }
 
@@ -556,25 +618,31 @@
 @media (hover: hover) and (pointer: fine) {
 	.hub-game-card--active:hover .hub-game-card__icon,
 	.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
-		transform: scale(1.02) translateZ(0);
+		transform: scale(1.04) translateZ(0);
 	}
 
 	.hub-game-card--dominoes.hub-game-card--active:hover .hub-game-card__icon,
 	.hub-game-card--dominoes.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
-		border-color: rgba(52, 211, 153, 0.32);
-		box-shadow: 0 0 10px rgba(52, 211, 153, 0.15);
+		border-color: rgba(52, 211, 153, 0.38);
+		box-shadow: 0 0 14px rgba(52, 211, 153, 0.2);
 	}
 
 	.hub-game-card--wordgame.hub-game-card--active:hover .hub-game-card__icon,
 	.hub-game-card--wordgame.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
-		border-color: rgba(56, 189, 248, 0.32);
-		box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+		border-color: rgba(56, 189, 248, 0.38);
+		box-shadow: 0 0 14px rgba(56, 189, 248, 0.22);
 	}
 
 	.hub-game-card--bara-alsalafa.hub-game-card--active:hover .hub-game-card__icon,
 	.hub-game-card--bara-alsalafa.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
-		border-color: rgba(244, 63, 94, 0.34);
-		box-shadow: 0 0 10px rgba(244, 63, 94, 0.16);
+		border-color: rgba(244, 63, 94, 0.38);
+		box-shadow: 0 0 14px rgba(244, 63, 94, 0.2);
+	}
+
+	.hub-game-card--mafia.hub-game-card--active:hover .hub-game-card__icon,
+	.hub-game-card--mafia.hub-game-card--active.hub-game-card--hovered .hub-game-card__icon {
+		border-color: rgba(201, 162, 39, 0.42);
+		box-shadow: 0 0 14px rgba(201, 162, 39, 0.22);
 	}
 }
 
@@ -606,10 +674,15 @@
 		color: #fda4af;
 	}
 
+	.hub-game-card--mafia.hub-game-card--active:hover .hub-game-card__play,
+	.hub-game-card--mafia.hub-game-card--active.hub-game-card--hovered .hub-game-card__play {
+		color: #fcd34d;
+	}
+
 	.hub-game-card--active:hover .hub-game-card__play-arrow,
 	.hub-game-card--active.hub-game-card--hovered .hub-game-card__play-arrow,
 	.hub-game-card--active:focus-visible .hub-game-card__play-arrow {
-		transform: translateX(2px);
+		transform: translateX(3px);
 	}
 }
 
@@ -653,37 +726,42 @@
 	box-shadow: 0 0 12px rgba(244, 63, 94, 0.35);
 }
 
+.hub-game-card--mafia::after {
+	background: linear-gradient(90deg, transparent, #c9a227, #fbbf24, transparent);
+	box-shadow: 0 0 14px rgba(201, 162, 39, 0.45);
+}
+
 @media (hover: hover) and (pointer: fine) {
 	.hub-game-card--active:hover::after,
 	.hub-game-card--active.hub-game-card--hovered::after,
 	.hub-game-card--active:focus-visible::after {
-		opacity: 0.75;
+		opacity: 0.7;
 	}
 
 	.hub-game-card--active:hover,
 	.hub-game-card--active.hub-game-card--hovered,
 	.hub-game-card--active:focus-visible {
 		box-shadow:
-			0 12px 28px rgba(0, 0, 0, 0.38),
-			0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+			0 14px 28px rgba(0, 0, 0, 0.4),
+			0 0 0 1px rgba(255, 255, 255, 0.04) inset;
 	}
 
 	.hub-game-card--dominoes.hub-game-card--active:hover,
 	.hub-game-card--dominoes.hub-game-card--active.hub-game-card--hovered,
 	.hub-game-card--dominoes.hub-game-card--active:focus-visible {
-		border-color: rgba(52, 211, 153, 0.3);
+		border-color: rgba(52, 211, 153, 0.32);
 		box-shadow:
-			0 12px 28px rgba(0, 0, 0, 0.38),
-			0 0 12px rgba(52, 211, 153, 0.08);
+			0 14px 28px rgba(0, 0, 0, 0.4),
+			0 0 16px rgba(52, 211, 153, 0.1);
 	}
 
 	.hub-game-card--wordgame.hub-game-card--active:hover,
 	.hub-game-card--wordgame.hub-game-card--active.hub-game-card--hovered,
 	.hub-game-card--wordgame.hub-game-card--active:focus-visible {
-		border-color: rgba(56, 189, 248, 0.3);
+		border-color: rgba(56, 189, 248, 0.32);
 		box-shadow:
-			0 12px 28px rgba(0, 0, 0, 0.38),
-			0 0 12px rgba(56, 189, 248, 0.09);
+			0 14px 28px rgba(0, 0, 0, 0.4),
+			0 0 16px rgba(56, 189, 248, 0.11);
 	}
 
 	.hub-game-card--bara-alsalafa.hub-game-card--active:hover,
@@ -691,8 +769,17 @@
 	.hub-game-card--bara-alsalafa.hub-game-card--active:focus-visible {
 		border-color: rgba(244, 63, 94, 0.34);
 		box-shadow:
-			0 12px 28px rgba(0, 0, 0, 0.38),
-			0 0 12px rgba(244, 63, 94, 0.09);
+			0 14px 28px rgba(0, 0, 0, 0.4),
+			0 0 16px rgba(244, 63, 94, 0.1);
+	}
+
+	.hub-game-card--mafia.hub-game-card--active:hover,
+	.hub-game-card--mafia.hub-game-card--active.hub-game-card--hovered,
+	.hub-game-card--mafia.hub-game-card--active:focus-visible {
+		border-color: rgba(201, 162, 39, 0.36);
+		box-shadow:
+			0 14px 28px rgba(0, 0, 0, 0.4),
+			0 0 16px rgba(201, 162, 39, 0.12);
 	}
 }
 
@@ -807,27 +894,439 @@
 	}
 }
 
-/* Word preview */
+/* Word preview — arcade cabinet decode (wordgame card) */
+.hub-game-card--wordgame .hub-word-slots {
+	--hub-word-accent: 56, 189, 248;
+	--hub-word-accent-dim: 59, 130, 246;
+}
+
 .hub-word-slots {
+	position: relative;
 	display: flex;
-	gap: 6px;
+	align-items: center;
 	justify-content: center;
-	font-family: ui-monospace, monospace;
+	gap: 4px;
+	padding: 8px 10px;
+	border-radius: 12px;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 	font-weight: 700;
-	font-size: 1.25rem;
-	letter-spacing: 0.15em;
-	min-height: 2rem;
+	font-size: 0.95rem;
+	letter-spacing: 0.06em;
+	min-height: 2.5rem;
+	background: linear-gradient(
+		165deg,
+		rgba(18, 24, 38, 0.92) 0%,
+		rgba(12, 16, 28, 0.96) 100%
+	);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.06),
+		inset 0 0 20px rgba(var(--hub-word-accent-dim, 59, 130, 246), 0.08),
+		0 6px 14px rgba(0, 0, 0, 0.28);
+	overflow: hidden;
+	isolation: isolate;
+}
+
+.hub-word-slots::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background:
+		repeating-linear-gradient(
+			90deg,
+			transparent 0,
+			transparent 11px,
+			rgba(255, 255, 255, 0.02) 11px,
+			rgba(255, 255, 255, 0.02) 12px
+		),
+		repeating-linear-gradient(
+			0deg,
+			transparent 0,
+			transparent 4px,
+			rgba(var(--hub-word-accent, 56, 189, 248), 0.03) 4px,
+			rgba(var(--hub-word-accent, 56, 189, 248), 0.03) 5px
+		);
+	pointer-events: none;
+	opacity: 0.85;
+}
+
+.hub-word-slots--live::after {
+	content: '';
+	position: absolute;
+	inset: -50% 0;
+	background: linear-gradient(
+		180deg,
+		transparent 0%,
+		rgba(var(--hub-word-accent, 56, 189, 248), 0.14) 48%,
+		transparent 92%
+	);
+	animation: hub-word-scan 1.35s linear infinite;
+	pointer-events: none;
+}
+
+.hub-word-slots--complete {
+	border-color: rgba(var(--hub-word-accent, 56, 189, 248), 0.38);
+	box-shadow:
+		inset 0 0 24px rgba(var(--hub-word-accent, 56, 189, 248), 0.1),
+		0 0 18px rgba(var(--hub-word-accent-dim, 59, 130, 246), 0.18);
 }
 
 .hub-word-slot {
-	width: 1.25rem;
-	text-align: center;
-	color: #38bdf8;
-	text-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
-	transition: color 0.1s;
+	position: relative;
+	width: 1.45rem;
+	height: 1.7rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 8px;
+	border: 1px solid rgba(255, 255, 255, 0.07);
+	background: rgba(8, 10, 18, 0.55);
+	color: rgba(148, 163, 184, 0.95);
+	text-shadow: 0 0 8px rgba(var(--hub-word-accent-dim, 59, 130, 246), 0.35);
+	overflow: hidden;
+	transition:
+		color 0.12s ease,
+		border-color 0.12s ease,
+		background 0.12s ease;
 }
 
-/* Bara preview */
+.hub-word-slot__char {
+	position: relative;
+	z-index: 1;
+	line-height: 1;
+}
+
+.hub-word-slot--scramble::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		180deg,
+		transparent 0%,
+		rgba(var(--hub-word-accent, 56, 189, 248), 0.28) 50%,
+		transparent 100%
+	);
+	transform: translateY(-100%);
+	animation: hub-word-rain 0.28s linear infinite;
+	pointer-events: none;
+}
+
+.hub-word-slot--scramble .hub-word-slot__char {
+	animation: hub-word-glyph-flicker 0.055s steps(2) infinite;
+}
+
+.hub-word-slot--locked {
+	color: #e0f2fe;
+	border-color: rgba(var(--hub-word-accent, 56, 189, 248), 0.42);
+	background: rgba(var(--hub-word-accent-dim, 59, 130, 246), 0.18);
+	text-shadow:
+		0 0 10px rgba(var(--hub-word-accent, 56, 189, 248), 0.75),
+		0 0 20px rgba(var(--hub-word-accent-dim, 59, 130, 246), 0.35);
+	animation: hub-word-lock-in 0.22s var(--hub-elastic, cubic-bezier(0.34, 1.56, 0.64, 1)) forwards;
+}
+
+.hub-word-slot--locked::before {
+	display: none;
+}
+
+@keyframes hub-word-scan {
+	0% {
+		transform: translateY(-60%);
+	}
+	100% {
+		transform: translateY(60%);
+	}
+}
+
+@keyframes hub-word-rain {
+	0% {
+		transform: translateY(-120%);
+		opacity: 0.2;
+	}
+	40% {
+		opacity: 0.85;
+	}
+	100% {
+		transform: translateY(120%);
+		opacity: 0;
+	}
+}
+
+@keyframes hub-word-glyph-flicker {
+	0%,
+	100% {
+		opacity: 1;
+		filter: brightness(1.15);
+	}
+	50% {
+		opacity: 0.72;
+		filter: brightness(0.85);
+	}
+}
+
+@keyframes hub-word-lock-in {
+	0% {
+		transform: scale(1.08);
+		filter: brightness(1.45);
+	}
+	100% {
+		transform: scale(1);
+		filter: brightness(1);
+	}
+}
+
+/* Mafia — dual masks orbit once on hover */
+.hub-game-card--mafia .hub-game-card__icon {
+	position: relative;
+	overflow: visible;
+}
+
+.hub-mafia-icon-static {
+	display: block;
+	transition: opacity 0.2s ease;
+}
+
+.hub-mafia-masks {
+	position: absolute;
+	inset: 0;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.hub-mafia-mask {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 1.25rem;
+	height: 1.25rem;
+	margin: -0.62rem 0 0 -0.62rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.05rem;
+	line-height: 1;
+	transform: rotate(0deg) translateX(0) rotate(0deg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.hub-game-card--mafia.hub-game-card--hovered .hub-mafia-icon-static,
+	.hub-game-card--mafia.hub-game-card--active:hover .hub-mafia-icon-static {
+		opacity: 0;
+	}
+
+	.hub-game-card--mafia.hub-game-card--hovered .hub-mafia-masks,
+	.hub-game-card--mafia.hub-game-card--active:hover .hub-mafia-masks {
+		opacity: 1;
+	}
+
+	.hub-game-card--mafia.hub-game-card--hovered .hub-mafia-mask--1,
+	.hub-game-card--mafia.hub-game-card--active:hover .hub-mafia-mask--1 {
+		animation: hub-mafia-mask-orbit-1 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+	}
+
+	.hub-game-card--mafia.hub-game-card--hovered .hub-mafia-mask--2,
+	.hub-game-card--mafia.hub-game-card--active:hover .hub-mafia-mask--2 {
+		animation: hub-mafia-mask-orbit-2 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+	}
+}
+
+@keyframes hub-mafia-mask-orbit-1 {
+	0%,
+	100% {
+		transform: rotate(0deg) translateX(0) rotate(0deg) scale(1);
+	}
+	50% {
+		transform: rotate(180deg) translateX(13px) rotate(-180deg) scale(1.05);
+	}
+}
+
+@keyframes hub-mafia-mask-orbit-2 {
+	0%,
+	100% {
+		transform: rotate(180deg) translateX(0) rotate(-180deg) scale(1);
+	}
+	50% {
+		transform: rotate(360deg) translateX(13px) rotate(-360deg) scale(1.05);
+	}
+}
+
+/* Bara card preview — secret word + outcast */
+.hub-bara-preview {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 8px;
+	padding: 10px 12px;
+	border-radius: 12px;
+	background: linear-gradient(
+		165deg,
+		rgba(28, 12, 18, 0.92) 0%,
+		rgba(16, 8, 12, 0.96) 100%
+	);
+	border: 1px solid rgba(244, 63, 94, 0.2);
+	box-shadow: inset 0 0 18px rgba(244, 63, 94, 0.06);
+}
+
+.hub-bara-preview--live {
+	border-color: rgba(244, 63, 94, 0.32);
+}
+
+.hub-bara-preview--reveal {
+	box-shadow:
+		inset 0 0 22px rgba(244, 63, 94, 0.1),
+		0 0 16px rgba(244, 63, 94, 0.12);
+}
+
+.hub-bara-preview__card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	padding: 8px 10px;
+	border-radius: 8px;
+	background: rgba(0, 0, 0, 0.35);
+	border: 1px dashed rgba(244, 63, 94, 0.28);
+}
+
+.hub-bara-preview__label {
+	font-size: 0.65rem;
+	font-weight: 600;
+	color: rgba(251, 113, 133, 0.85);
+	letter-spacing: 0.04em;
+}
+
+.hub-bara-preview__word {
+	font-size: 1.15rem;
+	font-weight: 800;
+	color: #fecdd3;
+	min-height: 1.4rem;
+	text-shadow: 0 0 12px rgba(244, 63, 94, 0.35);
+}
+
+.hub-bara-preview--reveal .hub-bara-preview__word {
+	color: #fff;
+	animation: hub-bara-word-lock 0.35s var(--hub-elastic) forwards;
+}
+
+.hub-bara-preview__hint {
+	margin: 0;
+	text-align: center;
+	font-size: 0.7rem;
+	color: rgba(148, 163, 184, 0.9);
+}
+
+.hub-bara-preview--reveal .hub-bara-preview__hint {
+	color: rgba(251, 113, 133, 0.95);
+}
+
+@keyframes hub-bara-word-lock {
+	0% {
+		transform: scale(1.08);
+		filter: brightness(1.4);
+	}
+	100% {
+		transform: scale(1);
+		filter: brightness(1);
+	}
+}
+
+/* Mafia card preview — minimal day / night phase rail */
+.hub-mafia-preview {
+	padding: 10px 12px;
+	border-radius: 12px;
+	border: 1px solid rgba(201, 162, 39, 0.22);
+	background: linear-gradient(
+		165deg,
+		rgba(16, 14, 10, 0.95) 0%,
+		rgba(8, 9, 14, 0.98) 100%
+	);
+	box-shadow: inset 0 0 20px rgba(201, 162, 39, 0.06);
+	transition:
+		border-color 0.5s var(--hub-smooth),
+		box-shadow 0.5s var(--hub-smooth);
+}
+
+.hub-mafia-preview--live {
+	border-color: rgba(201, 162, 39, 0.36);
+}
+
+.hub-mafia-preview--night {
+	border-color: rgba(100, 116, 139, 0.32);
+	box-shadow: inset 0 0 22px rgba(100, 116, 139, 0.1);
+}
+
+.hub-mafia-preview__phases {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.hub-mafia-preview__label {
+	flex-shrink: 0;
+	font-size: 0.65rem;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: rgba(148, 163, 184, 0.55);
+	transition:
+		color 0.45s var(--hub-smooth),
+		text-shadow 0.45s var(--hub-smooth);
+}
+
+.hub-mafia-preview__label--on {
+	color: rgba(251, 191, 36, 0.95);
+	text-shadow: 0 0 10px rgba(251, 191, 36, 0.35);
+}
+
+.hub-mafia-preview--night .hub-mafia-preview__label--on {
+	color: rgba(191, 219, 254, 0.95);
+	text-shadow: 0 0 10px rgba(147, 197, 253, 0.35);
+}
+
+.hub-mafia-preview__track {
+	position: relative;
+	flex: 1;
+	height: 3px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.07);
+	overflow: hidden;
+}
+
+.hub-mafia-preview__thumb {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 50%;
+	height: 100%;
+	border-radius: inherit;
+	background: linear-gradient(90deg, #fbbf24, #d97706);
+	box-shadow: 0 0 12px rgba(251, 191, 36, 0.45);
+	transition:
+		transform 0.5s var(--hub-elastic),
+		background 0.5s var(--hub-smooth),
+		box-shadow 0.5s var(--hub-smooth);
+}
+
+.hub-mafia-preview--night .hub-mafia-preview__thumb {
+	transform: translateX(100%);
+	background: linear-gradient(90deg, #64748b, #93c5fd);
+	box-shadow: 0 0 12px rgba(147, 197, 253, 0.4);
+}
+
+.hub-mafia-preview__copy {
+	margin: 8px 0 0;
+	font-size: 0.7rem;
+	line-height: 1.4;
+	text-align: center;
+	color: rgba(203, 213, 225, 0.85);
+	transition: color 0.45s ease;
+}
+
+.hub-mafia-preview--night .hub-mafia-preview__copy {
+	color: rgba(186, 204, 228, 0.9);
+}
+
+/* Bara spotlight rim */
 .hub-bara-spotlight {
 	position: absolute;
 	inset: -2px;
@@ -852,14 +1351,20 @@
 	transform: rotate(0deg);
 }
 
-.hub-game-card--hovered.hub-game-card--bara-alsalafa .hub-bara-spotlight {
-	opacity: 1;
-	animation: hub-spotlight-spin 1.2s linear infinite;
+.hub-game-card--hovered.hub-game-card--bara-alsalafa .hub-bara-spotlight,
+.hub-game-card--bara-alsalafa.hub-game-card--active:hover .hub-bara-spotlight {
+	opacity: 0.85;
+	animation: hub-spotlight-spin-once 0.75s ease-out forwards;
 }
 
-@keyframes hub-spotlight-spin {
+@keyframes hub-spotlight-spin-once {
+	from {
+		opacity: 0.85;
+		transform: rotate(0deg);
+	}
 	to {
-		transform: rotate(360deg);
+		opacity: 0;
+		transform: rotate(220deg);
 	}
 }
 
@@ -867,8 +1372,9 @@
 	transition: transform 0.15s ease;
 }
 
-.hub-game-card--hovered.hub-game-card--bara-alsalafa .hub-bara-logo {
-	animation: hub-bara-glitch 0.35s steps(2) 2;
+.hub-game-card--hovered.hub-game-card--bara-alsalafa .hub-bara-logo,
+.hub-game-card--bara-alsalafa.hub-game-card--active:hover .hub-bara-logo {
+	animation: hub-bara-glitch 0.35s steps(2) 1;
 }
 
 @keyframes hub-bara-glitch {
@@ -971,6 +1477,43 @@
 	box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
 }
 
+/* Mafia — theatre mask pointer */
+.hub-cursor--mask {
+	width: 22px;
+	height: 24px;
+	margin: -12px 0 0 -11px;
+	border-radius: 52% 52% 46% 46%;
+	background: linear-gradient(
+		165deg,
+		rgba(251, 191, 36, 0.35) 0%,
+		rgba(120, 80, 20, 0.55) 100%
+	);
+	border: 2px solid rgba(251, 191, 36, 0.92);
+	box-shadow:
+		0 0 14px rgba(201, 162, 39, 0.55),
+		inset 0 -6px 10px rgba(0, 0, 0, 0.35);
+}
+
+.hub-cursor--mask::before,
+.hub-cursor--mask::after {
+	content: '';
+	position: absolute;
+	top: 8px;
+	width: 5px;
+	height: 6px;
+	border-radius: 999px;
+	background: rgba(12, 10, 8, 0.92);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.hub-cursor--mask::before {
+	left: 5px;
+}
+
+.hub-cursor--mask::after {
+	right: 5px;
+}
+
 @media (pointer: coarse) {
 	.hub-aura {
 		filter: blur(72px);
@@ -1003,8 +1546,26 @@
 	}
 
 	.hub-game-card__shine,
-	.hub-game-card__play-label {
+	.hub-game-card::after,
+	.hub-mafia-mask,
+	.hub-bara-spotlight,
+	.hub-word-slots--live::after,
+	.hub-word-slot--scramble::before,
+	.hub-word-slot--scramble .hub-word-slot__char,
+	.hub-word-slot--locked,
+	.hub-bara-preview--reveal .hub-bara-preview__word {
 		animation: none !important;
+	}
+
+	.hub-mafia-preview__thumb,
+	.hub-mafia-preview__label,
+	.hub-mafia-preview__copy {
+		transition: none;
+	}
+
+	.hub-game-card--active:hover::after,
+	.hub-game-card--active.hub-game-card--hovered::after {
+		opacity: 0.75;
 	}
 
 	.hub-ticker-pill {

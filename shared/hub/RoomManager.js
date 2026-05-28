@@ -26,7 +26,7 @@ import {
 import { generateRoomId } from "./generateRoomId.js";
 import { getGame, isGameEnabled } from "../games/registry.js";
 import { RateLimiter } from "./RateLimiter.js";
-import { generateSessionToken } from "./session.js";
+import { verifyPlayerSession } from "./session.js";
 import { sanitizeChatMessage, sanitizeDisplayName } from "./validate.js";
 import { MAX_ROOMS, RATE_LIMIT_WINDOW_MS } from "./constants.js";
 import { cryptoRandomInt } from "../games/dominoes/random.js";
@@ -40,8 +40,8 @@ import {
 	suggestBalancedSetup,
 	validateLobbySetup,
 	normalizeRoleCounts,
-} from "../games/tavern-council/balancing.js";
-import { ROLE_IDS } from "../games/tavern-council/roles.js";
+} from "../games/mafia/balancing.js";
+import { ROLE_IDS } from "../games/mafia/roles.js";
 import {
 	isDevBotsEnabled,
 	createBotPlayer,
@@ -63,6 +63,7 @@ export class RoomManager {
 		this.playerSessions = new Map();
 		this.hubPresence = new Map();
 		this._hubPresenceFlushTimer = null;
+		this._gameStateFlushTimers = new Map();
 		this.rateLimiter = new RateLimiter();
 		this._startTurnTimerLoop();
 		this._startBaraPhaseLoop();
@@ -115,26 +116,13 @@ export class RoomManager {
 	}
 
 	_resolvePlayerSession(playerId, sessionToken) {
-		const activeSocket = this.playerToSocket.get(playerId);
-		const existingToken = this.playerSessions.get(playerId);
-
-		if (!existingToken) {
-			const token = generateSessionToken();
-			this.playerSessions.set(playerId, token);
-			return { sessionToken: token };
-		}
-
-		if (sessionToken && sessionToken === existingToken) {
-			return { sessionToken: existingToken };
-		}
-
-		if (activeSocket) {
-			return { error: "Invalid session token" };
-		}
-
-		const token = generateSessionToken();
-		this.playerSessions.set(playerId, token);
-		return { sessionToken: token, rotated: true };
+		const result = verifyPlayerSession(
+			this.playerSessions,
+			playerId,
+			sessionToken,
+		);
+		if (result.error) return { error: result.error };
+		return { sessionToken: result.sessionToken };
 	}
 
 	/** Resolve player + room even if playerToRoom map was lost (e.g. reconnect). */
@@ -157,6 +145,29 @@ export class RoomManager {
 
 		this.playerToSocket.set(playerId, socket.id);
 		return { playerId, roomId, room };
+	}
+
+	_requireConnectedPlayer(room, playerId) {
+		const player = room.players.find((p) => p.id === playerId);
+		if (!player) return { error: "Player not in room" };
+		if (!player.connected) return { error: "Player not connected" };
+		return { player };
+	}
+
+	_sanitizeMafiaRoleAssignments(room, incoming) {
+		if (!incoming || typeof incoming !== "object") return {};
+		const MAX_ENTRIES = 11;
+		const out = {};
+		let n = 0;
+		for (const [playerId, roleId] of Object.entries(incoming)) {
+			if (n >= MAX_ENTRIES) break;
+			if (typeof playerId !== "string" || typeof roleId !== "string") continue;
+			if (!room.players.some((p) => p.id === playerId)) continue;
+			if (!ROLE_IDS.includes(roleId)) continue;
+			out[playerId] = roleId;
+			n += 1;
+		}
+		return out;
 	}
 
 	_ensureRoomLink(playerId, roomId) {
@@ -189,11 +200,12 @@ export class RoomManager {
 
 	_buildHubPresencePayload(forPlayerId) {
 		const players = [...this.hubPresence.entries()]
-			.map(([id, entry]) => ({
-				id,
-				displayName: entry.displayName,
-				isYou: id === forPlayerId,
-			}))
+			.map(([id, entry]) => {
+				const isYou = id === forPlayerId;
+				return isYou ?
+						{ id, displayName: entry.displayName, isYou: true }
+					:	{ displayName: entry.displayName, isYou: false };
+			})
 			.sort((a, b) => a.displayName.localeCompare(b.displayName));
 
 		return { total: players.length, players };
@@ -667,7 +679,11 @@ export class RoomManager {
 			}
 		}
 
-		room.game = gameDef.createEngine(enginePlayerIds, room.settings);
+		const engineSettings =
+			room.gameType === "bara-alsalafa" ?
+				{ ...room.settings, hostId: room.hostId }
+			:	room.settings;
+		room.game = gameDef.createEngine(enginePlayerIds, engineSettings);
 		room.status = "playing";
 		if (room.gameType === "wordgame") {
 			for (const p of room.players) {
@@ -757,10 +773,24 @@ export class RoomManager {
 				settings?.roleAssignments &&
 				typeof settings.roleAssignments === "object"
 			) {
-				room.settings.roleAssignments = {
+				const patch = this._sanitizeMafiaRoleAssignments(
+					room,
+					settings.roleAssignments,
+				);
+				const merged = {
 					...room.settings.roleAssignments,
-					...settings.roleAssignments,
+					...patch,
 				};
+				const capped = {};
+				let n = 0;
+				for (const [playerId, roleId] of Object.entries(merged)) {
+					if (n >= 11) break;
+					if (!ROLE_IDS.includes(roleId)) continue;
+					if (!room.players.some((p) => p.id === playerId)) continue;
+					capped[playerId] = roleId;
+					n += 1;
+				}
+				room.settings.roleAssignments = capped;
 			}
 		}
 
@@ -861,6 +891,10 @@ export class RoomManager {
 
 		const targetSocketId = this.playerToSocket.get(targetPlayerId);
 		if (targetSocketId) {
+			if (this.useSocketRooms) {
+				const targetSocket = this.io.sockets.sockets.get(targetSocketId);
+				targetSocket?.leave(roomId);
+			}
 			this.io.to(targetSocketId).emit("room:kicked", {
 				roomId,
 				message: "You were removed from the lobby by the host",
@@ -919,6 +953,8 @@ export class RoomManager {
 		if (ctx.error) return { error: ctx.error };
 
 		const { playerId, room } = ctx;
+		const connected = this._requireConnectedPlayer(room, playerId);
+		if (connected.error) return { error: connected.error };
 		if (!room.game || room.gameType !== "dominoes") {
 			return { error: "No active dominoes game" };
 		}
@@ -936,6 +972,8 @@ export class RoomManager {
 		if (ctx.error) return { error: ctx.error };
 
 		const { playerId, room } = ctx;
+		const connected = this._requireConnectedPlayer(room, playerId);
+		if (connected.error) return { error: connected.error };
 		if (!room.game || room.gameType !== "dominoes") {
 			return { error: "No active dominoes game" };
 		}
@@ -953,6 +991,8 @@ export class RoomManager {
 		if (ctx.error) return { error: ctx.error };
 
 		const { playerId, room } = ctx;
+		const connected = this._requireConnectedPlayer(room, playerId);
+		if (connected.error) return { error: connected.error };
 		if (!room.game || room.gameType !== "dominoes") {
 			return { error: "No active dominoes game" };
 		}
@@ -969,7 +1009,10 @@ export class RoomManager {
 		const ctx = this._getPlayerContext(socket);
 		if (ctx.error) return { error: ctx.error };
 
-		const { room } = ctx;
+		const { playerId, room } = ctx;
+		if (room.hostId !== playerId) {
+			return { error: "Only the host can continue" };
+		}
 		if (!room.game || room.gameType !== "dominoes") {
 			return { error: "No active dominoes game" };
 		}
@@ -1088,6 +1131,9 @@ export class RoomManager {
 		if (ctx.error) return { error: ctx.error };
 
 		const { playerId, room } = ctx;
+		const connected = this._requireConnectedPlayer(room, playerId);
+		if (connected.error) return { error: connected.error };
+
 		if (!room.game || room.gameType !== "wordgame") {
 			return { error: "No active word game" };
 		}
@@ -1165,6 +1211,13 @@ export class RoomManager {
 		if (roomId) {
 			const room = this.rooms.get(roomId);
 			if (!room) return { error: "Room not found" };
+			if (
+				room.gameType === "mafia" &&
+				room.status === "playing" &&
+				room.game?.silencedForDay?.includes(playerId)
+			) {
+				return { error: "You are silenced and cannot chat today" };
+			}
 			this._emitToRoom(room, "chat:message", payload);
 		} else {
 			this._broadcastHubChat(payload);
@@ -1257,7 +1310,7 @@ export class RoomManager {
 		return { success: true, state };
 	}
 
-	_requireTavernGame(room, playerId) {
+	_requireMafiaGame(room, playerId) {
 		if (!room.game || room.gameType !== "mafia") {
 			return { error: "No active Mafia game" };
 		}
@@ -1267,7 +1320,7 @@ export class RoomManager {
 		return { game: room.game };
 	}
 
-	handleTavernAcknowledgeRole(socket) {
+	handleMafiaAcknowledgeRole(socket) {
 		const ctx = this._getPlayerContext(socket);
 		if (ctx.error) return { error: ctx.error };
 		const { playerId, room } = ctx;
@@ -1277,17 +1330,14 @@ export class RoomManager {
 		const result = room.game.acknowledgeRole(playerId);
 		if (!result.success) return { error: result.error };
 		this.broadcastGameState(room.id);
-		return {
-			success: true,
-			state: { roomId: room.id, ...room.game.serializeForPlayer(playerId) },
-		};
+		return { success: true };
 	}
 
-	handleTavernNarratorAction(socket, action, payload = {}) {
+	handleMafiaNarratorAction(socket, action, payload = {}) {
 		const ctx = this._getPlayerContext(socket);
 		if (ctx.error) return { error: ctx.error };
 		const { playerId, room } = ctx;
-		const guard = this._requireTavernGame(room, playerId);
+		const guard = this._requireMafiaGame(room, playerId);
 		if (guard.error) return { error: guard.error };
 		const game = guard.game;
 
@@ -1323,10 +1373,7 @@ export class RoomManager {
 
 		if (!result.success) return { error: result.error };
 		this.broadcastGameState(room.id);
-		return {
-			success: true,
-			state: { roomId: room.id, ...game.serializeForPlayer(playerId) },
-		};
+		return { success: true };
 	}
 
 	handleBaraReveal(socket) {
@@ -1334,6 +1381,9 @@ export class RoomManager {
 		if (ctx.error) return { error: ctx.error };
 
 		const { playerId, room } = ctx;
+		const connected = this._requireConnectedPlayer(room, playerId);
+		if (connected.error) return { error: connected.error };
+
 		if (!room.game || room.gameType !== "bara-alsalafa") {
 			return { error: "No active برا السالفة game" };
 		}
@@ -1399,7 +1449,12 @@ export class RoomManager {
 			return { error: "Guess is required" };
 		}
 
-		const result = room.game.submitOutcastGuess(playerId, guess);
+		const trimmed = guess.trim();
+		if (trimmed.length > 128) {
+			return { error: "Guess is too long" };
+		}
+
+		const result = room.game.submitOutcastGuess(playerId, trimmed);
 		if (!result.success) return { error: result.error };
 
 		this.broadcastGameState(room.id);
@@ -1535,12 +1590,21 @@ export class RoomManager {
 		this.broadcastLobbyState(roomId);
 	}
 
+	_lobbySettingsForViewer(room, viewerId) {
+		const settings = { ...room.settings };
+		if (viewerId !== room.hostId && room.gameType === "mafia") {
+			delete settings.roleAssignments;
+			delete settings.roleCounts;
+		}
+		return settings;
+	}
+
 	broadcastLobbyState(roomId) {
 		const room = this.rooms.get(roomId);
 		if (!room) return;
 
 		const gameDef = getGame(room.gameType);
-		const payload = {
+		const basePayload = {
 			roomId: room.id,
 			hostId: room.hostId,
 			status: room.status,
@@ -1559,14 +1623,41 @@ export class RoomManager {
 			})),
 			minPlayers: gameDef?.minPlayers ?? 2,
 			maxPlayers: gameDef?.maxPlayers ?? 4,
-			settings: { ...room.settings },
 			devBotsEnabled: isDevBotsEnabled(),
 		};
 
-		this._emitToRoom(room, "lobby:state", payload);
+		for (const player of room.players) {
+			const socketId = this.playerToSocket.get(player.id);
+			if (!socketId) continue;
+			this.io.to(socketId).emit("lobby:state", {
+				...basePayload,
+				settings: this._lobbySettingsForViewer(room, player.id),
+			});
+		}
+		for (const spectator of room.spectators ?? []) {
+			const socketId = this.playerToSocket.get(spectator.id);
+			if (!socketId) continue;
+			this.io.to(socketId).emit("lobby:state", {
+				...basePayload,
+				settings: this._lobbySettingsForViewer(room, spectator.id),
+			});
+		}
+	}
+
+	_scheduleBroadcastGameState(roomId) {
+		if (this._gameStateFlushTimers.has(roomId)) return;
+		const timer = setTimeout(() => {
+			this._gameStateFlushTimers.delete(roomId);
+			this._broadcastGameStateNow(roomId);
+		}, 16);
+		this._gameStateFlushTimers.set(roomId, timer);
 	}
 
 	broadcastGameState(roomId) {
+		this._scheduleBroadcastGameState(roomId);
+	}
+
+	_broadcastGameStateNow(roomId) {
 		const room = this.rooms.get(roomId);
 		if (!room?.game) return;
 
@@ -1618,7 +1709,7 @@ export class RoomManager {
 			const phase = room.game?.phase;
 			if (phase === "round_over" || phase === "round_end") {
 				room.game.startNextRound();
-				this.broadcastGameState(roomId);
+				this._broadcastGameStateNow(roomId);
 			}
 		}, delay);
 	}

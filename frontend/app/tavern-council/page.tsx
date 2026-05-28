@@ -1,10 +1,10 @@
 import { Suspense } from 'react';
-import TavernCouncilLegacyRedirect from './redirect-client';
+import MafiaLegacyRedirect from './redirect-client';
 
-export default function TavernCouncilRedirectPage() {
+export default function MafiaRedirectPage() {
   return (
     <Suspense fallback={null}>
-      <TavernCouncilLegacyRedirect />
+      <MafiaLegacyRedirect />
     </Suspense>
   );
 }

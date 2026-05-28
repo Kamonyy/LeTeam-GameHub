@@ -21,8 +21,10 @@ import {
 } from '@/lib/player';
 import { isSameOriginServer, resolveServerUrl } from '@/lib/socket-url';
 import { HubLiveProvider } from '@/lib/hub/HubLiveContext';
+import { HardResetProvider } from '@/lib/hub/HardResetContext';
 import { hubPresenceEqual, lobbyStateEqual } from '@/lib/hub/hub-live';
 import { isGameActive } from '@/lib/hub/games-registry';
+import { stripNarratorSecrets } from '@/games/mafia/lib/redactMafiaState';
 
 const SocketContext = createContext(null);
 
@@ -37,6 +39,37 @@ function mergeWordGameState(prev, next) {
   if (prev.phase === 'match_over' && next.phase !== 'match_over') return next;
   if (nextVer < prevVer) return prev;
   return next;
+}
+
+/** @param {import('@/games/mafia/types').MafiaGameState | null | undefined} state */
+function sanitizeMafiaClientState(state) {
+  if (!state || state.gameType !== 'mafia') return state ?? null;
+  return stripNarratorSecrets(state);
+}
+
+/** @param {Record<string, unknown>} a */
+/** @param {Record<string, unknown>} b */
+function shallowObjectEqual(a, b) {
+  if (a === b) return true;
+  const aKeys = Object.keys(a);
+  if (aKeys.length !== Object.keys(b).length) return false;
+  for (const key of aKeys) {
+    if (a[key] !== b[key]) return false;
+  }
+  return true;
+}
+
+/** @param {import('@/games/mafia/types').MafiaGameState | null | undefined} prev */
+/** @param {import('@/games/mafia/types').MafiaGameState | null | undefined} next */
+function mergeMafiaGameState(prev, next) {
+  if (!next || next.gameType !== 'mafia') return next ?? prev ?? null;
+  if (!prev || prev.gameType !== 'mafia') return sanitizeMafiaClientState(next);
+  const prevVer = typeof prev.stateVersion === 'number' ? prev.stateVersion : 0;
+  const nextVer = typeof next.stateVersion === 'number' ? next.stateVersion : 0;
+  if (nextVer < prevVer) return prev;
+  const sanitized = sanitizeMafiaClientState(next);
+  if (shallowObjectEqual(prev, sanitized)) return prev;
+  return sanitized;
 }
 
 function createUnsettledRegistration() {
@@ -216,7 +249,7 @@ export function SocketProvider({ children }) {
           return;
         }
         if (state?.gameType === 'mafia') {
-          setGameState(state);
+          setGameState((prev) => mergeMafiaGameState(prev, state));
           return;
         }
         if (state && 'board' in state) {
@@ -340,52 +373,58 @@ export function SocketProvider({ children }) {
 
   const createRoom = useCallback((displayName, gameType = 'wordgame') => {
     return new Promise((resolve) => {
-      const socket = socketRef.current;
-      if (!socket?.connected) {
-        resolve(null);
-        return;
-      }
-      if (!isGameActive(gameType)) {
-        setError('This game is temporarily unavailable');
-        resolve(null);
-        return;
-      }
-      socket.emit('room:create', { displayName, gameType }, (res) => {
-        if (res?.error) {
-          setError(res.error);
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
           resolve(null);
-        } else {
-          resolve(res.roomId ?? null);
+          return;
         }
-      });
+        if (!isGameActive(gameType)) {
+          setError('This game is temporarily unavailable');
+          resolve(null);
+          return;
+        }
+        socket.emit('room:create', { displayName, gameType }, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve(null);
+          } else {
+            resolve(res.roomId ?? null);
+          }
+        });
+      })();
     });
-  }, []);
+  }, [ensureRegistered]);
 
   const joinRoom = useCallback((roomId, displayName, options = {}) => {
     const { spectate = false } = options;
     return new Promise((resolve) => {
-      const socket = socketRef.current;
-      if (!socket?.connected) {
-        resolve(false);
-        return;
-      }
-      const payload = {
-        roomId: roomId.toUpperCase(),
-        displayName,
-        ...(spectate ? { spectate: true } : {}),
-      };
-      const event = spectate ? 'room:spectate' : 'room:join';
-      socket.emit(event, payload, (res) => {
-        if (res?.error) {
-          setError(res.error);
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
           resolve(false);
-        } else {
-          setIsSpectator(!!res?.isSpectator || spectate);
-          resolve(true);
+          return;
         }
-      });
+        const payload = {
+          roomId: roomId.toUpperCase(),
+          displayName,
+          ...(spectate ? { spectate: true } : {}),
+        };
+        const event = spectate ? 'room:spectate' : 'room:join';
+        socket.emit(event, payload, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve(false);
+          } else {
+            setIsSpectator(!!res?.isSpectator || spectate);
+            resolve(true);
+          }
+        });
+      })();
     });
-  }, []);
+  }, [ensureRegistered]);
 
   const spectateRoom = useCallback((roomId, displayName) => {
     return joinRoom(roomId, displayName, { spectate: true });
@@ -577,6 +616,9 @@ export function SocketProvider({ children }) {
           setGameState((prev) => {
             if (res.state.gameType === 'wordgame') {
               return mergeWordGameState(prev, res.state);
+            }
+            if (res.state.gameType === 'mafia') {
+              return mergeMafiaGameState(prev, res.state);
             }
             return res.state;
           });
@@ -863,7 +905,7 @@ export function SocketProvider({ children }) {
     });
   }, [ensureRegistered]);
 
-  const tavernAcknowledgeRole = useCallback(() => {
+  const mafiaAcknowledgeRole = useCallback(() => {
     return new Promise((resolve) => {
       (async () => {
         await ensureRegistered();
@@ -872,12 +914,14 @@ export function SocketProvider({ children }) {
           resolve(false);
           return;
         }
-        socket.emit('tavern:role:acknowledge', {}, (res) => {
+        socket.emit('mafia:role:acknowledge', {}, (res) => {
           if (res?.error) {
             setError(res.error);
             resolve(false);
           } else {
-            if (res?.state) setGameState(res.state);
+            if (res?.state) {
+              setGameState((prev) => mergeMafiaGameState(prev, res.state));
+            }
             resolve(true);
           }
         });
@@ -885,7 +929,7 @@ export function SocketProvider({ children }) {
     });
   }, [ensureRegistered]);
 
-  const tavernNarratorAction = useCallback((action, targetPlayerId = null) => {
+  const mafiaNarratorAction = useCallback((action, targetPlayerId = null) => {
     return new Promise((resolve) => {
       (async () => {
         await ensureRegistered();
@@ -895,14 +939,16 @@ export function SocketProvider({ children }) {
           return;
         }
         socket.emit(
-          'tavern:narrator',
+          'mafia:narrator',
           { action, targetPlayerId },
           (res) => {
             if (res?.error) {
               setError(res.error);
               resolve(false);
             } else {
-              if (res?.state) setGameState(res.state);
+              if (res?.state) {
+                setGameState((prev) => mergeMafiaGameState(prev, res.state));
+              }
               resolve(true);
             }
           }
@@ -969,11 +1015,10 @@ export function SocketProvider({ children }) {
       baraAdvanceInterrogation,
       baraVote,
       baraGuess,
-      tavernAcknowledgeRole,
-      tavernNarratorAction,
+      mafiaAcknowledgeRole,
+      mafiaNarratorAction,
       addDevBots,
       removeDevBots,
-      wordGuessedCelebration,
     }),
     [
       connected,
@@ -1010,11 +1055,10 @@ export function SocketProvider({ children }) {
       baraAdvanceInterrogation,
       baraVote,
       baraGuess,
-      tavernAcknowledgeRole,
-      tavernNarratorAction,
+      mafiaAcknowledgeRole,
+      mafiaNarratorAction,
       addDevBots,
       removeDevBots,
-      wordGuessedCelebration,
     ]
   );
 
@@ -1039,7 +1083,9 @@ export function SocketProvider({ children }) {
 
   return (
     <HubLiveProvider value={hubLiveValue}>
-      <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
+      <HardResetProvider hardResetPlayer={hardResetPlayer}>
+        <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
+      </HardResetProvider>
     </HubLiveProvider>
   );
 }

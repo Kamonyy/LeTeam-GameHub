@@ -5,6 +5,30 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 @layer base {
+	:root {
+		/* Mafia medieval theme — stone / amber / rose */
+		--background: 240 10% 3.9%; /* zinc-950 */
+		--foreground: 60 9.1% 97.8%; /* stone-50 */
+		--card: 24 9.8% 10%; /* stone-900 */
+		--card-foreground: 60 9.1% 97.8%;
+		--primary: 26 90.5% 37.1%; /* amber-700 */
+		--primary-foreground: 48 96.5% 88.8%; /* amber-100 */
+		--secondary: 24 5.4% 15.9%; /* stone-800 */
+		--secondary-foreground: 60 9.1% 97.8%;
+		--destructive: 343 87.5% 15.7%; /* rose-950 */
+		--destructive-foreground: 0 85.7% 97.3%; /* red-50 */
+		--muted: 20 14.3% 4.1%; /* stone-950 */
+		--muted-foreground: 24 5.4% 63.9%; /* stone-400 */
+		--accent: 24 5.7% 15.9%; /* stone-900 */
+		--accent-foreground: 60 9.1% 97.8%;
+		--popover: 24 9.8% 10%;
+		--popover-foreground: 60 9.1% 97.8%;
+		--border: 24 5.7% 25.9%; /* stone-700 */
+		--input: 24 5.7% 25.9%;
+		--ring: 26 90.5% 37.1%; /* amber-700 */
+		--radius: 0.625rem;
+	}
+
 	body {
 		@apply bg-hub-bg text-gray-100 antialiased;
 	}

@@ -24,7 +24,7 @@ export const MAFIA_MAX_PLAYERS = 12;
 
 export const DEFAULT_MAFIA_SETTINGS = {
 	narratorId: null,
-	revealRoleOnDeath: true,
+	revealRoleOnDeath: false,
 	roleCounts: null,
 	roleAssignments: {},
 };
@@ -57,4 +57,17 @@ export const RATE_LIMITS = {
 	chat: 30,
 	profile: 20,
 	focus: 40,
+	hubPresence: 20,
+	gameStateRequest: 30,
+	gameStart: 5,
+	gameCancel: 5,
+	roomSettingsUpdate: 15,
+	mafiaRoleAcknowledge: 10,
+	mafiaNarrator: 60,
+	wordSubmit: 20,
+	wordGuessed: 30,
+	wordChampionSubmit: 20,
+	baraReveal: 10,
+	baraVote: 20,
+	baraGuess: 30,
 };

@@ -3,16 +3,31 @@
 import {
   RATE_LIMITS,
 } from './constants.js';
+import { isDevBotsEnabled } from './devBots.js';
 import {
   normalizeRoomId,
   sanitizeDisplayName,
   validateDominoTile,
   validateGameType,
+  validateMafiaNarratorAction,
   validateMoveEnd,
   validatePlayerId,
   validateSessionToken,
   validateTargetPlayerId,
 } from './validate.js';
+
+const JOIN_ERROR_GENERIC = 'Unable to join room';
+
+function mapJoinError(error) {
+  if (error === 'Room not found' || error === 'Room is full') {
+    return JOIN_ERROR_GENERIC;
+  }
+  return error;
+}
+
+function isPlainObject(payload) {
+  return payload != null && typeof payload === 'object' && !Array.isArray(payload);
+}
 
 export function registerHandlers(socket, roomManager) {
   socket.on('player:register', ({ playerId, displayName, sessionToken }, ack) => {
@@ -58,6 +73,10 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('hub:presence:request', (_payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'hubPresence', RATE_LIMITS.hubPresence)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
     roomManager.sendHubPresenceToSocket(socket);
     ack?.({ success: true });
   });
@@ -80,9 +99,18 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true, roomId: result.roomId });
   });
 
-  socket.on('room:join', ({ roomId, displayName, spectate }, ack) => {
+  socket.on('room:join', (payload, ack) => {
     if (!roomManager.checkRateLimit(socket.id, 'join', RATE_LIMITS.join)) {
       ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    if (!isPlainObject(payload)) {
+      ack?.({ error: 'Invalid payload' });
+      return;
+    }
+    const { roomId, displayName, spectate } = payload;
+    if (spectate !== undefined && typeof spectate !== 'boolean') {
+      ack?.({ error: 'Invalid spectate flag' });
       return;
     }
     const normalized = normalizeRoomId(roomId);
@@ -95,7 +123,7 @@ export function registerHandlers(socket, roomManager) {
         roomManager.spectateRoom(socket, normalized, displayName)
       : roomManager.joinRoom(socket, normalized, displayName);
     if (result.error) {
-      ack?.({ error: result.error });
+      ack?.({ error: mapJoinError(result.error) });
       return;
     }
     ack?.({
@@ -117,29 +145,31 @@ export function registerHandlers(socket, roomManager) {
     }
     const result = roomManager.spectateRoom(socket, normalized, displayName);
     if (result.error) {
-      ack?.({ error: result.error });
+      ack?.({ error: mapJoinError(result.error) });
       return;
     }
     ack?.({ success: true, roomId: result.roomId, isSpectator: true });
   });
 
-  socket.on('room:dev:add-bots', ({ count }, ack) => {
-    const result = roomManager.addDevBots(socket, count);
-    if (result?.error) {
-      ack?.({ error: result.error });
-      return;
-    }
-    ack?.({ success: true, added: result.added });
-  });
+  if (isDevBotsEnabled()) {
+    socket.on('room:dev:add-bots', ({ count }, ack) => {
+      const result = roomManager.addDevBots(socket, count);
+      if (result?.error) {
+        ack?.({ error: result.error });
+        return;
+      }
+      ack?.({ success: true, added: result.added });
+    });
 
-  socket.on('room:dev:remove-bots', (_payload, ack) => {
-    const result = roomManager.removeDevBots(socket);
-    if (result?.error) {
-      ack?.({ error: result.error });
-      return;
-    }
-    ack?.({ success: true, removed: result.removed });
-  });
+    socket.on('room:dev:remove-bots', (_payload, ack) => {
+      const result = roomManager.removeDevBots(socket);
+      if (result?.error) {
+        ack?.({ error: result.error });
+        return;
+      }
+      ack?.({ success: true, removed: result.removed });
+    });
+  }
 
   socket.on('room:leave', (_payload, ack) => {
     roomManager.leaveRoom(socket);
@@ -147,6 +177,10 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('room:settings:update', (settings, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'roomSettingsUpdate', RATE_LIMITS.roomSettingsUpdate)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
     if (!settings || typeof settings !== 'object') {
       ack?.({ error: 'Invalid settings' });
       return;
@@ -173,6 +207,10 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('game:cancel', (_payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'gameCancel', RATE_LIMITS.gameCancel)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
     const result = roomManager.cancelMatch(socket);
     if (result?.error) {
       ack?.({ error: result.error });
@@ -182,6 +220,10 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('game:start', (_payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'gameStart', RATE_LIMITS.gameStart)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
     const result = roomManager.startGame(socket);
     if (result?.error) {
       ack?.({ error: result.error });
@@ -258,6 +300,10 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('word:submit', (payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'wordSubmit', RATE_LIMITS.wordSubmit)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
     const result = roomManager.handleWordSubmit(socket, payload);
     if (result?.error) {
       socket.emit('game:error', { message: result.error });
@@ -268,6 +314,10 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('word:champion:submit', (payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'wordChampionSubmit', RATE_LIMITS.wordChampionSubmit)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
     const result = roomManager.handleWordChampionSubmit(socket, payload);
     if (result?.error) {
       socket.emit('game:error', { message: result.error });
@@ -278,6 +328,10 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('word:guessed', (_payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'wordGuessed', RATE_LIMITS.wordGuessed)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
     const result = roomManager.handleWordGuessed(socket);
     if (result?.error) {
       socket.emit('game:error', { message: result.error });
@@ -305,6 +359,10 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('game:state:request', (_payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'gameStateRequest', RATE_LIMITS.gameStateRequest)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
     const result = roomManager.syncGameStateForPlayer(socket);
     if (result?.error) {
       ack?.({ error: result.error });
@@ -313,8 +371,12 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true, state: result.state });
   });
 
-  socket.on('tavern:role:acknowledge', (_payload, ack) => {
-    const result = roomManager.handleTavernAcknowledgeRole(socket);
+  socket.on('mafia:role:acknowledge', (_payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'mafiaRoleAcknowledge', RATE_LIMITS.mafiaRoleAcknowledge)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    const result = roomManager.handleMafiaAcknowledgeRole(socket);
     if (result?.error) {
       socket.emit('game:error', { message: result.error });
       ack?.({ error: result.error });
@@ -323,7 +385,20 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true, state: result.state });
   });
 
-  socket.on('tavern:narrator', ({ action, targetPlayerId }, ack) => {
+  socket.on('mafia:narrator', (payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'mafiaNarrator', RATE_LIMITS.mafiaNarrator)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    if (!isPlainObject(payload)) {
+      ack?.({ error: 'Invalid payload' });
+      return;
+    }
+    const { action, targetPlayerId } = payload;
+    if (!validateMafiaNarratorAction(action)) {
+      ack?.({ error: 'Invalid action' });
+      return;
+    }
     if (
       (action === 'day_eliminate' || action === 'set_night_target') &&
       targetPlayerId != null &&
@@ -332,7 +407,7 @@ export function registerHandlers(socket, roomManager) {
       ack?.({ error: 'Invalid target player' });
       return;
     }
-    const result = roomManager.handleTavernNarratorAction(socket, action, {
+    const result = roomManager.handleMafiaNarratorAction(socket, action, {
       targetPlayerId: targetPlayerId ?? null,
     });
     if (result?.error) {
@@ -344,6 +419,10 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('bara:reveal', (_payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'baraReveal', RATE_LIMITS.baraReveal)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
     const result = roomManager.handleBaraReveal(socket);
     if (result?.error) {
       socket.emit('game:error', { message: result.error });
@@ -364,6 +443,10 @@ export function registerHandlers(socket, roomManager) {
   });
 
   socket.on('bara:vote', ({ targetPlayerId }, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'baraVote', RATE_LIMITS.baraVote)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
     if (!validateTargetPlayerId(targetPlayerId)) {
       ack?.({ error: 'Invalid target player' });
       return;
@@ -377,7 +460,16 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true, state: result.state });
   });
 
-  socket.on('bara:guess', ({ guess }, ack) => {
+  socket.on('bara:guess', (payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'baraGuess', RATE_LIMITS.baraGuess)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    if (!isPlainObject(payload)) {
+      ack?.({ error: 'Invalid payload' });
+      return;
+    }
+    const { guess } = payload;
     const result = roomManager.handleBaraGuess(socket, guess);
     if (result?.error) {
       socket.emit('game:error', { message: result.error });

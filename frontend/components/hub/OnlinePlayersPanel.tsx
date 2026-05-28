@@ -4,49 +4,57 @@ import { memo, useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { Users, Circle } from 'lucide-react';
 import { useHubLive } from '@/lib/hub/HubLiveContext';
+import type { OnlinePlayer } from '@/lib/hub/types';
+
+function playerRowKey(player: OnlinePlayer, index: number): string {
+  return player.id ?? `${player.displayName}\0${index}`;
+}
 
 function OnlinePlayersPanelInner() {
   const { connected, hubPresence } = useHubLive();
   const { total, players } = hubPresence;
-  const prevIdsRef = useRef<Set<string>>(new Set());
-  const [enteringIds, setEnteringIds] = useState<Set<string>>(() => new Set());
+  const prevKeysRef = useRef<Set<string>>(new Set());
+  const [enteringKeys, setEnteringKeys] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
-    const prev = prevIdsRef.current;
-    const next = new Set(players.map((p) => p.id));
-    const joined = players.filter((p) => !prev.has(p.id)).map((p) => p.id);
+    const prev = prevKeysRef.current;
+    const next = new Set(players.map((p, i) => playerRowKey(p, i)));
+    const joined = players
+      .map((p, i) => ({ key: playerRowKey(p, i), player: p }))
+      .filter(({ key }) => !prev.has(key))
+      .map(({ key }) => key);
 
-    prevIdsRef.current = next;
+    prevKeysRef.current = next;
 
     if (joined.length === 0) return;
 
-    setEnteringIds((current) => {
+    setEnteringKeys((current) => {
       const merged = new Set(current);
-      joined.forEach((id) => merged.add(id));
+      joined.forEach((key) => merged.add(key));
       return merged;
     });
 
     const timer = window.setTimeout(() => {
-      setEnteringIds((current) => {
+      setEnteringKeys((current) => {
         const merged = new Set(current);
-        joined.forEach((id) => merged.delete(id));
+        joined.forEach((key) => merged.delete(key));
         return merged;
       });
     }, 500);
 
     return () => {
       window.clearTimeout(timer);
-      setEnteringIds((current) => {
+      setEnteringKeys((current) => {
         const merged = new Set(current);
-        joined.forEach((id) => merged.delete(id));
+        joined.forEach((key) => merged.delete(key));
         return merged;
       });
     };
   }, [players]);
 
   return (
-    <aside className="card flex flex-col h-fit lg:sticky lg:top-24 overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-hub-border/80">
+    <aside className="hub-players-panel flex flex-col h-full min-h-0 overflow-hidden">
+      <div className="hub-players-panel__header flex items-center gap-2 px-4 py-3 shrink-0">
         <Users className="w-4 h-4 text-hub-accent" />
         <h3 className="text-sm font-semibold">Players Online</h3>
         <span
@@ -59,7 +67,7 @@ function OnlinePlayersPanelInner() {
         </span>
       </div>
 
-      <ul className="max-h-[420px] overflow-y-auto overscroll-contain p-2 space-y-1 scrollbar-thin">
+      <ul className="hub-arcade-scroll flex-1 min-h-0 overflow-y-auto overscroll-contain p-2 space-y-1">
         {!connected && (
           <li className="text-center text-xs text-hub-muted py-8 px-3">
             Connecting to hub…
@@ -73,15 +81,17 @@ function OnlinePlayersPanelInner() {
         )}
 
         {connected &&
-          players.map((player) => (
+          players.map((player, index) => {
+            const rowKey = playerRowKey(player, index);
+            return (
             <li
-              key={player.id}
+              key={rowKey}
               className={clsx(
                 'flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-colors',
                 player.isYou
                   ? 'border-hub-accent/40 bg-hub-accent/10'
                   : 'border-transparent bg-hub-bg/40',
-                enteringIds.has(player.id) && 'hub-player-row--enter'
+                enteringKeys.has(rowKey) && 'hub-player-row--enter'
               )}
             >
               <span className="relative flex h-2 w-2 shrink-0">
@@ -99,11 +109,12 @@ function OnlinePlayersPanelInner() {
                 </span>
               )}
             </li>
-          ))}
+            );
+          })}
       </ul>
 
       {connected && total > 0 && (
-        <div className="px-4 py-2.5 border-t border-hub-border/60 flex items-center gap-1.5 text-[11px] text-hub-muted">
+        <div className="hub-players-panel__footer px-4 py-2.5 shrink-0 flex items-center gap-1.5 text-[11px] text-hub-muted">
           <Circle className="w-2 h-2 fill-hub-success text-hub-success" />
           <span className="tabular-nums">{total}</span>
           {total === 1 ? 'player' : 'players'} on the hub

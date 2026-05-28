@@ -11,11 +11,29 @@ export const MAX_PLAYER_ID_LENGTH = 36;
 export const MAX_TARGET_PLAYER_ID_LENGTH = 36;
 export const SESSION_TOKEN_BYTES = 32;
 
+const MAFIA_NARRATOR_ACTIONS = new Set([
+	"start_day",
+	"day_eliminate",
+	"begin_night",
+	"set_night_target",
+	"confirm_night_step",
+	"end_morning",
+	"reset_match",
+]);
+
+export function validateMafiaNarratorAction(action) {
+	return typeof action === "string" && MAFIA_NARRATOR_ACTIONS.has(action);
+}
+
 export function sanitizeDisplayName(raw) {
 	if (typeof raw !== "string") return "Player";
-	const trimmed = raw.trim().replace(/[\x00-\x1f\x7f]/g, "");
-	if (!trimmed) return "Player";
-	return trimmed.slice(0, MAX_DISPLAY_NAME);
+	let trimmed = raw.trim().replace(/[\x00-\x1f\x7f]/g, "");
+	if (typeof trimmed.normalize === "function") {
+		trimmed = trimmed.normalize("NFKC").trim();
+	}
+	const safe = trimmed.replace(/[<>]/g, "");
+	if (!safe) return "Player";
+	return safe.slice(0, MAX_DISPLAY_NAME);
 }
 
 export function validatePlayerId(id) {

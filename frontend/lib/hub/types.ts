@@ -12,7 +12,8 @@ export interface ChatMessage {
 }
 
 export interface OnlinePlayer {
-  id: string;
+  /** Present for the viewing player only; omitted for other lounge users. */
+  id?: string;
   displayName: string;
   isYou?: boolean;
 }
@@ -37,10 +38,11 @@ export interface BaraGameSettings {
   roundsToWin: number;
 }
 
-export interface TavernCouncilSettings {
+export interface MafiaSettings {
   narratorId: string | null;
   revealRoleOnDeath: boolean;
   roleCounts: Record<string, number> | null;
+  /** Host-only pre-deal map; omitted for non-host lobby payloads. Never render in UI. */
   roleAssignments?: Record<string, string>;
 }
 
@@ -73,7 +75,7 @@ export interface LobbyState {
     | MatchSettings
     | WordGameSettings
     | BaraGameSettings
-    | TavernCouncilSettings;
+    | MafiaSettings;
   isSpectator?: boolean;
   /** Server allows `room:dev:*` bot fillers (hide UI when false). */
   devBotsEnabled?: boolean;

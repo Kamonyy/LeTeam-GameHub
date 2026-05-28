@@ -2,7 +2,15 @@
 
 import { useEffect, useRef } from 'react';
 import clsx from 'clsx';
-import { AlertTriangle, OctagonX, X } from 'lucide-react';
+import { AlertTriangle, OctagonX } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -13,6 +21,8 @@ export interface ConfirmDialogProps {
   variant?: 'danger' | 'default';
   loading?: boolean;
   icon?: 'warning' | 'cancel';
+  /** Amber-tinted scrim when used inside Mafia (`overlayVariant="warm"`). */
+  overlayVariant?: 'default' | 'warm';
   onConfirm: () => void | Promise<void>;
   onCancel: () => void;
 }
@@ -26,6 +36,7 @@ export default function ConfirmDialog({
   variant = 'default',
   loading = false,
   icon = 'warning',
+  overlayVariant = 'default',
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -33,84 +44,58 @@ export default function ConfirmDialog({
 
   useEffect(() => {
     if (!open) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !loading) onCancel();
-    };
-
-    document.addEventListener('keydown', onKeyDown);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     confirmRef.current?.focus();
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [open, loading, onCancel]);
-
-  if (!open) return null;
+  }, [open]);
 
   const Icon = icon === 'cancel' ? OctagonX : AlertTriangle;
   const isDanger = variant === 'danger';
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirm-dialog-title"
-      aria-describedby="confirm-dialog-message"
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen && !loading) onCancel();
+      }}
     >
-      <button
-        type="button"
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        aria-label="Close dialog"
-        disabled={loading}
-        onClick={onCancel}
-      />
-
-      <div
+      <DialogContent
+        showClose
+        overlayVariant={overlayVariant}
         className={clsx(
-          'relative w-full max-w-md animate-overlay-pop rounded-2xl border shadow-2xl',
-          'bg-hub-surface/95 backdrop-blur-md',
-          isDanger ? 'border-hub-danger/40 shadow-hub-danger/10' : 'border-hub-border shadow-black/40'
+          'max-w-md rounded-2xl border p-0 shadow-2xl',
+          'bg-stone-900/95 backdrop-blur-md border-stone-800',
+          isDanger && 'border-rose-700/40 shadow-rose-950/20'
         )}
+        onPointerDownOutside={(e) => {
+          if (loading) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (loading) e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          if (loading) e.preventDefault();
+        }}
       >
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={loading}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-hub-muted hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40"
-          aria-label="Close"
-        >
-          <X className="w-4 h-4" />
-        </button>
-
-        <div className="px-6 pt-8 pb-6 text-center">
+        <DialogHeader className="px-6 pt-8 pb-2 text-center">
           <div
             className={clsx(
               'mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full border',
               isDanger
-                ? 'border-hub-danger/40 bg-hub-danger/15 text-hub-danger'
-                : 'border-hub-accent/40 bg-hub-accent/15 text-hub-accent'
+                ? 'border-rose-700/40 bg-rose-950/30 text-rose-400'
+                : 'border-amber-600/40 bg-amber-950/30 text-amber-400'
             )}
           >
-            <Icon className="h-7 w-7" />
+            <Icon className="h-7 w-7" aria-hidden />
           </div>
 
-          <h2
-            id="confirm-dialog-title"
-            className="text-xl font-bold text-white mb-2 tracking-tight"
-          >
+          <DialogTitle className="text-xl font-bold text-stone-100 tracking-tight">
             {title}
-          </h2>
-          <p id="confirm-dialog-message" className="text-sm text-hub-muted leading-relaxed max-w-sm mx-auto">
+          </DialogTitle>
+          <DialogDescription className="text-sm leading-relaxed max-w-sm mx-auto">
             {message}
-          </p>
-        </div>
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="flex gap-3 px-6 pb-6">
+        <DialogFooter className="flex-row gap-3 px-6 pb-6 sm:justify-center">
           <button
             type="button"
             onClick={onCancel}
@@ -128,14 +113,14 @@ export default function ConfirmDialog({
               'flex-1 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200',
               'disabled:opacity-50 disabled:cursor-not-allowed',
               isDanger
-                ? 'bg-hub-danger text-white hover:bg-red-600 shadow-lg shadow-hub-danger/20'
+                ? 'bg-rose-700 text-white hover:bg-rose-600 shadow-lg shadow-rose-950/30'
                 : 'btn-primary'
             )}
           >
             {loading ? 'Please wait…' : confirmLabel}
           </button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

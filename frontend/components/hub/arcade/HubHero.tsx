@@ -42,7 +42,7 @@ export default function HubHero({ connected, hubPresence }: HubHeroProps) {
   const presenceKey = useMemo(
     () =>
       `${hubPresence.total}:${hubPresence.players
-        .map((p) => `${p.id}:${p.displayName}`)
+        .map((p, i) => `${p.id ?? i}:${p.displayName}:${!!p.isYou}`)
         .join('|')}`,
     [hubPresence]
   );
@@ -54,7 +54,7 @@ export default function HubHero({ connected, hubPresence }: HubHeroProps) {
   const statusText = messages[tick % messages.length];
 
   return (
-    <section className="hub-enter-hero text-center lg:text-left py-8 lg:py-12 mb-10">
+    <section className="hub-enter-hero flex-1 min-w-0 text-center lg:text-left py-8 lg:py-12">
       <p className="text-xs uppercase tracking-[0.35em] text-hub-muted mb-4 font-medium">
         Digital Arcade Lounge
       </p>

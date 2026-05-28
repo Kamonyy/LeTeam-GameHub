@@ -1,260 +1,483 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, Clock, Loader2 } from 'lucide-react';
-import clsx from 'clsx';
-import type { GameCatalogEntry } from '@/lib/hub/games-registry';
-import HubDominoTile from './HubDominoTile';
-import { markHubGameNavigation } from './hubGameNavigation';
+import Link from "next/link";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { ArrowRight, Clock, Loader2 } from "lucide-react";
+import clsx from "clsx";
+import type { GameCatalogEntry } from "@/lib/hub/games-registry";
+import HubDominoTile from "./HubDominoTile";
+import { markHubGameNavigation } from "./hubGameNavigation";
 
 const SPARKS = [
-  { sx: '6px', sy: '-18px', delay: '0s' },
-  { sx: '-10px', sy: '-22px', delay: '0.08s' },
-  { sx: '14px', sy: '-14px', delay: '0.12s' },
-  { sx: '-4px', sy: '-26px', delay: '0.05s' },
+	{ sx: "6px", sy: "-18px", delay: "0s" },
+	{ sx: "-10px", sy: "-22px", delay: "0.08s" },
+	{ sx: "14px", sy: "-14px", delay: "0.12s" },
+	{ sx: "-4px", sy: "-26px", delay: "0.05s" },
 ];
 
 const CURSOR_BY_GAME: Record<string, string> = {
-  dominoes: 'grab',
-  wordgame: 'letter',
-  'bara-alsalafa': 'crosshair',
+	dominoes: "grab",
+	wordgame: "letter",
+	"bara-alsalafa": "crosshair",
+	mafia: "mask",
 };
 
 interface GameArcadeCardProps {
-  game: GameCatalogEntry;
-  staggerIndex: number;
+	game: GameCatalogEntry;
+	staggerIndex: number;
+}
+
+const WORD_PREVIEW_TARGET = "GUESS";
+const WORD_MATRIX_CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#%&*";
+
+function randomMatrixChar(): string {
+	return WORD_MATRIX_CHARSET[
+		Math.floor(Math.random() * WORD_MATRIX_CHARSET.length)
+	];
 }
 
 function WordPreview({ active }: { active: boolean }) {
-  const [slots, setSlots] = useState(['_', '_', '_', '_']);
-  const [locked, setLocked] = useState(false);
+	const [slots, setSlots] = useState(() =>
+		WORD_PREVIEW_TARGET.split("").map(() => "·"),
+	);
+	const [lockedMask, setLockedMask] = useState(() =>
+		WORD_PREVIEW_TARGET.split("").map(() => false),
+	);
+	const [complete, setComplete] = useState(false);
+	const lockIndexRef = useRef(0);
+	const timersRef = useRef<{ tick?: number; lock?: number }>({});
 
-  useEffect(() => {
-    if (!active) {
-      setLocked(false);
-      setSlots(['_', '_', '_', '_']);
-      return;
-    }
+	useEffect(() => {
+		const clearTimers = () => {
+			if (timersRef.current.tick) window.clearInterval(timersRef.current.tick);
+			if (timersRef.current.lock) window.clearTimeout(timersRef.current.lock);
+			timersRef.current = {};
+		};
 
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let frame = 0;
-    const id = window.setInterval(() => {
-      frame += 1;
-      if (frame > 14) {
-        setLocked(true);
-        setSlots(['P', 'L', 'A', 'Y']);
-        window.clearInterval(id);
-        return;
-      }
-      setSlots(
-        Array.from({ length: 4 }, () =>
-          Math.random() > 0.5 ? letters[Math.floor(Math.random() * letters.length)] : '_'
-        )
-      );
-    }, 70);
+		if (!active) {
+			clearTimers();
+			lockIndexRef.current = 0;
+			setComplete(false);
+			setLockedMask(WORD_PREVIEW_TARGET.split("").map(() => false));
+			setSlots(WORD_PREVIEW_TARGET.split("").map(() => "·"));
+			return clearTimers;
+		}
 
-    return () => window.clearInterval(id);
-  }, [active]);
+		lockIndexRef.current = 0;
+		setComplete(false);
+		setLockedMask(WORD_PREVIEW_TARGET.split("").map(() => false));
 
-  return (
-    <div className="hub-word-slots mt-4" aria-hidden>
-      {slots.map((ch, i) => (
-        <span key={i} className={clsx('hub-word-slot', locked && 'text-sky-300')}>
-          {ch}
-        </span>
-      ))}
-      {locked && (
-        <span className="hub-word-slot text-emerald-400 !w-auto ml-0.5">!</span>
-      )}
-    </div>
-  );
+		const scramble = () => {
+			const lockedThrough = lockIndexRef.current;
+			setSlots(
+				WORD_PREVIEW_TARGET.split("").map((letter, i) => {
+					if (i < lockedThrough) return letter;
+					return Math.random() > 0.04 ? randomMatrixChar() : "·";
+				}),
+			);
+		};
+
+		const lockNext = () => {
+			const i = lockIndexRef.current;
+			if (i >= WORD_PREVIEW_TARGET.length) {
+				clearTimers();
+				setComplete(true);
+				return;
+			}
+
+			lockIndexRef.current = i + 1;
+			setLockedMask((prev) => {
+				const next = [...prev];
+				next[i] = true;
+				return next;
+			});
+			setSlots((prev) => {
+				const next = [...prev];
+				next[i] = WORD_PREVIEW_TARGET[i];
+				return next;
+			});
+
+			const delayMs = i === 0 ? 280 : 220 + i * 55;
+			timersRef.current.lock = window.setTimeout(lockNext, delayMs);
+		};
+
+		scramble();
+		timersRef.current.tick = window.setInterval(scramble, 26);
+		timersRef.current.lock = window.setTimeout(lockNext, 240);
+
+		return clearTimers;
+	}, [active]);
+
+	return (
+		<div
+			className={clsx(
+				"hub-word-slots mt-4",
+				active && "hub-word-slots--live",
+				complete && "hub-word-slots--complete",
+			)}
+			aria-hidden
+		>
+			{WORD_PREVIEW_TARGET.split("").map((_, i) => (
+				<span
+					key={i}
+					className={clsx(
+						"hub-word-slot",
+						lockedMask[i] && "hub-word-slot--locked",
+						active && !lockedMask[i] && "hub-word-slot--scramble",
+					)}
+				>
+					<span className="hub-word-slot__char">{slots[i]}</span>
+				</span>
+			))}
+		</div>
+	);
+}
+
+const BARA_SAMPLE_WORD = "بيتزا";
+const BARA_SCAN_CHARS = "ابتثجحخدذرزسشصضطظعغفقكلمنهوي";
+
+function randomBaraGlyph(): string {
+	return BARA_SCAN_CHARS[Math.floor(Math.random() * BARA_SCAN_CHARS.length)];
+}
+
+function BaraPreview({ active }: { active: boolean }) {
+	const [phase, setPhase] = useState<"idle" | "scan" | "reveal">("idle");
+	const [scramble, setScramble] = useState("·····");
+	const timersRef = useRef<{ scan?: number; reveal?: number }>({});
+
+	useEffect(() => {
+		const clearTimers = () => {
+			if (timersRef.current.scan) window.clearInterval(timersRef.current.scan);
+			if (timersRef.current.reveal)
+				window.clearTimeout(timersRef.current.reveal);
+			timersRef.current = {};
+		};
+
+		if (!active) {
+			clearTimers();
+			setPhase("idle");
+			setScramble("·····");
+			return clearTimers;
+		}
+
+		setPhase("scan");
+		timersRef.current.scan = window.setInterval(() => {
+			setScramble(
+				Array.from({ length: 5 }, () =>
+					Math.random() > 0.2 ? randomBaraGlyph() : "·",
+				).join(""),
+			);
+		}, 70);
+
+		timersRef.current.reveal = window.setTimeout(() => {
+			if (timersRef.current.scan) window.clearInterval(timersRef.current.scan);
+			setPhase("reveal");
+			setScramble(BARA_SAMPLE_WORD);
+		}, 850);
+
+		return clearTimers;
+	}, [active]);
+
+	return (
+		<div
+			className={clsx(
+				"hub-bara-preview mt-4",
+				active && "hub-bara-preview--live",
+				phase === "reveal" && "hub-bara-preview--reveal",
+			)}
+			dir="rtl"
+			aria-hidden
+		>
+			<div className="hub-bara-preview__card">
+				<span className="hub-bara-preview__label">الكلمة السرية</span>
+				<span className="hub-bara-preview__word">{scramble}</span>
+			</div>
+			<p className="hub-bara-preview__hint">
+				{phase === "reveal" ? "واحد برا السالفة…" : "منو برا السالفة؟"}
+			</p>
+		</div>
+	);
+}
+
+function MafiaPreview({ active }: { active: boolean }) {
+	const [isNight, setIsNight] = useState(false);
+	const timerRef = useRef<number | undefined>(undefined);
+
+	useEffect(() => {
+		if (timerRef.current) window.clearTimeout(timerRef.current);
+
+		if (!active) {
+			setIsNight(false);
+			return;
+		}
+
+		setIsNight(false);
+		timerRef.current = window.setTimeout(() => setIsNight(true), 480);
+
+		return () => {
+			if (timerRef.current) window.clearTimeout(timerRef.current);
+		};
+	}, [active]);
+
+	return (
+		<div
+			className={clsx(
+				"hub-mafia-preview mt-4",
+				active && "hub-mafia-preview--live",
+				isNight && "hub-mafia-preview--night",
+			)}
+			aria-hidden
+		>
+			<div className="hub-mafia-preview__phases">
+				<span
+					className={clsx(
+						"hub-mafia-preview__label",
+						!isNight && "hub-mafia-preview__label--on",
+					)}
+				>
+					Day
+				</span>
+				<div className="hub-mafia-preview__track">
+					<span className="hub-mafia-preview__thumb" />
+				</div>
+				<span
+					className={clsx(
+						"hub-mafia-preview__label",
+						isNight && "hub-mafia-preview__label--on",
+					)}
+				>
+					Night
+				</span>
+			</div>
+			<p className="hub-mafia-preview__copy">
+				{isNight ?
+					"Eyes closed — the town belongs to shadows"
+				:	"Gather in person — narrator runs the room"}
+			</p>
+		</div>
+	);
 }
 
 function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
-  const cardRef = useRef<HTMLAnchorElement | HTMLDivElement>(null);
-  const [hovered, setHovered] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
-  const canTiltRef = useRef(false);
+	const cardRef = useRef<HTMLAnchorElement | HTMLDivElement>(null);
+	const [hovered, setHovered] = useState(false);
+	const [isNavigating, setIsNavigating] = useState(false);
+	const canTiltRef = useRef(false);
 
-  useEffect(() => {
-    const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
-    const update = () => {
-      canTiltRef.current = mq.matches;
-    };
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
+	useEffect(() => {
+		const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+		const update = () => {
+			canTiltRef.current = mq.matches;
+		};
+		update();
+		mq.addEventListener("change", update);
+		return () => mq.removeEventListener("change", update);
+	}, []);
 
-  const handleMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (!game.active || !canTiltRef.current) return;
-      const el = cardRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
-      const rotateX = y * -5;
-      const rotateY = x * 5;
-      el.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01) translateY(-2px) translateZ(0)`;
-    },
-    [game.active]
-  );
+	const handleMove = useCallback(
+		(e: React.MouseEvent) => {
+			if (!game.active || !canTiltRef.current) return;
+			const el = cardRef.current;
+			if (!el) return;
+			const rect = el.getBoundingClientRect();
+			const x = (e.clientX - rect.left) / rect.width - 0.5;
+			const y = (e.clientY - rect.top) / rect.height - 0.5;
+			const rotateX = y * -4;
+			const rotateY = x * 4;
+			el.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.015) translateY(-4px) translateZ(0)`;
+		},
+		[game.active],
+	);
 
-  const handleLeave = useCallback(() => {
-    setHovered(false);
-    const el = cardRef.current;
-    if (el) el.style.transform = '';
-  }, []);
+	const handleLeave = useCallback(() => {
+		setHovered(false);
+		const el = cardRef.current;
+		if (el) el.style.transform = "";
+	}, []);
 
-  const handleEnter = useCallback(() => setHovered(true), []);
+	const handleEnter = useCallback(() => setHovered(true), []);
 
-  const handleNavigate = useCallback(() => {
-    if (isNavigating) return;
-    setIsNavigating(true);
-    markHubGameNavigation(game.id);
-  }, [game.id, isNavigating]);
+	const handleNavigate = useCallback(() => {
+		if (isNavigating) return;
+		setIsNavigating(true);
+		markHubGameNavigation(game.id);
+	}, [game.id, isNavigating]);
 
-  const cardClass = clsx(
-    'hub-game-card hub-enter-card group block rounded-2xl border border-hub-border bg-hub-card p-6 overflow-hidden min-h-[220px]',
-    `hub-game-card--${game.id}`,
-    game.active && 'hub-game-card--active',
-    !game.active && 'hub-game-card--inactive opacity-70 cursor-not-allowed',
-    game.active && hovered && 'hub-game-card--hovered',
-    isNavigating && 'hub-game-card--navigating'
-  );
+	const cardClass = clsx(
+		"hub-game-card hub-enter-card group block rounded-2xl border border-hub-border bg-hub-card p-6 overflow-hidden min-h-[220px]",
+		`hub-game-card--${game.id}`,
+		game.active && "hub-game-card--active",
+		!game.active && "hub-game-card--inactive opacity-70 cursor-not-allowed",
+		game.active && hovered && "hub-game-card--hovered",
+		isNavigating && "hub-game-card--navigating",
+	);
 
-  const inner = (
-    <>
-      <span className="hub-game-card__glow" aria-hidden />
-      <span className="hub-game-card__shine" aria-hidden />
+	const inner = (
+		<>
+			<span className="hub-game-card__glow" aria-hidden />
+			<span className="hub-game-card__shine" aria-hidden />
 
-      {game.id === 'dominoes' && (
-        <>
-          <HubDominoTile top={3} bottom={6} className="hub-domino-tile--a" />
-          <HubDominoTile top={1} bottom={5} className="hub-domino-tile--b" />
-          {game.active &&
-            hovered &&
-            SPARKS.map((s, i) => (
-              <span
-                key={i}
-                className="hub-domino-spark"
-                style={
-                  {
-                    left: `${30 + i * 12}%`,
-                    bottom: '28%',
-                    animationDelay: s.delay,
-                    '--sx': s.sx,
-                    '--sy': s.sy,
-                  } as React.CSSProperties
-                }
-                aria-hidden
-              />
-            ))}
-        </>
-      )}
+			{game.id === "dominoes" && (
+				<>
+					<HubDominoTile top={3} bottom={6} className="hub-domino-tile--a" />
+					<HubDominoTile top={1} bottom={5} className="hub-domino-tile--b" />
+					{game.active &&
+						hovered &&
+						SPARKS.map((s, i) => (
+							<span
+								key={i}
+								className="hub-domino-spark"
+								style={
+									{
+										left: `${30 + i * 12}%`,
+										bottom: "28%",
+										animationDelay: s.delay,
+										"--sx": s.sx,
+										"--sy": s.sy,
+									} as React.CSSProperties
+								}
+								aria-hidden
+							/>
+						))}
+				</>
+			)}
 
-      {game.id === 'bara-alsalafa' && (
-        <span className="hub-bara-spotlight rounded-2xl" aria-hidden />
-      )}
+			{game.id === "bara-alsalafa" && (
+				<span className="hub-bara-spotlight rounded-2xl" aria-hidden />
+			)}
 
-      {isNavigating && (
-        <div className="hub-game-card__loading" aria-hidden>
-          <Loader2 className="hub-game-card__loading-icon w-8 h-8 animate-spin" />
-          <span className="hub-game-card__loading-text">Opening…</span>
-        </div>
-      )}
+			{isNavigating && (
+				<div className="hub-game-card__loading" aria-hidden>
+					<Loader2 className="hub-game-card__loading-icon w-8 h-8 animate-spin" />
+					<span className="hub-game-card__loading-text">Opening…</span>
+				</div>
+			)}
 
-      <div className="hub-game-card__surface relative">
-        <div className="flex items-start justify-between mb-4">
-          <div
-            className={clsx(
-              'hub-game-card__icon w-14 h-14 rounded-xl flex items-center justify-center text-2xl border',
-              game.id === 'dominoes' && 'bg-emerald-500/10 border-emerald-500/25',
-              game.id === 'wordgame' && 'bg-sky-500/10 border-sky-500/25',
-              game.id === 'bara-alsalafa' && 'bg-rose-500/10 border-rose-500/25'
-            )}
-          >
-            <span className={game.id === 'bara-alsalafa' ? 'hub-bara-logo' : undefined}>
-              {game.icon ?? '🎮'}
-            </span>
-          </div>
-          {game.active ?
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-hub-success/15 text-hub-success border border-hub-success/25">
-              Live
-            </span>
-          : <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-hub-border/80 text-hub-muted flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              Soon
-            </span>
-          }
-        </div>
+			<div className="hub-game-card__surface relative">
+				<div className="flex items-start justify-between mb-4">
+					<div
+						className={clsx(
+							"hub-game-card__icon w-14 h-14 rounded-xl flex items-center justify-center text-2xl border",
+							game.id === "dominoes" &&
+								"bg-emerald-500/10 border-emerald-500/25",
+							game.id === "wordgame" && "bg-sky-500/10 border-sky-500/25",
+							game.id === "bara-alsalafa" &&
+								"bg-rose-500/10 border-rose-500/25",
+							game.id === "mafia" && "bg-amber-500/10 border-amber-500/25",
+						)}
+					>
+						{game.id === "mafia" ?
+							<>
+								<span className="hub-mafia-icon-static" aria-hidden>
+									{game.icon ?? "🎭"}
+								</span>
+								<span className="hub-mafia-masks" aria-hidden>
+									<span className="hub-mafia-mask hub-mafia-mask--1">🎭</span>
+									<span className="hub-mafia-mask hub-mafia-mask--2">🎭</span>
+								</span>
+							</>
+						:	<span
+								className={
+									game.id === "bara-alsalafa" ? "hub-bara-logo" : undefined
+								}
+							>
+								{game.icon ?? "🎮"}
+							</span>
+						}
+					</div>
+					{game.active ?
+						<span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-hub-success/15 text-hub-success border border-hub-success/25">
+							Live
+						</span>
+					:	<span className="text-xs font-medium px-2.5 py-1 rounded-full bg-hub-border/80 text-hub-muted flex items-center gap-1">
+							<Clock className="w-3 h-3" />
+							Soon
+						</span>
+					}
+				</div>
 
-        <h4 className="text-xl font-bold mb-2 text-gray-50 group-hover:text-white transition-colors">
-          {game.name}
-        </h4>
-        <p className="text-hub-muted text-sm mb-3 leading-snug line-clamp-2">{game.tagline}</p>
+				<h4 className="text-xl font-bold mb-2 text-gray-50 group-hover:text-white transition-colors">
+					{game.name}
+				</h4>
+				<p className="text-hub-muted text-sm mb-3 leading-snug line-clamp-2">
+					{game.tagline}
+				</p>
 
-        {game.id === 'wordgame' && <WordPreview active={game.active && hovered} />}
+				{game.id === "wordgame" && (
+					<WordPreview active={game.active && hovered} />
+				)}
 
-        {!game.active && game.disabledReason && (
-          <p className="text-xs text-hub-warning mb-3">{game.disabledReason}</p>
-        )}
+				{game.id === "bara-alsalafa" && (
+					<BaraPreview active={game.active && hovered} />
+				)}
 
-        <div className="flex items-center justify-between mt-4 pt-2 border-t border-hub-border/50">
-          <span className="text-xs text-hub-muted font-medium">{game.players} players</span>
-          {game.active && (
-            <span className="hub-game-card__play flex items-center gap-1.5 text-sm font-semibold">
-              <span className="hub-game-card__play-label">Play</span>
-              <ArrowRight className="hub-game-card__play-arrow w-4 h-4" />
-            </span>
-          )}
-        </div>
-      </div>
-    </>
-  );
+				{game.id === "mafia" && (
+					<MafiaPreview active={game.active && hovered} />
+				)}
 
-  const style = {
-    ['--hub-stagger' as string]: staggerIndex,
-  } as React.CSSProperties;
+				{!game.active && game.disabledReason && (
+					<p className="text-xs text-hub-warning mb-3">{game.disabledReason}</p>
+				)}
 
-  const interactionProps = game.active
-    ? {
-        onMouseMove: handleMove,
-        onMouseEnter: handleEnter,
-        onMouseLeave: handleLeave,
-        'data-hub-cursor': CURSOR_BY_GAME[game.id] ?? 'default',
-      }
-    : {};
+				<div className="flex items-center justify-between mt-4 pt-2 border-t border-hub-border/50">
+					<span className="text-xs text-hub-muted font-medium">
+						{game.players} players
+					</span>
+					{game.active && (
+						<span className="hub-game-card__play flex items-center gap-1.5 text-sm font-semibold">
+							<span className="hub-game-card__play-label">Play</span>
+							<ArrowRight className="hub-game-card__play-arrow w-4 h-4" />
+						</span>
+					)}
+				</div>
+			</div>
+		</>
+	);
 
-  if (game.active) {
-    return (
-      <Link
-        ref={cardRef as React.RefObject<HTMLAnchorElement>}
-        href={game.href}
-        className={clsx(cardClass, 'outline-none focus-visible:ring-2 focus-visible:ring-hub-accent')}
-        style={style}
-        aria-busy={isNavigating}
-        onClick={handleNavigate}
-        {...interactionProps}
-      >
-        {inner}
-      </Link>
-    );
-  }
+	const style = {
+		["--hub-stagger" as string]: staggerIndex,
+	} as React.CSSProperties;
 
-  return (
-    <div
-      ref={cardRef as React.RefObject<HTMLDivElement>}
-      className={cardClass}
-      style={style}
-      aria-disabled
-      {...interactionProps}
-    >
-      {inner}
-    </div>
-  );
+	const interactionProps =
+		game.active ?
+			{
+				onMouseMove: handleMove,
+				onMouseEnter: handleEnter,
+				onMouseLeave: handleLeave,
+				"data-hub-cursor": CURSOR_BY_GAME[game.id] ?? "default",
+			}
+		:	{};
+
+	if (game.active) {
+		return (
+			<Link
+				ref={cardRef as React.RefObject<HTMLAnchorElement>}
+				href={game.href}
+				className={clsx(
+					cardClass,
+					"outline-none focus-visible:ring-2 focus-visible:ring-hub-accent",
+				)}
+				style={style}
+				aria-busy={isNavigating}
+				onClick={handleNavigate}
+				{...interactionProps}
+			>
+				{inner}
+			</Link>
+		);
+	}
+
+	return (
+		<div
+			ref={cardRef as React.RefObject<HTMLDivElement>}
+			className={cardClass}
+			style={style}
+			aria-disabled
+			{...interactionProps}
+		>
+			{inner}
+		</div>
+	);
 }
 
 export default memo(GameArcadeCard);
