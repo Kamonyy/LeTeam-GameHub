@@ -1,12 +1,12 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { PenLine, Loader2, Flame, Shield } from 'lucide-react';
+import { PenLine, Loader2, Flame, Shield, Dices } from 'lucide-react';
 import type { WordCategory } from '../types';
 import WordPanelFrame from './WordPanelFrame';
 import ChampionPicker from './ChampionPicker';
 import ChampionPortrait from './ChampionPortrait';
-import type { LolChampion } from '@/lib/wordgame/lol-champions';
+import { pickRandomLolChampion, type LolChampion } from '@/lib/wordgame/lol-champions';
 import { useWordGameAudioOptional } from '../hooks/useWordGameAudio';
 
 interface WordSetupProps {
@@ -49,23 +49,27 @@ export default function WordSetup({
     setSubmitting(false);
   };
 
-  const playChampionLockFeedback = () => {
-    if (!pendingChampion || iHaveSubmitted) return;
+  const playChampionLockFeedback = (champ: LolChampion) => {
+    if (iHaveSubmitted) return;
     audio?.unlock();
     audio?.playSfx('lockIn', 0.75);
-    audio?.playChampionStinger(pendingChampion.id);
+    audio?.playChampionStinger(champ.id);
   };
 
-  const handleChampionLock = async () => {
-    if (!pendingChampion || iHaveSubmitted || submitting || submitLockRef.current) {
-      return;
-    }
+  const sealChampion = async (champ: LolChampion) => {
+    if (iHaveSubmitted || submitting || submitLockRef.current) return;
     submitLockRef.current = true;
     setSubmitting(true);
-    const ok = await onSubmitChampion(pendingChampion.id);
+    setPendingChampion(champ);
+    const ok = await onSubmitChampion(champ.id);
     if (!ok && !iHaveSubmitted) setPendingChampion(null);
     submitLockRef.current = false;
     setSubmitting(false);
+  };
+
+  const handleChampionLock = async () => {
+    if (!pendingChampion) return;
+    await sealChampion(pendingChampion);
   };
 
   const handleChampionPick = (champ: LolChampion) => {
@@ -73,6 +77,11 @@ export default function WordSetup({
     audio?.playSfx('click', 0.5);
     audio?.preloadChampion(champ.id);
     setPendingChampion(champ);
+  };
+
+  const handleRandomChampionPick = () => {
+    if (iHaveSubmitted || submitting) return;
+    handleChampionPick(pickRandomLolChampion());
   };
 
   if (iHaveSubmitted) {
@@ -122,9 +131,23 @@ export default function WordSetup({
   if (isLol) {
     return (
       <WordPanelFrame panelEnter={false} className="p-8 sm:p-10">
-        <div className="flex items-center gap-3 mb-2">
-          <Shield className="w-5 h-5 text-[#f0d78c]" />
-          <h3 className="sw-heading text-base">Choose Champion</h3>
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <Shield className="w-5 h-5 text-[#f0d78c] shrink-0" />
+            <h3 className="sw-heading text-base">Choose Champion</h3>
+          </div>
+          <button
+            type="button"
+            onClick={handleRandomChampionPick}
+            disabled={submitting || iHaveSubmitted}
+            className="sw-champ-random-roll"
+            title="Fair random pick from the full roster — review before you lock in"
+          >
+            <span className="sw-champ-random-roll__icon-wrap" aria-hidden>
+              <Dices className="sw-champ-random-roll__icon" strokeWidth={2.25} />
+            </span>
+            <span className="sw-champ-random-roll__label sw-font-display">Random</span>
+          </button>
         </div>
         <div className="sw-divider-gold sw-divider-gold--draw" />
         <p className="text-sm sw-muted mb-6 leading-relaxed">
@@ -144,8 +167,8 @@ export default function WordSetup({
           <button
             type="button"
             onPointerDown={(e) => {
-              if (e.button !== 0 || submitting) return;
-              playChampionLockFeedback();
+              if (e.button !== 0 || submitting || !pendingChampion) return;
+              playChampionLockFeedback(pendingChampion);
             }}
             onClick={(e) => {
               e.preventDefault();

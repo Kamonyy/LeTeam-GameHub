@@ -103,6 +103,26 @@ export function getLolChampionById(id: string): LolChampion | undefined {
   return CHAMPION_BY_ID.get(id);
 }
 
+/** Uniform index in [0, max) — crypto.getRandomValues when available. */
+function randomUniformIndex(max: number): number {
+  if (max <= 1) return 0;
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const bucket = new Uint32Array(1);
+    crypto.getRandomValues(bucket);
+    return bucket[0]! % max;
+  }
+  return Math.floor(Math.random() * max);
+}
+
+/** Fair uniform pick from the full roster (every champion equally likely). */
+export function pickRandomLolChampion(): LolChampion {
+  const n = LOL_CHAMPIONS.length;
+  if (n === 0) {
+    throw new Error('Champion roster is empty');
+  }
+  return LOL_CHAMPIONS[randomUniformIndex(n)]!;
+}
+
 /** Square champion icon from Riot Data Dragon (version-pinned in lol-champions.json). */
 export function championIconSrc(
   id: string,
