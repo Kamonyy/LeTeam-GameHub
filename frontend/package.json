@@ -6,7 +6,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev --hostname 0.0.0.0 -p 3000",
     "build": "next build",
     "lint": "next lint",
     "fetch:lol-champions": "node scripts/fetch-lol-champion-icons.mjs"

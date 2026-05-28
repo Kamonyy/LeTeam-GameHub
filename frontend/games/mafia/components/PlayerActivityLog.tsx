@@ -14,6 +14,9 @@ import {
 } from '@/components/mafia/mafia-panel';
 import type { MafiaChronicleSection } from '../types';
 import { formatPlayerChronicleEntry } from '../lib/formatPlayerChronicleEntry';
+import MafiaDaySunIcon from './icons/MafiaDaySunIcon';
+import MafiaNightMoonIcon from './icons/MafiaNightMoonIcon';
+import { MafiaChronicleIcon } from './icons/MafiaChronicleIcon';
 
 interface PlayerActivityLogProps {
   sections: MafiaChronicleSection[];
@@ -22,9 +25,9 @@ interface PlayerActivityLogProps {
 }
 
 function periodIcon(type: string) {
-  if (type === 'day') return '☀️';
-  if (type === 'night') return '🌙';
-  if (type === 'morning') return '🌅';
+  if (type === 'night') return <MafiaNightMoonIcon size="sm" />;
+  if (type === 'day') return <MafiaDaySunIcon size="sm" variant="day" />;
+  if (type === 'morning') return <MafiaDaySunIcon size="sm" variant="morning" />;
   if (type === 'setup') return '🎭';
   return '📜';
 }
@@ -105,7 +108,7 @@ function PlayerActivityLog({
               <MafiaButton
                 type="button"
                 variant="ghost"
-                className="h-auto w-full justify-start gap-2 rounded-none px-3 py-2.5 text-left hover:bg-amber-500/5"
+                className="h-auto w-full min-w-0 justify-start gap-2 rounded-none px-3 py-2.5 text-left hover:bg-amber-500/5"
                 onClick={() => setOpenKey(isOpen ? null : section.key)}
                 aria-expanded={isOpen}
               >
@@ -115,7 +118,7 @@ function PlayerActivityLog({
                 >
                   {periodIcon(section.period.type)}
                 </span>
-                <span className="font-cinzel shrink-0 text-[0.78rem] font-bold uppercase tracking-[0.18em] text-amber-200">
+                <span className="min-w-0 shrink font-cinzel text-[0.78rem] font-bold uppercase tracking-[0.18em] text-amber-200">
                   {section.label}
                 </span>
                 {!isOpen && lastLine && (
@@ -148,10 +151,10 @@ function PlayerActivityLog({
                           >
                             <div className="flex gap-2">
                               <span
-                                className="w-5 shrink-0 text-center text-sm text-amber-500"
+                                className="flex w-5 shrink-0 items-center justify-center text-sm text-amber-500"
                                 aria-hidden
                               >
-                                {icon}
+                                <MafiaChronicleIcon icon={icon} size="xs" />
                               </span>
                               <div className="min-w-0 flex-1">
                                 <p className="text-base leading-snug text-stone-200">

@@ -44,7 +44,7 @@ export const mafiaPanelVariants = cva(
           'shadow-[inset_0_1px_0_rgba(255,255,255,0.04),inset_0_2px_8px_rgba(0,0,0,0.35)]',
         ],
         decree: [
-          'overflow-hidden rounded-md border-amber-700/55',
+          'overflow-x-hidden overflow-y-visible rounded-md border-amber-700/55',
           'bg-gradient-to-b from-stone-950/98 to-[#0a0908]',
           'p-3 shadow-[var(--mf-shadow-panel),inset_0_1px_0_rgba(212,166,74,0.12)]',
           'data-[decree-night]:border-violet-800/50',
@@ -71,20 +71,36 @@ export interface MafiaCardProps
 }
 
 const MafiaCard = React.forwardRef<HTMLDivElement, MafiaCardProps>(
-  ({ className, variant, interactive = true, ...props }, ref) => (
-    <Card
-      ref={ref}
-      className={cn(
-        'border-0 bg-transparent p-0 shadow-none backdrop-blur-none',
-        mafiaPanelVariants({ variant }),
-        interactive && variant === 'elevated' && mafiaPanelElevatedHoverClass,
-        interactive && variant === 'glass' && mafiaPanelGlassHoverClass,
-        !interactive && 'transition-none',
-        className,
-      )}
-      {...props}
-    />
-  ),
+  ({ className, variant, interactive = true, children, ...props }, ref) => {
+    const cardClassName = cn(
+      'border-0 bg-transparent p-0 shadow-none backdrop-blur-none',
+      mafiaPanelVariants({ variant }),
+      interactive && variant === 'elevated' && mafiaPanelElevatedHoverClass,
+      interactive && variant === 'glass' && mafiaPanelGlassHoverClass,
+      !interactive && 'transition-none',
+      className,
+    );
+
+    if (variant === 'decree') {
+      return (
+        <Card ref={ref} className={cardClassName} {...props}>
+          <div className="relative flex min-h-0 flex-col rounded-md">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 overflow-hidden rounded-md"
+            />
+            <div className="relative z-[1] flex min-h-0 flex-col">{children}</div>
+          </div>
+        </Card>
+      );
+    }
+
+    return (
+      <Card ref={ref} className={cardClassName} {...props}>
+        {children}
+      </Card>
+    );
+  },
 );
 MafiaCard.displayName = 'MafiaCard';
 

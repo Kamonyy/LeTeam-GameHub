@@ -1,6 +1,6 @@
 import type { MafiaPhase } from "../types";
 
-/** Player/narrator phase banner — Day and Night only (no separate “morning”). */
+/** Player/narrator phase banner label for the current phase. */
 export function mafiaPhaseDisplayLabel(
   phase: MafiaPhase,
   _dayNumber: number,
@@ -8,8 +8,9 @@ export function mafiaPhaseDisplayLabel(
 ): string {
   switch (phase) {
     case "day":
-    case "morning":
       return "Day";
+    case "morning":
+      return "Morning";
     case "night":
       return "Night";
     case "role_reveal":

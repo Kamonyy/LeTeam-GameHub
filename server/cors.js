@@ -5,13 +5,6 @@ export function parseAllowedOrigins(raw) {
   return raw.split(',').map((o) => o.trim()).filter(Boolean);
 }
 
-function isLanCorsEnabled() {
-  return (
-    process.env.NODE_ENV === 'development' ||
-    process.env.DEV_LAN_CORS === 'true'
-  );
-}
-
 /** Allow phone/tablet access via http://192.168.x.x:3000 during local dev. */
 function isPrivateNetworkDevOrigin(origin) {
   try {
@@ -41,7 +34,6 @@ export function createCorsOriginChecker(allowedOrigins) {
   }
 
   const allowMissingOrigin = process.env.NODE_ENV === 'development';
-  const allowLanBypass = isLanCorsEnabled();
 
   return (origin, callback) => {
     if (!origin) {
@@ -52,7 +44,8 @@ export function createCorsOriginChecker(allowedOrigins) {
       callback(null, true);
       return;
     }
-    if (allowLanBypass && isPrivateNetworkDevOrigin(origin)) {
+    // Local dev server only — LAN IPs on port 3000 (e.g. http://192.168.x.x:3000).
+    if (isPrivateNetworkDevOrigin(origin)) {
       callback(null, true);
       return;
     }

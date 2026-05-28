@@ -7,7 +7,14 @@ import {
   MafiaCard,
   MafiaCardFooter,
 } from "@/components/mafia/mafia-panel";
+import { NIGHT_SEQUENCE } from "@shared/games/mafia/nightSequence.js";
 import { getRoleAccent } from "@shared/games/mafia/roles.js";
+import {
+  nightStepDotStyle,
+  nightStepLabelStyle,
+  nightStepProgressBarStyle,
+  nightStepShortTitle,
+} from "../lib/nightStepTrackTheme";
 import type {
   MafiaNarratorGameState,
   MafiaNarratorPanel,
@@ -23,6 +30,7 @@ import NarratorTargetPicker from "./NarratorTargetPicker";
 import NarratorAskPrompt from "./NarratorAskPrompt";
 import { MafiaButton } from "@/components/mafia/mafia-button";
 import { formatMorningNightRecapDetail } from "../lib/formatMorningNightRecap";
+import { mfTitleGold } from "../lib/mafiaTypography";
 
 const scriptClass =
   "font-[family-name:var(--p1-font-script)] text-[color:var(--p1-ink)]";
@@ -73,15 +81,17 @@ function DecreeZone({
   kicker,
   children,
   tone = "default",
+  compact = false,
 }: {
   kicker: string;
   children: ReactNode;
   tone?: keyof typeof decreeZoneShellClass;
+  compact?: boolean;
 }) {
   return (
     <section className={decreeZoneShellClass[tone]}>
-      <div className="p-3.5 sm:p-4">
-        <div className="mb-2.5">
+      <div className={compact ? "p-2.5 sm:p-3" : "p-3.5 sm:p-4"}>
+        <div className={compact ? "mb-2" : "mb-2.5"}>
           <DecreeZoneKicker tone={tone}>{kicker}</DecreeZoneKicker>
         </div>
         <div className="min-w-0">{children}</div>
@@ -94,11 +104,14 @@ function NightStepTrack({
   currentIndex,
   total,
   titleEn,
+  activeRoleId,
 }: {
   currentIndex: number;
   total: number;
   titleEn: string;
+  activeRoleId: string | null;
 }) {
+  const steps = NIGHT_SEQUENCE.slice(0, total);
   const progressPct =
     total <= 1 ? 100 : (currentIndex / (total - 1)) * 100;
 
@@ -136,42 +149,44 @@ function NightStepTrack({
           <>
             <span
               className={clsx(
-                "pointer-events-none absolute left-2.5 right-2.5 h-[3px] rounded-full bg-violet-800/70",
+                "pointer-events-none absolute left-2.5 right-2.5 h-[3px] rounded-full bg-violet-600/55",
                 trackTop,
-                "shadow-[0_0_8px_rgba(109,40,217,0.45)]",
+                "shadow-[0_0_10px_rgba(139,92,246,0.5)]",
               )}
               aria-hidden
             />
             <span
               className={clsx(
-                "pointer-events-none absolute left-2.5 h-[3px] rounded-full bg-gradient-to-r from-amber-600 via-amber-400 to-amber-200 transition-[width] duration-300 motion-reduce:transition-none",
+                "pointer-events-none absolute left-2.5 h-[3px] rounded-full transition-[width] duration-300 motion-reduce:transition-none",
                 trackTop,
-                "shadow-[0_0_14px_rgba(251,191,36,0.75),0_0_4px_rgba(255,237,160,0.5)]",
               )}
-              style={{ width: `calc((100% - 1.25rem) * ${progressPct / 100})` }}
+              style={{
+                width: `calc((100% - 1.25rem) * ${progressPct / 100})`,
+                ...nightStepProgressBarStyle(activeRoleId),
+              }}
               aria-hidden
             />
           </>
         )}
 
         <ol className="relative m-0 flex list-none justify-between p-0">
-          {Array.from({ length: total }, (_, i) => {
+          {steps.map((stepDef, i) => {
             const done = i < currentIndex;
             const active = i === currentIndex;
-            const upcoming = !done && !active;
+            const state = done ? "done" : active ? "active" : "upcoming";
             return (
-              <li key={i} className="flex shrink-0 flex-col items-center">
+              <li
+                key={stepDef.key}
+                className="flex min-w-0 max-w-[4.75rem] shrink flex-col items-center gap-1.5"
+              >
                 <span
                   className={clsx(
-                    "relative flex h-5 w-5 items-center justify-center rounded-full border font-cinzel text-[0.52rem] font-bold leading-none transition-all duration-200 motion-reduce:transition-none",
-                    done &&
-                      "border-amber-400/75 bg-gradient-to-b from-amber-500/95 to-amber-800 text-amber-50 shadow-[0_0_12px_rgba(251,191,36,0.55),inset_0_1px_0_rgba(255,235,180,0.35)]",
-                    active &&
-                      "mf-night-step-active z-[1] scale-[1.12] border-amber-50 bg-gradient-to-b from-amber-100 to-amber-300 text-stone-950 ring-2 ring-amber-200/55",
-                    upcoming &&
-                      "border-violet-500/55 bg-gradient-to-b from-violet-900/90 to-violet-950 text-violet-200 shadow-[0_0_10px_rgba(139,92,246,0.4),inset_0_0_8px_rgba(167,139,250,0.12)]",
+                    "relative flex h-[1.35rem] w-[1.35rem] items-center justify-center rounded-full border font-cinzel text-[0.55rem] font-bold leading-none transition-all duration-200 motion-reduce:transition-none",
+                    active && "mf-night-step-active z-[1] scale-[1.14] ring-2 ring-white/35",
                   )}
+                  style={nightStepDotStyle(stepDef.roleId, state)}
                   aria-current={active ? "step" : undefined}
+                  title={stepDef.titleEn}
                 >
                   {done ? (
                     <span className="text-[0.48rem] leading-none" aria-hidden>
@@ -181,18 +196,22 @@ function NightStepTrack({
                     i + 1
                   )}
                 </span>
+                <span
+                  className={clsx(
+                    "max-w-full truncate text-center font-cinzel text-[0.52rem] font-semibold uppercase leading-tight tracking-[0.1em] sm:text-[0.56rem]",
+                    active && "font-bold",
+                    done && "opacity-90",
+                  )}
+                  style={nightStepLabelStyle(stepDef.roleId, state)}
+                  aria-current={active ? "step" : undefined}
+                >
+                  {nightStepShortTitle(stepDef.titleEn)}
+                </span>
               </li>
             );
           })}
         </ol>
       </div>
-
-      <p
-        className="m-0 mt-2 line-clamp-2 font-cinzel text-[0.7rem] font-semibold leading-snug tracking-wide text-amber-50 drop-shadow-[0_0_10px_rgba(251,191,36,0.25)]"
-        title={titleEn}
-      >
-        {titleEn}
-      </p>
     </nav>
   );
 }
@@ -232,7 +251,7 @@ function DecreeCardShell({
       variant="decree"
       interactive={false}
       data-decree-night={night ? "" : undefined}
-      className="overflow-hidden p-0 animate-mf-fade-rise motion-reduce:animate-none"
+      className="overflow-visible p-0 animate-mf-fade-rise motion-reduce:animate-none"
     >
       {children}
       {footer}
@@ -251,9 +270,11 @@ function DecreeFooter({
 }) {
   return (
     <MafiaCardFooter
+      data-decree-footer=""
       data-decree-night={night ? "" : undefined}
       className={clsx(
-        "sticky bottom-0 z-[2] rounded-b-md border-t border-amber-900/45 bg-gradient-to-t from-stone-950 via-stone-950/98 to-stone-950/90 p-3 pb-3.5 shadow-[inset_0_1px_0_rgba(212,166,74,0.1)] backdrop-blur-sm max-md:pb-[max(0.85rem,env(safe-area-inset-bottom,0px))]",
+        "z-[2] rounded-b-md border-t border-amber-900/45 bg-gradient-to-t from-stone-950 via-stone-950/98 to-stone-950/90 p-3 pb-3.5 shadow-[inset_0_1px_0_rgba(212,166,74,0.1)] max-md:pb-[max(0.85rem,env(safe-area-inset-bottom,0px))]",
+        "min-[960px]:sticky min-[960px]:bottom-0 min-[960px]:backdrop-blur-sm",
         night && "border-violet-900/40 shadow-[inset_0_1px_0_rgba(167,139,250,0.12)]",
         className,
       )}
@@ -263,12 +284,14 @@ function DecreeFooter({
   );
 }
 
-function DecreeHeaderStrip({
+function DecreeTitleBlock({
   decreeContext,
   nightStep,
+  className,
 }: {
   decreeContext: string;
   nightStep?: MafiaNightStepView | null;
+  className?: string;
 }) {
   const showNightProgress = Boolean(nightStep);
   const progressPct = nightStep
@@ -276,16 +299,19 @@ function DecreeHeaderStrip({
     : 0;
 
   return (
-    <header className="sticky top-0 z-[3] rounded-lg border border-amber-900/45 bg-gradient-to-b from-stone-950/98 via-stone-950/95 to-stone-900/90 px-3.5 py-3 shadow-[inset_0_1px_0_rgba(212,166,74,0.14),0_4px_16px_-8px_rgba(0,0,0,0.55)] backdrop-blur-sm">
+    <div className={className}>
       <h2
         id="mf-decree-title"
-        className="m-0 font-cinzel bg-gradient-to-b from-amber-50 via-amber-200 to-amber-700 bg-clip-text text-[clamp(1.15rem,2.8vw,1.55rem)] font-bold uppercase tracking-[0.16em] text-transparent"
+        className={clsx(
+          mfTitleGold,
+          'm-0 text-[clamp(1.2rem,2.8vw,1.6rem)] tracking-[0.16em]',
+        )}
       >
         Decree of the Hour
       </h2>
       <Badge
         variant="phase"
-        className="mt-2.5 w-fit rounded-md font-[family-name:var(--p1-font-script)] text-[0.95rem] font-normal italic tracking-normal normal-case"
+        className="mt-2.5 block max-w-full truncate rounded-md font-[family-name:var(--p1-font-script)] text-[0.95rem] font-normal italic tracking-normal normal-case"
       >
         {decreeContext}
       </Badge>
@@ -309,7 +335,48 @@ function DecreeHeaderStrip({
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Desktop / tablet wide — sticky above decree body cards */
+function DecreeHeaderStrip({
+  decreeContext,
+  nightStep,
+}: {
+  decreeContext: string;
+  nightStep?: MafiaNightStepView | null;
+}) {
+  return (
+    <header
+      data-decree-header=""
+      className="hidden shrink-0 rounded-lg border border-amber-900/45 bg-gradient-to-b from-stone-950/98 via-stone-950/95 to-stone-900/90 px-3.5 py-3 shadow-[inset_0_1px_0_rgba(212,166,74,0.14),0_4px_16px_-8px_rgba(0,0,0,0.55)] backdrop-blur-sm min-[960px]:sticky min-[960px]:top-0 min-[960px]:z-[3] min-[960px]:block"
+    >
+      <DecreeTitleBlock decreeContext={decreeContext} nightStep={nightStep} />
     </header>
+  );
+}
+
+function MobileNightDecreeHeader({ decreeContext }: { decreeContext: string }) {
+  return (
+    <div
+      data-decree-header=""
+      className="shrink-0 border-b border-amber-900/40 bg-gradient-to-b from-stone-950/98 to-stone-900/92 px-3 py-2.5 min-[960px]:hidden"
+    >
+      <DecreeTitleBlock decreeContext={decreeContext} nightStep={null} />
+    </div>
+  );
+}
+
+/** Non-night phases on phone — static title (no sticky overlap) */
+function MobileDecreeHeader({ decreeContext }: { decreeContext: string }) {
+  return (
+    <div
+      data-decree-header=""
+      className="shrink-0 rounded-lg border border-amber-900/45 bg-gradient-to-b from-stone-950/98 via-stone-950/95 to-stone-900/90 px-3.5 py-3 shadow-[inset_0_1px_0_rgba(212,166,74,0.14)] min-[960px]:hidden"
+    >
+      <DecreeTitleBlock decreeContext={decreeContext} nightStep={null} />
+    </div>
   );
 }
 
@@ -359,17 +426,23 @@ export default function NarratorDecreeDeck({
     (state.phase === "day" && panel?.canDayEliminate) ||
     state.phase === "match_over";
 
+  const isNight = state.phase === "night" && !!step;
+
   return (
     <MafiaCard
       variant="elevated"
       interactive={false}
-      className="relative flex flex-col gap-4 rounded-md p-4 sm:p-5 before:pointer-events-none before:absolute before:inset-1 before:rounded before:border before:border-white/[0.06]"
+      className={clsx(
+        "relative flex flex-col gap-4 rounded-md p-4 sm:p-5 before:pointer-events-none before:absolute before:inset-1 before:rounded before:border before:border-white/[0.06]",
+        isNight && "max-[959px]:gap-0 max-[959px]:p-3",
+      )}
       aria-labelledby="mf-decree-title"
     >
       <DecreeHeaderStrip
         decreeContext={decreeContext}
-        nightStep={state.phase === "night" ? step : null}
+        nightStep={isNight ? step : null}
       />
+      {!isNight && <MobileDecreeHeader decreeContext={decreeContext} />}
 
       {!hasBody && (
         <p
@@ -427,78 +500,109 @@ export default function NarratorDecreeDeck({
             : undefined
           }
         >
-          <div className="flex min-w-0 flex-col">
+          <MobileNightDecreeHeader decreeContext={decreeContext} />
+          <div className="flex min-w-0 flex-col max-[959px]:overflow-visible min-[960px]:min-h-0">
             <NightStepTrack
               currentIndex={step.index}
               total={step.total}
               titleEn={step.titleEn}
+              activeRoleId={step.roleId}
             />
 
             <div className="flex min-w-0 flex-col p-3 sm:p-4">
-              <DecreeZone kicker="1 · Read aloud" tone="night">
-                <p className="mb-1 font-cinzel text-lg font-bold uppercase tracking-widest text-amber-200">
-                  {step.titleEn}
-                </p>
-                {step.titleAr && (
-                  <p
-                    className={clsx(scriptClass, "mb-2.5 text-base")}
-                    dir="rtl"
-                  >
-                    {step.titleAr}
-                  </p>
-                )}
-                <div className={instructionClass}>
-                  {step.playAlongOnly ? (
-                    <p>
+              {step.playAlongOnly ? (
+                <>
+                  <DecreeZone kicker="1 · Read aloud" tone="night" compact>
+                    <p className="mb-0.5 font-cinzel text-base font-bold uppercase tracking-widest text-amber-200">
+                      {step.titleEn}
+                    </p>
+                    {step.titleAr && (
+                      <p
+                        className={clsx(scriptClass, "mb-2 text-sm")}
+                        dir="rtl"
+                      >
+                        {step.titleAr}
+                      </p>
+                    )}
+                    <p className={clsx(instructionClass, "m-0 text-sm [&_p]:my-1")}>
                       Run the {step.roleNameEn ?? "role"} ritual for theater only
                       — the holder is dead.
                     </p>
-                  ) : (
-                    <>
-                      <p>{step.instructionEn}</p>
-                      {step.instructionAr && (
-                        <p dir="rtl" lang="ar">
-                          {step.instructionAr}
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
-              </DecreeZone>
-
-              {step.playAlongOnly ? (
-                <DecreeZone kicker="2 · Play along" tone="night">
-                  <p
-                    className={clsx(
-                      instructionClass,
-                      "m-0 rounded-md border border-violet-800/45 bg-violet-950/35 px-3.5 py-3.5 text-base leading-relaxed",
-                    )}
-                  >
-                    {step.playAlongMessageEn}
-                  </p>
-                  {step.playAlongMessageAr && (
+                  </DecreeZone>
+                  <DecreeZone kicker="2 · Play along" tone="night" compact>
                     <p
                       className={clsx(
-                        scriptClass,
-                        "m-0 mt-3 rounded-md border border-violet-900/35 bg-stone-950/50 px-3 py-2.5 text-base leading-relaxed text-[color:var(--p1-ink-soft)]",
+                        instructionClass,
+                        "m-0 text-sm leading-relaxed [&_p]:my-1",
                       )}
-                      dir="rtl"
-                      lang="ar"
                     >
-                      {step.playAlongMessageAr}
+                      {step.playAlongMessageEn}
                     </p>
-                  )}
-                </DecreeZone>
-              ) : (
-                step.roleId && (
-                  <DecreeZone kicker="2 · Wake player" tone="night">
+                    {step.playAlongMessageAr && (
+                      <p
+                        className={clsx(
+                          scriptClass,
+                          "m-0 mt-2 text-sm leading-relaxed text-[color:var(--p1-ink-soft)]",
+                        )}
+                        dir="rtl"
+                        lang="ar"
+                      >
+                        {step.playAlongMessageAr}
+                      </p>
+                    )}
+                  </DecreeZone>
+                </>
+              ) : step.roleId ? (
+                <DecreeZone kicker="1 · Wake & ask" tone="night" compact>
+                  <div className="space-y-2.5">
                     <NarratorAskPrompt
+                      embedded
                       step={step}
                       holders={step.roleHolders}
                       playerName={playerName}
                     />
-                  </DecreeZone>
-                )
+                    <div className="min-w-0 rounded-md border border-violet-800/30 bg-violet-950/20 px-3 py-2.5">
+                      <p className="m-0 font-cinzel text-[0.58rem] font-semibold uppercase tracking-[0.2em] text-amber-200/85">
+                        Read aloud
+                      </p>
+                      <div
+                        className={clsx(
+                          instructionClass,
+                          "mt-1.5 text-sm leading-snug [&_p]:my-0.5",
+                        )}
+                      >
+                        <p>{step.instructionEn}</p>
+                        {step.instructionAr && (
+                          <p dir="rtl" lang="ar">
+                            {step.instructionAr}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </DecreeZone>
+              ) : (
+                <DecreeZone kicker="1 · Read aloud" tone="night" compact>
+                  <p className="mb-0.5 font-cinzel text-base font-bold uppercase tracking-widest text-amber-200">
+                    {step.titleEn}
+                  </p>
+                  {step.titleAr && (
+                    <p
+                      className={clsx(scriptClass, "mb-2 text-sm")}
+                      dir="rtl"
+                    >
+                      {step.titleAr}
+                    </p>
+                  )}
+                  <div className={clsx(instructionClass, "text-sm [&_p]:my-1")}>
+                    <p>{step.instructionEn}</p>
+                    {step.instructionAr && (
+                      <p dir="rtl" lang="ar">
+                        {step.instructionAr}
+                      </p>
+                    )}
+                  </div>
+                </DecreeZone>
               )}
 
               {seerReveal && !step.playAlongOnly && (
@@ -529,13 +633,21 @@ export default function NarratorDecreeDeck({
               )}
 
               {step.playAlongOnly ? (
-                <DecreeZone kicker="3 · Continue" tone="night">
-                  <p className={clsx(instructionClass, "m-0 text-base italic")}>
+                <DecreeZone kicker="3 · Continue" tone="night" compact>
+                  <p className={clsx(instructionClass, "m-0 text-sm italic")}>
                     No target is recorded — the night action has no effect.
                   </p>
                 </DecreeZone>
               ) : step.requiresTarget && panel ? (
-                <DecreeZone kicker="3 · Record choice" tone="night">
+                <DecreeZone
+                  kicker={
+                    seerReveal && !step.playAlongOnly ?
+                      "3 · Record choice"
+                    : "2 · Record choice"
+                  }
+                  tone="night"
+                  compact
+                >
                   <NarratorTargetPicker
                     players={panel.allPlayers}
                     playerIds={state.playerIds}
@@ -552,8 +664,8 @@ export default function NarratorDecreeDeck({
                 </DecreeZone>
               ) : (
                 !step.requiresTarget && (
-                  <DecreeZone kicker="3 · Continue" tone="night">
-                    <p className={clsx(instructionClass, "m-0 text-base")}>
+                  <DecreeZone kicker="2 · Continue" tone="night" compact>
+                    <p className={clsx(instructionClass, "m-0 text-sm")}>
                       No target for this step — confirm when ready.
                     </p>
                   </DecreeZone>

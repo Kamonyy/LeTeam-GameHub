@@ -2,6 +2,7 @@
 
 import { memo, useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
+import { RotateCcw } from "lucide-react";
 import type { MafiaNarratorGameState, MafiaNarratorAction } from "../types";
 import type { LobbyState } from "@/lib/hub/types";
 import NarratorTeamRoster from "./NarratorTeamRoster";
@@ -16,6 +17,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mafiaPhaseDisplayLabel } from "../lib/phaseDisplayLabel";
+import { mfTitleGold } from "../lib/mafiaTypography";
 import PhaseCeremony from "@/components/mafia/PhaseCeremony";
 
 interface NarratorDashboardProps {
@@ -116,6 +118,12 @@ function NarratorDashboard({
 
   const seerReveal = panel?.lastSeerReveal;
   const periodKey = currentPeriodKey(state);
+  const actionsPending = Boolean(
+    state.phase === "night" &&
+      step?.requiresTarget &&
+      !step.playAlongOnly &&
+      !step.choiceRecorded,
+  );
 
   const selectTarget = async (targetId: string | null) => {
     if (!step?.requiresTarget) return;
@@ -127,21 +135,34 @@ function NarratorDashboard({
       data-mafia-narrator
       className="px-4 pb-12 pt-4 md:px-6 md:pb-12 md:pt-8"
     >
-      <MafiaCard variant="codex" className="relative mb-5">
+      <MafiaCard
+        variant="codex"
+        className={clsx(
+          'mf-codex-header relative mb-5',
+          'max-[959px]:shadow-[inset_0_1px_0_rgba(212,166,74,0.12),inset_0_-2px_0_rgba(0,0,0,0.55)]',
+          'max-[959px]:before:shadow-none',
+        )}
+      >
         <MafiaCardContent className="flex flex-col items-start justify-between gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
           <div>
-            <h1 className="font-cinzel mb-1.5 bg-gradient-to-b from-amber-50 via-amber-300 to-amber-700 bg-clip-text text-[clamp(1.15rem,2.8vw,1.65rem)] font-bold uppercase tracking-[0.2em] text-transparent">
+            <h1
+              className={clsx(
+                mfTitleGold,
+                'mb-1.5 text-xl tracking-[0.2em] max-[959px]:text-lg max-[959px]:tracking-[0.16em]',
+              )}
+            >
               Loremaster&apos;s Codex
             </h1>
             <PhaseCeremony label={phaseLabel} />
           </div>
           <MafiaButton
-            variant="ghost"
-            className="text-sm"
+            variant="ritual"
+            className="shrink-0 gap-1.5 px-3.5"
             disabled={busy}
             onClick={() => setRestartConfirmOpen(true)}
           >
-            Restart Game
+            <RotateCcw className="h-3.5 w-3.5 opacity-85" aria-hidden />
+            Restart game
           </MafiaButton>
         </MafiaCardContent>
       </MafiaCard>
@@ -179,7 +200,15 @@ function NarratorDashboard({
           aria-label="Narrator panels"
         >
           <TabsTrigger value="actions" className={narratorTabTriggerClass}>
-            Actions
+            <span className="relative inline-flex items-center">
+              Actions
+              {actionsPending && (
+                <span
+                  className="absolute -right-2.5 top-0 h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.75)]"
+                  aria-hidden
+                />
+              )}
+            </span>
           </TabsTrigger>
           <TabsTrigger value="roster" className={narratorTabTriggerClass}>
             Roster
@@ -190,14 +219,11 @@ function NarratorDashboard({
         </TabsList>
       </Tabs>
 
-      <div className="grid gap-5 min-[960px]:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
+      <div className="grid min-w-0 gap-5 min-[960px]:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
         <div
           data-narrator-panel
           {...(showPanel("actions") ? { "data-visible": true } : {})}
-          className={clsx(
-            "max-[959px]:animate-slide-up",
-            panelVisibilityClass(showPanel("actions")),
-          )}
+          className={clsx(panelVisibilityClass(showPanel("actions")), "min-w-0 max-w-full")}
         >
           <NarratorDecreeDeck
             state={state}
@@ -216,15 +242,12 @@ function NarratorDashboard({
           />
         </div>
 
-        <aside className="flex flex-col gap-4">
+        <aside className="flex min-w-0 max-w-full flex-col gap-4">
           {panel && (
             <div
               data-narrator-panel
               {...(showPanel("roster") ? { "data-visible": true } : {})}
-              className={clsx(
-                "max-[959px]:animate-slide-up",
-                panelVisibilityClass(showPanel("roster")),
-              )}
+              className={clsx(panelVisibilityClass(showPanel("roster")), "min-w-0 max-w-full")}
             >
               <NarratorTeamRoster
                 players={panel.allPlayers}
@@ -237,10 +260,7 @@ function NarratorDashboard({
             <div
               data-narrator-panel
               {...(showPanel("log") ? { "data-visible": true } : {})}
-              className={clsx(
-                "max-[959px]:animate-slide-up",
-                panelVisibilityClass(showPanel("log")),
-              )}
+              className={clsx(panelVisibilityClass(showPanel("log")), "min-w-0 max-w-full")}
             >
               <NarratorChronicle
                 sections={panel.chronicle}

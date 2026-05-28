@@ -37,6 +37,16 @@ const mafiaButtonVariants = cva("", {
 				"hover:border-amber-700/55 hover:from-stone-900/70 hover:to-stone-950/85",
 				"focus-visible:ring-amber-500/35",
 			],
+			ritual: [
+				"font-cinzel text-xs font-semibold uppercase tracking-[0.14em]",
+				"border border-amber-700/50 text-amber-100/90",
+				"bg-gradient-to-b from-stone-900/90 via-stone-950/95 to-black/90",
+				"shadow-[inset_0_1px_0_rgba(212,166,74,0.2),inset_0_-1px_0_rgba(0,0,0,0.55),0_2px_8px_rgba(0,0,0,0.35)]",
+				"hover:border-amber-500/55 hover:text-amber-50",
+				"hover:bg-gradient-to-b hover:from-amber-950/50 hover:via-stone-950 hover:to-stone-950",
+				"hover:shadow-[inset_0_1px_0_rgba(251,191,36,0.15),0_0_14px_rgba(180,83,9,0.18)]",
+				"focus-visible:ring-amber-500/45",
+			],
 		},
 	},
 	defaultVariants: {

@@ -577,10 +577,11 @@ export default function MafiaLobby({
 
                   )}
 
-                  <span className="break-words font-cinzel text-[0.88rem] font-semibold uppercase tracking-wide text-[color:var(--p1-ink)]">
-
+                  <span
+                    dir="auto"
+                    className="break-words font-cinzel text-[0.88rem] font-semibold normal-case tracking-wide text-[color:var(--p1-ink)]"
+                  >
                     {p.displayName}
-
                   </span>
 
                   {p.isBot && (
@@ -611,7 +612,7 @@ export default function MafiaLobby({
 
                     type="button"
 
-                    className="shrink-0 text-rose-300/80 hover:text-rose-200"
+                    className="flex shrink-0 items-center justify-center min-h-11 min-w-11 p-2 text-rose-300/80 hover:text-rose-200"
 
                     disabled={kickingId === p.id}
 
@@ -683,6 +684,8 @@ export default function MafiaLobby({
 
                 size="sm"
 
+                className="min-h-11"
+
                 disabled={botsBusy || connectedCount >= lobby.maxPlayers}
 
                 onClick={async () => {
@@ -709,6 +712,8 @@ export default function MafiaLobby({
 
                 size="sm"
 
+                className="min-h-11"
+
                 disabled={botsBusy || connectedCount >= lobby.maxPlayers}
 
                 onClick={async () => {
@@ -734,6 +739,8 @@ export default function MafiaLobby({
                 variant="ghost"
 
                 size="sm"
+
+                className="min-h-11"
 
                 disabled={botsBusy}
 
@@ -956,7 +963,7 @@ export default function MafiaLobby({
 
                       <span className="inline-flex items-center gap-2 text-[color:var(--p1-ink-soft)]">
                         <span
-                          className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-stone-700/60"
+                          className="mf-role-dot shrink-0 rounded-full"
                           style={roleDotStyle(id)}
                           aria-hidden
                         />
@@ -988,7 +995,7 @@ export default function MafiaLobby({
 
                           size="icon"
 
-                          className="h-7 w-7 shrink-0 rounded-full text-base"
+                          className="h-11 w-11 min-h-11 min-w-11 shrink-0 rounded-full text-base"
 
                           disabled={count <= 0}
 
@@ -1016,7 +1023,7 @@ export default function MafiaLobby({
 
                           size="icon"
 
-                          className="h-7 w-7 shrink-0 rounded-full text-base"
+                          className="h-11 w-11 min-h-11 min-w-11 shrink-0 rounded-full text-base"
 
                           disabled={!canIncrementRoles}
 
@@ -1054,7 +1061,7 @@ export default function MafiaLobby({
 
 
 
-      <div className="flex flex-wrap justify-center gap-3 pt-2">
+      <div className="flex flex-wrap justify-center gap-3 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
 
         {isHost && (
 

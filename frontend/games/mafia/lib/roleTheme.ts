@@ -24,28 +24,43 @@ export function roleThemeStyleFromRole(
   return roleThemeStyle(resolveRoleAccent(roleId, accentOverride));
 }
 
+const ROLE_BADGE_BG_SOLID =
+  'radial-gradient(circle at 35% 28%, #4a4238 0%, #221e18 52%, #100e0c 100%)';
 /** Raised badge behind role emoji — high contrast on dark panels */
 export function roleIconBadgeStyle(
   roleId?: string | null,
   accentOverride?: string | null
 ): CSSProperties {
   const accent = resolveRoleAccent(roleId, accentOverride);
+  const badgeBgTinted = `radial-gradient(circle at 35% 28%, color-mix(in srgb, ${accent} 38%, #4a4238) 0%, color-mix(in srgb, ${accent} 28%, #221e18) 52%, #100e0c 100%)`;
   return {
-    background: `radial-gradient(circle at 35% 28%, color-mix(in srgb, ${accent} 38%, #4a4238) 0%, color-mix(in srgb, ${accent} 28%, #221e18) 52%, #100e0c 100%)`,
-    borderColor: `color-mix(in srgb, ${accent} 70%, #f0dcb4)`,
-    boxShadow: `inset 0 2px 0 rgba(255, 235, 200, 0.32), inset 0 -4px 10px rgba(0, 0, 0, 0.42), 0 0 22px -4px color-mix(in srgb, ${accent} 58%, transparent)`,
+    background: `${ROLE_BADGE_BG_SOLID}, ${badgeBgTinted}`,
+    borderColor: '#f0dcb4',
+    boxShadow: [
+      `inset 0 0 0 1px #f0dcb4`,
+      `inset 0 0 0 1px color-mix(in srgb, ${accent} 70%, #f0dcb4)`,
+      'inset 0 2px 0 rgba(255, 235, 200, 0.32)',
+      'inset 0 -4px 10px rgba(0, 0, 0, 0.42)',
+      `0 0 22px -4px ${accent}94`,
+      `0 0 22px -4px color-mix(in srgb, ${accent} 58%, transparent)`,
+    ].join(', '),
   };
 }
 
-/** Small roster / chip dot — role tint with a lit center */
-export function roleDotStyle(
-  roleId?: string | null,
-  accentOverride?: string | null
-): CSSProperties {
-  const accent = resolveRoleAccent(roleId, accentOverride);
+/** Solid role-color dot with a light glow. Use class `mf-role-dot`. */
+export function roleDotStyle(roleId?: string | null): CSSProperties {
+  const accent = resolveRoleAccent(roleId);
   return {
-    background: `radial-gradient(circle at 38% 32%, color-mix(in srgb, ${accent} 55%, #e5dcc8) 0%, color-mix(in srgb, ${accent} 90%, #3d3428) 100%)`,
-    boxShadow: `0 0 8px color-mix(in srgb, ${accent} 45%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.28)`,
+    backgroundColor: accent,
+    boxShadow: `0 0 5px 1px color-mix(in srgb, ${accent} 30%, transparent)`,
+  };
+}
+
+/** Seat color when role is hidden (public player list). */
+export function seatColorDotStyle(seatColor: string): CSSProperties {
+  return {
+    backgroundColor: seatColor,
+    boxShadow: `0 0 5px 1px color-mix(in srgb, ${seatColor} 30%, transparent)`,
   };
 }
 

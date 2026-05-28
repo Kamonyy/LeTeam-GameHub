@@ -50,8 +50,9 @@ function transitionView(
     case 'role_reveal':
       return { key, phase, label: 'Role reveal', icon: '🎭' };
     case 'day':
-    case 'morning':
       return { key, phase, label: 'Day', icon: '☀️' };
+    case 'morning':
+      return { key, phase, label: 'Morning', icon: '🌅' };
     case 'night':
       return { key, phase, label: 'Night', icon: '🌙' };
   }

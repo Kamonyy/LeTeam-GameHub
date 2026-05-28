@@ -18,7 +18,7 @@ export default function ErrorToast({ message, onDismiss }: ErrorToastProps) {
   if (!message) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
+    <div className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))] left-1/2 z-50 -translate-x-1/2 animate-slide-up">
       <div className="flex items-center gap-3 px-4 py-3 bg-hub-danger/90 backdrop-blur-sm text-white text-sm rounded-lg shadow-lg border border-hub-danger">
         <span>{message}</span>
         <button

@@ -53,8 +53,10 @@ export const NIGHT_SEQUENCE = [
 		roleId: "seer",
 		titleEn: "Seer action",
 		titleAr: "فعل شيخ الصالحين",
-		instructionEn: "Ask the Seer who to inspect. The system will reveal GOOD or EVIL.",
-		instructionAr: "اسأل شيخ الصالحين من يفحص. النظام يكشف خير أو شر.",
+		instructionEn:
+			"Ask the Seer who to inspect (not themselves). The system will reveal GOOD or EVIL.",
+		instructionAr:
+			"اسأل شيخ الصالحين من يفحص (غير نفسه). النظام يكشف خير أو شر.",
 		requiresTarget: true,
 		allowSkip: true,
 	},

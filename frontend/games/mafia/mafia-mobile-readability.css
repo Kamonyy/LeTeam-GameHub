@@ -1,0 +1,189 @@
+/* Phone / tablet — brighter panels and text (OLED + outdoor readability) */
+@media (max-width: 959px) {
+  [data-mafia-theme],
+  .mf-shell {
+    --p1-ink: #faf6ec;
+    --p1-ink-soft: rgba(250, 246, 236, 0.98);
+    --p1-ink-dim: rgba(250, 246, 236, 0.9);
+    --mf-glass-bg: rgba(28, 24, 18, 0.94);
+    --mf-glass-border: rgba(180, 140, 60, 0.48);
+    --muted-foreground: 38 28% 78%;
+  }
+
+  .mf-atmosphere {
+    --mf-atmo-vignette-strength: 0.62;
+    --mf-atmo-vignette-hole: 52%;
+    --mf-atmo-fog-opacity: 0.035;
+    --mf-atmo-texture-opacity: 0.028;
+  }
+
+  .mf-atmosphere--night {
+    --mf-atmo-base-0: #0a0c10;
+    --mf-atmo-base-1: #10141c;
+    --mf-atmo-base-2: #161a24;
+    --mf-atmo-vignette-strength: 0.68;
+    --mf-atmo-vignette-hole: 48%;
+  }
+
+  .mf-atmosphere--morning {
+    --mf-atmo-vignette-strength: 0.72;
+  }
+
+  [data-mafia-theme],
+  .mf-shell {
+    --mf-app-header-offset: calc(env(safe-area-inset-top, 0px) + 5.5rem);
+  }
+
+  /* Codex + decree shells — slightly lifted blacks */
+  [data-mafia-theme] .from-stone-900\/95.to-stone-950\/98,
+  [data-mafia-theme] .from-stone-950\/98.to-\[\#0a0908\],
+  [data-mafia-theme] .from-stone-950\/95.to-black\/95 {
+    background: linear-gradient(
+      180deg,
+      rgba(38, 34, 28, 0.97) 0%,
+      rgba(24, 20, 16, 0.98) 100%
+    ) !important;
+  }
+
+  [data-mafia-narrator] .border-stone-700\/50.bg-stone-950\/80,
+  [data-mafia-narrator] .bg-stone-950\/35,
+  [data-mafia-narrator] .bg-stone-950\/30 {
+    background-color: rgba(32, 28, 24, 0.88) !important;
+  }
+
+  [data-mafia-narrator] .text-stone-300\/90,
+  [data-mafia-narrator] .text-stone-400,
+  [data-mafia-narrator] .text-stone-500 {
+    color: rgba(232, 220, 200, 0.92) !important;
+  }
+
+  [data-mafia-narrator] .text-\[color\:var\(--p1-ink-soft\)\]\/75,
+  [data-mafia-narrator] .text-\[color\:var\(--p1-ink-soft\)\]\/70,
+  [data-mafia-narrator] .text-\[color\:var\(--p1-ink-soft\)\]\/60,
+  [data-mafia-narrator] .text-\[color\:var\(--p1-ink-soft\)\]\/55,
+  [data-mafia-narrator] .text-\[color\:var\(--p1-ink-soft\)\]\/50 {
+    color: var(--p1-ink-soft) !important;
+    opacity: 1;
+  }
+
+  [data-mafia-narrator] header.sticky.top-0,
+  [data-mafia-narrator] [data-decree-header],
+  [data-mafia-narrator] footer.sticky.bottom-0,
+  [data-mafia-narrator] [data-decree-footer] {
+    background: linear-gradient(
+      180deg,
+      rgba(28, 24, 20, 0.98) 0%,
+      rgba(22, 18, 14, 0.96) 100%
+    ) !important;
+    border-color: rgba(180, 140, 60, 0.42) !important;
+  }
+
+  [data-mafia-narrator] .from-stone-950\/98,
+  [data-mafia-narrator] .via-stone-950\/95,
+  [data-mafia-narrator] .to-stone-900\/90,
+  [data-mafia-narrator] .from-stone-950\/98.via-stone-950\/95 {
+    --tw-gradient-from: rgba(32, 28, 24, 0.98) var(--tw-gradient-from-position);
+    --tw-gradient-to: rgba(28, 24, 20, 0.94) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  /* Player companion */
+  [data-mafia-theme] .text-stone-200 {
+    color: #ece4d4 !important;
+  }
+
+  [data-mafia-theme] .text-stone-500 {
+    color: rgba(220, 208, 188, 0.88) !important;
+  }
+
+  [data-mafia-theme] .border-stone-700\/80.bg-stone-800\/40 {
+    background-color: rgba(48, 42, 36, 0.75) !important;
+    border-color: rgba(120, 100, 72, 0.55) !important;
+  }
+
+  [data-mafia-theme] .italic.text-\[color\:var\(--p1-ink-dim\)\] {
+    color: var(--p1-ink-dim) !important;
+  }
+
+  /* Mobile narrator tabs — clearer inactive labels */
+  [data-mafia-narrator] [role="tablist"] {
+    background: rgba(32, 28, 22, 0.96) !important;
+    border-color: rgba(180, 140, 60, 0.5) !important;
+  }
+
+  [data-mafia-narrator] [role="tab"][data-state="inactive"] {
+    color: var(--p1-ink-dim) !important;
+  }
+
+  [data-mafia-narrator] .text-stone-200,
+  [data-mafia-narrator] .text-stone-300 {
+    color: var(--p1-ink-soft) !important;
+  }
+
+  [data-mafia-narrator] .text-violet-100,
+  [data-mafia-narrator] .text-violet-300\/80,
+  [data-mafia-narrator] .text-violet-300\/90 {
+    color: #e9e0ff !important;
+  }
+
+  [data-mafia-narrator] .text-amber-200\/85,
+  [data-mafia-narrator] .text-amber-200\/90,
+  [data-mafia-narrator] .text-amber-500\/70,
+  [data-mafia-narrator] .text-amber-500\/75 {
+    color: #fde68a !important;
+    opacity: 1;
+  }
+
+  [data-mafia-narrator] .mf-title-gold,
+  [data-mafia-narrator] .mf-name-gold,
+  [data-mafia-theme] .mf-title-gold {
+    color: #fff4dc !important;
+  }
+
+  /* Loremaster codex strip — flat panel, no torch glow on phone */
+  [data-mafia-narrator] .mf-codex-header {
+    box-shadow:
+      inset 0 1px 0 rgba(212, 166, 74, 0.12),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.55) !important;
+  }
+
+  [data-mafia-narrator] .mf-codex-header::before {
+    box-shadow: none !important;
+  }
+
+  [data-mafia-narrator] .mf-codex-header .mf-title-gold {
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.92) !important;
+  }
+
+  [data-mafia-narrator] .mf-label-subtle,
+  [data-mafia-narrator] .mf-role-line {
+    color: rgba(250, 240, 220, 0.95) !important;
+  }
+
+  [data-mafia-narrator] .font-serif.text-sm.italic,
+  [data-mafia-narrator] .font-serif.text-base {
+    color: var(--p1-ink-soft) !important;
+  }
+
+  [data-mafia-narrator] .text-violet-100\/95 {
+    color: #f3eeff !important;
+  }
+
+  [data-mafia-narrator] .bg-violet-950\/20,
+  [data-mafia-narrator] .bg-violet-950\/25 {
+    background-color: rgba(46, 36, 72, 0.72) !important;
+  }
+
+  /* Game log — stay inside viewport */
+  [data-mafia-narrator] [data-narrator-panel] {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+}
+
+@media (max-width: 959px) and (prefers-reduced-motion: no-preference) {
+  [data-mafia-narrator] [data-narrator-panel][data-visible] {
+    animation: mf-fade-rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}

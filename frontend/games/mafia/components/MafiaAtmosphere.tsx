@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import MafiaAtmosphereThemes from './MafiaAtmosphereThemes';
 
+const MOBILE_MQ = '(max-width: 959px)';
+
 const EMBER_COUNT_FULL = 14;
 const EMBER_COUNT_REDUCED = 0;
 
@@ -31,31 +33,42 @@ export default function MafiaAtmosphere({
   reduced = false,
 }: MafiaAtmosphereProps) {
   const [transitioning, setTransitioning] = useState(false);
+  const [isNarrowViewport, setIsNarrowViewport] = useState(false);
   const prevVariant = useRef(variant);
-  const displayVariant = reduced ? 'day' : variant;
-  const embers = reduced ? EMBERS.slice(0, EMBER_COUNT_REDUCED) : EMBERS;
 
   useEffect(() => {
-    if (reduced) return;
+    const mq = window.matchMedia(MOBILE_MQ);
+    const sync = () => setIsNarrowViewport(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  const effectiveReduced = reduced || isNarrowViewport;
+  const displayVariant = effectiveReduced ? 'day' : variant;
+  const embers = effectiveReduced ? EMBERS.slice(0, EMBER_COUNT_REDUCED) : EMBERS;
+
+  useEffect(() => {
+    if (effectiveReduced) return;
     if (prevVariant.current === variant) return;
     prevVariant.current = variant;
     setTransitioning(true);
     const timer = window.setTimeout(() => setTransitioning(false), VARIANT_FADE_MS);
     return () => window.clearTimeout(timer);
-  }, [variant, reduced]);
+  }, [variant, effectiveReduced]);
 
   return (
     <div
       className={clsx(
         'mf-atmosphere',
         `mf-atmosphere--${displayVariant}`,
-        reduced && 'mf-atmosphere--reduced',
-        !reduced && transitioning && 'mf-atmosphere--transitioning',
+        effectiveReduced && 'mf-atmosphere--reduced',
+        !effectiveReduced && transitioning && 'mf-atmosphere--transitioning',
       )}
       aria-hidden
     >
       <div className="mf-atmosphere__texture" />
-      <MafiaAtmosphereThemes reduced={reduced} />
+      <MafiaAtmosphereThemes reduced={effectiveReduced} />
       <div className="mf-atmosphere__moonlight" />
       <div className="mf-atmosphere__torch mf-atmosphere__torch--left" />
       <div className="mf-atmosphere__torch mf-atmosphere__torch--right" />

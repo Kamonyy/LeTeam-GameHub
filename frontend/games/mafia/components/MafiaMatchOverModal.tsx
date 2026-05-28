@@ -45,13 +45,19 @@ export default function MafiaMatchOverModal({
 
   const content = (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[rgba(7,5,4,0.82)] backdrop-blur-sm [background-image:linear-gradient(180deg,rgba(120,53,15,0.14)_0%,transparent_42%)]"
+      className={clsx(
+        'fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto overscroll-contain',
+        'p-[max(1.25rem,env(safe-area-inset-top))_max(1.25rem,env(safe-area-inset-right))_max(1.25rem,env(safe-area-inset-bottom))_max(1.25rem,env(safe-area-inset-left))]',
+        'bg-[rgba(7,5,4,0.82)] backdrop-blur-sm',
+        '[background-image:linear-gradient(180deg,rgba(120,53,15,0.14)_0%,transparent_42%)]',
+      )}
       role="presentation"
-      onClick={(e) => e.target === e.currentTarget && undefined}
     >
       <div
         className={clsx(
-          'relative w-full max-w-md overflow-hidden rounded-lg border px-6 py-7 text-center',
+          'relative mx-auto my-auto box-border w-full max-w-md',
+          'max-h-[min(100%,calc(100dvh-2.5rem))] overflow-x-hidden overflow-y-auto',
+          'rounded-lg border px-6 py-7 text-center',
           'border-amber-800/50 bg-gradient-to-b from-stone-900/98 to-black/98',
           'shadow-[var(--mf-shadow-panel),0_24px_48px_rgba(0,0,0,0.65)]',
           'before:pointer-events-none before:absolute before:inset-1 before:rounded before:border before:border-white/[0.07]',

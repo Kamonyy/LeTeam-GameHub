@@ -23,6 +23,8 @@ export interface ConfirmDialogProps {
   icon?: 'warning' | 'cancel';
   /** Amber-tinted scrim when used inside Mafia (`overlayVariant="warm"`). */
   overlayVariant?: 'default' | 'warm';
+  /** Extra classes for the portaled overlay (e.g. z-index above match-over). */
+  overlayClassName?: string;
   onConfirm: () => void | Promise<void>;
   onCancel: () => void;
 }
@@ -37,6 +39,7 @@ export default function ConfirmDialog({
   loading = false,
   icon = 'warning',
   overlayVariant = 'default',
+  overlayClassName,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -60,9 +63,14 @@ export default function ConfirmDialog({
       <DialogContent
         showClose
         overlayVariant={overlayVariant}
+        overlayClassName={clsx(
+          overlayVariant === 'warm' && 'z-[210]',
+          overlayClassName,
+        )}
         className={clsx(
           'max-w-md rounded-2xl border p-0 shadow-2xl',
           'bg-stone-900/95 backdrop-blur-md border-stone-800',
+          overlayVariant === 'warm' && 'z-[210]',
           isDanger && 'border-rose-700/40 shadow-rose-950/20'
         )}
         onPointerDownOutside={(e) => {

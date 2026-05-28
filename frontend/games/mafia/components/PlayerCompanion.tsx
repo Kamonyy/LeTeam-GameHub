@@ -4,13 +4,9 @@ import { memo, type ReactNode } from "react";
 import clsx from "clsx";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
 import PhaseCeremony from "@/components/mafia/PhaseCeremony";
+import MafiaNightMoonIcon from "./icons/MafiaNightMoonIcon";
+import { mafiaPhaseDisplayLabel } from "../lib/phaseDisplayLabel";
 import {
 	MafiaCard,
 	MafiaCardContent,
@@ -25,6 +21,7 @@ import {
 	roleBorderAccentStyle,
 	roleIconBadgeStyle,
 	roleThemeStyleFromRole,
+	seatColorDotStyle,
 } from "../lib/roleTheme";
 
 interface PlayerCompanionProps {
@@ -122,40 +119,38 @@ function PlayerCompanion({
 	acknowledging,
 }: PlayerCompanionProps) {
 	const phaseLabel =
-		state.phase === "day" || state.phase === "morning"
-			? "Day"
-			: state.phase === "night"
-				? "Night"
-				: state.phase === "role_reveal"
-					? "Role reveal"
-					: state.phase === "match_over"
-						? "Game over"
-						: state.phase;
+		state.phase === "match_over"
+			? "Game over"
+			: mafiaPhaseDisplayLabel(
+					state.phase,
+					state.dayNumber,
+					state.nightNumber,
+				);
 
 	const roleReveal = state.phase === "role_reveal";
 	const hasChronicle =
 		state.playerChronicle != null && state.playerChronicle.length > 0;
 
 	return (
-		<TooltipProvider delayDuration={200}>
-			<div
+		<div
 				className={clsx(
-					"relative mx-auto flex w-full max-w-lg flex-col gap-4 px-4 pb-10 pt-6",
-					"after:pointer-events-none after:fixed after:inset-0 after:z-[1] after:bg-[radial-gradient(ellipse_at_50%_42%,rgba(180,120,40,0.07)_0%,transparent_58%)]",
-					roleReveal &&
-						"min-h-[calc(100dvh-10rem)] items-center justify-center gap-6 py-8",
+					"relative mx-auto flex w-full max-w-lg flex-col gap-4 px-4 pt-6",
+					"pb-[max(2.5rem,env(safe-area-inset-bottom))]",
+					"after:pointer-events-none after:fixed after:inset-0 after:z-[-1] after:bg-[radial-gradient(ellipse_at_50%_42%,rgba(180,120,40,0.07)_0%,transparent_58%)] max-[959px]:after:opacity-0",
 				)}
 			>
 				<PhaseCeremony label={phaseLabel} />
 
 				{roleReveal && state.myRole && (
-					<RoleRevealCard
-						role={state.myRole}
-						onAcknowledge={
-							state.canAcknowledgeRole ? onAcknowledgeRole : undefined
-						}
-						acknowledging={acknowledging}
-					/>
+					<div className="flex min-h-[calc(100dvh-12rem)] w-full items-center justify-center overflow-y-auto py-4">
+						<RoleRevealCard
+							role={state.myRole}
+							onAcknowledge={
+								state.canAcknowledgeRole ? onAcknowledgeRole : undefined
+							}
+							acknowledging={acknowledging}
+						/>
+					</div>
 				)}
 
 				{!roleReveal && (
@@ -192,8 +187,11 @@ function PlayerCompanion({
 							state.nightCallout &&
 							!state.nightCallout.isYourTurn && (
 								<NightCalloutCard variant="dormant">
-									<p className="font-cinzel text-base font-bold uppercase tracking-[0.22em] text-indigo-100">
-										<span aria-hidden>☾ </span>
+									<p className="flex items-center justify-center gap-2 font-cinzel text-base font-bold uppercase tracking-[0.22em] text-indigo-100">
+										<MafiaNightMoonIcon
+											size="sm"
+											className="opacity-95"
+										/>
 										Night {state.nightNumber}
 									</p>
 									<p className="text-sm italic text-indigo-200/70">
@@ -234,7 +232,7 @@ function PlayerCompanion({
 											<li
 												key={card.id}
 												className={clsx(
-													"grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded border px-2.5 py-2 text-[0.95rem] text-stone-200 transition-colors",
+													"grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded border px-2.5 py-2 text-[0.95rem] text-[color:var(--p1-ink-soft)] transition-colors",
 													isDead
 														? "border-stone-800/80 bg-stone-950/50 opacity-45 grayscale"
 														: "border-stone-700/80 bg-stone-800/40 hover:border-stone-600 hover:bg-stone-800/60",
@@ -244,18 +242,25 @@ function PlayerCompanion({
 												)}
 											>
 												<span
-													className="inline-block h-2.5 w-2.5 shrink-0 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]"
-													style={{ background: card.color }}
+													className="mf-role-dot inline-block shrink-0 rounded-full"
+													style={seatColorDotStyle(card.color)}
 													aria-hidden
 												/>
 												<span
 													className={clsx(
-														"min-w-0 truncate",
+														"min-w-0",
 														isDead && "line-through decoration-stone-600",
 													)}
 												>
-													{name}
-													{isSelf ? " (you)" : ""}
+													<span className="block truncate">
+														{name}
+														{isSelf ? " (you)" : ""}
+													</span>
+													{isDead && (
+														<span className="mt-0.5 block text-[0.68rem] normal-case not-italic leading-tight text-[color:var(--p1-ink-dim)]">
+															Eliminated — follow the narrator
+														</span>
+													)}
 												</span>
 												<Badge
 													variant={isDead ? "destructive" : isSelf ? "default" : "outline"}
@@ -265,15 +270,6 @@ function PlayerCompanion({
 												</Badge>
 											</li>
 										);
-
-										if (isDead) {
-											return (
-												<Tooltip key={card.id}>
-													<TooltipTrigger asChild>{seat}</TooltipTrigger>
-													<TooltipContent>Eliminated — follow the narrator</TooltipContent>
-												</Tooltip>
-											);
-										}
 
 										return seat;
 									})}
@@ -303,8 +299,7 @@ function PlayerCompanion({
 						</span>
 					</p>
 				)}
-			</div>
-		</TooltipProvider>
+		</div>
 	);
 }
 

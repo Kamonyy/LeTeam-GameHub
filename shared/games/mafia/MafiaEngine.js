@@ -497,6 +497,15 @@ export class MafiaEngine {
 				error: "Doctor cannot heal the same player two nights in a row",
 			};
 		}
+		if (step.key === "seer" && targetId != null) {
+			const seerIds = this._playersWithRole("seer");
+			if (seerIds.includes(targetId)) {
+				return {
+					success: false,
+					error: "Seer cannot inspect themselves",
+				};
+			}
+		}
 		this.nightTargets[step.key] = targetId;
 		this._bump();
 		return { success: true };
@@ -878,10 +887,15 @@ export class MafiaEngine {
 				})
 			: [];
 		/** @type {string[]} */
-		const blockedTargetIds =
-			step.key === "healer" && this.lastHealedPlayerId ?
-				[this.lastHealedPlayerId]
-			:	[];
+		const blockedTargetIds = [];
+		if (step.key === "healer" && this.lastHealedPlayerId) {
+			blockedTargetIds.push(this.lastHealedPlayerId);
+		}
+		if (step.key === "seer") {
+			for (const id of this._playersWithRole("seer")) {
+				if (!blockedTargetIds.includes(id)) blockedTargetIds.push(id);
+			}
+		}
 
 		const hasChoice = Object.prototype.hasOwnProperty.call(
 			this.nightTargets,

@@ -10,6 +10,7 @@ import {
   MafiaCardTitle,
 } from '@/components/mafia/mafia-panel';
 import { getRoleAccent } from '@shared/games/mafia/roles.js';
+import { mfLabelSubtle, mfNameGold } from '../lib/mafiaTypography';
 import { roleDotStyle } from '../lib/roleTheme';
 import type { MafiaNarratorPlayerRow } from '../types';
 
@@ -101,7 +102,7 @@ function TeamColumn({
             </span>
           </div>
         </div>
-        <p className="m-0 font-cinzel text-[0.62rem] uppercase tracking-widest text-stone-500">
+        <p className={clsx(mfLabelSubtle, 'm-0 text-[0.65rem]')}>
           {players.length} total
         </p>
       </MafiaCardHeader>
@@ -120,15 +121,16 @@ function TeamColumn({
                 )}
               >
                 <span
-                  className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-stone-600/60"
+                  className="mf-role-dot mt-0.5 shrink-0 rounded-full"
                   style={roleDotStyle(p.roleId)}
                   aria-hidden
                 />
                 <span className="min-w-0 flex-1 basis-[calc(100%-1.25rem)] sm:basis-auto">
                   <span
                     className={clsx(
-                      'block break-words font-cinzel text-[0.82rem] font-bold uppercase leading-snug tracking-wide text-amber-50',
-                      !p.alive && 'line-through decoration-stone-500/80',
+                      mfNameGold,
+                      'block break-words text-[0.85rem] leading-snug tracking-wide',
+                      !p.alive && 'line-through decoration-stone-500/80 opacity-80',
                     )}
                   >
                     {playerName(p.id)}

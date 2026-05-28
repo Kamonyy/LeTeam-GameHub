@@ -32,8 +32,8 @@ export default function PhaseCeremony({
           'bg-gradient-to-b from-[#2a2218]/95 to-stone-950/98',
           'shadow-[inset_0_1px_0_rgba(248,228,168,0.35),inset_0_-1px_2px_rgba(0,0,0,0.65),0_0_18px_-2px_rgba(201,162,39,0.55)]',
           compact ?
-            'px-2.5 py-0.5 text-[0.68rem] tracking-[0.2em]'
-          : 'px-4 py-1 text-[0.78rem] tracking-[0.26em]',
+            'px-2.5 py-0.5 text-[0.68rem] tracking-[0.2em] max-[959px]:text-[0.76rem]'
+          : 'px-4 py-1 text-[0.78rem] tracking-[0.26em] max-[959px]:text-[0.84rem]',
         )}
       >
         {label}

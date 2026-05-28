@@ -75,7 +75,7 @@ export default function PlayerNameControl({
           'flex items-center gap-2 rounded-lg border text-sm font-medium transition-all',
           isMafia ?
             [
-              'px-2.5 py-1.5 font-cinzel text-[0.72rem] uppercase tracking-[0.08em]',
+              'min-h-11 px-2.5 py-2.5 font-cinzel text-[0.72rem] uppercase tracking-[0.08em]',
               showName ?
                 'border-amber-800/55 bg-gradient-to-b from-stone-900/90 to-stone-950/95 text-amber-100 shadow-[inset_0_1px_0_rgba(212,166,74,0.12)] hover:border-amber-600/55'
               : 'border-amber-700/45 bg-amber-950/40 text-amber-200 hover:border-amber-600/50 hover:bg-amber-950/60',

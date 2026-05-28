@@ -321,6 +321,16 @@
   opacity: calc(var(--mf-atmo-prop-opacity) * 0.7);
 }
 
+/* Tablet/phone — soften parchment/decals (matches narrator 959px breakpoint) */
+@media (max-width: 959px) {
+  .mf-atmosphere {
+    --mf-atmo-parchment-opacity: 0.024;
+    --mf-atmo-decal-opacity: 0.016;
+    --mf-atmo-window-opacity: 0.038;
+  }
+}
+
+/* Narrow phones — trim decorative props only (keep 720 for silhouettes) */
 @media (max-width: 720px) {
   .mf-atmo-gallows {
     right: 2%;

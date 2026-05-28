@@ -2,6 +2,7 @@ const LOCAL_API = 'http://localhost:3001';
 const DEV_HUB_PORT = '3001';
 
 let cachedServerUrl: string | null = null;
+let cachedForHostname: string | null = null;
 
 /** Next dev (3000) + Node hub (3001) on the same machine / LAN. */
 function isLocalFrontendDev(): boolean {
@@ -63,7 +64,11 @@ function isAllowedServerUrl(url: string): boolean {
 
 /** Resolve Socket.io URL: config.json → same-origin HTTPS → LAN dev hub → env. */
 export async function resolveServerUrl(): Promise<string> {
-  if (cachedServerUrl) return cachedServerUrl;
+  const pageHostname =
+    typeof window !== 'undefined' ? window.location.hostname : '';
+  if (cachedServerUrl && cachedForHostname === pageHostname) {
+    return cachedServerUrl;
+  }
 
   if (typeof window !== 'undefined') {
     try {
@@ -72,15 +77,12 @@ export async function resolveServerUrl(): Promise<string> {
         const data = (await res.json()) as { serverUrl?: string };
         if (data.serverUrl === '' || data.serverUrl === '/') {
           if (isLocalFrontendDev()) {
-            cachedServerUrl = getDevHubServerUrl();
-            return cachedServerUrl;
+            return rememberServerUrl(getDevHubServerUrl(), pageHostname);
           }
-          cachedServerUrl = window.location.origin;
-          return cachedServerUrl;
+          return rememberServerUrl(window.location.origin, pageHostname);
         }
         if (data.serverUrl && isAllowedServerUrl(data.serverUrl)) {
-          cachedServerUrl = data.serverUrl;
-          return cachedServerUrl;
+          return rememberServerUrl(data.serverUrl, pageHostname);
         }
       }
     } catch {
@@ -88,24 +90,26 @@ export async function resolveServerUrl(): Promise<string> {
     }
 
     if (window.location.protocol === 'https:') {
-      cachedServerUrl = window.location.origin;
-      return cachedServerUrl;
+      return rememberServerUrl(window.location.origin, pageHostname);
     }
 
     if (isLocalFrontendDev()) {
-      cachedServerUrl = getDevHubServerUrl();
-      return cachedServerUrl;
+      return rememberServerUrl(getDevHubServerUrl(), pageHostname);
     }
   }
 
   const fallback = process.env.NEXT_PUBLIC_SERVER_URL || LOCAL_API;
   if (typeof window !== 'undefined' && !isAllowedServerUrl(fallback)) {
-    cachedServerUrl = window.location.origin;
-    return cachedServerUrl;
+    return rememberServerUrl(window.location.origin, pageHostname);
   }
 
-  cachedServerUrl = fallback;
-  return cachedServerUrl;
+  return rememberServerUrl(fallback, pageHostname);
+}
+
+function rememberServerUrl(url: string, hostname: string): string {
+  cachedServerUrl = url;
+  cachedForHostname = hostname;
+  return url;
 }
 
 export function isSameOriginServer(serverUrl: string): boolean {

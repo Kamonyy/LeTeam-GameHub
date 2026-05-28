@@ -1,0 +1,21 @@
+/* Simple role / seat color dots */
+
+.mf-role-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+  width: 0.75rem;
+  height: 0.75rem;
+  min-width: 0.75rem;
+  min-height: 0.75rem;
+  border-radius: 9999px;
+}
+
+@media (max-width: 959px) {
+  .mf-role-dot {
+    width: 0.8rem;
+    height: 0.8rem;
+    min-width: 0.8rem;
+    min-height: 0.8rem;
+  }
+}

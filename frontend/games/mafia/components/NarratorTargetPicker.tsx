@@ -9,22 +9,18 @@ import {
   MafiaCardTitle,
 } from '@/components/mafia/mafia-panel';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { getRoleAccent } from '@shared/games/mafia/roles.js';
+import { mfNameGold, mfNameMuted, mfRoleLine } from '../lib/mafiaTypography';
 import { roleDotStyle } from '../lib/roleTheme';
 import type { MafiaNarratorPlayerRow } from '../types';
 
 const SKIP_VALUE = '__skip__';
 
-const targetItemClass = clsx(
-  'flex h-auto min-h-9 w-full items-center justify-start gap-2 px-2.5 py-2',
-  'text-left text-[0.88rem] leading-snug whitespace-normal text-stone-200',
-  'hover:border-amber-700/70 hover:bg-stone-800/90',
-  'data-[state=on]:border-amber-500/75 data-[state=on]:bg-amber-950/50 data-[state=on]:text-amber-100',
-  'data-[state=on]:shadow-[inset_0_1px_0_rgba(251,191,36,0.15),0_0_12px_rgba(180,83,9,0.2)]',
-);
-
 /** Tiles grow with name length and wrap to fit available width. */
-const targetGridClass =
-  'grid w-full gap-1.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,10rem),1fr))]';
+const targetGridClass = clsx(
+  'grid w-full grid-cols-1 gap-2',
+  'min-[400px]:[grid-template-columns:repeat(auto-fill,minmax(min(100%,11rem),1fr))]',
+);
 
 type TeamSide = 'good' | 'evil';
 
@@ -46,8 +42,10 @@ function teamAccentClass(team: TeamSide) {
   return team === 'good' ? 'text-emerald-300' : 'text-rose-300';
 }
 
-function teamBorderClass(team: TeamSide) {
-  return team === 'good' ? 'border-emerald-500/40' : 'border-rose-500/40';
+function teamPanelClass(team: TeamSide) {
+  return team === 'good'
+    ? 'border-emerald-700/45 bg-[radial-gradient(ellipse_at_0%_0%,rgba(110,200,144,0.12)_0%,transparent_55%),linear-gradient(180deg,rgba(22,38,28,0.95)_0%,rgba(10,16,12,0.98)_100%)] shadow-[inset_0_1px_0_rgba(180,230,200,0.08)]'
+    : 'border-rose-800/45 bg-[radial-gradient(ellipse_at_0%_0%,rgba(200,84,106,0.12)_0%,transparent_55%),linear-gradient(180deg,rgba(42,18,22,0.95)_0%,rgba(18,8,10,0.98)_100%)] shadow-[inset_0_1px_0_rgba(255,180,190,0.06)]';
 }
 
 function TeamTargets({
@@ -74,18 +72,22 @@ function TeamTargets({
   if (ids.length === 0) return null;
 
   return (
-    <MafiaCard variant="inset" interactive={false} className={teamBorderClass(team)}>
-      <MafiaCardHeader className="space-y-0 p-2 pb-1">
+    <MafiaCard
+      variant="inset"
+      interactive={false}
+      className={clsx('border', teamPanelClass(team))}
+    >
+      <MafiaCardHeader className="space-y-0 border-b border-amber-900/30 p-2.5 pb-2">
         <MafiaCardTitle
           className={clsx(
-            'font-cinzel text-[0.68rem] font-bold uppercase tracking-widest',
+            'font-cinzel text-[0.72rem] font-bold uppercase tracking-[0.2em]',
             teamAccentClass(team),
           )}
         >
           {title}
         </MafiaCardTitle>
       </MafiaCardHeader>
-      <MafiaCardContent className="p-2 pt-0">
+      <MafiaCardContent className="p-2.5 pt-2">
         <ToggleGroup
           type="single"
           variant="outline"
@@ -99,28 +101,62 @@ function TeamTargets({
             if (!p) return null;
             const blocked = blockedIds.includes(id);
             const label = playerName(id);
+            const roleAccent = getRoleAccent(p.roleId);
+            const isChosen = groupValue === id;
+
             return (
               <ToggleGroupItem
                 key={id}
                 value={id}
                 variant="outline"
                 disabled={disabled || blocked}
-                title={blocked ? 'Cannot select — rule blocked' : label}
+                aria-label={
+                  isChosen ?
+                    `${label}, ${p.roleNameEn}, selected`
+                  : `${label}, ${p.roleNameEn}`
+                }
+                title={
+                  blocked
+                    ? 'Cannot select — rule blocked'
+                    : `${label} · ${p.roleNameEn}`
+                }
                 className={clsx(
-                  targetItemClass,
-                  'min-w-0',
-                  !p.alive && 'opacity-45 grayscale',
+                  'mf-target-tile',
+                  team === 'good' ? 'mf-target-tile--good' : 'mf-target-tile--evil',
+                  isChosen && 'mf-target-tile--chosen',
+                  'relative flex h-auto min-h-[3.25rem] w-full min-w-0 items-center gap-2 px-2.5 py-2',
+                  'text-left whitespace-normal',
+                  !p.alive && 'opacity-50 grayscale',
                   blocked && 'cursor-not-allowed opacity-40',
                 )}
               >
                 <span
-                  className="h-[0.7rem] w-[0.7rem] shrink-0 rounded-full ring-1 ring-stone-900/45"
-                  style={roleDotStyle(p.roleId, p.color)}
+                  className="mf-role-dot shrink-0 rounded-full"
+                  style={roleDotStyle(p.roleId)}
+                  aria-hidden
                 />
-                <span className="min-w-0 flex-1 break-words text-left">
-                  {label}
+                <span className="min-w-0 flex flex-1 flex-col gap-0.5 text-left">
+                  <span
+                    className={clsx(
+                      p.alive ? mfNameGold : mfNameMuted,
+                      'text-[0.8rem] leading-tight tracking-wide',
+                    )}
+                  >
+                    {label}
+                  </span>
+                  <span
+                    className={clsx(mfRoleLine, 'text-[0.62rem] leading-tight')}
+                    style={{ color: roleAccent }}
+                  >
+                    <span aria-hidden>{p.roleIcon}</span> {p.roleNameEn}
+                  </span>
                 </span>
-                {!p.alive && (
+                {isChosen && (
+                  <span className="mf-target-tile__chosen-mark shrink-0" aria-hidden>
+                    ✓ Chosen
+                  </span>
+                )}
+                {!p.alive && !isChosen && (
                   <Badge variant="dead" className="shrink-0 px-1 py-0 text-[0.5rem]">
                     Dead
                   </Badge>
@@ -159,6 +195,9 @@ export default function NarratorTargetPicker({
   );
 
   const groupValue = skipSelected ? SKIP_VALUE : (selectedId ?? '');
+  const hasChoice = Boolean(selectedId || skipSelected);
+  const chosenPlayer =
+    selectedId ? players.find((p) => p.id === selectedId) : null;
 
   const handleValueChange = (value: string) => {
     if (!value) return;
@@ -167,10 +206,39 @@ export default function NarratorTargetPicker({
   };
 
   return (
-    <div className="flex flex-col gap-2.5">
-      <p className="m-0 font-cinzel text-[0.78rem] font-bold uppercase tracking-widest text-amber-200 before:text-[0.6rem] before:text-amber-400 before:content-['◆_']">
+    <div
+      className="mf-target-picker flex flex-col gap-2.5"
+      data-has-choice={hasChoice ? '' : undefined}
+    >
+      <p className="m-0 font-cinzel text-[0.82rem] font-bold uppercase tracking-widest text-amber-100 before:text-[0.6rem] before:text-amber-400 before:content-['◆_']">
         {actionLabel}
       </p>
+
+      {hasChoice && (
+        <div
+          className="mf-target-choice-summary rounded-md px-3 py-2.5"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="m-0 font-cinzel text-[0.62rem] font-bold uppercase tracking-[0.22em] text-amber-300">
+            Recorded choice
+          </p>
+          <p className="mf-name-gold m-0 mt-1 text-lg leading-tight tracking-wide">
+            {skipSelected ?
+              'No target — skipped'
+            : <>
+                {chosenPlayer && playerName(selectedId!)}
+                {chosenPlayer && (
+                  <span className="mt-0.5 block font-cinzel text-sm font-semibold normal-case tracking-normal text-amber-200/95">
+                    <span aria-hidden>{chosenPlayer.roleIcon}</span>{' '}
+                    {chosenPlayer.roleNameEn}
+                  </span>
+                )}
+              </>
+            }
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-2.5 min-[520px]:grid-cols-2 min-[520px]:items-start">
         <TeamTargets
@@ -198,7 +266,7 @@ export default function NarratorTargetPicker({
       </div>
 
       {allowSkip && (
-        <div className="border-t border-dashed border-stone-700/60 pt-2">
+        <div className="border-t border-dashed border-amber-900/40 pt-2">
           <ToggleGroup
             type="single"
             variant="outline"
@@ -212,14 +280,18 @@ export default function NarratorTargetPicker({
               variant="outline"
               aria-pressed={skipSelected}
               className={clsx(
-                targetItemClass,
-                'min-h-[2.1rem] w-full justify-center text-center',
+                'mf-target-tile',
+                skipSelected && 'mf-target-tile--chosen',
+                'flex min-h-11 w-full items-center justify-center gap-2 px-3 py-2.5 text-center',
               )}
             >
-              <span className="shrink-0 text-[0.95rem] leading-none opacity-90" aria-hidden>
+              <span
+                className="shrink-0 text-[0.95rem] leading-none text-amber-200/90"
+                aria-hidden
+              >
                 ⊘
               </span>
-              <span className="font-cinzel text-[0.62rem] font-semibold uppercase tracking-widest">
+              <span className="font-cinzel text-[0.65rem] font-semibold uppercase tracking-widest text-amber-100">
                 {skipSelected ? 'Skipped — no target' : 'Skip — no target tonight'}
               </span>
             </ToggleGroupItem>

@@ -274,6 +274,26 @@
   opacity: 0.94;
 }
 
+/* Mobile/tablet — lighter vignette for OLED readability (narrator breakpoint) */
+@media (max-width: 959px) {
+  .mf-atmosphere {
+    --mf-atmo-vignette-strength: 0.58;
+    --mf-atmo-vignette-hole: 54%;
+    --mf-atmo-fog-opacity: 0.032;
+    --mf-atmo-texture-opacity: 0.026;
+  }
+
+  .mf-atmosphere--night {
+    --mf-atmo-vignette-strength: 0.64;
+    --mf-atmo-vignette-hole: 50%;
+  }
+
+  .mf-atmosphere--morning {
+    --mf-atmo-vignette-strength: 0.68;
+    --mf-atmo-vignette-hole: 52%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mf-atmosphere--transitioning {
     opacity: 1;

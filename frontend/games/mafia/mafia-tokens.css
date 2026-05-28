@@ -53,6 +53,9 @@
   --mf-duration-medium: 0.32s;
   --mf-duration-slow: 0.48s;
 
+  /* Sticky app chrome — decree header offset on mobile/tablet */
+  --mf-app-header-offset: calc(env(safe-area-inset-top, 0px) + 4.25rem);
+
   /* shadcn semantic bridge (warm medieval, not zinc hub) */
   --background: 30 8% 4%;
   --foreground: 43 35% 92%;

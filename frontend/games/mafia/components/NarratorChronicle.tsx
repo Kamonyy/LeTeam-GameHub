@@ -14,6 +14,9 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { MafiaChronicleSection } from '../types';
 import { formatChronicleEntry } from '../lib/formatChronicleEntry';
+import MafiaDaySunIcon from './icons/MafiaDaySunIcon';
+import MafiaNightMoonIcon from './icons/MafiaNightMoonIcon';
+import { MafiaChronicleIcon } from './icons/MafiaChronicleIcon';
 
 interface NarratorChronicleProps {
   sections: MafiaChronicleSection[];
@@ -23,9 +26,9 @@ interface NarratorChronicleProps {
 }
 
 function periodIcon(type: string) {
-  if (type === 'day') return '☀️';
-  if (type === 'night') return '🌙';
-  if (type === 'morning') return '🌅';
+  if (type === 'night') return <MafiaNightMoonIcon size="sm" />;
+  if (type === 'day') return <MafiaDaySunIcon size="sm" variant="day" />;
+  if (type === 'morning') return <MafiaDaySunIcon size="sm" variant="morning" />;
   if (type === 'setup') return '🎭';
   return '🏁';
 }
@@ -77,7 +80,7 @@ function NarratorChronicle({
   }
 
   return (
-    <MafiaCard variant="glass">
+    <MafiaCard variant="glass" className="min-w-0 max-w-full overflow-hidden">
       <MafiaCardHeader className="space-y-1 pb-2">
         <MafiaCardTitle className="font-cinzel text-[0.78rem] font-bold uppercase tracking-[0.18em] text-amber-200/90 before:mr-1.5 before:text-amber-500/70 before:content-['◆_']">
           Game log
@@ -86,7 +89,7 @@ function NarratorChronicle({
           Tap a period — summary when closed, scroll when open
         </MafiaCardDescription>
       </MafiaCardHeader>
-      <MafiaCardContent className="flex flex-col gap-2 pt-0">
+      <MafiaCardContent className="flex min-w-0 flex-col gap-2 overflow-hidden pt-0">
         {sections.map((section) => {
           const isOpen = effectiveOpen === section.key;
           const isCurrent = section.key === currentPeriodKey;
@@ -96,6 +99,7 @@ function NarratorChronicle({
               key={section.key}
               className={clsx(
                 periodCardClass,
+                'w-full min-w-0 max-w-full',
                 isOpen &&
                   'border-amber-600/60 shadow-[inset_0_1px_0_rgba(212,166,74,0.2),0_0_14px_-4px_rgba(212,166,74,0.3)]',
                 isCurrent &&
@@ -104,7 +108,7 @@ function NarratorChronicle({
             >
               <button
                 type="button"
-                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-[color:var(--p1-ink-soft)] transition-colors hover:bg-amber-500/5"
+                className="flex w-full min-w-0 max-w-full items-center gap-2 px-3 py-2.5 text-left text-[color:var(--p1-ink-soft)] transition-colors hover:bg-amber-500/5"
                 onClick={() => setOpenKey(isOpen ? null : section.key)}
                 aria-expanded={isOpen}
               >
@@ -124,7 +128,7 @@ function NarratorChronicle({
                     </span>
                   )}
                 </span>
-                <Badge variant="outline" className="shrink-0 tabular-nums">
+                <Badge variant="outline" className="max-w-[5.5rem] shrink-0 truncate tabular-nums">
                   {section.entries.length}
                   {isCurrent ? ' · now' : ''}
                 </Badge>
@@ -136,8 +140,8 @@ function NarratorChronicle({
               {isOpen && (
                 <>
                   <Separator className="bg-amber-900/35" />
-                  <ScrollArea className="max-h-[18rem]">
-                    <ol className="m-0 list-none px-3.5 pb-3.5 pt-1">
+                  <ScrollArea className="max-h-[min(18rem,40vh)] w-full max-w-full">
+                    <ol className="m-0 w-full min-w-0 list-none px-3 pb-3.5 pt-1">
                       {section.entries.map((entry, i) => {
                         const { icon, text, detail } = formatChronicleEntry(
                           entry,
@@ -150,17 +154,17 @@ function NarratorChronicle({
                             className="flex gap-2.5 border-b border-dashed border-amber-900/25 py-2 last:border-b-0"
                           >
                             <span
-                              className="w-5 shrink-0 text-center text-sm text-amber-500"
+                              className="flex w-5 shrink-0 items-center justify-center text-sm text-amber-500"
                               aria-hidden
                             >
-                              {icon}
+                              <MafiaChronicleIcon icon={icon} size="xs" />
                             </span>
-                            <div className="min-w-0 flex-1">
-                              <p className="m-0 font-serif text-base leading-snug text-[color:var(--p1-ink-soft)]">
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                              <p className="m-0 break-words font-serif text-base leading-snug text-[color:var(--p1-ink-soft)] [overflow-wrap:anywhere]">
                                 {text}
                               </p>
                               {detail && (
-                                <p className="mt-0.5 font-serif text-sm italic text-[color:var(--p1-ink-soft)]/70">
+                                <p className="mt-0.5 break-words font-serif text-sm italic text-[color:var(--p1-ink-soft)] [overflow-wrap:anywhere]">
                                   {detail}
                                 </p>
                               )}

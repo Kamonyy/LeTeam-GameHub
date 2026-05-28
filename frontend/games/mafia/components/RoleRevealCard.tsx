@@ -92,6 +92,29 @@ function RoleSeal({ role }: { role: MafiaRoleView }) {
   );
 }
 
+function RoleAbilitiesList({
+  lines,
+  className,
+}: {
+  lines: string[];
+  className?: string;
+}) {
+  if (lines.length === 0) return null;
+
+  return (
+    <div className={clsx('text-left', className)}>
+      <p className="mb-1.5 font-cinzel text-[0.68rem] font-bold uppercase tracking-[0.22em] text-amber-200/85">
+        Abilities
+      </p>
+      <ul className="m-0 list-disc space-y-1 pl-4 text-sm leading-snug text-[color:var(--p1-ink-soft)]">
+        {lines.map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default function RoleRevealCard({
   role,
   onAcknowledge,
@@ -100,6 +123,7 @@ export default function RoleRevealCard({
   const locked = !role.pendingAcknowledge;
   const accent = resolveRoleAccent(role.id, role.accentColor);
   const cardStyle = roleAccentStyle(role);
+  const abilityLines = roleAbilityTooltipLines(role.id);
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -141,6 +165,7 @@ export default function RoleRevealCard({
               <p className="mb-4 font-cormorant text-base text-[color:var(--p1-ink-soft)]">
                 {role.descriptionEn}
               </p>
+              <RoleAbilitiesList lines={abilityLines} className="mb-4" />
               {role.pendingAcknowledge && onAcknowledge && (
                 <MafiaButton
                   variant="primary"
@@ -182,6 +207,7 @@ export default function RoleRevealCard({
                 Oath sealed — await the narrator
                 <span className="mx-1.5 text-amber-600/55">~</span>
               </p>
+              <RoleAbilitiesList lines={abilityLines} className="w-full pt-1" />
             </div>
           )}
         </MafiaCardContent>

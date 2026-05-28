@@ -45,6 +45,7 @@ import PlayerCompanion from "@/games/mafia/components/PlayerCompanion";
 import MafiaMatchOverModal from "@/games/mafia/components/MafiaMatchOverModal";
 import { mafiaAtmosphereVariant } from "@/games/mafia/lib/atmosphereVariant";
 import { stripNarratorSecrets } from "@/games/mafia/lib/redactMafiaState";
+import { cn } from "@/lib/utils";
 import type {
   MafiaGameState,
   MafiaNarratorGameState,
@@ -60,14 +61,14 @@ function MafiaConnectionSeal({ connected }: { connected: boolean }) {
     <Badge
       variant={connected ? "jade" : "rust"}
       role="status"
-      className="gap-1.5 px-3 py-1 font-cinzel text-[0.7rem] uppercase tracking-widest"
+      className="gap-1.5 px-3 py-1 font-cinzel text-[0.7rem] uppercase tracking-widest max-[959px]:px-2 max-[959px]:py-1.5"
     >
       {connected ? (
         <Wifi className="h-3.5 w-3.5" aria-hidden />
       ) : (
         <WifiOff className="h-3.5 w-3.5" aria-hidden />
       )}
-      <span className="max-[720px]:sr-only">
+      <span className="max-[400px]:sr-only max-[959px]:text-[0.65rem]">
         {connected ? "Connected" : "Reconnecting"}
       </span>
     </Badge>
@@ -111,6 +112,7 @@ export default function MafiaClient() {
   const [actionBusy, setActionBusy] = useState(false);
   const [ackBusy, setAckBusy] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [isNarrowViewport, setIsNarrowViewport] = useState(false);
 
   useEffect(() => {
     setInviteJoin(!!roomParam && !hasDisplayName());
@@ -119,6 +121,14 @@ export default function MafiaClient() {
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const sync = () => setPrefersReducedMotion(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 959px)");
+    const sync = () => setIsNarrowViewport(mq.matches);
     sync();
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
@@ -141,6 +151,12 @@ export default function MafiaClient() {
   useEffect(() => {
     setDisplayNameState(getDisplayName());
   }, []);
+
+  useEffect(() => {
+    if (tcState?.phase === "match_over") {
+      setCancelConfirmOpen(false);
+    }
+  }, [tcState?.phase]);
 
   useEffect(() => {
     if (
@@ -238,7 +254,7 @@ export default function MafiaClient() {
     [tcState?.phase, inLobby, tcLobby],
   );
 
-  const atmosphereReduced = prefersReducedMotion;
+  const atmosphereReduced = prefersReducedMotion || isNarrowViewport;
 
   const deathCount = tcState?.lastMorningSummary?.deaths.length ?? 0;
 
@@ -320,32 +336,32 @@ export default function MafiaClient() {
     <TooltipProvider delayDuration={280}>
     <main
       data-mafia-theme
-      className="relative min-h-screen bg-[color:var(--p1-abyss)] text-[color:var(--p1-ink)]"
+      className="relative min-h-dvh overflow-x-hidden bg-[color:var(--p1-abyss)] text-[color:var(--p1-ink)]"
     >
       <MafiaAtmosphere variant={atmosphere} reduced={atmosphereReduced} />
 
-      <header className="sticky top-0 z-40 border-b border-[color:var(--mf-glass-border)] bg-[color:var(--mf-glass-bg)] shadow-[var(--mf-shadow-panel)] backdrop-blur-[length:var(--mf-glass-blur)] before:pointer-events-none before:absolute before:inset-x-[6%] before:bottom-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-amber-500/70 before:to-transparent">
-        <div className="mx-auto flex max-w-[76rem] flex-wrap items-center justify-between gap-x-4 gap-y-3 px-5 py-3.5 max-[720px]:gap-y-2 max-[720px]:px-3.5 max-[720px]:py-2.5">
+      <header className="sticky top-0 z-40 border-b border-[color:var(--mf-glass-border)] bg-[color:var(--mf-glass-bg)] pt-[env(safe-area-inset-top,0px)] shadow-[var(--mf-shadow-panel)] backdrop-blur-[length:var(--mf-glass-blur)] before:pointer-events-none before:absolute before:inset-x-[6%] before:bottom-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-amber-500/70 before:to-transparent">
+        <div className="mx-auto flex max-w-[76rem] flex-wrap items-center justify-between gap-x-4 gap-y-3 px-5 py-3.5 max-[959px]:gap-y-2 max-[959px]:px-3.5 max-[959px]:py-2.5">
           <div className="flex min-w-0 items-center gap-3">
             <Link
               href="/"
-              className="shrink-0 rounded-[10px] border border-transparent p-1.5 text-stone-300 transition-colors hover:border-amber-700/35 hover:bg-amber-500/5 hover:text-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
+              className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-[10px] border border-transparent p-2.5 text-stone-300 transition-colors hover:border-amber-700/35 hover:bg-amber-500/5 hover:text-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
               aria-label="Back to hub"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div className="min-w-0">
-              <h1 className="font-cinzel bg-gradient-to-b from-amber-50 via-amber-200 to-amber-700 bg-clip-text text-xl font-bold uppercase tracking-[0.18em] text-transparent max-[720px]:text-base max-[720px]:tracking-[0.14em]">
+              <h1 className="mf-title-gold font-cinzel text-xl font-bold uppercase tracking-[0.18em] max-[959px]:text-base max-[959px]:tracking-[0.14em]">
                 Mafia
               </h1>
               {gameMeta && (
-                <p className="font-cormorant max-w-[22rem] text-sm italic text-[color:var(--p1-ink-soft)] max-[720px]:hidden">
+                <p className="font-cormorant max-w-[22rem] text-sm italic text-[color:var(--p1-ink-soft)] max-[959px]:hidden">
                   {gameMeta.tagline}
                 </p>
               )}
             </div>
           </div>
-          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[720px]:w-full max-[720px]:justify-between">
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[959px]:w-full max-[959px]:justify-between">
             {isHost && inGame && (
               <MafiaButton
                 type="button"
@@ -353,7 +369,7 @@ export default function MafiaClient() {
                 size="sm"
                 onClick={() => setCancelConfirmOpen(true)}
                 disabled={cancelling}
-                className="min-h-[2.15rem] gap-1.5 px-3 text-[0.68rem]"
+                className="min-h-11 gap-1.5 px-3 text-[0.68rem]"
               >
                 <OctagonX className="h-4 w-4 shrink-0" aria-hidden />
                 {cancelling ? "Ending…" : "End Game"}
@@ -365,7 +381,12 @@ export default function MafiaClient() {
         </div>
       </header>
 
-      <div className="relative z-[2] isolate mx-auto max-w-[76rem] px-4 pb-10">
+      <div
+        className={cn(
+          "relative z-[2] isolate mx-auto max-w-[76rem] pb-10",
+          !inLobby && !inGame && "px-4",
+        )}
+      >
         {!tcLobby && !enabled && <InactiveGameScreen gameId="mafia" />}
 
         {!tcLobby && enabled && inviteJoin && (
@@ -487,7 +508,7 @@ export default function MafiaClient() {
 
         {inGame ? (
           <MafiaAudioProvider phase={tcState?.phase} deathCount={deathCount}>
-            <div className="relative z-[2] mx-auto max-w-[76rem] px-4 pb-8">
+            <div className="relative z-[2] pb-8">
               <MafiaPhaseTransition transition={phaseTransition} />
               {gameBody}
             </div>

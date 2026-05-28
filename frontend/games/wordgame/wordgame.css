@@ -2069,6 +2069,14 @@
 	font-size: 0.75rem;
 	text-transform: none;
 	letter-spacing: normal;
+	-moz-appearance: textfield;
+	appearance: textfield;
+}
+
+.sw-match-settings__custom-input::-webkit-outer-spin-button,
+.sw-match-settings__custom-input::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
 }
 
 .sw-match-settings__custom-btn {
