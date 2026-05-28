@@ -50,7 +50,7 @@ interface GameArcadeCardProps {
 	staggerIndex: number;
 }
 
-/** Sample secret words for hub Word Game card preview (silly + light trash-talk) */
+/** Sample secret words for hub Word Game card preview */
 const WORD_PREVIEW_WORDS = [
 	"YEET",
 	"SUS",
@@ -62,16 +62,6 @@ const WORD_PREVIEW_WORDS = [
 	"CAP",
 	"LAG",
 	"AFK",
-	"BOZO",
-	"CLOWN",
-	"MID",
-	"TRASH",
-	"COPE",
-	"LOSER",
-	"NPC",
-	"MALD",
-	"RAT",
-	"LAME",
 ] as const;
 
 const WORD_MATRIX_CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#%&*";
@@ -252,7 +242,7 @@ function WordPreview({ active }: { active: boolean }) {
 	);
 }
 
-/** Sample secret words for hub Bara card preview (برا السالفة) — topics + roast banter */
+/** Sample secret words for hub Bara card preview (برا السالفة) */
 const BARA_PREVIEW_WORDS = [
 	"بيتزا",
 	"قهوة",
@@ -264,17 +254,6 @@ const BARA_PREVIEW_WORDS = [
 	"تلفون",
 	"مستشفى",
 	"حديقة",
-	"حمار",
-	"غبي",
-	"كذاب",
-	"فاشل",
-	"معتوه",
-	"أحمق",
-	"وسخ",
-	"تافه",
-	"قرد",
-	"مخرف",
-	"أبله",
 ] as const;
 
 const BARA_SCAN_CHARS = "ابتثجحخدذرزسشصضطظعغفقكلمنهوي";
