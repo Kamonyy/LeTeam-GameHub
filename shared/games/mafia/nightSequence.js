@@ -15,26 +15,17 @@
  * @property {boolean} allowSkip
  */
 
-/** @type {NightStepDef[]} */
+/** @type {NightStepDef[]} — evil roles first, then good (ritual order). */
 export const NIGHT_SEQUENCE = [
-	{
-		key: "healer",
-		roleId: "doctor",
-		titleEn: "Healer action",
-		titleAr: "فعل المعالج",
-		instructionEn: "Ask the Doctor who they want to save tonight.",
-		instructionAr: "اسأل الطبيب من يريد إنقاذه هذه الليلة.",
-		requiresTarget: true,
-		allowSkip: true,
-	},
 	{
 		key: "mafia",
 		roleId: "mafia",
 		titleEn: "Mafia action",
 		titleAr: "فعل المافيا",
 		instructionEn:
-			"Ask the Mafia (in person) for their single kill, then record the target here.",
-		instructionAr: "اسأل المافيا وجمع قرار القتل الواحد، ثم سجّل الهدف هنا.",
+			"Ask the Mafia (in person) for their kill(s), then record each victim here. With two or more living Mafia, you may record up to two victims (one is enough). Mafia cannot target themselves.",
+		instructionAr:
+			"اسأل المافيا عن ضحايا الليلة وسجّلهم هنا. إن وُجد مافيان حيّان أو أكثر، يمكن تسجيل ضحية أو اثنتين كحد أقصى. لا يمكن للمافيا استهداف نفسها.",
 		requiresTarget: true,
 		allowSkip: true,
 	},
@@ -45,6 +36,16 @@ export const NIGHT_SEQUENCE = [
 		titleAr: "فعل القنّاص",
 		instructionEn: "Ask the Sniper who they want to silence tomorrow.",
 		instructionAr: "اسأل القنّاص من يريد إسكاته غداً.",
+		requiresTarget: true,
+		allowSkip: true,
+	},
+	{
+		key: "healer",
+		roleId: "doctor",
+		titleEn: "Healer action",
+		titleAr: "فعل المعالج",
+		instructionEn: "Ask the Doctor who they want to save tonight.",
+		instructionAr: "اسأل الطبيب من يريد إنقاذه هذه الليلة.",
 		requiresTarget: true,
 		allowSkip: true,
 	},

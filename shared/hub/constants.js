@@ -1,4 +1,7 @@
-export const DISCONNECT_GRACE_MS = 86_400_000;
+/** Pre-game lobby: remove disconnected players after 30 minutes. */
+export const LOBBY_DISCONNECT_GRACE_MS = 30 * 60 * 1000;
+/** Legacy alias — active matches use in-room disconnect handling instead. */
+export const DISCONNECT_GRACE_MS = LOBBY_DISCONNECT_GRACE_MS;
 export const ROOM_IDLE_CLEANUP_MS = 86_400_000 * 7;
 export const TURN_TIMER_TICK_MS = 1000;
 export const DEFAULT_MIN_PLAYERS = 2;
@@ -21,6 +24,21 @@ export const BARA_PHASE_TICK_MS = 1000;
 /** Lobby size: at least 5 gameplay players + 1 narrator */
 export const MAFIA_MIN_PLAYERS = 6;
 export const MAFIA_MAX_PLAYERS = 12;
+export const SKETCH_DRAW_MIN_PLAYERS = 3;
+export const SKETCH_DRAW_MAX_PLAYERS = 12;
+export const SKETCH_DRAW_ROUND_DELAY_MS = 6000;
+export const SKETCH_DRAW_ROUNDS_OPTIONS = [3, 5, 7, 10];
+export const SKETCH_DRAW_TIMER_OPTIONS = [90, 120, 180];
+export const SKETCH_DRAW_TIMER_MIN_SEC = 30;
+export const SKETCH_DRAW_TIMER_MAX_SEC = 600;
+
+export const DEFAULT_SKETCH_DRAW_SETTINGS = {
+	totalRounds: 5,
+	drawTimerSec: 90,
+	categoryPackageIds: ["animals"],
+	customWords: "",
+	useCustomWordsOnly: false,
+};
 
 export const DEFAULT_MAFIA_SETTINGS = {
 	narratorId: null,
@@ -48,6 +66,7 @@ export const DEFAULT_WORD_GAME_SETTINGS = {
 };
 
 export const MAX_ROOMS = 500;
+export const INVITE_TTL_MS = 30_000;
 export const RATE_LIMIT_WINDOW_MS = 60_000;
 export const RATE_LIMITS = {
 	register: 30,
@@ -70,4 +89,14 @@ export const RATE_LIMITS = {
 	baraReveal: 10,
 	baraVote: 20,
 	baraGuess: 30,
+	sketchDrawWordSelect: 10,
+	sketchDrawCanvasBatch: 120,
+	sketchDrawCanvasUndo: 30,
+	sketchDrawCanvasRedo: 30,
+	sketchDrawCanvasClear: 10,
+	sketchDrawCanvasFill: 20,
+	sketchDrawCanvasRecovery: 10,
+	sketchDrawGuessSubmit: 40,
+	inviteSend: 15,
+	inviteRespond: 30,
 };

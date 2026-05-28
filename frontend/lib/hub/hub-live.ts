@@ -14,9 +14,13 @@ export function hubPresenceEqual(
     const p = ap[i];
     const q = bp[i];
     if (
+      p.id !== q.id ||
       p.displayName !== q.displayName ||
-      !!p.isYou !== !!q.isYou ||
-      (p.id !== undefined && q.id !== undefined && p.id !== q.id)
+      p.status !== q.status ||
+      p.inviteable !== q.inviteable ||
+      (p.roomId ?? null) !== (q.roomId ?? null) ||
+      (p.hostId ?? null) !== (q.hostId ?? null) ||
+      (p.gameType ?? null) !== (q.gameType ?? null)
     ) {
       return false;
     }

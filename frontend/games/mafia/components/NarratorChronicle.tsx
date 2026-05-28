@@ -154,7 +154,7 @@ function NarratorChronicle({
                             className="flex gap-2.5 border-b border-dashed border-amber-900/25 py-2 last:border-b-0"
                           >
                             <span
-                              className="flex w-5 shrink-0 items-center justify-center text-sm text-amber-500"
+                              className="flex w-7 shrink-0 items-center justify-center text-sm text-amber-500"
                               aria-hidden
                             >
                               <MafiaChronicleIcon icon={icon} size="xs" />

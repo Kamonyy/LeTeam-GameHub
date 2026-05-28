@@ -94,19 +94,6 @@
     0 4px 14px rgba(0, 0, 0, 0.45);
 }
 
-.mf-target-choice-summary {
-  border: 2px solid rgba(251, 191, 36, 0.75);
-  background: linear-gradient(
-    135deg,
-    rgba(72, 48, 18, 0.95) 0%,
-    rgba(28, 22, 14, 0.98) 100%
-  );
-  box-shadow:
-    0 0 0 1px rgba(255, 235, 180, 0.2),
-    0 0 28px rgba(251, 191, 36, 0.35),
-    inset 0 1px 0 rgba(255, 248, 220, 0.2);
-}
-
 .mf-target-tile__chosen-mark {
   display: inline-flex;
   align-items: center;

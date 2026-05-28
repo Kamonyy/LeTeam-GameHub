@@ -18,17 +18,28 @@ import {
 	WORD_POINTS_OPTIONS,
 	WORD_ROUND_RESET_DELAY_MS,
 	BARA_ROUNDS_OPTIONS,
+	DEFAULT_SKETCH_DRAW_SETTINGS,
+	SKETCH_DRAW_ROUND_DELAY_MS,
+	SKETCH_DRAW_ROUNDS_OPTIONS,
+	SKETCH_DRAW_TIMER_OPTIONS,
+	SKETCH_DRAW_TIMER_MIN_SEC,
+	SKETCH_DRAW_TIMER_MAX_SEC,
 } from "./constants.js";
 import {
 	CATEGORY_PACKAGE_IDS,
 	normalizeCategoryPackageIds,
 } from "../games/bara-alsalafa/categories/index.js";
+import {
+	SKETCH_CATEGORY_PACKAGE_IDS,
+	normalizeCategoryPackageIds as normalizeSketchCategoryPackageIds,
+} from "../games/sketch-draw/data/index.js";
+import { buildActiveWordPool } from "../games/sketch-draw/wordPool.js";
 import { generateRoomId } from "./generateRoomId.js";
 import { getGame, isGameEnabled } from "../games/registry.js";
 import { RateLimiter } from "./RateLimiter.js";
 import { verifyPlayerSession } from "./session.js";
 import { sanitizeChatMessage, sanitizeDisplayName } from "./validate.js";
-import { MAX_ROOMS, RATE_LIMIT_WINDOW_MS } from "./constants.js";
+import { INVITE_TTL_MS, MAX_ROOMS, RATE_LIMIT_WINDOW_MS } from "./constants.js";
 import { cryptoRandomInt } from "../games/dominoes/random.js";
 import {
 	isActiveWordGameSession,
@@ -62,11 +73,14 @@ export class RoomManager {
 		this.spectatorToRoom = new Map();
 		this.playerSessions = new Map();
 		this.hubPresence = new Map();
+		/** @type {Map<string, { inviteId: string, senderId: string, targetId: string, roomId: string, gameType: string, expiresAt: number, timeoutRef: ReturnType<typeof setTimeout> }>} */
+		this.pendingInvites = new Map();
 		this._hubPresenceFlushTimer = null;
 		this._gameStateFlushTimers = new Map();
 		this.rateLimiter = new RateLimiter();
 		this._startTurnTimerLoop();
 		this._startBaraPhaseLoop();
+		this._startSketchDrawPhaseLoop();
 		this._startCleanupLoop();
 	}
 
@@ -198,17 +212,259 @@ export class RoomManager {
 		}
 	}
 
+	_getPlayerPresenceMeta(playerId) {
+		const roomId = this.playerToRoom.get(playerId);
+		if (!roomId) {
+			return {
+				status: "hub",
+				inviteable: true,
+				roomId: null,
+				hostId: null,
+				gameType: null,
+			};
+		}
+		const room = this.rooms.get(roomId);
+		if (!room) {
+			return {
+				status: "hub",
+				inviteable: true,
+				roomId: null,
+				hostId: null,
+				gameType: null,
+			};
+		}
+		const roomMeta = {
+			roomId,
+			hostId: room.hostId ?? null,
+			gameType: room.gameType ?? null,
+		};
+		if (room.status === "playing") {
+			return { status: "playing", inviteable: false, ...roomMeta };
+		}
+		if (room.status === "finished") {
+			return { status: "lobby", inviteable: true, ...roomMeta };
+		}
+		return { status: "lobby", inviteable: true, ...roomMeta };
+	}
+
+	_isPlayerInviteable(playerId) {
+		if (!this.hubPresence.has(playerId)) return false;
+		return this._getPlayerPresenceMeta(playerId).inviteable;
+	}
+
 	_buildHubPresencePayload(forPlayerId) {
 		const players = [...this.hubPresence.entries()]
+			.filter(([id]) => id !== forPlayerId)
 			.map(([id, entry]) => {
-				const isYou = id === forPlayerId;
-				return isYou ?
-						{ id, displayName: entry.displayName, isYou: true }
-					:	{ displayName: entry.displayName, isYou: false };
+				const meta = this._getPlayerPresenceMeta(id);
+				return {
+					id,
+					displayName: entry.displayName,
+					status: meta.status,
+					inviteable: meta.inviteable,
+					roomId: meta.roomId,
+					hostId: meta.hostId,
+					gameType: meta.gameType,
+				};
 			})
 			.sort((a, b) => a.displayName.localeCompare(b.displayName));
 
 		return { total: players.length, players };
+	}
+
+	_emitToPlayer(playerId, event, payload) {
+		const socketId = this.playerToSocket.get(playerId);
+		if (!socketId) return;
+		this.io.to(socketId).emit(event, payload);
+	}
+
+	_emitInviteError(socket, message) {
+		socket.emit("invite:error", { message });
+	}
+
+	_findPendingInviteByPair(senderId, targetId) {
+		for (const invite of this.pendingInvites.values()) {
+			if (invite.senderId === senderId && invite.targetId === targetId) {
+				return invite;
+			}
+		}
+		return null;
+	}
+
+	_clearPendingInvite(inviteId, { emitExpired = false } = {}) {
+		const invite = this.pendingInvites.get(inviteId);
+		if (!invite) return;
+		clearTimeout(invite.timeoutRef);
+		this.pendingInvites.delete(inviteId);
+		if (emitExpired) {
+			const payload = { inviteId, roomId: invite.roomId };
+			this._emitToPlayer(invite.senderId, "invite:expired", payload);
+			this._emitToPlayer(invite.targetId, "invite:expired", payload);
+		}
+	}
+
+	_cancelPendingInvitesForPlayer(playerId) {
+		for (const [inviteId, invite] of [...this.pendingInvites.entries()]) {
+			if (invite.senderId === playerId || invite.targetId === playerId) {
+				this._clearPendingInvite(inviteId, { emitExpired: true });
+			}
+		}
+	}
+
+	_requireInviteSender(socket, sessionToken) {
+		const playerId = this.socketToPlayer.get(socket.id);
+		if (!playerId) return { error: "Not registered" };
+		const session = this._resolvePlayerSession(playerId, sessionToken);
+		if (session.error) return { error: session.error };
+		return { playerId };
+	}
+
+	_canJoinRoomAsPlayer(room, playerId) {
+		const gameDef = getGame(room.gameType);
+		if (!gameDef) return { error: "Invalid room game type" };
+		const alreadyIn = room.players.some((p) => p.id === playerId);
+		if (alreadyIn) return { ok: true };
+		if (room.status === "playing") {
+			return { error: "Game already in progress" };
+		}
+		if (room.players.length >= gameDef.maxPlayers) {
+			return { error: "Room is full" };
+		}
+		return { ok: true };
+	}
+
+	sendInvite(socket, { targetPlayerId, roomId, gameType, sessionToken }) {
+		const auth = this._requireInviteSender(socket, sessionToken);
+		if (auth.error) return { error: auth.error };
+		const senderId = auth.playerId;
+
+		if (senderId === targetPlayerId) {
+			return { error: "Cannot invite yourself" };
+		}
+
+		const senderRoomId = this.playerToRoom.get(senderId);
+		if (senderRoomId !== roomId) {
+			return { error: "You must be in this room to invite" };
+		}
+
+		const room = this.rooms.get(roomId);
+		if (!room) return { error: "Room not found" };
+		if (room.status !== "lobby") {
+			return { error: "Can only invite while in lobby" };
+		}
+		if (room.gameType !== gameType) {
+			return { error: "Game type mismatch" };
+		}
+		if (!isGameEnabled(gameType)) {
+			return { error: "This game is temporarily unavailable" };
+		}
+
+		if (!this.hubPresence.has(targetPlayerId)) {
+			return { error: "Player is offline" };
+		}
+		if (this.playerToRoom.get(targetPlayerId) === roomId) {
+			return { error: "Player is already in your lobby" };
+		}
+		if (!this._isPlayerInviteable(targetPlayerId)) {
+			return { error: "Player is not available for invites" };
+		}
+
+		const joinCheck = this._canJoinRoomAsPlayer(room, targetPlayerId);
+		if (joinCheck.error) return { error: joinCheck.error };
+
+		const existing = this._findPendingInviteByPair(senderId, targetPlayerId);
+		if (existing) {
+			this._clearPendingInvite(existing.inviteId);
+		}
+
+		const inviteId = crypto.randomUUID();
+		const expiresAt = Date.now() + INVITE_TTL_MS;
+		const fromName = this.hubPresence.get(senderId)?.displayName ?? "Player";
+
+		const timeoutRef = setTimeout(() => {
+			this._clearPendingInvite(inviteId, { emitExpired: true });
+		}, INVITE_TTL_MS);
+
+		this.pendingInvites.set(inviteId, {
+			inviteId,
+			senderId,
+			targetId: targetPlayerId,
+			roomId,
+			gameType,
+			expiresAt,
+			timeoutRef,
+		});
+
+		this._emitToPlayer(targetPlayerId, "invite:received", {
+			inviteId,
+			fromName,
+			fromPlayerId: senderId,
+			roomId,
+			gameType,
+			expiresAt,
+		});
+
+		return { inviteId, expiresAt };
+	}
+
+	respondToInvite(socket, { inviteId, accept, sessionToken }) {
+		const auth = this._requireInviteSender(socket, sessionToken);
+		if (auth.error) return { error: auth.error };
+		const playerId = auth.playerId;
+
+		const invite = this.pendingInvites.get(inviteId);
+		if (!invite) return { error: "Invite not found or expired" };
+		if (invite.targetId !== playerId) {
+			return { error: "Not authorized for this invite" };
+		}
+		if (Date.now() > invite.expiresAt) {
+			this._clearPendingInvite(inviteId);
+			return { error: "Invite expired" };
+		}
+
+		this._clearPendingInvite(inviteId);
+
+		const senderName =
+			this.hubPresence.get(invite.senderId)?.displayName ?? "Player";
+		const targetName =
+			this.hubPresence.get(playerId)?.displayName ?? "Player";
+
+		if (!accept) {
+			this._emitToPlayer(invite.senderId, "invite:declined", {
+				inviteId,
+				targetId: playerId,
+				displayName: targetName,
+			});
+			return { success: true, accepted: false };
+		}
+
+		this.leaveRoom(socket, { force: true });
+
+		const joinResult = this.joinRoom(
+			socket,
+			invite.roomId,
+			targetName,
+		);
+		if (joinResult.error) {
+			this._emitInviteError(socket, joinResult.error);
+			return { error: joinResult.error };
+		}
+
+		this._emitToPlayer(invite.senderId, "invite:accepted", {
+			inviteId,
+			targetId: playerId,
+			displayName: targetName,
+			roomId: invite.roomId,
+			gameType: invite.gameType,
+		});
+		this._scheduleBroadcastHubPresence();
+
+		return {
+			success: true,
+			accepted: true,
+			roomId: invite.roomId,
+			gameType: invite.gameType,
+		};
 	}
 
 	sendHubPresenceToSocket(socket) {
@@ -428,6 +684,8 @@ export class RoomManager {
 					{ ...DEFAULT_BARA_SETTINGS }
 				: gameType === "mafia" ?
 					{ ...DEFAULT_MAFIA_SETTINGS }
+				: gameType === "sketch-draw" ?
+					{ ...DEFAULT_SKETCH_DRAW_SETTINGS }
 				:	{ ...DEFAULT_MATCH_SETTINGS },
 			nextRoundTimer: null,
 			autoPlayTimer: null,
@@ -574,14 +832,31 @@ export class RoomManager {
 
 	leaveRoom(socket, payload = {}) {
 		const force = payload?.force === true;
-		const playerId = this.socketToPlayer.get(socket.id);
-		if (!playerId) return;
+		let playerId = this.socketToPlayer.get(socket.id);
+
+		if (
+			!playerId &&
+			typeof payload?.playerId === "string" &&
+			payload.playerId.length > 0
+		) {
+			playerId = payload.playerId;
+			const inRoom = this._findRoomForPlayer(playerId);
+			if (inRoom) {
+				this.socketToPlayer.set(socket.id, playerId);
+				this.playerToSocket.set(playerId, socket.id);
+			}
+		}
+
+		if (!playerId) {
+			return { error: "Not registered" };
+		}
 
 		const spectatorRoomId = this.spectatorToRoom.get(playerId);
 		if (spectatorRoomId) {
 			if (this.useSocketRooms) socket.leave(spectatorRoomId);
 			this._removeSpectatorFromRoom(playerId, spectatorRoomId);
-			return;
+			this._scheduleBroadcastHubPresence();
+			return { success: true, left: true };
 		}
 
 		let roomId = this.playerToRoom.get(playerId);
@@ -589,10 +864,16 @@ export class RoomManager {
 			const found = this._findRoomForPlayer(playerId);
 			roomId = found?.roomId;
 		}
-		if (!roomId) return;
+		if (!roomId) {
+			this.playerToRoom.delete(playerId);
+			return { success: true, left: false };
+		}
 
 		const room = this.rooms.get(roomId);
-		if (!room) return;
+		if (!room) {
+			this.playerToRoom.delete(playerId);
+			return { success: true, left: false };
+		}
 
 		const player = room.players.find((p) => p.id === playerId);
 		if (player?.disconnectTimer) {
@@ -608,11 +889,14 @@ export class RoomManager {
 			if (this.useSocketRooms) socket.leave(roomId);
 			this.broadcastLobbyState(roomId);
 			this.broadcastGameState(roomId);
-			return;
+			this._scheduleBroadcastHubPresence();
+			return { success: true, left: false, softDisconnect: true };
 		}
 
 		if (this.useSocketRooms) socket.leave(roomId);
 		this._removePlayerFromRoom(playerId, roomId);
+		this._scheduleBroadcastHubPresence();
+		return { success: true, left: true, roomId };
 	}
 
 	startGame(socket) {
@@ -661,6 +945,14 @@ export class RoomManager {
 			}
 		}
 
+		if (room.gameType === "sketch-draw") {
+			room.settings.categoryPackageIds = normalizeSketchCategoryPackageIds(
+				room.settings,
+			);
+			const { error } = buildActiveWordPool(room.settings);
+			if (error) return { error };
+		}
+
 		let enginePlayerIds = connectedPlayers.map((p) => p.id);
 		if (room.gameType === "mafia") {
 			const ids = connectedPlayers.map((p) => p.id);
@@ -701,6 +993,7 @@ export class RoomManager {
 		}
 		this.broadcastGameState(roomId);
 		this.broadcastLobbyState(roomId);
+		this._scheduleBroadcastHubPresence();
 		return { success: true };
 	}
 
@@ -799,6 +1092,46 @@ export class RoomManager {
 					n += 1;
 				}
 				room.settings.roleAssignments = capped;
+			}
+		}
+
+		if (room.gameType === "sketch-draw") {
+			if (settings?.categoryPackageIds !== undefined) {
+				room.settings.categoryPackageIds = normalizeSketchCategoryPackageIds({
+					categoryPackageIds: settings.categoryPackageIds,
+				});
+			} else if (
+				settings?.categoryPackageId &&
+				SKETCH_CATEGORY_PACKAGE_IDS.includes(settings.categoryPackageId)
+			) {
+				const current = normalizeSketchCategoryPackageIds(room.settings);
+				const id = settings.categoryPackageId;
+				const has = current.includes(id);
+				const next = has ? current.filter((x) => x !== id) : [...current, id];
+				room.settings.categoryPackageIds =
+					next.length > 0 ? next : [id];
+			}
+			const rounds = Number(settings?.totalRounds);
+			if (Number.isInteger(rounds) && rounds >= 1 && rounds <= 20) {
+				room.settings.totalRounds = rounds;
+			} else if (SKETCH_DRAW_ROUNDS_OPTIONS.includes(settings?.totalRounds)) {
+				room.settings.totalRounds = settings.totalRounds;
+			}
+			const timerSec = Number(settings?.drawTimerSec);
+			if (
+				Number.isFinite(timerSec) &&
+				timerSec >= SKETCH_DRAW_TIMER_MIN_SEC &&
+				timerSec <= SKETCH_DRAW_TIMER_MAX_SEC
+			) {
+				room.settings.drawTimerSec = Math.floor(timerSec);
+			} else if (SKETCH_DRAW_TIMER_OPTIONS.includes(settings?.drawTimerSec)) {
+				room.settings.drawTimerSec = settings.drawTimerSec;
+			}
+			if (typeof settings?.customWords === "string") {
+				room.settings.customWords = settings.customWords.slice(0, 4000);
+			}
+			if (typeof settings?.useCustomWordsOnly === "boolean") {
+				room.settings.useCustomWordsOnly = settings.useCustomWordsOnly;
 			}
 		}
 
@@ -930,7 +1263,12 @@ export class RoomManager {
 			room.status === "finished" &&
 			room.game?.phase === "match_over";
 
-		if (room.status !== "playing" && !finishedWordMatch) {
+		const finishedSketchMatch =
+			room.gameType === "sketch-draw" &&
+			room.status === "finished" &&
+			room.game?.phase === "match_over";
+
+		if (room.status !== "playing" && !finishedWordMatch && !finishedSketchMatch) {
 			return { error: "No match in progress" };
 		}
 
@@ -951,6 +1289,7 @@ export class RoomManager {
 		}
 
 		this.broadcastLobbyState(roomId);
+		this._scheduleBroadcastHubPresence();
 		return { success: true };
 	}
 
@@ -1105,6 +1444,7 @@ export class RoomManager {
 		}
 		this.broadcastGameState(room.id);
 		this.broadcastLobbyState(room.id);
+		this._scheduleBroadcastHubPresence();
 		return { success: true };
 	}
 
@@ -1206,13 +1546,6 @@ export class RoomManager {
 		if (!message) return { error: "Message cannot be empty" };
 
 		const roomId = this._getRoomIdForSocket(playerId);
-		const payload = {
-			roomId,
-			playerId,
-			displayName: this._getChatDisplayName(playerId, roomId),
-			message,
-			timestamp: Date.now(),
-		};
 
 		if (roomId) {
 			const room = this.rooms.get(roomId);
@@ -1224,11 +1557,261 @@ export class RoomManager {
 			) {
 				return { error: "You are silenced and cannot chat today" };
 			}
+
+			const payload = {
+				roomId,
+				playerId,
+				displayName: this._getChatDisplayName(playerId, roomId),
+				message,
+				timestamp: Date.now(),
+			};
 			this._emitToRoom(room, "chat:message", payload);
 		} else {
+			const payload = {
+				roomId: null,
+				playerId,
+				displayName: this._getChatDisplayName(playerId, roomId),
+				message,
+				timestamp: Date.now(),
+			};
 			this._broadcastHubChat(payload);
 		}
 
+		return { success: true };
+	}
+
+	handleSketchDrawGuessSubmit(socket, guess) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		if (!room.game || room.gameType !== "sketch-draw") {
+			return { error: "No active Sketch Draw game" };
+		}
+		if (room.status !== "playing" || room.game.phase !== "drawing") {
+			return { error: "Guesses are only accepted during drawing" };
+		}
+
+		const message =
+			typeof guess === "string" ? guess.trim() : "";
+		if (!message) return { error: "Guess cannot be empty" };
+
+		return this._handleSketchDrawGuess(socket, room, playerId, message);
+	}
+
+	_handleSketchDrawGuess(socket, room, playerId, message) {
+		const result = room.game.processGuess(playerId, message);
+
+		if (result.type === "correct") {
+			const displayName = this._getChatDisplayName(playerId, room.id);
+			this._emitToRoom(room, "sketch-draw:guess:correct", {
+				roomId: room.id,
+				playerId,
+				displayName,
+				message: `${displayName} guessed the word!`,
+				kind: "correct",
+				stateVersion: room.game.stateVersion,
+			});
+			this.broadcastGameState(room.id);
+			if (room.game.phase === "round_end") {
+				this._scheduleNextRound(room.id, room);
+			}
+			return { success: true, outcome: "correct" };
+		}
+
+		if (result.type === "close") {
+			socket.emit("sketch-draw:guess:close", {
+				messageAr: "أنت قريب من الكلمة!",
+				messageEn: "You are close to the word!",
+			});
+			return { success: true, outcome: "close" };
+		}
+
+		if (result.type === "wrong") {
+			const displayName = this._getChatDisplayName(playerId, room.id);
+			const trimmed = typeof message === "string" ? message.trim().slice(0, 200) : "";
+			this._emitToRoom(room, "sketch-draw:guess:wrong", {
+				roomId: room.id,
+				playerId,
+				displayName,
+				text: trimmed,
+				stateVersion: room.game.stateVersion,
+			});
+			return { success: true, outcome: "wrong" };
+		}
+
+		return { success: true, outcome: "ignore" };
+	}
+
+	handleSketchDrawSelectWord(socket, index) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		if (!room.game || room.gameType !== "sketch-draw") {
+			return { error: "No active Sketch Draw game" };
+		}
+
+		const result = room.game.selectWord(playerId, index);
+		if (!result.success) return { error: result.error };
+
+		this.broadcastGameState(room.id);
+		return { success: true };
+	}
+
+	handleSketchDrawCanvasStrokeBatch(socket, payload) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		if (!room.game || room.gameType !== "sketch-draw") {
+			return { error: "No active Sketch Draw game" };
+		}
+
+		const result = room.game.appendCanvasBatch(playerId, payload);
+		if (!result.success) return { error: result.error };
+
+		const drawerId = room.game.currentDrawerId;
+		const batches = result.batches ?? (result.batch ? [result.batch] : []);
+		for (const batch of batches) {
+			this._emitToRoomExcept(room, drawerId, "sketch-draw:canvas:stroke:batch", {
+				roomId: room.id,
+				batch,
+				canvasBufferVersion: room.game.canvasBufferVersion,
+			});
+		}
+
+		return { success: true };
+	}
+
+	disbandSketchDrawRoom(socket) {
+		const playerId = this.socketToPlayer.get(socket.id);
+		const roomId = this.playerToRoom.get(playerId);
+		if (!roomId) return { error: "Not in a room" };
+
+		const room = this.rooms.get(roomId);
+		if (!room) return { error: "Room not found" };
+		if (room.hostId !== playerId) return { error: "Only the host can disband the room" };
+
+		this._emitToRoom(room, "sketch-draw:disband", {
+			roomId: room.id,
+			message: "The host closed the room",
+		});
+
+		const playerIds = room.players.map((p) => p.id);
+		for (const id of playerIds) {
+			this._removePlayerFromRoom(id, roomId);
+		}
+		for (const spectator of room.spectators ?? []) {
+			this._removePlayerFromRoom(spectator.id, roomId);
+		}
+
+		return { success: true };
+	}
+
+	handleSketchDrawCanvasUndo(socket) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		if (!room.game || room.gameType !== "sketch-draw") {
+			return { error: "No active Sketch Draw game" };
+		}
+
+		const result = room.game.undoCanvas(playerId);
+		if (!result.success) return { error: result.error };
+
+		this._emitSketchDrawCanvasSync(room);
+		return { success: true };
+	}
+
+	handleSketchDrawCanvasRedo(socket) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		if (!room.game || room.gameType !== "sketch-draw") {
+			return { error: "No active Sketch Draw game" };
+		}
+
+		const result = room.game.redoCanvas(playerId);
+		if (!result.success) return { error: result.error };
+
+		this._emitSketchDrawCanvasSync(room);
+		return { success: true };
+	}
+
+	handleSketchDrawCanvasClear(socket) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		if (!room.game || room.gameType !== "sketch-draw") {
+			return { error: "No active Sketch Draw game" };
+		}
+
+		const result = room.game.clearCanvas(playerId);
+		if (!result.success) return { error: result.error };
+
+		this._emitSketchDrawCanvasSync(room);
+		return { success: true };
+	}
+
+	handleSketchDrawCanvasFill(socket, payload) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		if (!room.game || room.gameType !== "sketch-draw") {
+			return { error: "No active Sketch Draw game" };
+		}
+
+		const result = room.game.applyCanvasFill(playerId, payload);
+		if (!result.success) return { error: result.error };
+
+		const drawerId = room.game.currentDrawerId;
+		this._emitToRoomExcept(room, drawerId, "sketch-draw:canvas:stroke:batch", {
+			roomId: room.id,
+			batch: result.batch,
+			canvasBufferVersion: room.game.canvasBufferVersion,
+		});
+		this._emitToRoom(room, "sketch-draw:canvas:sync", {
+			roomId: room.id,
+			canvasBuffer: room.game.canvasBuffer,
+			canvasBufferVersion: room.game.canvasBufferVersion,
+		});
+
+		return { success: true };
+	}
+
+	_emitSketchDrawCanvasSync(room, targetSocketId = null) {
+		const payload = {
+			roomId: room.id,
+			canvasBuffer: room.game.canvasBuffer,
+			canvasBufferVersion: room.game.canvasBufferVersion,
+		};
+		if (targetSocketId) {
+			this.io.to(targetSocketId).emit("sketch-draw:canvas:sync", payload);
+			return;
+		}
+		this._emitToRoom(room, "sketch-draw:canvas:sync", payload);
+	}
+
+	handleSketchDrawCanvasRecovery(socket) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { room } = ctx;
+		if (!room.game || room.gameType !== "sketch-draw") {
+			return { error: "No active Sketch Draw game" };
+		}
+
+		const phase = room.game.phase;
+		if (phase !== "drawing" && phase !== "word_select") {
+			return { error: "Canvas recovery not available in this phase" };
+		}
+
+		this._emitSketchDrawCanvasSync(room, socket.id);
 		return { success: true };
 	}
 
@@ -1486,6 +2069,7 @@ export class RoomManager {
 		const playerId = this.socketToPlayer.get(socket.id);
 		if (!playerId) return;
 
+		this._cancelPendingInvitesForPlayer(playerId);
 		this._removeHubPresence(playerId, socket.id);
 		this.socketToPlayer.delete(socket.id);
 		// Keep playerToSocket during Secret Word sessions so reconnect can replace it;
@@ -1552,6 +2136,7 @@ export class RoomManager {
 			if (!room.spectators?.length) {
 				this.rooms.delete(roomId);
 			}
+			this._scheduleBroadcastHubPresence();
 			return;
 		}
 
@@ -1575,6 +2160,7 @@ export class RoomManager {
 				this.broadcastGameState(roomId);
 			}
 		}
+		this._scheduleBroadcastHubPresence();
 	}
 
 	_removeSpectatorFromRoom(playerId, roomId) {
@@ -1586,10 +2172,12 @@ export class RoomManager {
 
 		if (room.players.length === 0 && !room.spectators?.length) {
 			this.rooms.delete(roomId);
+			this._scheduleBroadcastHubPresence();
 			return;
 		}
 
 		this.broadcastLobbyState(roomId);
+		this._scheduleBroadcastHubPresence();
 	}
 
 	_lobbySettingsForViewer(room, viewerId) {
@@ -1644,6 +2232,8 @@ export class RoomManager {
 				settings: this._lobbySettingsForViewer(room, spectator.id),
 			});
 		}
+
+		this._scheduleBroadcastHubPresence();
 	}
 
 	_scheduleBroadcastGameState(roomId) {
@@ -1694,6 +2284,8 @@ export class RoomManager {
 		if (room.game.phase === "match_over") {
 			this.broadcastLobbyState(roomId);
 		}
+
+		this._scheduleBroadcastHubPresence();
 	}
 
 	_scheduleNextRound(roomId, room) {
@@ -1704,6 +2296,8 @@ export class RoomManager {
 				WORD_ROUND_RESET_DELAY_MS
 			: room.gameType === "bara-alsalafa" ?
 				BARA_ROUND_RESET_DELAY_MS
+			: room.gameType === "sketch-draw" ?
+				SKETCH_DRAW_ROUND_DELAY_MS
 			:	ROUND_RESTART_DELAY_MS;
 
 		room.nextRoundTimer = setTimeout(() => {
@@ -1777,6 +2371,53 @@ export class RoomManager {
 			if (!socketId) continue;
 			this.io.to(socketId).emit(event, payload);
 		}
+	}
+
+	_emitToRoomExcept(room, excludePlayerId, event, payload) {
+		for (const player of room.players) {
+			if (player.id === excludePlayerId) continue;
+			const socketId = this.playerToSocket.get(player.id);
+			if (!socketId) continue;
+			this.io.to(socketId).emit(event, payload);
+		}
+		for (const spectator of room.spectators ?? []) {
+			const socketId = this.playerToSocket.get(spectator.id);
+			if (!socketId) continue;
+			this.io.to(socketId).emit(event, payload);
+		}
+	}
+
+	_tickSketchDrawPhaseTimers() {
+		for (const [roomId, room] of this.rooms) {
+			if (room.status !== "playing" || room.gameType !== "sketch-draw") continue;
+			if (!room.game?.phaseEndsAt) continue;
+
+			const phase = room.game.phase;
+			if (phase === "word_select" || phase === "drawing") {
+				this._emitToRoom(room, "game:time:tick", {
+					roomId: room.id,
+					gameType: "sketch-draw",
+					phase,
+					remainingMs: room.game.getPhaseTimeRemaining(),
+					phaseEndsAt: room.game.phaseEndsAt,
+					stateVersion: room.game.stateVersion,
+				});
+			}
+
+			if (Date.now() < room.game.phaseEndsAt) continue;
+
+			if (phase === "word_select") {
+				const result = room.game.onWordSelectTimerExpired();
+				if (result?.changed) this.broadcastGameState(roomId);
+			} else if (phase === "drawing") {
+				const result = room.game.onDrawingTimerExpired();
+				if (result?.changed) this.broadcastGameState(roomId);
+			}
+		}
+	}
+
+	_startSketchDrawPhaseLoop() {
+		setInterval(() => this._tickSketchDrawPhaseTimers(), BARA_PHASE_TICK_MS);
 	}
 
 	_startBaraPhaseLoop() {

@@ -2,6 +2,7 @@ import { DominoEngine } from './dominoes/DominoEngine.js';
 import { WordGameEngine } from './wordgame/WordGameEngine.js';
 import { BaraAlsalafaEngine } from './bara-alsalafa/BaraAlsalafaEngine.js';
 import { MafiaEngine } from './mafia/MafiaEngine.js';
+import { SketchDrawEngine } from './sketch-draw/SketchDrawEngine.js';
 import { GAME_ENABLED } from './availability.js';
 import {
   DEFAULT_MAX_PLAYERS,
@@ -12,6 +13,8 @@ import {
   BARA_MAX_PLAYERS,
   MAFIA_MIN_PLAYERS,
   MAFIA_MAX_PLAYERS,
+  SKETCH_DRAW_MIN_PLAYERS,
+  SKETCH_DRAW_MAX_PLAYERS,
 } from '../hub/constants.js';
 
 export { isGameEnabled } from './availability.js';
@@ -43,6 +46,12 @@ export const GAMES = {
     minPlayers: MAFIA_MIN_PLAYERS,
     maxPlayers: MAFIA_MAX_PLAYERS,
     createEngine: (playerIds, settings) => new MafiaEngine(playerIds, settings),
+  },
+  'sketch-draw': {
+    enabled: GAME_ENABLED['sketch-draw'],
+    minPlayers: SKETCH_DRAW_MIN_PLAYERS,
+    maxPlayers: SKETCH_DRAW_MAX_PLAYERS,
+    createEngine: (playerIds, settings) => new SketchDrawEngine(playerIds, settings),
   },
 };
 

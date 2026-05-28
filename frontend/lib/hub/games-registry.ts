@@ -57,6 +57,21 @@ const CATALOG: Omit<GameCatalogEntry, 'active'>[] = [
     icon: '🕵️',
   },
   {
+    id: 'sketch-draw',
+    name: 'What is that',
+    tagline:
+      'Draw, guess, and laugh — real-time sketching for 3–12 players with secret words and speed scoring.',
+    lobbyDescription: [
+      'One player draws while everyone else guesses in chat — fastest correct guesses earn the most points.',
+      'Pick word categories, add custom words, and race the timer with live scoring.',
+      'This mode is temporarily offline while we finish polish and stability.',
+    ],
+    href: '/sketch-draw',
+    disabledReason: 'Temporarily unavailable while we finish polish.',
+    players: '3–12',
+    icon: '🎨',
+  },
+  {
     id: 'mafia',
     name: 'Mafia',
     tagline:

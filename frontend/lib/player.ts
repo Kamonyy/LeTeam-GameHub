@@ -1,85 +1,84 @@
 import { v4 as uuidv4 } from 'uuid';
+import {
+  patchCoreSession,
+  readCoreSession,
+  writeCoreSession,
+  type CoreSessionV1,
+} from '@/lib/session/core-session';
+import { HUB_NAVIGATING_KEY } from '@/lib/session/core-session';
 
-const PLAYER_ID_KEY = 'leteam_player_id';
-const DISPLAY_NAME_KEY = 'leteam_display_name';
-const SESSION_TOKEN_KEY = 'leteam_session_token';
-const MAX_DISPLAY_NAME = 32;
-
-function generatePlayerId(): string {
+function newPlayerId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
   return uuidv4();
 }
 
-function readStorage(key: string): string | null {
-  if (typeof window === 'undefined') return null;
-  const fromLocal = localStorage.getItem(key);
-  if (fromLocal) return fromLocal;
-  const fromSession = sessionStorage.getItem(key);
-  if (fromSession) {
-    localStorage.setItem(key, fromSession);
-    sessionStorage.removeItem(key);
-  }
-  return fromSession;
-}
+const MAX_DISPLAY_NAME = 32;
 
-function writeStorage(key: string, value: string): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(key, value);
+export { HUB_NAVIGATING_KEY };
+
+function ensureSession(): CoreSessionV1 {
+  const existing = readCoreSession();
+  if (existing) return existing;
+  const created = patchCoreSession({});
+  return created;
 }
 
 export function getOrCreatePlayerId(): string {
   if (typeof window === 'undefined') return '';
-
-  let id = readStorage(PLAYER_ID_KEY);
-  if (!id) {
-    id = generatePlayerId();
-    writeStorage(PLAYER_ID_KEY, id);
-  }
-  return id;
+  return ensureSession().player.id;
 }
 
 export function getSessionToken(): string {
   if (typeof window === 'undefined') return '';
-  return readStorage(SESSION_TOKEN_KEY) || '';
+  return readCoreSession()?.player.token ?? '';
 }
 
 export function setSessionToken(token: string): void {
   if (typeof window === 'undefined') return;
   if (!token || typeof token !== 'string') return;
-  writeStorage(SESSION_TOKEN_KEY, token);
+  patchCoreSession({ player: { token } });
 }
 
 export function clearSessionToken(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem(SESSION_TOKEN_KEY);
-  sessionStorage.removeItem(SESSION_TOKEN_KEY);
+  patchCoreSession({ player: { token: '' } });
 }
 
 export function getDisplayName(): string {
   if (typeof window === 'undefined') return '';
-  return readStorage(DISPLAY_NAME_KEY) || '';
+  return readCoreSession()?.player.name ?? '';
 }
 
 export function hasDisplayName(): boolean {
   if (typeof window === 'undefined') return false;
-  const name = readStorage(DISPLAY_NAME_KEY);
-  return !!name && name.trim().length > 0;
+  const name = readCoreSession()?.player.name ?? '';
+  return name.trim().length > 0;
 }
 
 export function setDisplayName(name: string): void {
   if (typeof window === 'undefined') return;
   const trimmed = name.trim().slice(0, MAX_DISPLAY_NAME);
   if (!trimmed) return;
-  writeStorage(DISPLAY_NAME_KEY, trimmed);
+  patchCoreSession({ player: { name: trimmed } });
 }
 
 /** New random player id written to storage (does not read existing id). */
 export function createFreshPlayerId(): string {
-  const id = generatePlayerId();
-  writeStorage(PLAYER_ID_KEY, id);
-  sessionStorage.removeItem(PLAYER_ID_KEY);
+  if (typeof window === 'undefined') return '';
+  const id = newPlayerId();
+
+  const session = readCoreSession();
+  if (session) {
+    patchCoreSession({ player: { id, token: '' } });
+  } else {
+    writeCoreSession({
+      v: 1,
+      player: { id, name: '', token: '' },
+      prefs: { audioMuted: false, vol: 0.8, sketchMuted: false },
+    });
+  }
   return id;
 }
 
@@ -99,5 +98,9 @@ export function clearPlayerLocalGameDataKeepingIdentity(): void {
     localStorage.removeItem(key);
   }
 
-  sessionStorage.removeItem('hub-navigating-game');
+  try {
+    sessionStorage.removeItem(HUB_NAVIGATING_KEY);
+  } catch {
+    /* ignore */
+  }
 }

@@ -62,7 +62,12 @@ export interface MafiaNightStepView {
   choiceRecorded: boolean;
   /** Skip was chosen (no player target). */
   skipped: boolean;
+  /** Minimum victims to record before continuing (always 1 when a target is required). */
+  requiredTargetCount: number;
+  /** Maximum victims this step (2 when two or more living Mafia). */
+  maxTargetCount: number;
   selectedTargetId: string | null;
+  selectedTargetIds: string[];
   blockedTargetIds: string[];
 }
 
@@ -173,6 +178,7 @@ export interface MafiaNightRecapBeat {
 export interface MafiaNarratorMorningSummary extends MafiaPlayerMorningSummary {
   seerInsights: Record<string, SeerAlignment>;
   mafiaAttempted?: string | null;
+  mafiaAttempts?: string[];
   mafiaKillLanded?: boolean;
   nightRecap: MafiaNightRecapBeat[];
 }

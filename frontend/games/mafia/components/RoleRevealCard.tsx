@@ -169,7 +169,7 @@ export default function RoleRevealCard({
               {role.pendingAcknowledge && onAcknowledge && (
                 <MafiaButton
                   variant="primary"
-                  className="w-full"
+                  className="w-full min-h-11"
                   onClick={onAcknowledge}
                   disabled={acknowledging}
                 >

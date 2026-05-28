@@ -7,6 +7,7 @@ export const GAME_ENABLED = {
   wordgame: true,
   'bara-alsalafa': true,
   mafia: true,
+  'sketch-draw': false,
 };
 
 export function isGameEnabled(gameType) {

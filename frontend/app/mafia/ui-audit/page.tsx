@@ -140,7 +140,7 @@ export default function MafiaUiAuditPage() {
 
   if (process.env.NODE_ENV === "production") {
     return (
-      <main className="min-h-screen p-8 text-white bg-hub-deep">
+      <main className="min-h-dvh p-8 text-white bg-hub-deep">
         <p>UI audit is only available in development.</p>
         <Link href="/mafia" className="text-hub-accent underline mt-4 inline-block">
           Back to Mafia
@@ -152,7 +152,7 @@ export default function MafiaUiAuditPage() {
   return (
     <main
       data-mafia-theme
-      className="relative min-h-screen bg-zinc-950 text-stone-100"
+      className="relative min-h-dvh bg-zinc-950 text-stone-100"
     >
       <MafiaAtmosphere variant="day" reduced />
       <header className="sticky top-0 z-40 border-b border-stone-800 bg-stone-900/85 backdrop-blur-md">

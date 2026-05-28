@@ -1,123 +1,280 @@
 'use client';
 
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo } from 'react';
 import clsx from 'clsx';
-import { Users, Circle } from 'lucide-react';
+import { Users, Crown } from 'lucide-react';
 import { useHubLive } from '@/lib/hub/HubLiveContext';
+import {
+  gameLabelForPresence,
+  groupOnlinePlayers,
+  presenceDotClass,
+} from '@/lib/hub/groupOnlinePlayers';
+import { usePresenceListAnimations } from '@/lib/hub/usePresenceListAnimations';
 import type { OnlinePlayer } from '@/lib/hub/types';
+import type { ExitingPresenceRow } from '@/lib/hub/usePresenceListAnimations';
 
-function playerRowKey(player: OnlinePlayer, index: number): string {
-  return player.id ?? `${player.displayName}\0${index}`;
+function playerRowKey(player: OnlinePlayer): string {
+  return player.id;
+}
+
+function PresenceDot({
+  player,
+  showPing,
+  statusFlash,
+}: {
+  player: OnlinePlayer;
+  showPing?: boolean;
+  statusFlash?: boolean;
+}) {
+  return (
+    <span className="relative flex h-2 w-2 shrink-0">
+      {showPing && (
+        <span
+          className={clsx(
+            'absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping',
+            presenceDotClass(player.status)
+          )}
+        />
+      )}
+      <span
+        className={clsx(
+          'relative inline-flex h-2 w-2 rounded-full hub-presence-dot',
+          presenceDotClass(player.status),
+          statusFlash && 'hub-presence-dot--flash'
+        )}
+      />
+    </span>
+  );
+}
+
+function PlayerRow({
+  player,
+  hostId,
+  entering,
+  exiting,
+  statusFlash,
+}: {
+  player: OnlinePlayer;
+  hostId?: string;
+  entering?: boolean;
+  exiting?: boolean;
+  statusFlash?: boolean;
+}) {
+  const isHost = hostId && player.id === hostId;
+
+  return (
+    <li
+      className={clsx(
+        'hub-player-row flex items-center gap-2.5 px-3 py-2 rounded-lg border bg-hub-bg/40',
+        entering && 'hub-player-row--enter',
+        exiting && 'hub-player-row--exit',
+        statusFlash && 'hub-player-row--status-flash',
+        !exiting && !statusFlash && 'border-transparent'
+      )}
+    >
+      <PresenceDot
+        player={player}
+        showPing={player.status === 'hub' && player.inviteable && !exiting}
+        statusFlash={statusFlash}
+      />
+      <span className="flex-1 text-sm font-medium text-gray-100 truncate min-w-0">
+        {player.displayName}
+      </span>
+      {isHost && !exiting && (
+        <span
+          className="inline-flex items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300/90 shrink-0"
+          title="Room owner"
+        >
+          <Crown className="w-3 h-3" />
+          Host
+        </span>
+      )}
+    </li>
+  );
+}
+
+function renderPlayerRow(
+  player: OnlinePlayer,
+  opts: {
+    hostId?: string;
+    enteringKeys: Set<string>;
+    statusFlashKeys: Set<string>;
+    exiting?: boolean;
+  }
+) {
+  const key = playerRowKey(player);
+  return (
+    <PlayerRow
+      key={opts.exiting ? `exit-${key}` : key}
+      player={player}
+      hostId={opts.hostId}
+      entering={!opts.exiting && opts.enteringKeys.has(key)}
+      exiting={opts.exiting}
+      statusFlash={!opts.exiting && opts.statusFlashKeys.has(key)}
+    />
+  );
 }
 
 function OnlinePlayersPanelInner() {
   const { connected, hubPresence } = useHubLive();
   const { total, players } = hubPresence;
-  const prevKeysRef = useRef<Set<string>>(new Set());
-  const [enteringKeys, setEnteringKeys] = useState<Set<string>>(() => new Set());
 
-  useEffect(() => {
-    const prev = prevKeysRef.current;
-    const next = new Set(players.map((p, i) => playerRowKey(p, i)));
-    const joined = players
-      .map((p, i) => ({ key: playerRowKey(p, i), player: p }))
-      .filter(({ key }) => !prev.has(key))
-      .map(({ key }) => key);
+  const groups = groupOnlinePlayers(players);
+  const {
+    enteringKeys,
+    statusFlashKeys,
+    groupFlashKeys,
+    groupEnterKeys,
+    exitingRows,
+    countPulse,
+    listBump,
+  } = usePresenceListAnimations(players, groups);
 
-    prevKeysRef.current = next;
-
-    if (joined.length === 0) return;
-
-    setEnteringKeys((current) => {
-      const merged = new Set(current);
-      joined.forEach((key) => merged.add(key));
-      return merged;
-    });
-
-    const timer = window.setTimeout(() => {
-      setEnteringKeys((current) => {
-        const merged = new Set(current);
-        joined.forEach((key) => merged.delete(key));
-        return merged;
-      });
-    }, 500);
-
-    return () => {
-      window.clearTimeout(timer);
-      setEnteringKeys((current) => {
-        const merged = new Set(current);
-        joined.forEach((key) => merged.delete(key));
-        return merged;
-      });
-    };
-  }, [players]);
+  const exitingByGroup = new Map<string, ExitingPresenceRow[]>();
+  for (const row of exitingRows) {
+    const list = exitingByGroup.get(row.groupKey) ?? [];
+    list.push(row);
+    exitingByGroup.set(row.groupKey, list);
+  }
 
   return (
     <aside className="hub-players-panel flex flex-col h-full min-h-0 overflow-hidden">
-      <div className="hub-players-panel__header flex items-center gap-2 px-4 py-3 shrink-0">
+      <div className="hub-players-panel__header flex items-center gap-2 px-6 py-3 shrink-0">
         <Users className="w-4 h-4 text-hub-accent" />
         <h3 className="text-sm font-semibold">Players Online</h3>
         <span
           className={clsx(
-            'ml-auto text-xs font-bold tabular-nums px-2 py-0.5 rounded-full transition-colors duration-300',
-            connected ? 'bg-hub-success/15 text-hub-success' : 'bg-hub-warning/15 text-hub-warning'
+            'ml-auto text-xs font-bold tabular-nums px-2 py-0.5 rounded-full transition-all duration-300',
+            connected ? 'bg-hub-success/15 text-hub-success' : 'bg-hub-warning/15 text-hub-warning',
+            countPulse && 'hub-players-count--pulse'
           )}
         >
           {connected ? total : '—'}
         </span>
       </div>
 
-      <ul className="hub-arcade-scroll flex-1 min-h-0 overflow-y-auto overscroll-contain p-2 space-y-1">
+      <ul
+        className={clsx(
+          'hub-arcade-scroll hub-players-list flex-1 min-h-0 overflow-y-auto overscroll-contain p-2 space-y-2',
+          listBump && 'hub-players-list--bump'
+        )}
+      >
         {!connected && (
-          <li className="text-center text-xs text-hub-muted py-8 px-3">
+          <li className="text-center text-xs text-hub-muted py-8 px-3 hub-players-empty--enter">
             Connecting to hub…
           </li>
         )}
 
-        {connected && players.length === 0 && (
-          <li className="text-center text-xs text-hub-muted py-8 px-3">
-            No players online yet. You&apos;ll appear here once connected.
+        {connected && players.length === 0 && exitingRows.length === 0 && (
+          <li className="text-center text-xs text-hub-muted py-8 px-3 hub-players-empty--enter">
+            No other players online yet.
           </li>
         )}
 
         {connected &&
-          players.map((player, index) => {
-            const rowKey = playerRowKey(player, index);
+          groups.map((group) => {
+            const groupKey = group.kind === 'hub' ? 'hub-solo' : `room:${group.roomId}`;
+            const groupAnim = clsx(
+              'hub-presence-group',
+              groupEnterKeys.has(groupKey) && 'hub-presence-group--enter',
+              groupFlashKeys.has(groupKey) && 'hub-presence-group--flash'
+            );
+
+            if (group.kind === 'hub') {
+              const ghosts = exitingByGroup.get('hub-solo') ?? [];
+              return (
+                <li key="hub-solo" className={groupAnim}>
+                  <p className="hub-presence-group__label px-2 py-1 text-[10px] uppercase tracking-wider text-hub-muted">
+                    On hub
+                  </p>
+                  <ul className="hub-presence-group__list space-y-0.5">
+                    {group.players.map((player) =>
+                      renderPlayerRow(player, { enteringKeys, statusFlashKeys })
+                    )}
+                    {ghosts.map((g) =>
+                      renderPlayerRow(g.player, {
+                        enteringKeys,
+                        statusFlashKeys,
+                        exiting: true,
+                      })
+                    )}
+                  </ul>
+                </li>
+              );
+            }
+
+            const statusLabel =
+              group.status === 'playing' ? 'In game' : 'In lobby';
+            const ghosts = exitingByGroup.get(groupKey) ?? [];
+
             return (
-            <li
-              key={rowKey}
-              className={clsx(
-                'flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-colors',
-                player.isYou
-                  ? 'border-hub-accent/40 bg-hub-accent/10'
-                  : 'border-transparent bg-hub-bg/40',
-                enteringKeys.has(rowKey) && 'hub-player-row--enter'
-              )}
-            >
-              <span className="relative flex h-2 w-2 shrink-0">
-                {!player.isYou && (
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-hub-success opacity-75 animate-ping" />
-                )}
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-hub-success" />
-              </span>
-              <span className="flex-1 text-sm font-medium text-gray-100 truncate">
-                {player.displayName}
-              </span>
-              {player.isYou && (
-                <span className="text-[10px] uppercase tracking-wider text-hub-accent font-semibold">
-                  You
-                </span>
-              )}
-            </li>
+              <li key={group.roomId} className={groupAnim}>
+                <div
+                  className={clsx(
+                    'hub-presence-group__header px-2 py-1.5',
+                    groupFlashKeys.has(groupKey) && 'hub-presence-group__header--flash'
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={clsx(
+                        'hub-presence-dot inline-flex h-2 w-2 rounded-full shrink-0',
+                        presenceDotClass(group.status),
+                        groupFlashKeys.has(groupKey) && 'hub-presence-dot--flash'
+                      )}
+                    />
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-300">
+                      {statusLabel}
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-400 mt-0.5 truncate">
+                    {gameLabelForPresence(group.gameType)}
+                    <span className="font-mono text-[10px] text-stone-500 ml-1.5">
+                      {group.roomId}
+                    </span>
+                  </p>
+                </div>
+                <ul className="hub-presence-group__list space-y-0.5 pl-1 border-l border-white/10 ml-2">
+                  {group.players.map((player) =>
+                    renderPlayerRow(player, {
+                      hostId: group.hostId,
+                      enteringKeys,
+                      statusFlashKeys,
+                    })
+                  )}
+                  {ghosts.map((g) =>
+                    renderPlayerRow(g.player, {
+                      hostId: g.hostId,
+                      enteringKeys,
+                      statusFlashKeys,
+                      exiting: true,
+                    })
+                  )}
+                </ul>
+              </li>
             );
           })}
       </ul>
 
       {connected && total > 0 && (
-        <div className="hub-players-panel__footer px-4 py-2.5 shrink-0 flex items-center gap-1.5 text-[11px] text-hub-muted">
-          <Circle className="w-2 h-2 fill-hub-success text-hub-success" />
-          <span className="tabular-nums">{total}</span>
-          {total === 1 ? 'player' : 'players'} on the hub
+        <div className="hub-players-panel__footer px-4 py-2.5 shrink-0 space-y-1.5">
+          <div className="flex items-center gap-3 text-[10px] text-hub-muted flex-wrap">
+            <span className="inline-flex items-center gap-1">
+              <span className="hub-presence-dot hub-presence-dot--hub h-2 w-2 rounded-full" />
+              Hub
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="hub-presence-dot hub-presence-dot--lobby h-2 w-2 rounded-full" />
+              Lobby
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="hub-presence-dot hub-presence-dot--playing h-2 w-2 rounded-full" />
+              In game
+            </span>
+          </div>
+          <p className="text-[11px] text-hub-muted tabular-nums">
+            {total} {total === 1 ? 'player' : 'players'} on the hub
+          </p>
         </div>
       )}
     </aside>

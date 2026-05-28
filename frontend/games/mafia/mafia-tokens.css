@@ -94,5 +94,6 @@
   background-color: var(--mf-glass-bg);
   color: var(--p1-ink-soft);
   box-shadow: var(--mf-shadow-panel);
+  -webkit-backdrop-filter: blur(var(--mf-glass-blur));
   backdrop-filter: blur(var(--mf-glass-blur));
 }

@@ -66,7 +66,7 @@ export function formatChronicleEntry(
         NIGHT_ACTION_VERBS[entry.stepKey ?? ''] ??
         (entry.stepTitleEn ? entry.stepTitleEn.toLowerCase() : 'acted on');
       return {
-        icon: '🌑',
+        icon: '🌙',
         text: `${actor} ${verb}: ${playerName(entry.targetId!)}`,
       };
     }

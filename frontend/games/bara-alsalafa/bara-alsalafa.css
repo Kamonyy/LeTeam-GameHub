@@ -13,6 +13,8 @@
 	--bara-border: rgba(244, 63, 94, 0.14);
 
 	min-height: 100vh;
+	min-height: 100dvh;
+	overflow-x: hidden;
 	color: var(--bara-text);
 	background: var(--bara-deep);
 	position: relative;
@@ -69,8 +71,10 @@
 	position: sticky;
 	top: 0;
 	z-index: 40;
+	padding-top: var(--safe-top);
 	border-bottom: 1px solid var(--bara-border);
 	background: rgba(10, 8, 16, 0.82);
+	-webkit-backdrop-filter: blur(12px);
 	backdrop-filter: blur(12px);
 }
 
@@ -187,6 +191,8 @@
 }
 
 .bara-input {
+	appearance: none;
+	-webkit-appearance: none;
 	width: 100%;
 	padding: 0.625rem 0.875rem;
 	border-radius: 0.5rem;
@@ -247,7 +253,7 @@
 @media (min-width: 1024px) {
 	.bara-lobby-aside {
 		position: sticky;
-		top: 6.5rem;
+		top: calc(var(--safe-top) + var(--app-header-h));
 		align-self: start;
 	}
 }
@@ -354,7 +360,7 @@
 }
 
 .bara-view-mount {
-	animation: bara-view-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+	animation: bara-view-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes bara-view-in {
@@ -783,7 +789,7 @@
 	padding: 1.25rem 1.5rem;
 	border-radius: 1rem;
 	text-align: center;
-	animation: bara-view-in 0.4s ease both;
+	animation: bara-view-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .bara-outcome-card {
@@ -795,7 +801,7 @@
 }
 
 .bara-outcome-card:not(.animate-bara-shake):not(.animate-bara-explosion) {
-	animation: bara-view-in 0.4s ease both;
+	animation: bara-view-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .bara-guess-panel {
@@ -913,4 +919,19 @@
 .bara-shell .bara-flip-card__face {
 	background: linear-gradient(155deg, rgba(36, 24, 32, 0.98), rgba(12, 9, 14, 1));
 	border-color: rgba(244, 63, 94, 0.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bara-atmosphere__spotlight,
+	.bara-view-mount,
+	.bara-sidebar-in,
+	.bara-guess-panel,
+	.bara-outcome-card {
+		animation: none !important;
+	}
+
+	.bara-header {
+		-webkit-backdrop-filter: none;
+		backdrop-filter: none;
+	}
 }

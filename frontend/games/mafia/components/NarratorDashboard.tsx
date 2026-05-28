@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import clsx from "clsx";
 import { RotateCcw } from "lucide-react";
 import type { MafiaNarratorGameState, MafiaNarratorAction } from "../types";
@@ -31,8 +31,6 @@ interface NarratorDashboardProps {
 }
 
 type MobileTab = "actions" | "roster" | "log";
-
-const MOBILE_MQ = "(max-width: 959px)";
 
 const narratorTabTriggerClass = clsx(
   "h-full w-full rounded-md px-2 py-2",
@@ -75,8 +73,8 @@ function currentPeriodKey(state: MafiaNarratorGameState): string | undefined {
   return undefined;
 }
 
-function panelVisibilityClass(visible: boolean) {
-  return clsx(!visible && "max-[959px]:hidden");
+function panelVisibilityClass(tab: MobileTab, activeTab: MobileTab) {
+  return clsx(tab !== activeTab && "max-[959px]:hidden");
 }
 
 function NarratorDashboard({
@@ -89,22 +87,11 @@ function NarratorDashboard({
   const step = panel?.nightStep;
   const playerName = (id: string) => name(lobby, id);
   const [mobileTab, setMobileTab] = useState<MobileTab>("actions");
-  const [isMobile, setIsMobile] = useState(false);
   const [pendingElimination, setPendingElimination] = useState<{
     id: string;
     name: string;
   } | null>(null);
   const [restartConfirmOpen, setRestartConfirmOpen] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia(MOBILE_MQ);
-    const sync = () => setIsMobile(mq.matches);
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, []);
-
-  const showPanel = (tab: MobileTab) => !isMobile || mobileTab === tab;
 
   const phaseLabel = useMemo(
     () =>
@@ -157,7 +144,7 @@ function NarratorDashboard({
           </div>
           <MafiaButton
             variant="ritual"
-            className="shrink-0 gap-1.5 px-3.5"
+            className="min-h-11 shrink-0 gap-1.5 px-3.5"
             disabled={busy}
             onClick={() => setRestartConfirmOpen(true)}
           >
@@ -222,8 +209,8 @@ function NarratorDashboard({
       <div className="grid min-w-0 gap-5 min-[960px]:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
         <div
           data-narrator-panel
-          {...(showPanel("actions") ? { "data-visible": true } : {})}
-          className={clsx(panelVisibilityClass(showPanel("actions")), "min-w-0 max-w-full")}
+          {...(mobileTab === "actions" ? { "data-visible": true } : {})}
+          className={clsx(panelVisibilityClass("actions", mobileTab), "min-w-0 max-w-full")}
         >
           <NarratorDecreeDeck
             state={state}
@@ -246,8 +233,8 @@ function NarratorDashboard({
           {panel && (
             <div
               data-narrator-panel
-              {...(showPanel("roster") ? { "data-visible": true } : {})}
-              className={clsx(panelVisibilityClass(showPanel("roster")), "min-w-0 max-w-full")}
+              {...(mobileTab === "roster" ? { "data-visible": true } : {})}
+              className={clsx(panelVisibilityClass("roster", mobileTab), "min-w-0 max-w-full")}
             >
               <NarratorTeamRoster
                 players={panel.allPlayers}
@@ -259,8 +246,8 @@ function NarratorDashboard({
           {panel?.chronicle && (
             <div
               data-narrator-panel
-              {...(showPanel("log") ? { "data-visible": true } : {})}
-              className={clsx(panelVisibilityClass(showPanel("log")), "min-w-0 max-w-full")}
+              {...(mobileTab === "log" ? { "data-visible": true } : {})}
+              className={clsx(panelVisibilityClass("log", mobileTab), "min-w-0 max-w-full")}
             >
               <NarratorChronicle
                 sections={panel.chronicle}

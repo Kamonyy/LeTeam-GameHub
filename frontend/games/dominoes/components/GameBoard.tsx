@@ -1,6 +1,7 @@
 "use client";
 
 import {
+	memo,
 	useState,
 	useEffect,
 	useCallback,
@@ -44,7 +45,42 @@ interface GameBoardProps {
 	onRematch: () => Promise<boolean>;
 }
 
-export default function GameBoard({
+function dominoBoardPropsEqual(
+	prev: GameBoardProps,
+	next: GameBoardProps,
+): boolean {
+	if (
+		prev.playerId !== next.playerId ||
+		prev.isHost !== next.isHost ||
+		prev.isSpectator !== next.isSpectator
+	) {
+		return false;
+	}
+	if (prev.lobby?.roomId !== next.lobby?.roomId) return false;
+	if (prev.lobby?.players?.length !== next.lobby?.players?.length) {
+		return false;
+	}
+
+	const a = prev.gameState;
+	const b = next.gameState;
+	if (a === b) return true;
+
+	return (
+		a.phase === b.phase &&
+		a.currentPlayerId === b.currentPlayerId &&
+		a.turnTimerPaused === b.turnTimerPaused &&
+		a.board.length === b.board.length &&
+		a.myHand.length === b.myHand.length &&
+		a.boneyardCount === b.boneyardCount &&
+		a.roundNumber === b.roundNumber &&
+		JSON.stringify(a.matchScores) === JSON.stringify(b.matchScores) &&
+		JSON.stringify(a.tileCounts) === JSON.stringify(b.tileCounts) &&
+		JSON.stringify(a.lastAction) === JSON.stringify(b.lastAction) &&
+		JSON.stringify(a.validMoves) === JSON.stringify(b.validMoves)
+	);
+}
+
+function GameBoard({
 	gameState,
 	lobby,
 	playerId,
@@ -451,7 +487,7 @@ export default function GameBoard({
 		gameState.phase === "round_over" || gameState.phase === "match_over";
 
 	return (
-		<div className="domino-arena flex flex-col gap-3 w-full max-w-7xl mx-auto min-h-[calc(100dvh-5rem)] animate-fade-in pb-2">
+		<div className="domino-arena flex flex-col gap-3 w-full max-w-7xl mx-auto min-h-[calc(100dvh-var(--arena-chrome)-var(--safe-top))] animate-fade-in pb-safe-bottom">
 			<div className="flex flex-col gap-2 px-1">
 				<div className="flex items-center justify-center gap-2 text-xs text-hub-muted uppercase tracking-widest">
 					<Sparkles className="w-3.5 h-3.5 text-hub-accent" />
@@ -717,3 +753,5 @@ export default function GameBoard({
 		</div>
 	);
 }
+
+export default memo(GameBoard, dominoBoardPropsEqual);

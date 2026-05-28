@@ -59,7 +59,8 @@ export function validateGameType(gameType) {
 		gameType === "dominoes" ||
 		gameType === "wordgame" ||
 		gameType === "bara-alsalafa" ||
-		gameType === "mafia"
+		gameType === "mafia" ||
+		gameType === "sketch-draw"
 	);
 }
 

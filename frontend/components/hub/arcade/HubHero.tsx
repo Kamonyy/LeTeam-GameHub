@@ -18,10 +18,14 @@ export default function HubHero({ connected, hubPresence }: HubHeroProps) {
       list.push(
         `• ${hubPresence.total} ${hubPresence.total === 1 ? 'player' : 'players'} in the arcade lounge`
       );
-      const others = hubPresence.players.filter((p) => !p.isYou).slice(0, 2);
+      const others = hubPresence.players.slice(0, 2);
       others.forEach((p, i) => {
         const game = activeGames[i % activeGames.length];
-        list.push(`• ${p.displayName} is in the lounge — ${game} awaits`);
+        const where =
+          p.status === 'playing' ? 'in a match' : (
+            p.status === 'lobby' ? 'in a lobby'
+          : 'in the lounge');
+        list.push(`• ${p.displayName} is ${where} — ${game} awaits`);
       });
     } else if (connected) {
       list.push('• The lounge is quiet — be the first to deal a room');
@@ -42,7 +46,7 @@ export default function HubHero({ connected, hubPresence }: HubHeroProps) {
   const presenceKey = useMemo(
     () =>
       `${hubPresence.total}:${hubPresence.players
-        .map((p, i) => `${p.id ?? i}:${p.displayName}:${!!p.isYou}`)
+        .map((p) => `${p.id}:${p.displayName}:${p.status}`)
         .join('|')}`,
     [hubPresence]
   );

@@ -171,8 +171,12 @@ export function registerHandlers(socket, roomManager) {
   socket.on('room:leave', (payload, ack) => {
     const options =
       payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : {};
-    roomManager.leaveRoom(socket, options);
-    ack?.({ success: true });
+    const result = roomManager.leaveRoom(socket, options);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, ...result });
   });
 
   socket.on('room:settings:update', (settings, ack) => {
@@ -478,6 +482,166 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true, state: result.state });
   });
 
+  socket.on('sketch-draw:word:select', ({ index }, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'sketchDrawWordSelect', RATE_LIMITS.sketchDrawWordSelect)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    const result = roomManager.handleSketchDrawSelectWord(socket, index);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
+  socket.on('sketch-draw:canvas:stroke:batch', (payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'sketchDrawCanvasBatch', RATE_LIMITS.sketchDrawCanvasBatch)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    if (!isPlainObject(payload)) {
+      ack?.({ error: 'Invalid payload' });
+      return;
+    }
+    const result = roomManager.handleSketchDrawCanvasStrokeBatch(socket, payload);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
+  socket.on('sketch-draw:canvas:undo', (_payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'sketchDrawCanvasUndo', RATE_LIMITS.sketchDrawCanvasUndo)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    const result = roomManager.handleSketchDrawCanvasUndo(socket);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
+  socket.on('sketch-draw:canvas:redo', (_payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'sketchDrawCanvasRedo', RATE_LIMITS.sketchDrawCanvasRedo)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    const result = roomManager.handleSketchDrawCanvasRedo(socket);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
+  socket.on('game:guess:submit', (payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'sketchDrawGuessSubmit', RATE_LIMITS.sketchDrawGuessSubmit)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    if (!isPlainObject(payload)) {
+      ack?.({ error: 'Invalid payload' });
+      return;
+    }
+    const guess =
+      typeof payload.text === 'string' ? payload.text
+      : typeof payload.guess === 'string' ? payload.guess
+      : typeof payload.message === 'string' ? payload.message
+      : '';
+    const result = roomManager.handleSketchDrawGuessSubmit(socket, guess);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({
+      success: true,
+      outcome: result.outcome ?? 'ok',
+    });
+  });
+
+  socket.on('sketch-draw:guess:submit', (payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'sketchDrawGuessSubmit', RATE_LIMITS.sketchDrawGuessSubmit)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    if (!isPlainObject(payload)) {
+      ack?.({ error: 'Invalid payload' });
+      return;
+    }
+    const guess =
+      typeof payload.text === 'string' ? payload.text
+      : typeof payload.guess === 'string' ? payload.guess
+      : '';
+    const result = roomManager.handleSketchDrawGuessSubmit(socket, guess);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, outcome: result.outcome ?? 'ok' });
+  });
+
+  socket.on('sketch-draw:canvas:fill', (payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'sketchDrawCanvasFill', RATE_LIMITS.sketchDrawCanvasFill)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    if (!isPlainObject(payload)) {
+      ack?.({ error: 'Invalid payload' });
+      return;
+    }
+    const result = roomManager.handleSketchDrawCanvasFill(socket, payload);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
+  socket.on('sketch-draw:canvas:clear', (_payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'sketchDrawCanvasClear', RATE_LIMITS.sketchDrawCanvasClear)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    const result = roomManager.handleSketchDrawCanvasClear(socket);
+    if (result?.error) {
+      socket.emit('game:error', { message: result.error });
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
+  socket.on('sketch-draw:canvas:recovery:request', (_payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'sketchDrawCanvasRecovery', RATE_LIMITS.sketchDrawCanvasRecovery)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    const result = roomManager.handleSketchDrawCanvasRecovery(socket);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
+  socket.on('sketch-draw:disband', (_payload, ack) => {
+    const result = roomManager.disbandSketchDrawRoom(socket);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true });
+  });
+
   socket.on('chat:send', ({ message }, ack) => {
     if (!roomManager.checkRateLimit(socket.id, 'chat', RATE_LIMITS.chat)) {
       ack?.({ error: 'Too many messages, slow down' });
@@ -489,6 +653,82 @@ export function registerHandlers(socket, roomManager) {
       return;
     }
     ack?.({ success: true });
+  });
+
+  socket.on('invite:send', (payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'inviteSend', RATE_LIMITS.inviteSend)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    if (!isPlainObject(payload)) {
+      ack?.({ error: 'Invalid payload' });
+      return;
+    }
+    const { targetPlayerId, roomId, gameType, sessionToken } = payload;
+    if (!validateTargetPlayerId(targetPlayerId)) {
+      ack?.({ error: 'Invalid target player' });
+      return;
+    }
+    const normalized = normalizeRoomId(roomId);
+    if (!normalized) {
+      ack?.({ error: 'Invalid room code' });
+      return;
+    }
+    if (!validateGameType(gameType)) {
+      ack?.({ error: 'Invalid game type' });
+      return;
+    }
+    if (!validateSessionToken(sessionToken)) {
+      ack?.({ error: 'Invalid session token' });
+      return;
+    }
+    const result = roomManager.sendInvite(socket, {
+      targetPlayerId,
+      roomId: normalized,
+      gameType,
+      sessionToken,
+    });
+    if (result.error) {
+      roomManager._emitInviteError(socket, result.error);
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, inviteId: result.inviteId, expiresAt: result.expiresAt });
+  });
+
+  socket.on('invite:respond', (payload, ack) => {
+    if (!roomManager.checkRateLimit(socket.id, 'inviteRespond', RATE_LIMITS.inviteRespond)) {
+      ack?.({ error: 'Too many requests, slow down' });
+      return;
+    }
+    if (!isPlainObject(payload)) {
+      ack?.({ error: 'Invalid payload' });
+      return;
+    }
+    const { inviteId, accept, sessionToken } = payload;
+    if (typeof inviteId !== 'string' || inviteId.length > 64) {
+      ack?.({ error: 'Invalid invite id' });
+      return;
+    }
+    if (typeof accept !== 'boolean') {
+      ack?.({ error: 'Invalid accept flag' });
+      return;
+    }
+    if (!validateSessionToken(sessionToken)) {
+      ack?.({ error: 'Invalid session token' });
+      return;
+    }
+    const result = roomManager.respondToInvite(socket, {
+      inviteId,
+      accept,
+      sessionToken,
+    });
+    if (result.error) {
+      roomManager._emitInviteError(socket, result.error);
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, ...result });
   });
 
   socket.on('disconnect', () => {

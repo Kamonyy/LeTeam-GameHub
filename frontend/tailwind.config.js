@@ -3,6 +3,7 @@ module.exports = {
 	content: [
 		"./app/**/*.{js,ts,jsx,tsx,mdx}",
 		"./components/**/*.{js,ts,jsx,tsx,mdx}",
+		"./context/**/*.{js,ts,jsx,tsx,mdx}",
 		"./games/**/*.{js,ts,jsx,tsx,mdx}",
 	],
 	theme: {
@@ -59,6 +60,18 @@ module.exports = {
 				md: "calc(var(--radius) - 2px)",
 				sm: "calc(var(--radius) - 4px)",
 			},
+			spacing: {
+				"safe-top": "var(--safe-top)",
+				"safe-right": "var(--safe-right)",
+				"safe-bottom": "var(--safe-bottom)",
+				"safe-left": "var(--safe-left)",
+			},
+			transitionDuration: {
+				"ui-fast": "150ms",
+				ui: "250ms",
+				overlay: "350ms",
+				enter: "500ms",
+			},
 			fontFamily: {
 				sans: ["Inter", "system-ui", "sans-serif"],
 				cinzel: ["Cinzel", "Georgia", "serif"],
@@ -100,6 +113,9 @@ module.exports = {
 				"torch-flicker": "torchFlicker 5.8s ease-in-out infinite",
 				"fog-drift": "fogDrift 25s linear infinite",
 				"fog-drift-slow": "fogDrift 40s linear infinite reverse",
+				"arcade-slide-in":
+					"arcadeSlideIn 250ms cubic-bezier(0.25, 1, 0.5, 1) both",
+				"arcade-slide-out": "arcadeSlideOut 200ms ease-out both",
 			},
 			backgroundImage: {
 				"mf-cobblestone":
@@ -118,6 +134,14 @@ module.exports = {
 				fogDrift: {
 					"0%": { transform: "translateX(-8%)" },
 					"100%": { transform: "translateX(8%)" },
+				},
+				arcadeSlideIn: {
+					"0%": { opacity: "0", transform: "translate(1.5rem, 1rem)" },
+					"100%": { opacity: "1", transform: "translate(0, 0)" },
+				},
+				arcadeSlideOut: {
+					"0%": { opacity: "1", transform: "translate(0, 0)" },
+					"100%": { opacity: "0", transform: "translate(0, 1rem)" },
 				},
 				fadeIn: {
 					"0%": { opacity: "0" },

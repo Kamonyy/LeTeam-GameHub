@@ -62,7 +62,7 @@ export default function GameActionOverlay({
     <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
       <div
         className={clsx(
-          'animate-overlay-pop px-10 py-6 rounded-2xl border-2 backdrop-blur-md shadow-2xl text-center',
+          'animate-overlay-pop max-md:animate-fade-in px-10 py-6 rounded-2xl border-2 glass-blur-md shadow-2xl text-center',
           content.variant === 'domino' &&
             'border-amber-400/60 bg-amber-950/85 text-amber-100',
           content.variant === 'blocked' &&

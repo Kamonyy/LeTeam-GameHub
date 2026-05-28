@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX, Loader2 } from 'lucide-react';
 import { useSocket } from '@/hooks/useSocket';
+import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
+import { suppressRoomAutoJoinRef } from '@/lib/hub/room-auto-join';
 import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
 import WordGamePlayerProfile from '@/games/wordgame/components/WordGamePlayerProfile';
@@ -37,7 +39,6 @@ export default function WordGameClient() {
     clearError,
     createRoom,
     joinRoom,
-    leaveRoom,
     updateRoomSettings,
     startGame,
     requestRematch,
@@ -52,6 +53,9 @@ export default function WordGameClient() {
   const [displayName, setDisplayNameState] = useState('');
   const [joinCode, setJoinCode] = useState(roomParam || '');
   const [loading, setLoading] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'create' | 'join' | null>(
+    null
+  );
   const [starting, setStarting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [postMatchBusy, setPostMatchBusy] = useState(false);
@@ -59,6 +63,7 @@ export default function WordGameClient() {
   const [autoJoined, setAutoJoined] = useState(false);
   /** Avoid SSR/client mismatch: localStorage is unavailable during server render. */
   const [inviteJoin, setInviteJoin] = useState(false);
+  const leaveToHub = useLeaveToHub();
 
   useEffect(() => {
     setInviteJoin(!!roomParam && !hasDisplayName());
@@ -77,7 +82,20 @@ export default function WordGameClient() {
   }, []);
 
   useEffect(() => {
+    if (!roomParam) {
+      setAutoJoined(false);
+    }
+  }, [roomParam]);
+
+  useEffect(() => {
+    if (lobby?.gameType === 'wordgame' && lobby.roomId) {
+      setAutoJoined(true);
+    }
+  }, [lobby?.gameType, lobby?.roomId]);
+
+  useEffect(() => {
     if (
+      suppressRoomAutoJoinRef.current ||
       !wordgameEnabled ||
       !connected ||
       hardResetInFlight ||
@@ -122,20 +140,36 @@ export default function WordGameClient() {
   const handleCreate = async () => {
     if (!displayName.trim()) return;
     setLoading(true);
+    setPendingAction('create');
     setDisplayName(displayName);
-    const roomId = await createRoom(displayName.trim(), 'wordgame');
-    if (roomId) router.push(`/wordgame?room=${roomId}`);
-    setLoading(false);
+    try {
+      const roomId = await createRoom(displayName.trim(), 'wordgame');
+      if (roomId) {
+        setAutoJoined(true);
+        router.push(`/wordgame?room=${roomId}`);
+      }
+    } finally {
+      setLoading(false);
+      setPendingAction(null);
+    }
   };
 
   const handleJoin = async () => {
     const code = normalizeRoomCode(joinCode);
     if (!code || !displayName.trim()) return;
     setLoading(true);
+    setPendingAction('join');
     setDisplayName(displayName);
-    const ok = await joinRoom(code, displayName.trim());
-    if (ok) router.push(`/wordgame?room=${code}`);
-    setLoading(false);
+    try {
+      const ok = await joinRoom(code, displayName.trim());
+      if (ok) {
+        setAutoJoined(true);
+        router.push(`/wordgame?room=${code}`);
+      }
+    } finally {
+      setLoading(false);
+      setPendingAction(null);
+    }
   };
 
   const handleInviteJoin = async () => {
@@ -200,7 +234,7 @@ export default function WordGameClient() {
 
   return (
     <WordGameAudioProvider enabled={isLolAudioEnabled}>
-    <main className="sw-shell min-h-screen relative">
+    <main className="sw-shell min-h-dvh relative overflow-x-hidden">
       <WordGameAtmosphere />
 
       <header className="sw-header">
@@ -245,39 +279,51 @@ export default function WordGameClient() {
         {!wordLobby && wordgameEnabled && inviteJoin && (
           <div className="max-w-md mx-auto sw-animate-ascend">
             <WordPanelFrame className="p-6 sm:p-8">
-              <div className="flex items-center gap-2 mb-4">
-                <UserPlus className="w-5 h-5 text-[#f0d78c]" />
-                <h2 className="sw-heading text-base">Join the Rift</h2>
-              </div>
-              <div className="sw-divider-gold mb-4" />
-              <p className="text-sm sw-muted mb-4 leading-relaxed">
-                Summoned to room{' '}
-                <span className="font-mono font-bold text-[#fff8e7] tracking-widest">
-                  {roomParam}
-                </span>
-                . Inscribe your name to enter.
-              </p>
-              <label className="block text-[10px] sw-muted mb-2 uppercase tracking-widest">
-                Champion Name
-              </label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayNameState(e.target.value)}
-                className="sw-input normal-case tracking-normal text-left mb-6"
-                placeholder="Enter your name"
-                maxLength={20}
-                autoFocus
-              />
-              <button
-                type="button"
-                onClick={handleInviteJoin}
-                disabled={!connected || loading || !displayName.trim()}
-                className="sw-btn-primary"
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void handleInviteJoin();
+                }}
               >
-                <LogIn className="w-4 h-4" />
-                {loading ? 'Entering…' : 'Enter Room'}
-              </button>
+                <div className="flex items-center gap-2 mb-4">
+                  <UserPlus className="w-5 h-5 text-[#f0d78c]" />
+                  <h2 className="sw-heading text-base">Join the Rift</h2>
+                </div>
+                <div className="sw-divider-gold mb-4" />
+                <p className="text-sm sw-muted mb-4 leading-relaxed">
+                  Summoned to room{' '}
+                  <span className="font-mono font-bold text-[#fff8e7] tracking-widest">
+                    {roomParam}
+                  </span>
+                  . Inscribe your name to enter.
+                </p>
+                <label
+                  htmlFor="sw-invite-name"
+                  className="block text-[10px] sw-muted mb-2 uppercase tracking-widest"
+                >
+                  Champion Name
+                </label>
+                <input
+                  id="sw-invite-name"
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayNameState(e.target.value)}
+                  className="sw-input normal-case tracking-normal text-left mb-6"
+                  placeholder="Enter your name"
+                  maxLength={20}
+                  autoComplete="off"
+                  enterKeyHint="go"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={!connected || loading || !displayName.trim()}
+                  className="sw-btn-primary"
+                >
+                  <LogIn className="w-4 h-4" />
+                  {loading ? 'Entering…' : 'Enter Room'}
+                </button>
+              </form>
             </WordPanelFrame>
           </div>
         )}
@@ -299,50 +345,73 @@ export default function WordGameClient() {
                 Crossing into room {roomParam}…
               </p>
             )}
-            {loading && (
-              <GameLobbyPendingOverlay message="Creating your lobby…" />
+            {loading && pendingAction && (
+              <GameLobbyPendingOverlay
+                message={
+                  pendingAction === 'create' ?
+                    'Creating your lobby…'
+                  :	'Joining room…'
+                }
+              />
             )}
             <WordPanelFrame className="p-6 sm:p-8">
-              <label className="block text-[10px] sw-muted mb-2 uppercase tracking-widest">
-                Champion Name
-              </label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayNameState(e.target.value)}
-                onBlur={() => displayName.trim() && setDisplayName(displayName)}
-                className="sw-input normal-case tracking-normal text-left mb-6"
-                placeholder="Your name"
-                maxLength={20}
-              />
-              <div className="space-y-4">
-                <button
-                  type="button"
-                  onClick={handleCreate}
-                  disabled={!connected || loading || !displayName.trim()}
-                  className="sw-btn-primary"
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void handleJoin();
+                }}
+              >
+                <label
+                  htmlFor="sw-create-name"
+                  className="block text-[10px] sw-muted mb-2 uppercase tracking-widest"
                 >
-                  <Plus className="w-4 h-4" />
-                  {loading ? 'Forging…' : 'Create Room'}
-                </button>
+                  Champion Name
+                </label>
                 <input
+                  id="sw-create-name"
                   type="text"
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  className="sw-input uppercase tracking-[0.25em] text-center font-mono"
-                  placeholder="ROOM CODE"
-                  maxLength={8}
+                  value={displayName}
+                  onChange={(e) => setDisplayNameState(e.target.value)}
+                  onBlur={() => displayName.trim() && setDisplayName(displayName)}
+                  className="sw-input normal-case tracking-normal text-left mb-6"
+                  placeholder="Your name"
+                  maxLength={20}
+                  autoComplete="off"
                 />
-                <button
-                  type="button"
-                  onClick={handleJoin}
-                  disabled={!connected || loading || !joinCode.trim() || !displayName.trim()}
-                  className="sw-btn-secondary w-full"
-                >
-                  <LogIn className="w-4 h-4" />
-                  {loading ? 'Entering…' : 'Join Room'}
-                </button>
-              </div>
+                <div className="space-y-4">
+                  <button
+                    type="button"
+                    onClick={() => void handleCreate()}
+                    disabled={!connected || loading || !displayName.trim()}
+                    className="sw-btn-primary"
+                  >
+                    <Plus className="w-4 h-4" />
+                    {loading ? 'Forging…' : 'Create Room'}
+                  </button>
+                  <label htmlFor="sw-join-code" className="sr-only">
+                    Room code
+                  </label>
+                  <input
+                    id="sw-join-code"
+                    type="text"
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                    className="sw-input uppercase tracking-[0.25em] text-center font-mono"
+                    placeholder="ROOM CODE"
+                    maxLength={8}
+                    autoComplete="off"
+                    enterKeyHint="go"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!connected || loading || !joinCode.trim() || !displayName.trim()}
+                    className="sw-btn-secondary w-full"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    {loading ? 'Entering…' : 'Join Room'}
+                  </button>
+                </div>
+              </form>
             </WordPanelFrame>
           </div>
         )}
@@ -359,10 +428,7 @@ export default function WordGameClient() {
                 await startGame();
                 setStarting(false);
               }}
-              onLeave={() => {
-                leaveRoom();
-                router.push('/wordgame');
-              }}
+              onLeave={() => void leaveToHub()}
               starting={starting}
             />
           </div>

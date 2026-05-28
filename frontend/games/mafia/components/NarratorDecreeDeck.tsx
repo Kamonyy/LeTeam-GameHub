@@ -116,25 +116,30 @@ function NightStepTrack({
     total <= 1 ? 100 : (currentIndex / (total - 1)) * 100;
 
   const trackTop = "top-[0.65rem]";
+  /** Center of first/last dot in equal grid columns */
+  const trackInset =
+    total > 1 ? `calc(100% / ${total} / 2)` : "0";
+  const trackSpan =
+    total > 1 ? `calc(100% - 100% / ${total})` : "100%";
 
   return (
     <nav
-      className="border-b border-violet-700/45 bg-gradient-to-b from-violet-950/50 via-violet-950/30 to-stone-950/30 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(167,139,250,0.08),inset_0_-12px_24px_-12px_rgba(109,40,217,0.15)]"
+      className="border-b border-amber-800/45 bg-gradient-to-b from-[#1c1810] via-[#14110c] to-[#0e0c08] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(251,191,36,0.12),0_2px_10px_rgba(0,0,0,0.4)]"
       aria-label={`Night step ${currentIndex + 1} of ${total}: ${titleEn}`}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="font-cinzel text-[0.58rem] font-semibold uppercase tracking-[0.22em] text-violet-100 drop-shadow-[0_0_8px_rgba(167,139,250,0.45)]">
+        <span className="font-cinzel text-[0.58rem] font-semibold uppercase tracking-[0.22em] text-amber-100 drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]">
           Night path
         </span>
         <span
-          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-violet-500/45 bg-violet-900/50 px-2 py-0.5 font-cinzel text-[0.58rem] tabular-nums leading-none shadow-[0_0_12px_rgba(139,92,246,0.35),inset_0_1px_0_rgba(196,181,253,0.12)]"
+          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-600/45 bg-[#2a2214] px-2 py-0.5 font-cinzel text-[0.58rem] tabular-nums leading-none shadow-[0_0_10px_rgba(180,120,40,0.35),inset_0_1px_0_rgba(253,230,138,0.12)]"
           role="status"
         >
           <span className="font-bold text-amber-200 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]">
             {currentIndex + 1}
           </span>
-          <span className="text-violet-300/80">/</span>
-          <span className="text-violet-100/90">{total}</span>
+          <span className="text-amber-200/80">/</span>
+          <span className="text-amber-50">{total}</span>
         </span>
       </div>
 
@@ -149,19 +154,21 @@ function NightStepTrack({
           <>
             <span
               className={clsx(
-                "pointer-events-none absolute left-2.5 right-2.5 h-[3px] rounded-full bg-violet-600/55",
+                "pointer-events-none absolute h-[3px] rounded-full bg-violet-400/85",
                 trackTop,
-                "shadow-[0_0_10px_rgba(139,92,246,0.5)]",
+                "shadow-[0_0_14px_rgba(167,139,250,0.75),inset_0_1px_0_rgba(255,255,255,0.2)]",
               )}
+              style={{ left: trackInset, right: trackInset }}
               aria-hidden
             />
             <span
               className={clsx(
-                "pointer-events-none absolute left-2.5 h-[3px] rounded-full transition-[width] duration-300 motion-reduce:transition-none",
+                "pointer-events-none absolute h-[3px] rounded-full transition-[width] duration-300 motion-reduce:transition-none",
                 trackTop,
               )}
               style={{
-                width: `calc((100% - 1.25rem) * ${progressPct / 100})`,
+                left: trackInset,
+                width: `calc(${trackSpan} * ${progressPct / 100})`,
                 ...nightStepProgressBarStyle(activeRoleId),
               }}
               aria-hidden
@@ -169,7 +176,10 @@ function NightStepTrack({
           </>
         )}
 
-        <ol className="relative m-0 flex list-none justify-between p-0">
+        <ol
+          className="relative m-0 grid list-none p-0"
+          style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }}
+        >
           {steps.map((stepDef, i) => {
             const done = i < currentIndex;
             const active = i === currentIndex;
@@ -177,7 +187,7 @@ function NightStepTrack({
             return (
               <li
                 key={stepDef.key}
-                className="flex min-w-0 max-w-[4.75rem] shrink flex-col items-center gap-1.5"
+                className="flex min-w-0 flex-col items-center gap-1.5 justify-self-center"
               >
                 <span
                   className={clsx(
@@ -198,9 +208,8 @@ function NightStepTrack({
                 </span>
                 <span
                   className={clsx(
-                    "max-w-full truncate text-center font-cinzel text-[0.52rem] font-semibold uppercase leading-tight tracking-[0.1em] sm:text-[0.56rem]",
+                    "max-w-full truncate text-center font-cinzel text-[0.58rem] font-semibold uppercase leading-tight tracking-[0.1em] sm:text-[0.62rem]",
                     active && "font-bold",
-                    done && "opacity-90",
                   )}
                   style={nightStepLabelStyle(stepDef.roleId, state)}
                   aria-current={active ? "step" : undefined}
@@ -274,7 +283,7 @@ function DecreeFooter({
       data-decree-night={night ? "" : undefined}
       className={clsx(
         "z-[2] rounded-b-md border-t border-amber-900/45 bg-gradient-to-t from-stone-950 via-stone-950/98 to-stone-950/90 p-3 pb-3.5 shadow-[inset_0_1px_0_rgba(212,166,74,0.1)] max-md:pb-[max(0.85rem,env(safe-area-inset-bottom,0px))]",
-        "min-[960px]:sticky min-[960px]:bottom-0 min-[960px]:backdrop-blur-sm",
+        "max-md:sticky max-md:bottom-0 max-md:glass-blur-sm min-[960px]:sticky min-[960px]:bottom-0 min-[960px]:glass-blur-sm",
         night && "border-violet-900/40 shadow-[inset_0_1px_0_rgba(167,139,250,0.12)]",
         className,
       )}
@@ -555,12 +564,6 @@ export default function NarratorDecreeDeck({
               ) : step.roleId ? (
                 <DecreeZone kicker="1 · Wake & ask" tone="night" compact>
                   <div className="space-y-2.5">
-                    <NarratorAskPrompt
-                      embedded
-                      step={step}
-                      holders={step.roleHolders}
-                      playerName={playerName}
-                    />
                     <div className="min-w-0 rounded-md border border-violet-800/30 bg-violet-950/20 px-3 py-2.5">
                       <p className="m-0 font-cinzel text-[0.58rem] font-semibold uppercase tracking-[0.2em] text-amber-200/85">
                         Read aloud
@@ -579,6 +582,12 @@ export default function NarratorDecreeDeck({
                         )}
                       </div>
                     </div>
+                    <NarratorAskPrompt
+                      embedded
+                      step={step}
+                      holders={step.roleHolders}
+                      playerName={playerName}
+                    />
                   </div>
                 </DecreeZone>
               ) : (
@@ -653,12 +662,14 @@ export default function NarratorDecreeDeck({
                     playerIds={state.playerIds}
                     playerName={playerName}
                     selectedId={step.selectedTargetId}
+                    selectedIds={step.selectedTargetIds}
+                    requiredTargetCount={step.requiredTargetCount}
+                    maxTargetCount={step.maxTargetCount}
                     skipSelected={step.skipped}
                     blockedIds={step.blockedTargetIds}
                     allowSkip={step.allowSkip}
                     aliveOnly
                     disabled={busy}
-                    actionLabel="Tap a player to record"
                     onSelect={onSelectNightTarget}
                   />
                 </DecreeZone>

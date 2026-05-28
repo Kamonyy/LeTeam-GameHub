@@ -116,7 +116,7 @@ export default function ChatPanel({ className }: ChatPanelProps) {
           disabled={!connected}
           maxLength={MAX_MESSAGE_LENGTH}
           placeholder={connected ? 'Type a message…' : 'Offline'}
-          className="flex-1 min-w-0 px-3 py-2 text-sm bg-hub-bg border border-hub-border rounded-lg
+          className="appearance-none flex-1 min-w-0 px-3 py-2 text-sm bg-hub-bg border border-hub-border rounded-lg
             text-gray-100 placeholder-hub-muted focus:outline-none focus:border-hub-accent
             normal-case tracking-normal text-left disabled:opacity-40"
           autoComplete="off"

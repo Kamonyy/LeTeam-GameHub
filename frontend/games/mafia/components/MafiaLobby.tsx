@@ -46,6 +46,7 @@ import type { LobbyState } from "@/lib/hub/types";
 import type { MafiaSettings } from "../types";
 
 import { MafiaButton } from "@/components/mafia/mafia-button";
+import InviteFriendsButton from "@/components/invitations/InviteFriendsButton";
 
 import { MafiaCard, MafiaCardContent } from "@/components/mafia/mafia-panel";
 
@@ -474,6 +475,18 @@ export default function MafiaLobby({
               {lobby.roomId}
 
             </code>
+
+            <InviteFriendsButton
+
+              roomId={lobby.roomId}
+
+              gameType={lobby.gameType}
+
+              disabled={lobby.status !== "lobby"}
+
+              className="w-full sm:w-auto justify-center"
+
+            />
 
             <MafiaButton
 

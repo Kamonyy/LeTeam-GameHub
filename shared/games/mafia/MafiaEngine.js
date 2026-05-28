@@ -280,6 +280,39 @@ export class MafiaEngine {
 		);
 	}
 
+	/** Alive Mafia role holders (for kill quota and self-target rules). */
+	_aliveMafiaHolderIds() {
+		return this._playersWithRole("mafia").filter(
+			(id) => this.players[id]?.alive,
+		);
+	}
+
+	/** Max victims per night: 2 when two or more living Mafia, otherwise 1. */
+	_mafiaMaxKills() {
+		return this._aliveMafiaHolderIds().length >= 2 ? 2 : 1;
+	}
+
+	/**
+	 * @param {string | string[] | null | undefined} raw
+	 * @returns {string[]}
+	 */
+	_mafiaTargetList(raw) {
+		if (raw == null) return [];
+		const ids = Array.isArray(raw) ? raw : [raw];
+		return ids.filter((id) => this._isAliveTarget(id));
+	}
+
+	_mafiaNightChoiceComplete() {
+		if (
+			!Object.prototype.hasOwnProperty.call(this.nightTargets, "mafia")
+		) {
+			return false;
+		}
+		const raw = this.nightTargets.mafia;
+		if (raw === null) return true;
+		return this._mafiaTargetList(raw).length >= 1;
+	}
+
 	/** Night step ritual only — holder(s) dead; narrator runs theater, no recorded target. */
 	_stepPlayAlongOnly(step) {
 		if (!step?.roleId) return false;
@@ -506,7 +539,35 @@ export class MafiaEngine {
 				};
 			}
 		}
-		this.nightTargets[step.key] = targetId;
+		if (step.key === "mafia" && targetId != null) {
+			if (this._aliveMafiaHolderIds().includes(targetId)) {
+				return {
+					success: false,
+					error: "Mafia cannot target themselves",
+				};
+			}
+			const maxKills = this._mafiaMaxKills();
+			if (maxKills === 1) {
+				this.nightTargets.mafia = targetId;
+			} else {
+				/** @type {string[]} */
+				let current = this._mafiaTargetList(this.nightTargets.mafia);
+				if (current.includes(targetId)) {
+					current = current.filter((id) => id !== targetId);
+				} else {
+					if (current.length >= maxKills) {
+						return {
+							success: false,
+							error: `Mafia may kill at most ${maxKills} players tonight`,
+						};
+					}
+					current = [...current, targetId];
+				}
+				this.nightTargets.mafia = current;
+			}
+		} else {
+			this.nightTargets[step.key] = targetId;
+		}
 		this._bump();
 		return { success: true };
 	}
@@ -535,12 +596,12 @@ export class MafiaEngine {
 	 */
 	_buildNightRecap(ctx) {
 		const {
-			mafiaTarget,
+			mafiaTargets,
 			saveTarget,
 			sniperTarget,
 			sheriffTarget,
 			saved,
-			mafiaKillLanded,
+			mafiaKillLandedByTarget,
 			uniqueDeaths,
 		} = ctx;
 		/** @type {object[]} */
@@ -549,8 +610,7 @@ export class MafiaEngine {
 		if (this._roleInNightRecap("doctor")) {
 			if (saveTarget) {
 				const blocked =
-					mafiaTarget &&
-					saveTarget === mafiaTarget &&
+					mafiaTargets.includes(saveTarget) &&
 					saved.includes(saveTarget);
 				recap.push(
 					this._nightRecapBeat(
@@ -565,15 +625,18 @@ export class MafiaEngine {
 		}
 
 		if (this._roleInNightRecap("mafia")) {
-			if (mafiaTarget) {
-				const blocked = !mafiaKillLanded && saved.includes(mafiaTarget);
-				recap.push(
-					this._nightRecapBeat(
-						"mafia",
-						mafiaTarget,
-						blocked ? "saved_kill" : "kill_landed",
-					),
-				);
+			if (mafiaTargets.length > 0) {
+				for (const mafiaTarget of mafiaTargets) {
+					const landed = mafiaKillLandedByTarget.get(mafiaTarget) === true;
+					const blocked = !landed && saved.includes(mafiaTarget);
+					recap.push(
+						this._nightRecapBeat(
+							"mafia",
+							mafiaTarget,
+							blocked ? "saved_kill" : "kill_landed",
+						),
+					);
+				}
 			} else if (
 				Object.prototype.hasOwnProperty.call(this.nightTargets, "mafia")
 			) {
@@ -628,7 +691,7 @@ export class MafiaEngine {
 	_resolveNight() {
 		/** @param {string | null | undefined} id */
 		const liveTarget = (id) => (this._isAliveTarget(id) ? id : null);
-		const mafiaTarget = liveTarget(this.nightTargets.mafia);
+		const mafiaTargets = this._mafiaTargetList(this.nightTargets.mafia);
 		const saveTarget = liveTarget(this.nightTargets.healer);
 		const sniperTarget = liveTarget(this.nightTargets.sniper);
 		const sheriffTarget = liveTarget(this.nightTargets.sheriff);
@@ -637,19 +700,25 @@ export class MafiaEngine {
 		const deaths = [];
 		/** @type {string[]} */
 		const saved = [];
+		/** @type {Map<string, boolean>} */
+		const mafiaKillLandedByTarget = new Map();
 
-		// 1. Healing immunity (alive doctor only)
+		// 1. Mafia kills (alive mafia only)
 		let mafiaKillLanded = false;
-		if (this._hasAliveRoleHolder("mafia") && mafiaTarget) {
-			if (
-				this._hasAliveRoleHolder("doctor") &&
-				saveTarget &&
-				saveTarget === mafiaTarget
-			) {
-				saved.push(mafiaTarget);
-			} else {
-				mafiaKillLanded = true;
-				deaths.push(mafiaTarget);
+		if (this._hasAliveRoleHolder("mafia")) {
+			for (const mafiaTarget of mafiaTargets) {
+				if (
+					this._hasAliveRoleHolder("doctor") &&
+					saveTarget &&
+					saveTarget === mafiaTarget
+				) {
+					if (!saved.includes(mafiaTarget)) saved.push(mafiaTarget);
+					mafiaKillLandedByTarget.set(mafiaTarget, false);
+				} else {
+					mafiaKillLanded = true;
+					mafiaKillLandedByTarget.set(mafiaTarget, true);
+					if (!deaths.includes(mafiaTarget)) deaths.push(mafiaTarget);
+				}
 			}
 		}
 
@@ -689,12 +758,12 @@ export class MafiaEngine {
 		}
 
 		const nightRecap = this._buildNightRecap({
-			mafiaTarget,
+			mafiaTargets,
 			saveTarget,
 			sniperTarget,
 			sheriffTarget,
 			saved,
-			mafiaKillLanded,
+			mafiaKillLandedByTarget,
 			uniqueDeaths,
 		});
 
@@ -706,7 +775,8 @@ export class MafiaEngine {
 			saved: saved.map((id) => ({ playerId: id })),
 			silenced: [...this.silencedForDay],
 			seerInsights: { ...this._seerResults },
-			mafiaAttempted: mafiaTarget,
+			mafiaAttempted: mafiaTargets[0] ?? null,
+			mafiaAttempts: mafiaTargets,
 			mafiaKillLanded,
 			nightRecap,
 		};
@@ -738,38 +808,65 @@ export class MafiaEngine {
 		const playAlongOnly = this._stepPlayAlongOnly(step);
 
 		if (step.requiresTarget && !playAlongOnly) {
-			const hasChoice = Object.prototype.hasOwnProperty.call(
-				this.nightTargets,
-				step.key,
-			);
-			const target = this.nightTargets[step.key];
-			if (!hasChoice) {
-				return {
-					success: false,
-					error: "Choose a player or tap Skip before continuing",
-				};
-			}
-			if (target == null && !step.allowSkip) {
-				return {
-					success: false,
-					error: "Select a target before continuing",
-				};
-			}
-			if (target != null && !this._isAliveTarget(target)) {
-				return {
-					success: false,
-					error: "Cannot target a dead player",
-				};
-			}
-			if (
-				step.key === "healer" &&
-				target != null &&
-				target === this.lastHealedPlayerId
-			) {
-				return {
-					success: false,
-					error: "Doctor cannot heal the same player two nights in a row",
-				};
+			if (step.key === "mafia") {
+				if (!this._mafiaNightChoiceComplete()) {
+					return {
+						success: false,
+						error: "Choose a player or tap Skip before continuing",
+					};
+				}
+				const raw = this.nightTargets.mafia;
+				if (raw !== null) {
+					const targets = this._mafiaTargetList(raw);
+					for (const id of targets) {
+						if (!this._isAliveTarget(id)) {
+							return {
+								success: false,
+								error: "Cannot target a dead player",
+							};
+						}
+						if (this._aliveMafiaHolderIds().includes(id)) {
+							return {
+								success: false,
+								error: "Mafia cannot target themselves",
+							};
+						}
+					}
+				}
+			} else {
+				const hasChoice = Object.prototype.hasOwnProperty.call(
+					this.nightTargets,
+					step.key,
+				);
+				const target = this.nightTargets[step.key];
+				if (!hasChoice) {
+					return {
+						success: false,
+						error: "Choose a player or tap Skip before continuing",
+					};
+				}
+				if (target == null && !step.allowSkip) {
+					return {
+						success: false,
+						error: "Select a target before continuing",
+					};
+				}
+				if (target != null && !this._isAliveTarget(target)) {
+					return {
+						success: false,
+						error: "Cannot target a dead player",
+					};
+				}
+				if (
+					step.key === "healer" &&
+					target != null &&
+					target === this.lastHealedPlayerId
+				) {
+					return {
+						success: false,
+						error: "Doctor cannot heal the same player two nights in a row",
+					};
+				}
 			}
 		}
 
@@ -804,16 +901,41 @@ export class MafiaEngine {
 			step.key !== "seer" &&
 			step.key !== "morning"
 		) {
-			const target = this.nightTargets[step.key];
-			this._logEntry("night_step", {
-				stepKey: step.key,
-				stepTitleEn: step.titleEn,
-				actorPlayerId: step.roleId ?
-					this._primaryRoleHolder(step.roleId)
-				:	undefined,
-				targetId: target ?? undefined,
-				skipped: target == null && step.allowSkip,
-			});
+			const actorPlayerId = step.roleId ?
+				this._primaryRoleHolder(step.roleId)
+			:	undefined;
+			if (step.key === "mafia") {
+				const raw = this.nightTargets.mafia;
+				if (raw === null && step.allowSkip) {
+					this._logEntry("night_step", {
+						stepKey: step.key,
+						stepTitleEn: step.titleEn,
+						roleId: step.roleId ?? undefined,
+						actorPlayerId,
+						skipped: true,
+					});
+				} else {
+					for (const targetId of this._mafiaTargetList(raw)) {
+						this._logEntry("night_step", {
+							stepKey: step.key,
+							stepTitleEn: step.titleEn,
+							roleId: step.roleId ?? undefined,
+							actorPlayerId,
+							targetId,
+						});
+					}
+				}
+			} else {
+				const target = this.nightTargets[step.key];
+				this._logEntry("night_step", {
+					stepKey: step.key,
+					stepTitleEn: step.titleEn,
+					roleId: step.roleId ?? undefined,
+					actorPlayerId,
+					targetId: target ?? undefined,
+					skipped: target == null && step.allowSkip,
+				});
+			}
 		}
 
 		this.nightStepIndex += 1;
@@ -896,6 +1018,11 @@ export class MafiaEngine {
 				if (!blockedTargetIds.includes(id)) blockedTargetIds.push(id);
 			}
 		}
+		if (step.key === "mafia") {
+			for (const id of this._aliveMafiaHolderIds()) {
+				if (!blockedTargetIds.includes(id)) blockedTargetIds.push(id);
+			}
+		}
 
 		const hasChoice = Object.prototype.hasOwnProperty.call(
 			this.nightTargets,
@@ -904,6 +1031,20 @@ export class MafiaEngine {
 		const rawTarget = this.nightTargets[step.key];
 		const playAlongOnly = this._stepPlayAlongOnly(step);
 		const playAlong = playAlongOnly ? this._playAlongMessages(step.roleId) : null;
+		const maxTargetCount =
+			step.key === "mafia" ? this._mafiaMaxKills() : 1;
+		const selectedTargetIds =
+			step.key === "mafia" ?
+				this._mafiaTargetList(rawTarget)
+			:	hasChoice && rawTarget != null ?
+				[rawTarget]
+			:	[];
+		const choiceRecorded =
+			step.key === "mafia" ? this._mafiaNightChoiceComplete() : hasChoice;
+		const selectedTargetId =
+			choiceRecorded && selectedTargetIds.length > 0 ?
+				selectedTargetIds[0]
+			:	null;
 
 		return {
 			index: this.nightStepIndex,
@@ -918,15 +1059,17 @@ export class MafiaEngine {
 			playAlongMessageAr: playAlong?.ar ?? null,
 			requiresTarget: step.requiresTarget,
 			allowSkip: step.allowSkip,
+			requiredTargetCount: 1,
+			maxTargetCount,
 			roleId: step.roleId,
 			roleNameEn: role?.nameEn ?? null,
 			roleNameAr: role?.nameAr ?? null,
 			roleIcon: role?.icon ?? null,
 			roleHolders: holders,
-			choiceRecorded: hasChoice,
+			choiceRecorded,
 			skipped: hasChoice && rawTarget == null && step.allowSkip,
-			selectedTargetId:
-				hasChoice && rawTarget != null ? rawTarget : null,
+			selectedTargetId,
+			selectedTargetIds,
 			blockedTargetIds,
 		};
 	}

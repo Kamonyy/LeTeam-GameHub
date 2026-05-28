@@ -80,13 +80,28 @@ function firstAlive(engine: MafiaEngine): string {
   );
 }
 
+function aliveNonMafia(engine: MafiaEngine): string[] {
+  return AUDIT_PLAYER_IDS.filter(
+    (id) => engine.players[id]?.alive && engine.roleByPlayer[id] !== "mafia",
+  );
+}
+
 function advanceNightSteps(engine: MafiaEngine) {
   while (engine.phase === "night") {
     const panel = engine.serializeForPlayer(AUDIT_NARRATOR_ID) as MafiaNarratorGameState;
     const step = panel.narratorPanel?.nightStep;
     if (!step) break;
     if (step.requiresTarget) {
-      engine.narratorSetNightTarget(AUDIT_NARRATOR_ID, firstAlive(engine));
+      if (step.key === "mafia" && step.maxTargetCount > 1) {
+        const victim = aliveNonMafia(engine)[0];
+        if (victim) engine.narratorSetNightTarget(AUDIT_NARRATOR_ID, victim);
+      } else {
+        const victim =
+          step.key === "mafia" ? aliveNonMafia(engine)[0] : firstAlive(engine);
+        if (victim) {
+          engine.narratorSetNightTarget(AUDIT_NARRATOR_ID, victim);
+        }
+      }
     }
     const res = engine.narratorConfirmNightStep(AUDIT_NARRATOR_ID);
     if (!res.success) break;

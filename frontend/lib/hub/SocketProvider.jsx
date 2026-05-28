@@ -25,8 +25,18 @@ import { HardResetProvider } from '@/lib/hub/HardResetContext';
 import { hubPresenceEqual, lobbyStateEqual } from '@/lib/hub/hub-live';
 import { isGameActive } from '@/lib/hub/games-registry';
 import { stripNarratorSecrets } from '@/games/mafia/lib/redactMafiaState';
-
-const SocketContext = createContext(null);
+import { InvitationProvider } from '@/context/InvitationContext';
+import { socketDispatchRegistry } from '@/lib/hub/socket/dispatch-registry';
+import { GameTimerProvider } from '@/lib/hub/socket/GameTimerContext';
+import { SketchCanvasProvider } from '@/lib/hub/socket/SketchCanvasContext';
+import { GameStateProvider } from '@/lib/hub/socket/GameStateContext';
+import {
+  SocketConnectionProvider,
+  useSocketConnection,
+} from '@/lib/hub/socket/SocketConnectionContext';
+import { useGameState } from '@/lib/hub/socket/GameStateContext';
+import { useGameTimer } from '@/lib/hub/socket/GameTimerContext';
+import { useSketchCanvas } from '@/lib/hub/socket/SketchCanvasContext';
 
 /** @param {import('@/games/wordgame/types').WordGameState | null | undefined} prev */
 /** @param {import('@/games/wordgame/types').WordGameState | null | undefined} next */
@@ -72,6 +82,18 @@ function mergeMafiaGameState(prev, next) {
   return sanitized;
 }
 
+/** @param {import('@/games/sketch-draw/types').SketchDrawGameState | null | undefined} prev */
+/** @param {import('@/games/sketch-draw/types').SketchDrawGameState | null | undefined} next */
+function mergeSketchDrawState(prev, next) {
+  if (!next || next.gameType !== 'sketch-draw') return next ?? prev ?? null;
+  if (!prev || prev.gameType !== 'sketch-draw') return next;
+  const prevVer = typeof prev.stateVersion === 'number' ? prev.stateVersion : 0;
+  const nextVer = typeof next.stateVersion === 'number' ? next.stateVersion : 0;
+  if (prev.phase === 'match_over' && next.phase !== 'match_over') return next;
+  if (nextVer < prevVer) return prev;
+  return next;
+}
+
 function createUnsettledRegistration() {
   return new Promise(() => {});
 }
@@ -95,8 +117,37 @@ function waitForSocketEvent(socket, event, timeoutMs = 8000) {
 }
 
 const WORD_ACTION_TIMEOUT_MS = 12000;
+const REGISTER_ACK_MS = 12000;
+const ROOM_ACTION_ACK_MS = 12000;
 /** Max wait for reconnect + register during كموني ساعندي hard reset. */
 const HARD_RESET_REGISTER_MS = 2500;
+
+/**
+ * @param {import('socket.io-client').Socket | null | undefined} socket
+ * @param {string} event
+ * @param {unknown} payload
+ * @param {number} timeoutMs
+ */
+function emitWithAck(socket, event, payload, timeoutMs) {
+  return new Promise((resolve) => {
+    if (!socket?.connected) {
+      resolve(null);
+      return;
+    }
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      resolve(null);
+    }, timeoutMs);
+    socket.emit(event, payload, (res) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(res ?? null);
+    });
+  });
+}
 
 const BENIGN_WORD_GAME_ERRORS = new Set([
   'You already chose a champion',
@@ -121,11 +172,17 @@ export function SocketProvider({ children }) {
   const [chatMessages, setChatMessages] = useState([]);
   const [isSpectator, setIsSpectator] = useState(false);
   const [wordGuessedCelebration, setWordGuessedCelebration] = useState(null);
+  const [sketchDrawLocalHints, setSketchDrawLocalHints] = useState([]);
+  const [sketchDrawRoomAlerts, setSketchDrawRoomAlerts] = useState([]);
+  const [sketchDrawGuessFeed, setSketchDrawGuessFeed] = useState([]);
+  const [sketchDrawDisbandAt, setSketchDrawDisbandAt] = useState(0);
   const [hardResetInFlight, setHardResetInFlight] = useState(false);
+  const actionsRef = useRef({});
   const chatChannelRef = useRef(null);
   const wordActionInFlightRef = useRef(false);
   const skipNextConnectRegisterRef = useRef(false);
   const hardResetInFlightRef = useRef(false);
+  const leavingRoomRef = useRef(false);
 
   const setError = useCallback((message) => {
     if (message != null && hardResetInFlightRef.current) return;
@@ -133,50 +190,68 @@ export function SocketProvider({ children }) {
   }, []);
 
   const registerPlayer = useCallback((socket, id, isRetry = false) => {
-    return new Promise((resolve) => {
-      socket.emit(
+    return (async () => {
+      const res = await emitWithAck(
+        socket,
         'player:register',
         {
           playerId: id,
           displayName: getDisplayName() || 'Player',
           sessionToken: getSessionToken() || undefined,
         },
-        (res) => {
-          if (
-            !isRetry &&
-            res?.error &&
-            (res.error === 'Invalid session token' ||
-              res.error === 'Session token required')
-          ) {
-            clearSessionToken();
-            registerPlayer(socket, id, true).then(resolve);
-            return;
-          }
-          if (res?.error) {
-            setError(res.error);
-            resolve(false);
-            return;
-          }
-          if (res?.sessionToken) {
-            setSessionToken(res.sessionToken);
-          }
-          if (res?.reconnected && res?.roomId) {
-            // lobby/game state arrives via reconnect:sync + game:state:update
-            if (res?.isSpectator) setIsSpectator(true);
-          } else if (!res?.reconnected) {
-            setLobby(null);
-            setGameState(null);
-            setIsSpectator(false);
-          }
-          resolve(true);
-        }
+        REGISTER_ACK_MS
       );
-    });
-  }, []);
+
+      if (!res) {
+        return false;
+      }
+
+      if (
+        !isRetry &&
+        res.error &&
+        (res.error === 'Invalid session token' ||
+          res.error === 'Session token required')
+      ) {
+        clearSessionToken();
+        return registerPlayer(socket, id, true);
+      }
+
+      if (res.error) {
+        setError(res.error);
+        return false;
+      }
+
+      if (res.sessionToken) {
+        setSessionToken(res.sessionToken);
+      }
+      if (res.reconnected && res.roomId) {
+        if (res.isSpectator) setIsSpectator(true);
+      } else if (!res.reconnected) {
+        setLobby(null);
+        setGameState(null);
+        setIsSpectator(false);
+      }
+      return true;
+    })();
+  }, [setError]);
 
   const ensureRegistered = useCallback(async () => {
-    await registerReadyRef.current;
-  }, []);
+    let ok = await Promise.race([
+      registerReadyRef.current,
+      new Promise((resolve) => {
+        setTimeout(() => resolve(false), REGISTER_ACK_MS);
+      }),
+    ]);
+
+    if (ok) return true;
+
+    const socket = socketRef.current;
+    if (!socket?.connected) return false;
+
+    ok = await registerPlayer(socket, playerIdRef.current);
+    registerReadyRef.current = Promise.resolve(ok);
+    return ok;
+  }, [registerPlayer]);
 
   useEffect(() => {
     let cancelled = false;
@@ -230,6 +305,7 @@ export function SocketProvider({ children }) {
         );
       });
       socket.on('lobby:state', (state) => {
+        if (leavingRoomRef.current) return;
         setLobby((prev) => {
           if (lobbyStateEqual(prev, state)) return prev;
           if (state?.status === 'lobby') {
@@ -249,6 +325,7 @@ export function SocketProvider({ children }) {
         });
       });
       socket.on('game:state:update', (state) => {
+        if (leavingRoomRef.current) return;
         if (state?.gameType === 'wordgame') {
           setGameState((prev) => mergeWordGameState(prev, state));
           return;
@@ -261,11 +338,16 @@ export function SocketProvider({ children }) {
           setGameState((prev) => mergeMafiaGameState(prev, state));
           return;
         }
+        if (state?.gameType === 'sketch-draw') {
+          setGameState((prev) => mergeSketchDrawState(prev, state));
+          return;
+        }
         if (state && 'board' in state) {
           setGameState(state);
         }
       });
       socket.on('reconnect:sync', (payload) => {
+        if (leavingRoomRef.current) return;
         setLobby((prev) => (lobbyStateEqual(prev, payload) ? prev : payload));
         setIsSpectator(!!payload?.isSpectator);
         if (payload?.status === 'lobby') {
@@ -329,6 +411,80 @@ export function SocketProvider({ children }) {
           return next.length > 200 ? next.slice(-200) : next;
         });
       });
+      socket.on('sketch-draw:guess:close', (payload) => {
+        if (!payload) return;
+        setSketchDrawLocalHints((prev) => [
+          ...prev.slice(-20),
+          {
+            id: `close-${Date.now()}`,
+            messageAr: payload.messageAr ?? 'أنت قريب من الكلمة!',
+            messageEn: payload.messageEn ?? 'You are close to the word!',
+            at: Date.now(),
+          },
+        ]);
+      });
+      socket.on('sketch-draw:guess:correct', (payload) => {
+        if (!payload?.message) return;
+        setSketchDrawRoomAlerts((prev) => [
+          ...prev.slice(-30),
+          {
+            id: `correct-${payload.playerId}-${Date.now()}`,
+            message: payload.message,
+            kind: 'correct',
+            at: Date.now(),
+          },
+        ]);
+      });
+      socket.on('sketch-draw:guess:wrong', (payload) => {
+        if (!payload?.playerId || payload.text == null) return;
+        setSketchDrawGuessFeed((prev) => [
+          ...prev.slice(-80),
+          {
+            id: `wrong-${payload.playerId}-${Date.now()}`,
+            playerId: payload.playerId,
+            displayName: payload.displayName ?? 'Player',
+            text: payload.text ?? '',
+            at: Date.now(),
+          },
+        ]);
+      });
+      socket.on('game:time:tick', (payload) => {
+        if (!payload || payload.gameType !== 'sketch-draw') return;
+        socketDispatchRegistry.setGameTimerTick?.({
+          roomId: payload.roomId,
+          phase: payload.phase,
+          remainingMs: payload.remainingMs ?? 0,
+          phaseEndsAt: payload.phaseEndsAt ?? null,
+          stateVersion: payload.stateVersion ?? 0,
+          at: Date.now(),
+        });
+      });
+      socket.on('sketch-draw:canvas:stroke:batch', (payload) => {
+        if (!payload?.batch) return;
+        socketDispatchRegistry.setSketchRemoteBatch?.({
+          ...payload.batch,
+          _at: Date.now(),
+        });
+      });
+      socket.on('sketch-draw:canvas:sync', (payload) => {
+        if (!Array.isArray(payload?.canvasBuffer)) return;
+        socketDispatchRegistry.setSketchCanvasSync?.({
+          canvasBuffer: payload.canvasBuffer,
+          canvasBufferVersion: payload.canvasBufferVersion ?? 0,
+          at: Date.now(),
+        });
+      });
+      socket.on('sketch-draw:disband', (payload) => {
+        setSketchDrawLocalHints([]);
+        setSketchDrawRoomAlerts([]);
+        setSketchDrawGuessFeed([]);
+        socketDispatchRegistry.setGameTimerTick?.(null);
+        socketDispatchRegistry.clearSketchStreams?.();
+        setLobby(null);
+        setGameState(null);
+        setSketchDrawDisbandAt(Date.now());
+        if (payload?.message) setError(payload.message);
+      });
     })();
 
     return () => {
@@ -380,64 +536,103 @@ export function SocketProvider({ children }) {
     });
   }, []);
 
-  const createRoom = useCallback((displayName, gameType = 'wordgame') => {
-    return new Promise((resolve) => {
-      (async () => {
-        await ensureRegistered();
-        const socket = socketRef.current;
-        if (!socket?.connected) {
-          resolve(null);
-          return;
-        }
-        if (!isGameActive(gameType)) {
-          setError('This game is temporarily unavailable');
-          resolve(null);
-          return;
-        }
-        socket.emit('room:create', { displayName, gameType }, (res) => {
-          if (res?.error) {
-            setError(res.error);
-            resolve(null);
-          } else {
-            resolve(res.roomId ?? null);
-          }
-        });
-      })();
-    });
-  }, [ensureRegistered]);
+  const createRoom = useCallback(
+    async (displayName, gameType = 'wordgame') => {
+      const registered = await ensureRegistered();
+      if (!registered) {
+        setError('Could not register with server. Check your connection.');
+        return null;
+      }
 
-  const joinRoom = useCallback((roomId, displayName, options = {}) => {
-    const { spectate = false } = options;
-    return new Promise((resolve) => {
-      (async () => {
-        await ensureRegistered();
-        const socket = socketRef.current;
-        if (!socket?.connected) {
-          resolve(false);
-          return;
+      const socket = socketRef.current;
+      if (!socket?.connected) {
+        setError('Not connected to server');
+        return null;
+      }
+      if (!isGameActive(gameType)) {
+        setError('This game is temporarily unavailable');
+        return null;
+      }
+
+      const attempt = async (didLeave) => {
+        const res = await emitWithAck(
+          socket,
+          'room:create',
+          { displayName, gameType },
+          ROOM_ACTION_ACK_MS
+        );
+
+        if (!res) {
+          setError('Server did not respond. Try again.');
+          return null;
         }
-        const payload = {
-          roomId: roomId.toUpperCase(),
-          displayName,
-          ...(spectate ? { spectate: true } : {}),
-        };
-        const event = spectate ? 'room:spectate' : 'room:join';
-        socket.emit(event, payload, (res) => {
-          if (hardResetInFlightRef.current) {
-            resolve(false);
-            return;
-          }
-          if (res?.error) {
-            setError(res.error);
-            resolve(false);
-          } else {
-            setIsSpectator(!!res?.isSpectator || spectate);
-            resolve(true);
-          }
-        });
-      })();
-    });
-  }, [ensureRegistered]);
+
+        if (res.error === 'Already in a room' && !didLeave) {
+          await emitWithAck(
+            socket,
+            'room:leave',
+            { force: true, playerId: playerIdRef.current },
+            ROOM_ACTION_ACK_MS
+          );
+          setLobby(null);
+          setGameState(null);
+          setIsSpectator(false);
+          return attempt(true);
+        }
+
+        if (res.error) {
+          setError(res.error);
+          return null;
+        }
+
+        return res.roomId ?? null;
+      };
+
+      return attempt(false);
+    },
+    [ensureRegistered, setError]
+  );
+
+  const joinRoom = useCallback(
+    async (roomId, displayName, options = {}) => {
+      const { spectate = false } = options;
+      const registered = await ensureRegistered();
+      if (!registered) {
+        setError('Could not register with server. Check your connection.');
+        return false;
+      }
+
+      const socket = socketRef.current;
+      if (!socket?.connected) {
+        setError('Not connected to server');
+        return false;
+      }
+
+      const payload = {
+        roomId: roomId.toUpperCase(),
+        displayName,
+        ...(spectate ? { spectate: true } : {}),
+      };
+      const event = spectate ? 'room:spectate' : 'room:join';
+      const res = await emitWithAck(socket, event, payload, ROOM_ACTION_ACK_MS);
+
+      if (hardResetInFlightRef.current) {
+        return false;
+      }
+      if (!res) {
+        setError('Server did not respond. Try again.');
+        return false;
+      }
+      if (res.error) {
+        setError(res.error);
+        return false;
+      }
+
+      setIsSpectator(!!res.isSpectator || spectate);
+      return true;
+    },
+    [ensureRegistered, setError]
+  );
 
   const spectateRoom = useCallback((roomId, displayName) => {
     return joinRoom(roomId, displayName, { spectate: true });
@@ -484,14 +679,59 @@ export function SocketProvider({ children }) {
     });
   }, []);
 
+  const clearSketchDrawSession = useCallback(() => {
+    setSketchDrawLocalHints([]);
+    setSketchDrawRoomAlerts([]);
+    setSketchDrawGuessFeed([]);
+    setSketchDrawDisbandAt(0);
+    socketDispatchRegistry.setGameTimerTick?.(null);
+    socketDispatchRegistry.clearSketchStreams?.();
+  }, []);
+
   const leaveRoom = useCallback(() => {
-    socketRef.current?.emit('room:leave', {}, () => {
+    const clearLocalRoomState = () => {
       setLobby(null);
       setGameState(null);
       setWordGuessedCelebration(null);
       setIsSpectator(false);
-    });
-  }, []);
+      clearSketchDrawSession();
+    };
+
+    return (async () => {
+      leavingRoomRef.current = true;
+      try {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        const id = playerIdRef.current;
+        if (!socket?.connected) {
+          clearLocalRoomState();
+          return;
+        }
+
+        await new Promise((resolve) => {
+          const timer = setTimeout(() => {
+            clearLocalRoomState();
+            resolve();
+          }, 4000);
+
+          socket.emit(
+            'room:leave',
+            { force: true, playerId: id },
+            (res) => {
+              clearTimeout(timer);
+              if (res?.error) {
+                setError(res.error);
+              }
+              clearLocalRoomState();
+              resolve();
+            }
+          );
+        });
+      } finally {
+        leavingRoomRef.current = false;
+      }
+    })();
+  }, [clearSketchDrawSession, ensureRegistered, setError]);
 
   const clearClientSessionState = useCallback(() => {
     setLobby(null);
@@ -502,7 +742,8 @@ export function SocketProvider({ children }) {
     setIsSpectator(false);
     wordActionInFlightRef.current = false;
     chatChannelRef.current = null;
-  }, []);
+    clearSketchDrawSession();
+  }, [clearSketchDrawSession]);
 
   const hardResetPlayer = useCallback(async () => {
     hardResetInFlightRef.current = true;
@@ -546,6 +787,8 @@ export function SocketProvider({ children }) {
           }),
         ]);
 
+      registerReadyRef.current = registerSameIdentity();
+
       if (!socket.connected) {
         socket.connect();
         await Promise.race([
@@ -556,7 +799,6 @@ export function SocketProvider({ children }) {
         ]).catch(() => {});
       }
 
-      registerReadyRef.current = registerSameIdentity();
       await registerReadyRef.current;
     } finally {
       skipNextConnectRegisterRef.current = false;
@@ -997,6 +1239,70 @@ export function SocketProvider({ children }) {
     });
   }, [ensureRegistered]);
 
+  const sketchDrawSelectWord = useCallback((index) => {
+    return new Promise((resolve) => {
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve(false);
+          return;
+        }
+        socket.emit('sketch-draw:word:select', { index }, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve(false);
+          } else {
+            resolve(true);
+          }
+        });
+      })();
+    });
+  }, [ensureRegistered]);
+
+  const sketchDrawDisbandRoom = useCallback(() => {
+    return new Promise((resolve) => {
+      const socket = socketRef.current;
+      if (!socket?.connected) {
+        resolve(false);
+        return;
+      }
+      socket.emit('sketch-draw:disband', {}, (res) => {
+        if (res?.error) {
+          setError(res.error);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  }, []);
+
+  const sketchDrawSubmitGuess = useCallback((guess) => {
+    return new Promise((resolve) => {
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve({ ok: false, outcome: 'error' });
+          return;
+        }
+        socket.emit('game:guess:submit', { text: guess, guess }, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve({ ok: false, outcome: 'error', error: res.error });
+            return;
+          }
+          resolve({ ok: true, outcome: res.outcome ?? 'ok' });
+        });
+      })();
+    });
+  }, [ensureRegistered]);
+
+  const clearSketchDrawLocalHints = useCallback(() => {
+    setSketchDrawLocalHints([]);
+  }, []);
+
   const baraGuess = useCallback((guess) => {
     return new Promise((resolve) => {
       (async () => {
@@ -1019,88 +1325,122 @@ export function SocketProvider({ children }) {
     });
   }, [ensureRegistered]);
 
-  const value = useMemo(
+  const registerSocketListener = useCallback((event, handler) => {
+    const socket = socketRef.current;
+    if (!socket) return () => {};
+    socket.on(event, handler);
+    return () => {
+      socket.off(event, handler);
+    };
+  }, [connected]);
+
+  const emitInviteSend = useCallback(
+    (payload) =>
+      new Promise((resolve) => {
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve({ error: 'Not connected' });
+          return;
+        }
+        socket.emit('invite:send', payload, (res) => {
+          resolve(res ?? {});
+        });
+      }),
+    []
+  );
+
+  const emitInviteRespond = useCallback(
+    (payload) =>
+      new Promise((resolve) => {
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve({ error: 'Not connected' });
+          return;
+        }
+        socket.emit('invite:respond', payload, (res) => {
+          resolve(res ?? {});
+        });
+      }),
+    []
+  );
+
+  actionsRef.current = {
+    clearError,
+    refreshDisplayName,
+    createRoom,
+    joinRoom,
+    spectateRoom,
+    joinRoomOrSpectate,
+    leaveRoom,
+    hardResetPlayer,
+    updateRoomSettings,
+    startGame,
+    kickPlayer,
+    cancelMatch,
+    playMove,
+    drawTile,
+    passTurn,
+    continueRound,
+    requestRematch,
+    submitSecretWord,
+    submitSecretChampion,
+    confirmWordGuessed,
+    reportWordTabFocus,
+    baraReveal,
+    baraAdvanceInterrogation,
+    baraVote,
+    baraGuess,
+    sketchDrawSelectWord,
+    sketchDrawSubmitGuess,
+    sketchDrawDisbandRoom,
+    mafiaAcknowledgeRole,
+    mafiaNarratorAction,
+    addDevBots,
+    removeDevBots,
+    registerSocketListener,
+    emitInviteSend,
+    emitInviteRespond,
+    sendChat,
+  };
+
+  const connectionValue = useMemo(
     () => ({
+      socketRef,
+      actionsRef,
       connected,
       playerId,
+      error,
+      hardResetInFlight,
+    }),
+    [connected, playerId, error, hardResetInFlight]
+  );
+
+  const gameStateValue = useMemo(
+    () => ({
       lobby,
       gameState,
       isSpectator,
-      error,
-      hardResetInFlight,
       hubPresence,
       chatMessages,
+      sketchDrawLocalHints,
+      sketchDrawRoomAlerts,
+      sketchDrawGuessFeed,
+      sketchDrawDisbandAt,
+      clearSketchDrawLocalHints,
       sendChat,
-      clearError,
-      refreshDisplayName,
-      createRoom,
-      joinRoom,
-      spectateRoom,
-      joinRoomOrSpectate,
-      leaveRoom,
-      hardResetPlayer,
-      updateRoomSettings,
-      startGame,
-      kickPlayer,
-      cancelMatch,
-      playMove,
-      drawTile,
-      passTurn,
-      continueRound,
-      requestRematch,
-      submitSecretWord,
-      submitSecretChampion,
-      confirmWordGuessed,
-      reportWordTabFocus,
-      baraReveal,
-      baraAdvanceInterrogation,
-      baraVote,
-      baraGuess,
-      mafiaAcknowledgeRole,
-      mafiaNarratorAction,
-      addDevBots,
-      removeDevBots,
     }),
     [
-      connected,
-      playerId,
       lobby,
       gameState,
       isSpectator,
-      error,
-      hardResetInFlight,
       hubPresence,
       chatMessages,
+      sketchDrawLocalHints,
+      sketchDrawRoomAlerts,
+      sketchDrawGuessFeed,
+      sketchDrawDisbandAt,
+      clearSketchDrawLocalHints,
       sendChat,
-      clearError,
-      refreshDisplayName,
-      createRoom,
-      joinRoom,
-      spectateRoom,
-      joinRoomOrSpectate,
-      leaveRoom,
-      hardResetPlayer,
-      updateRoomSettings,
-      startGame,
-      kickPlayer,
-      cancelMatch,
-      playMove,
-      drawTile,
-      passTurn,
-      continueRound,
-      requestRematch,
-      submitSecretWord,
-      submitSecretChampion,
-      confirmWordGuessed,
-      reportWordTabFocus,
-      baraReveal,
-      baraAdvanceInterrogation,
-      baraVote,
-      baraGuess,
-      mafiaAcknowledgeRole,
-      mafiaNarratorAction,
-      addDevBots,
-      removeDevBots,
     ]
   );
 
@@ -1126,16 +1466,58 @@ export function SocketProvider({ children }) {
   return (
     <HubLiveProvider value={hubLiveValue}>
       <HardResetProvider hardResetPlayer={hardResetPlayer}>
-        <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
+        <SocketConnectionProvider value={connectionValue}>
+          <GameTimerProvider>
+            <SketchCanvasProvider>
+              <GameStateProvider value={gameStateValue}>
+                <InvitationProvider>{children}</InvitationProvider>
+              </GameStateProvider>
+            </SketchCanvasProvider>
+          </GameTimerProvider>
+        </SocketConnectionProvider>
       </HardResetProvider>
     </HubLiveProvider>
   );
 }
 
 export function useSocket() {
-  const ctx = useContext(SocketContext);
-  if (!ctx) {
-    throw new Error('useSocket must be used within SocketProvider');
-  }
-  return ctx;
+  const connection = useSocketConnection();
+  const game = useGameState();
+  const sketchDrawTimeTick = useGameTimer();
+  const canvas = useSketchCanvas();
+  const { actionsRef } = useSocketConnection();
+
+  return useMemo(() => {
+    const stateSlice = {
+      connected: connection.connected,
+      playerId: connection.playerId,
+      error: connection.error,
+      hardResetInFlight: connection.hardResetInFlight,
+      ...game,
+      sketchDrawTimeTick,
+      sketchDrawRemoteBatch: canvas.sketchDrawRemoteBatch,
+      sketchDrawCanvasSync: canvas.sketchDrawCanvasSync,
+      sketchDrawStrokeBatch: canvas.sketchDrawStrokeBatch,
+      sketchDrawCanvasUndo: canvas.sketchDrawCanvasUndo,
+      sketchDrawCanvasRedo: canvas.sketchDrawCanvasRedo,
+      sketchDrawCanvasClear: canvas.sketchDrawCanvasClear,
+      sketchDrawCanvasFill: canvas.sketchDrawCanvasFill,
+      requestSketchCanvasRecovery: canvas.requestSketchCanvasRecovery,
+    };
+
+    // Socket actions live on actionsRef; do not spread a Proxy (ownKeys is empty).
+    return new Proxy(stateSlice, {
+      get(target, prop, receiver) {
+        if (Reflect.has(target, prop)) {
+          return Reflect.get(target, prop, receiver);
+        }
+        if (typeof prop !== 'string') return undefined;
+        const fn = actionsRef.current[prop];
+        if (typeof fn === 'function') {
+          return (...args) => fn(...args);
+        }
+        return fn;
+      },
+    });
+  }, [connection, game, sketchDrawTimeTick, canvas, actionsRef]);
 }

@@ -37,10 +37,10 @@ export function nightStepDotStyle(
   }
 
   return {
-    borderColor: `color-mix(in srgb, ${accent} 58%, #c8b8a0)`,
-    background: `linear-gradient(165deg, color-mix(in srgb, ${accent} 48%, #3a3430) 0%, color-mix(in srgb, ${accent} 32%, #1a1814) 100%)`,
-    color: `color-mix(in srgb, ${accent} 55%, #faf6ec)`,
-    boxShadow: `0 0 12px color-mix(in srgb, ${accent} 35%, transparent), inset 0 1px 0 rgba(255, 240, 210, 0.12)`,
+    borderColor: `color-mix(in srgb, ${accent} 55%, #d4c4a8)`,
+    background: `linear-gradient(165deg, color-mix(in srgb, ${accent} 45%, #5c5448) 0%, color-mix(in srgb, ${accent} 30%, #322e28) 100%)`,
+    color: "#f5f0e6",
+    boxShadow: `0 0 10px color-mix(in srgb, ${accent} 35%, transparent), inset 0 1px 0 rgba(255, 248, 235, 0.25)`,
   };
 }
 
@@ -52,21 +52,21 @@ export function nightStepLabelStyle(
 
   if (state === "active") {
     return {
-      color: `color-mix(in srgb, ${accent} 35%, #fff8e8)`,
-      textShadow: `0 0 18px color-mix(in srgb, ${accent} 75%, transparent), 0 0 4px color-mix(in srgb, ${accent} 50%, #fffef0)`,
+      color: "#fffef5",
+      textShadow: `0 0 14px color-mix(in srgb, ${accent} 80%, transparent), 0 1px 2px rgba(0, 0, 0, 0.75)`,
     };
   }
 
   if (state === "done") {
     return {
-      color: `color-mix(in srgb, ${accent} 50%, #f5ecd8)`,
-      textShadow: `0 0 10px color-mix(in srgb, ${accent} 40%, transparent)`,
+      color: `color-mix(in srgb, ${accent} 30%, #faf3e0)`,
+      textShadow: `0 0 10px color-mix(in srgb, ${accent} 50%, transparent), 0 1px 2px rgba(0, 0, 0, 0.55)`,
     };
   }
 
   return {
-    color: `color-mix(in srgb, ${accent} 45%, #fff8ec)`,
-    textShadow: `0 0 10px color-mix(in srgb, ${accent} 50%, transparent)`,
+    color: `color-mix(in srgb, ${accent} 25%, #f8f4ea)`,
+    textShadow: `0 1px 2px rgba(0, 0, 0, 0.7)`,
   };
 }
 

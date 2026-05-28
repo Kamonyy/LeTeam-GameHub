@@ -3,6 +3,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 .sw-shell {
+	--sw-header-height: 4.25rem;
 	--sw-deep: #060816;
 	--sw-mid: #0b1020;
 	--sw-panel: rgba(12, 18, 36, 0.72);
@@ -20,6 +21,9 @@
 	font-family: 'Inter', system-ui, sans-serif;
 	background: var(--sw-deep);
 	color: var(--sw-text);
+	min-height: 100vh;
+	min-height: 100dvh;
+	overflow-x: hidden;
 }
 
 .sw-font-display {
@@ -120,6 +124,7 @@
 	position: sticky;
 	top: 0;
 	z-index: 40;
+	padding-top: var(--safe-top);
 	border-bottom: 1px solid rgba(201, 162, 39, 0.15);
 	background: linear-gradient(
 		180deg,
@@ -658,6 +663,8 @@
 
 /* ── Inputs & buttons ── */
 .sw-input {
+	appearance: none;
+	-webkit-appearance: none;
 	width: 100%;
 	padding: 0.75rem 1rem;
 	border-radius: 0.5rem;
@@ -1174,6 +1181,7 @@
 		max(1.25rem, env(safe-area-inset-bottom))
 		max(1.25rem, env(safe-area-inset-left));
 	background: rgba(4, 8, 18, 0.82);
+	-webkit-backdrop-filter: blur(10px);
 	backdrop-filter: blur(10px);
 	pointer-events: auto;
 }
@@ -1427,6 +1435,7 @@
 	flex-wrap: nowrap;
 	gap: 0.35rem;
 	overflow-x: auto;
+	overscroll-behavior-x: contain;
 	padding-bottom: 0.15rem;
 	scrollbar-width: thin;
 	scrollbar-color: rgba(201, 162, 39, 0.35) transparent;
@@ -1624,6 +1633,7 @@
 	position: relative;
 	max-height: 16rem;
 	overflow-y: auto;
+	overscroll-behavior: contain;
 	margin: 0 -0.25rem;
 	padding: 0 0.25rem;
 	scrollbar-width: thin;
@@ -2125,7 +2135,7 @@
 	.sw-lobby-aside {
 		order: 0;
 		position: sticky;
-		top: 6.5rem;
+		top: calc(var(--safe-top) + var(--sw-header-height));
 		align-self: start;
 	}
 }
@@ -2297,7 +2307,7 @@
 }
 
 .sw-view-mount {
-	animation: sw-view-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+	animation: sw-view-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 	-webkit-backface-visibility: hidden;
 	backface-visibility: hidden;
 }
@@ -2317,7 +2327,7 @@
 @media (min-width: 1024px) {
 	.sw-game-with-scratchpad__aside {
 		position: sticky;
-		top: 6.5rem;
+		top: calc(var(--safe-top) + var(--sw-header-height));
 		align-self: start;
 	}
 
@@ -2727,6 +2737,7 @@
 	box-shadow:
 		0 8px 32px rgba(0, 0, 0, 0.45),
 		0 0 24px rgba(201, 162, 39, 0.08);
+	-webkit-backdrop-filter: blur(12px);
 	backdrop-filter: blur(12px);
 }
 
@@ -2806,8 +2817,8 @@
 /* ── LoL audio mute (floating) ── */
 .sw-audio-mute {
 	position: fixed;
-	bottom: 1.25rem;
-	right: 1.25rem;
+	bottom: max(1.25rem, var(--safe-bottom));
+	right: max(1.25rem, var(--safe-right));
 	z-index: 50;
 	display: flex;
 	align-items: center;
@@ -2872,6 +2883,10 @@
 			rgba(12, 18, 36, 0.96) 100%
 		);
 	}
+
+	.sw-match-over-overlay {
+		background: rgba(4, 8, 18, 0.95);
+	}
 }
 
 /* Infinite / ambient loops only — keep one-shot entrances visible */
@@ -2891,7 +2906,9 @@
 
 	.sw-header,
 	.sw-card,
-	.sw-panel {
+	.sw-panel,
+	.sw-match-over-overlay,
+	.sw-player-profile {
 		-webkit-backdrop-filter: none;
 		backdrop-filter: none;
 	}

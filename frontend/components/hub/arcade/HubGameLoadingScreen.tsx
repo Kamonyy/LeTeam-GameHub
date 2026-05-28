@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import clsx from 'clsx';
 import { getGameEntry } from '@/lib/hub/games-registry';
-
-export const HUB_NAVIGATING_KEY = 'hub-navigating-game';
+import { useClientStorage } from '@/lib/session/ClientStorageContext';
+import { HUB_NAVIGATING_KEY } from '@/lib/session/core-session';
 
 interface HubGameLoadingScreenProps {
   /** Fallback when session hint is missing (e.g. direct URL). */
@@ -13,9 +13,18 @@ interface HubGameLoadingScreenProps {
 }
 
 export default function HubGameLoadingScreen({ gameId }: HubGameLoadingScreenProps) {
-  const [resolvedId, setResolvedId] = useState(gameId);
+  const { isStorageReady, hubNavigatingGameId } = useClientStorage();
+  const [resolvedId, setResolvedId] = useState<string | undefined>(gameId);
 
   useEffect(() => {
+    if (!isStorageReady) return;
+
+    const fromBoot = hubNavigatingGameId ?? gameId;
+    if (fromBoot) {
+      setResolvedId(fromBoot);
+      return;
+    }
+
     try {
       const stored = sessionStorage.getItem(HUB_NAVIGATING_KEY);
       if (stored) {
@@ -25,12 +34,20 @@ export default function HubGameLoadingScreen({ gameId }: HubGameLoadingScreenPro
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [isStorageReady, hubNavigatingGameId, gameId]);
+
+  if (!isStorageReady) {
+    return (
+      <main className="hub-arcade min-h-dvh relative flex items-center justify-center px-6">
+        <div className="h-8 w-8 rounded-full border-2 border-gray-400 border-t-transparent animate-spin" />
+      </main>
+    );
+  }
 
   const game = resolvedId ? getGameEntry(resolvedId) : null;
 
   return (
-    <main className="hub-arcade min-h-screen relative flex items-center justify-center px-6">
+    <main className="hub-arcade min-h-dvh relative flex items-center justify-center px-6 overflow-x-hidden">
       <div
         className={clsx(
           'hub-game-loading text-center max-w-sm',

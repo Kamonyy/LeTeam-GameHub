@@ -11,6 +11,9 @@ const PHASE_ICONS: Record<string, '🌙' | '☀️' | '🌅'> = {
   morning: '🌅',
 };
 
+/** Night emojis that should render as the shared moon SVG (not raw glyph). */
+const MOON_ICONS = new Set(['🌙', '🌑', '🌛', '🌜', '🌘', '🌗', '🌖', '🌕']);
+
 /** Renders detailed phase SVGs for chronicle / log emojis */
 export function MafiaChronicleIcon({
   icon,
@@ -21,7 +24,7 @@ export function MafiaChronicleIcon({
   className?: string;
   size?: MafiaChronicleIconSize;
 }) {
-  if (icon === PHASE_ICONS.moon) {
+  if (MOON_ICONS.has(icon)) {
     return <MafiaNightMoonIcon size={size} className={className} />;
   }
   if (icon === PHASE_ICONS.sun) {

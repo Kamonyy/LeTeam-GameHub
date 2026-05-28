@@ -6,6 +6,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX } from 'lucide-react';
 import { useSocket } from '@/hooks/useSocket';
+import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
+import { suppressRoomAutoJoinRef } from '@/lib/hub/room-auto-join';
 import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
@@ -40,7 +42,6 @@ export default function DominoesClient() {
     createRoom,
     joinRoomOrSpectate,
     spectateRoom,
-    leaveRoom,
     updateRoomSettings,
     startGame,
     kickPlayer,
@@ -60,6 +61,7 @@ export default function DominoesClient() {
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [autoJoined, setAutoJoined] = useState(false);
   const [inviteJoin, setInviteJoin] = useState(false);
+  const leaveToHub = useLeaveToHub();
 
   useEffect(() => {
     setInviteJoin(!!roomParam && !hasDisplayName());
@@ -73,6 +75,7 @@ export default function DominoesClient() {
 
   useEffect(() => {
     if (
+      suppressRoomAutoJoinRef.current ||
       !dominoesEnabled ||
       !connected ||
       hardResetInFlight ||
@@ -205,12 +208,12 @@ export default function DominoesClient() {
   return (
     <main
       className={clsx(
-        'min-h-screen',
+        'min-h-dvh overflow-x-hidden',
         showChatSidebar && 'lg:grid lg:grid-cols-[minmax(0,1fr)_20rem]',
       )}
     >
       <div className="min-w-0 flex flex-col">
-      <header className="border-b border-hub-border bg-hub-surface/50 backdrop-blur-sm sticky top-0 z-40">
+      <header className="border-b border-hub-border bg-hub-surface/50 glass-blur-sm sticky top-0 z-40 pt-safe-top">
         <div
           className={clsx(
             'mx-auto px-6 py-4 flex items-center justify-between w-full',
@@ -249,7 +252,7 @@ export default function DominoesClient() {
 
       <div
         className={clsx(
-          'mx-auto px-4 sm:px-6 py-10 w-full',
+          'mx-auto px-6 py-10 w-full',
           showGameBoard ? 'max-w-none' : 'max-w-6xl',
         )}
       >
@@ -369,10 +372,7 @@ export default function DominoesClient() {
           <div className="max-w-md mx-auto text-center animate-fade-in py-16">
             <SpectatorBanner
               roomId={dominoLobby.roomId}
-              onLeave={() => {
-                leaveRoom();
-                router.push('/dominoes');
-              }}
+              onLeave={() => void leaveToHub()}
             />
             <p className="text-sm text-hub-muted mt-6">
               Waiting for the host to start the match.
@@ -391,10 +391,7 @@ export default function DominoesClient() {
               await startGame();
               setStarting(false);
             }}
-            onLeave={() => {
-              leaveRoom();
-              router.push('/dominoes');
-            }}
+            onLeave={() => void leaveToHub()}
             starting={starting}
           />
         )}
@@ -411,10 +408,7 @@ export default function DominoesClient() {
             {isSpectator && (
               <SpectatorBanner
                 roomId={dominoLobby.roomId}
-                onLeave={() => {
-                  leaveRoom();
-                  router.push('/dominoes');
-                }}
+                onLeave={() => void leaveToHub()}
               />
             )}
             <GameBoard
@@ -435,7 +429,7 @@ export default function DominoesClient() {
       </div>
 
       {showChatSidebar && (
-        <ChatPanel className="hidden lg:flex lg:flex-col lg:col-start-2 lg:row-start-1 border-l border-hub-border bg-hub-surface/80 backdrop-blur-sm sticky top-0 h-dvh min-h-0 z-30" />
+        <ChatPanel className="hidden lg:flex lg:flex-col lg:col-start-2 lg:row-start-1 border-l border-hub-border bg-hub-surface/80 glass-blur-sm sticky top-0 pt-safe-top h-dvh min-h-0 pb-safe-bottom z-30" />
       )}
 
       <ErrorToast message={error} onDismiss={clearError} />

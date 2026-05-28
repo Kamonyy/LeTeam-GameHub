@@ -46,7 +46,7 @@ export default function RoundResultsModal({
 		:	myPlayerId === winnerId);
 
 	return (
-		<div className="absolute inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-sm p-4 pointer-events-auto">
+		<div className="absolute inset-0 z-50 flex items-center justify-center bg-black/55 glass-blur-sm p-4 pointer-events-auto overscroll-contain">
 			<div
 				className={clsx(
 					"w-full max-w-lg rounded-2xl border-2 p-6 sm:p-8 text-center shadow-2xl animate-overlay-pop",

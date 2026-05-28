@@ -2,12 +2,17 @@
 
 import { useId } from 'react';
 import clsx from 'clsx';
-import {
-  MAFIA_PHASE_ICON_PX,
-  type MafiaPhaseIconSize,
-} from './phaseIconSizes';
+import type { MafiaPhaseIconSize } from './phaseIconSizes';
 
 export type MafiaDaySunIconSize = MafiaPhaseIconSize;
+
+/** Match moon icon scale so phase icons read equally in the chronicle. */
+const SUN_ICON_PX: Record<MafiaDaySunIconSize, number> = {
+  xs: 22,
+  sm: 26,
+  md: 40,
+  lg: 64,
+};
 export type MafiaSunVariant = 'day' | 'morning';
 
 interface MafiaDaySunIconProps {
@@ -44,7 +49,7 @@ export default function MafiaDaySunIcon({
   variant = 'day',
   className,
 }: MafiaDaySunIconProps) {
-  const px = MAFIA_PHASE_ICON_PX[size];
+  const px = SUN_ICON_PX[size];
   const uid = useId().replace(/:/g, '');
   const coronaId = `mf-sun-corona-${uid}`;
   const coreId = `mf-sun-core-${uid}`;

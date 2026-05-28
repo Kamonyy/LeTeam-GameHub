@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import type { LobbyState, MatchSettings } from '@/lib/hub/types';
 import { SCORE_CAP_OPTIONS } from '@/lib/hub/types';
 import GameAboutPanel from '@/components/hub/GameAboutPanel';
+import InviteFriendsButton from '@/components/invitations/InviteFriendsButton';
 
 interface LobbyProps {
   lobby: LobbyState;
@@ -75,17 +76,24 @@ export default function Lobby({
             {lobby.roomId}
           </h2>
         </div>
-        <button
-          onClick={copyLink}
-          className="btn-secondary flex items-center gap-2 text-sm py-2"
-        >
-          {copied ? (
-            <Check className="w-4 h-4 text-hub-success" />
-          ) : (
-            <Copy className="w-4 h-4" />
-          )}
-          {copied ? 'Copied' : 'Share'}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <InviteFriendsButton
+            roomId={lobby.roomId}
+            gameType={lobby.gameType}
+            disabled={lobby.status !== 'lobby'}
+          />
+          <button
+            onClick={copyLink}
+            className="btn-secondary flex items-center gap-2 text-sm py-2"
+          >
+            {copied ? (
+              <Check className="w-4 h-4 text-hub-success" />
+            ) : (
+              <Copy className="w-4 h-4" />
+            )}
+            {copied ? 'Copied' : 'Share'}
+          </button>
+        </div>
       </div>
 
       {/* Match settings */}

@@ -151,7 +151,7 @@ function PlayerActivityLog({
                           >
                             <div className="flex gap-2">
                               <span
-                                className="flex w-5 shrink-0 items-center justify-center text-sm text-amber-500"
+                                className="flex w-7 shrink-0 items-center justify-center text-sm text-amber-500"
                                 aria-hidden
                               >
                                 <MafiaChronicleIcon icon={icon} size="xs" />

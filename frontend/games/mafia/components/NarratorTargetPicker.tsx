@@ -29,6 +29,9 @@ interface NarratorTargetPickerProps {
   playerIds: string[];
   playerName: (id: string) => string;
   selectedId: string | null;
+  selectedIds?: string[];
+  requiredTargetCount?: number;
+  maxTargetCount?: number;
   skipSelected?: boolean;
   blockedIds?: string[];
   allowSkip?: boolean;
@@ -48,6 +51,86 @@ function teamPanelClass(team: TeamSide) {
     : 'border-rose-800/45 bg-[radial-gradient(ellipse_at_0%_0%,rgba(200,84,106,0.12)_0%,transparent_55%),linear-gradient(180deg,rgba(42,18,22,0.95)_0%,rgba(18,8,10,0.98)_100%)] shadow-[inset_0_1px_0_rgba(255,180,190,0.06)]';
 }
 
+function renderTargetTile({
+  id,
+  allPlayers,
+  playerName,
+  team,
+  blockedIds,
+  disabled,
+  isChosen,
+}: {
+  id: string;
+  allPlayers: MafiaNarratorPlayerRow[];
+  playerName: (id: string) => string;
+  team: TeamSide;
+  blockedIds: string[];
+  disabled?: boolean;
+  isChosen: boolean;
+}) {
+  const p = allPlayers.find((x) => x.id === id);
+  if (!p) return null;
+  const blocked = blockedIds.includes(id);
+  const label = playerName(id);
+  const roleAccent = getRoleAccent(p.roleId);
+
+  return (
+    <ToggleGroupItem
+      key={id}
+      value={id}
+      variant="outline"
+      disabled={disabled || blocked}
+      aria-label={
+        isChosen ? `${label}, ${p.roleNameEn}, selected` : `${label}, ${p.roleNameEn}`
+      }
+      title={
+        blocked ? 'Cannot select — rule blocked' : `${label} · ${p.roleNameEn}`
+      }
+      className={clsx(
+        'mf-target-tile',
+        team === 'good' ? 'mf-target-tile--good' : 'mf-target-tile--evil',
+        isChosen && 'mf-target-tile--chosen',
+        'relative flex h-auto min-h-[3.25rem] w-full min-w-0 items-center gap-2 px-2.5 py-2',
+        'text-left whitespace-normal',
+        !p.alive && 'opacity-50 grayscale',
+        blocked && 'cursor-not-allowed opacity-40',
+      )}
+    >
+      <span
+        className="mf-role-dot shrink-0 rounded-full"
+        style={roleDotStyle(p.roleId)}
+        aria-hidden
+      />
+      <span className="min-w-0 flex flex-1 flex-col gap-0.5 text-left">
+        <span
+          className={clsx(
+            p.alive ? mfNameGold : mfNameMuted,
+            'text-[0.8rem] leading-tight tracking-wide',
+          )}
+        >
+          {label}
+        </span>
+        <span
+          className={clsx(mfRoleLine, 'text-[0.62rem] leading-tight')}
+          style={{ color: roleAccent }}
+        >
+          <span aria-hidden>{p.roleIcon}</span> {p.roleNameEn}
+        </span>
+      </span>
+      {isChosen && (
+        <span className="mf-target-tile__chosen-mark shrink-0" aria-hidden>
+          ✓ Chosen
+        </span>
+      )}
+      {!p.alive && !isChosen && (
+        <Badge variant="dead" className="shrink-0 px-1 py-0 text-[0.5rem]">
+          Dead
+        </Badge>
+      )}
+    </ToggleGroupItem>
+  );
+}
+
 function TeamTargets({
   title,
   team,
@@ -55,9 +138,12 @@ function TeamTargets({
   allPlayers,
   playerName,
   groupValue,
+  selectedIds,
+  multiSelect,
   blockedIds,
   disabled,
-  onValueChange,
+  onSingleChange,
+  onMultiChange,
 }: {
   title: string;
   team: TeamSide;
@@ -65,9 +151,12 @@ function TeamTargets({
   allPlayers: MafiaNarratorPlayerRow[];
   playerName: (id: string) => string;
   groupValue: string;
+  selectedIds: string[];
+  multiSelect: boolean;
   blockedIds: string[];
   disabled?: boolean;
-  onValueChange: (value: string) => void;
+  onSingleChange: (value: string) => void;
+  onMultiChange: (value: string[]) => void;
 }) {
   if (ids.length === 0) return null;
 
@@ -88,83 +177,48 @@ function TeamTargets({
         </MafiaCardTitle>
       </MafiaCardHeader>
       <MafiaCardContent className="p-2.5 pt-2">
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          value={groupValue}
-          onValueChange={onValueChange}
-          disabled={disabled}
-          className={targetGridClass}
-        >
-          {ids.map((id) => {
-            const p = allPlayers.find((x) => x.id === id);
-            if (!p) return null;
-            const blocked = blockedIds.includes(id);
-            const label = playerName(id);
-            const roleAccent = getRoleAccent(p.roleId);
-            const isChosen = groupValue === id;
-
-            return (
-              <ToggleGroupItem
-                key={id}
-                value={id}
-                variant="outline"
-                disabled={disabled || blocked}
-                aria-label={
-                  isChosen ?
-                    `${label}, ${p.roleNameEn}, selected`
-                  : `${label}, ${p.roleNameEn}`
-                }
-                title={
-                  blocked
-                    ? 'Cannot select — rule blocked'
-                    : `${label} · ${p.roleNameEn}`
-                }
-                className={clsx(
-                  'mf-target-tile',
-                  team === 'good' ? 'mf-target-tile--good' : 'mf-target-tile--evil',
-                  isChosen && 'mf-target-tile--chosen',
-                  'relative flex h-auto min-h-[3.25rem] w-full min-w-0 items-center gap-2 px-2.5 py-2',
-                  'text-left whitespace-normal',
-                  !p.alive && 'opacity-50 grayscale',
-                  blocked && 'cursor-not-allowed opacity-40',
-                )}
-              >
-                <span
-                  className="mf-role-dot shrink-0 rounded-full"
-                  style={roleDotStyle(p.roleId)}
-                  aria-hidden
-                />
-                <span className="min-w-0 flex flex-1 flex-col gap-0.5 text-left">
-                  <span
-                    className={clsx(
-                      p.alive ? mfNameGold : mfNameMuted,
-                      'text-[0.8rem] leading-tight tracking-wide',
-                    )}
-                  >
-                    {label}
-                  </span>
-                  <span
-                    className={clsx(mfRoleLine, 'text-[0.62rem] leading-tight')}
-                    style={{ color: roleAccent }}
-                  >
-                    <span aria-hidden>{p.roleIcon}</span> {p.roleNameEn}
-                  </span>
-                </span>
-                {isChosen && (
-                  <span className="mf-target-tile__chosen-mark shrink-0" aria-hidden>
-                    ✓ Chosen
-                  </span>
-                )}
-                {!p.alive && !isChosen && (
-                  <Badge variant="dead" className="shrink-0 px-1 py-0 text-[0.5rem]">
-                    Dead
-                  </Badge>
-                )}
-              </ToggleGroupItem>
-            );
-          })}
-        </ToggleGroup>
+        {multiSelect ?
+          <ToggleGroup
+            type="multiple"
+            variant="outline"
+            value={selectedIds}
+            onValueChange={onMultiChange}
+            disabled={disabled}
+            className={targetGridClass}
+          >
+            {ids.map((id) =>
+              renderTargetTile({
+                id,
+                allPlayers,
+                playerName,
+                team,
+                blockedIds,
+                disabled,
+                isChosen: selectedIds.includes(id),
+              }),
+            )}
+          </ToggleGroup>
+        : <ToggleGroup
+            type="single"
+            variant="outline"
+            value={groupValue}
+            onValueChange={onSingleChange}
+            disabled={disabled}
+            className={targetGridClass}
+          >
+            {ids.map((id) =>
+              renderTargetTile({
+                id,
+                allPlayers,
+                playerName,
+                team,
+                blockedIds,
+                disabled,
+                isChosen: groupValue === id,
+              }),
+            )}
+          </ToggleGroup>
+        }
       </MafiaCardContent>
     </MafiaCard>
   );
@@ -175,14 +229,20 @@ export default function NarratorTargetPicker({
   playerIds,
   playerName,
   selectedId,
+  selectedIds = [],
+  requiredTargetCount = 1,
+  maxTargetCount = 1,
   skipSelected = false,
   blockedIds = [],
   allowSkip = false,
   aliveOnly = true,
   disabled,
-  actionLabel = 'Choose target',
+  actionLabel,
   onSelect,
 }: NarratorTargetPickerProps) {
+  const multiSelect = maxTargetCount > 1;
+  const resolvedSelectedIds =
+    multiSelect ? selectedIds : selectedId ? [selectedId] : [];
   const selectableIds =
     aliveOnly ?
       playerIds.filter((id) => players.find((p) => p.id === id)?.alive)
@@ -195,11 +255,24 @@ export default function NarratorTargetPicker({
   );
 
   const groupValue = skipSelected ? SKIP_VALUE : (selectedId ?? '');
-  const hasChoice = Boolean(selectedId || skipSelected);
-  const chosenPlayer =
-    selectedId ? players.find((p) => p.id === selectedId) : null;
+  const hasChoice =
+    skipSelected ||
+    resolvedSelectedIds.length >= requiredTargetCount;
 
-  const handleValueChange = (value: string) => {
+  const resolvedActionLabel =
+    actionLabel ??
+    (multiSelect ?
+      `Tap up to ${maxTargetCount} players (${resolvedSelectedIds.length}/${maxTargetCount})`
+    : 'Choose target');
+
+  const handleMultiChange = (next: string[]) => {
+    const added = next.find((id) => !resolvedSelectedIds.includes(id));
+    const removed = resolvedSelectedIds.find((id) => !next.includes(id));
+    const toggled = added ?? removed;
+    if (toggled) onSelect(toggled);
+  };
+
+  const handleSingleChange = (value: string) => {
     if (!value) return;
     if (value === SKIP_VALUE) onSelect(null);
     else onSelect(value);
@@ -211,34 +284,8 @@ export default function NarratorTargetPicker({
       data-has-choice={hasChoice ? '' : undefined}
     >
       <p className="m-0 font-cinzel text-[0.82rem] font-bold uppercase tracking-widest text-amber-100 before:text-[0.6rem] before:text-amber-400 before:content-['◆_']">
-        {actionLabel}
+        {resolvedActionLabel}
       </p>
-
-      {hasChoice && (
-        <div
-          className="mf-target-choice-summary rounded-md px-3 py-2.5"
-          role="status"
-          aria-live="polite"
-        >
-          <p className="m-0 font-cinzel text-[0.62rem] font-bold uppercase tracking-[0.22em] text-amber-300">
-            Recorded choice
-          </p>
-          <p className="mf-name-gold m-0 mt-1 text-lg leading-tight tracking-wide">
-            {skipSelected ?
-              'No target — skipped'
-            : <>
-                {chosenPlayer && playerName(selectedId!)}
-                {chosenPlayer && (
-                  <span className="mt-0.5 block font-cinzel text-sm font-semibold normal-case tracking-normal text-amber-200/95">
-                    <span aria-hidden>{chosenPlayer.roleIcon}</span>{' '}
-                    {chosenPlayer.roleNameEn}
-                  </span>
-                )}
-              </>
-            }
-          </p>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 gap-2.5 min-[520px]:grid-cols-2 min-[520px]:items-start">
         <TeamTargets
@@ -248,9 +295,12 @@ export default function NarratorTargetPicker({
           allPlayers={players}
           playerName={playerName}
           groupValue={groupValue}
+          selectedIds={resolvedSelectedIds}
+          multiSelect={multiSelect}
           blockedIds={blockedIds}
           disabled={disabled}
-          onValueChange={handleValueChange}
+          onSingleChange={handleSingleChange}
+          onMultiChange={handleMultiChange}
         />
         <TeamTargets
           title="Evil"
@@ -259,9 +309,12 @@ export default function NarratorTargetPicker({
           allPlayers={players}
           playerName={playerName}
           groupValue={groupValue}
+          selectedIds={resolvedSelectedIds}
+          multiSelect={multiSelect}
           blockedIds={blockedIds}
           disabled={disabled}
-          onValueChange={handleValueChange}
+          onSingleChange={handleSingleChange}
+          onMultiChange={handleMultiChange}
         />
       </div>
 
@@ -271,7 +324,7 @@ export default function NarratorTargetPicker({
             type="single"
             variant="outline"
             value={groupValue}
-            onValueChange={handleValueChange}
+            onValueChange={handleSingleChange}
             disabled={disabled}
             className="w-full"
           >

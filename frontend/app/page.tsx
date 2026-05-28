@@ -18,10 +18,10 @@ export default function HomePage() {
   const soonGames = GAMES.filter((game) => !game.active);
 
   return (
-    <main className="hub-arcade min-h-screen relative overflow-x-hidden">
+    <main className="hub-arcade min-h-dvh relative overflow-x-hidden">
       <HubArcadeShell />
 
-      <header className="relative z-40 border-b border-hub-border/80 bg-hub-surface/40 backdrop-blur-md sticky top-0">
+      <header className="relative z-40 border-b border-hub-border/80 bg-hub-surface/40 glass-blur-md sticky top-0 pt-safe-top">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0 hub-enter-hero" style={{ animationDelay: '0ms' }}>
             <Gamepad2 className="w-7 h-7 text-hub-accent shrink-0" />
@@ -38,7 +38,7 @@ export default function HomePage() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-6 lg:py-10">
         <div className="flex flex-col gap-10 lg:gap-12">
-          <div className="flex flex-col lg:flex-row gap-10 lg:gap-12 lg:items-stretch mb-10">
+          <div className="flex flex-col lg:flex-row gap-10 lg:gap-12 lg:items-stretch">
             <HubHero connected={connected} hubPresence={hubPresence} />
 
             <div className="w-full lg:w-72 shrink-0 hub-enter-sidebar flex flex-col min-h-[260px] lg:min-h-0">
@@ -47,7 +47,7 @@ export default function HomePage() {
           </div>
 
           <div className="flex-1 min-w-0">
-            <section className="pb-10">
+            <section className="pb-12">
               <h3
                 className="text-xs uppercase tracking-[0.3em] text-hub-success mb-6 font-semibold hub-enter-card"
                 style={{ ['--hub-stagger' as string]: 0 }}
@@ -66,9 +66,9 @@ export default function HomePage() {
             </section>
 
             {soonGames.length > 0 && (
-              <section className="pb-16 pt-4 border-t border-hub-border/40">
+              <section className="pb-12 pt-4 border-t border-hub-border/40">
                 <h3
-                  className="text-xs uppercase tracking-[0.3em] text-hub-muted mb-2 font-semibold hub-enter-card"
+                  className="text-xs uppercase tracking-[0.3em] text-hub-muted mb-6 font-semibold hub-enter-card"
                   style={{ ['--hub-stagger' as string]: liveGames.length + 1 }}
                 >
                   Coming soon

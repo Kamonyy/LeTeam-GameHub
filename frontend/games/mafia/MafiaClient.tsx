@@ -25,6 +25,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { MafiaButton } from "@/components/mafia/mafia-button";
 import { Badge } from "@/components/ui/badge";
 import { useSocket } from "@/hooks/useSocket";
+import { useLeaveToHub } from "@/lib/hub/useLeaveToHub";
+import { suppressRoomAutoJoinRef } from "@/lib/hub/room-auto-join";
 import { setDisplayName, getDisplayName, hasDisplayName } from "@/lib/player";
 import { normalizeRoomCode } from "@/lib/hub/room";
 import PlayerNameControl from "@/components/hub/PlayerNameControl";
@@ -90,7 +92,6 @@ export default function MafiaClient() {
     createRoom,
     joinRoom,
     hardResetInFlight,
-    leaveRoom,
     updateRoomSettings,
     startGame,
     kickPlayer,
@@ -112,6 +113,7 @@ export default function MafiaClient() {
   const [actionBusy, setActionBusy] = useState(false);
   const [ackBusy, setAckBusy] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const leaveToHub = useLeaveToHub();
   const [isNarrowViewport, setIsNarrowViewport] = useState(false);
 
   useEffect(() => {
@@ -160,6 +162,7 @@ export default function MafiaClient() {
 
   useEffect(() => {
     if (
+      suppressRoomAutoJoinRef.current ||
       !enabled ||
       !connected ||
       hardResetInFlight ||
@@ -297,10 +300,7 @@ export default function MafiaClient() {
             await startGame();
             setStarting(false);
           }}
-          onLeave={() => {
-            leaveRoom();
-            router.push("/mafia");
-          }}
+          onLeave={() => void leaveToHub()}
           starting={starting}
         />
       )}
@@ -420,7 +420,7 @@ export default function MafiaClient() {
                 <MafiaButton
                   type="button"
                   variant="primary"
-                  className="w-full"
+                  className="w-full min-h-11"
                   disabled={!connected || loading || !displayName.trim()}
                   onClick={handleInviteJoin}
                 >
@@ -460,7 +460,7 @@ export default function MafiaClient() {
                 <MafiaButton
                   type="button"
                   variant="primary"
-                  className="w-full"
+                  className="w-full min-h-11"
                   disabled={!connected || loading || !displayName.trim()}
                   onClick={handleCreate}
                 >
@@ -489,7 +489,7 @@ export default function MafiaClient() {
                 <MafiaButton
                   type="button"
                   variant="outline"
-                  className="w-full"
+                  className="w-full min-h-11"
                   disabled={
                     !connected ||
                     loading ||

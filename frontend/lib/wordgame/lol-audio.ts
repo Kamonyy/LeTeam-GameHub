@@ -1,3 +1,4 @@
+import { patchCoreSession, readCoreSession } from '@/lib/session/core-session';
 import { CDRAGON_CHAMP_SELECT_SFX } from './lol-cdragon';
 
 /** Champion Select / client UI sounds (Community Dragon). */
@@ -18,9 +19,9 @@ export type LolUiSfxKey = keyof typeof LOL_UI_SFX;
 
 type Channel = 'voice';
 
-const STORAGE_KEY = 'sw-lol-audio-muted';
+/** @deprecated Use core session prefs; kept for any external references. */
 export const LOL_AUDIO_VOLUME_STORAGE_KEY = 'sw-lol-audio-volume';
-const DEFAULT_VOLUME = 0.5;
+const DEFAULT_VOLUME = 0.8;
 const SFX_POOL_SIZE = 8;
 const WARM_CACHE_MAX = 96;
 
@@ -46,17 +47,10 @@ class LolAudioEngine {
 
   constructor() {
     if (typeof window === 'undefined') return;
-    try {
-      this.muted = localStorage.getItem(STORAGE_KEY) === '1';
-      const raw = localStorage.getItem(LOL_AUDIO_VOLUME_STORAGE_KEY);
-      if (raw != null) {
-        const parsed = parseFloat(raw);
-        if (Number.isFinite(parsed)) {
-          this.volumeScale = clampVolume(parsed);
-        }
-      }
-    } catch {
-      /* ignore */
+    const session = readCoreSession();
+    if (session) {
+      this.muted = session.prefs.audioMuted;
+      this.volumeScale = clampVolume(session.prefs.vol);
     }
   }
 
@@ -71,11 +65,7 @@ class LolAudioEngine {
     if (this.persistVolumeTimer) clearTimeout(this.persistVolumeTimer);
     this.persistVolumeTimer = setTimeout(() => {
       this.persistVolumeTimer = null;
-      try {
-        localStorage.setItem(LOL_AUDIO_VOLUME_STORAGE_KEY, String(this.volumeScale));
-      } catch {
-        /* ignore */
-      }
+      patchCoreSession({ prefs: { vol: this.volumeScale } });
     }, 300);
   }
 
@@ -107,11 +97,7 @@ class LolAudioEngine {
   setMuted(muted: boolean): void {
     this.muted = muted;
     if (typeof window === 'undefined') return;
-    try {
-      localStorage.setItem(STORAGE_KEY, muted ? '1' : '0');
-    } catch {
-      /* ignore */
-    }
+    patchCoreSession({ prefs: { audioMuted: muted } });
     if (muted) {
       this.stopAll();
       return;

@@ -17,6 +17,7 @@ import type { LobbyState, WordCategory, WordGameSettings } from '@/lib/hub/types
 import { WORD_POINTS_OPTIONS } from '@/lib/hub/types';
 import WordPanelFrame from './WordPanelFrame';
 import WordGameAboutSidebar from './WordGameAboutSidebar';
+import InviteFriendsButton from '@/components/invitations/InviteFriendsButton';
 
 interface WordLobbyProps {
   lobby: LobbyState;
@@ -112,12 +113,19 @@ export default function WordLobby({
             {lobby.roomId}
           </h3>
         </div>
-        <button type="button" onClick={copyLink} className="sw-btn-secondary text-sm py-2">
-          {copied ?
-            <Check className="w-4 h-4 text-[#86efac]" />
-          :	<Copy className="w-4 h-4" />}
-          {copied ? 'Copied' : 'Share'}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <InviteFriendsButton
+            roomId={lobby.roomId}
+            gameType={lobby.gameType}
+            disabled={lobby.status !== 'lobby'}
+          />
+          <button type="button" onClick={copyLink} className="sw-btn-secondary text-sm py-2">
+            {copied ?
+              <Check className="w-4 h-4 text-[#86efac]" />
+            :	<Copy className="w-4 h-4" />}
+            {copied ? 'Copied' : 'Share'}
+          </button>
+        </div>
       </div>
 
       <section className="sw-match-settings" aria-labelledby="sw-match-settings-title">

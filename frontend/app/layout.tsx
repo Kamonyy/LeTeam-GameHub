@@ -1,10 +1,16 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Providers from './providers';
 
 export const metadata: Metadata = {
   title: 'LeTeam Game Hub',
   description: 'Real-time multiplayer game platform',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -14,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen">
+      <body className="min-h-dvh">
         <Providers>{children}</Providers>
       </body>
     </html>

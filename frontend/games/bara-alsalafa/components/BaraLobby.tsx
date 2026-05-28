@@ -19,6 +19,7 @@ import type { LobbyState, BaraGameSettings } from '@/lib/hub/types';
 import { BARA_ROUNDS_OPTIONS } from '@/lib/hub/types';
 import { CATEGORY_PACKAGES } from '@/lib/bara/categories';
 import BaraAboutSidebar from './BaraAboutSidebar';
+import InviteFriendsButton from '@/components/invitations/InviteFriendsButton';
 
 interface BaraLobbyProps {
   lobby: LobbyState;
@@ -136,21 +137,28 @@ export default function BaraLobby({
               {lobby.roomId}
             </h3>
           </div>
-          <button
-            type="button"
-            onClick={copyLink}
-            className="bara-btn-secondary text-sm py-2"
-          >
-            {copied ?
-              <>
-                <Check className="w-4 h-4 text-emerald-400" />
-                تم النسخ
-              </>
-            :	<>
-                <Copy className="w-4 h-4" />
-                مشاركة
-              </>}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <InviteFriendsButton
+              roomId={lobby.roomId}
+              gameType={lobby.gameType}
+              disabled={lobby.status !== 'lobby'}
+            />
+            <button
+              type="button"
+              onClick={copyLink}
+              className="bara-btn-secondary text-sm py-2"
+            >
+              {copied ?
+                <>
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  تم النسخ
+                </>
+              :	<>
+                  <Copy className="w-4 h-4" />
+                  مشاركة
+                </>}
+            </button>
+          </div>
         </div>
 
         <div className="bara-settings-block">

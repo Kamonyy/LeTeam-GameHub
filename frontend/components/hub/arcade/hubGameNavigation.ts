@@ -1,4 +1,4 @@
-import { HUB_NAVIGATING_KEY } from './HubGameLoadingScreen';
+import { HUB_NAVIGATING_KEY } from '@/lib/session/core-session';
 
 export function markHubGameNavigation(gameId: string) {
   try {

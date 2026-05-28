@@ -11,11 +11,16 @@ export interface ChatMessage {
   timestamp: number;
 }
 
+export type OnlinePlayerStatus = 'hub' | 'lobby' | 'playing';
+
 export interface OnlinePlayer {
-  /** Present for the viewing player only; omitted for other lounge users. */
-  id?: string;
+  id: string;
   displayName: string;
-  isYou?: boolean;
+  status: OnlinePlayerStatus;
+  inviteable: boolean;
+  roomId?: string | null;
+  hostId?: string | null;
+  gameType?: string | null;
 }
 
 export interface MatchSettings {
@@ -44,6 +49,15 @@ export interface MafiaSettings {
   roleCounts: Record<string, number> | null;
   /** Host-only pre-deal map; omitted for non-host lobby payloads. Never render in UI. */
   roleAssignments?: Record<string, string>;
+}
+
+export interface SketchDrawSettings {
+  totalRounds: number;
+  drawTimerSec: number;
+  categoryPackageIds: string[];
+  categoryPackageId?: string;
+  customWords: string;
+  useCustomWordsOnly: boolean;
 }
 
 export interface LobbyPlayer {
@@ -75,7 +89,8 @@ export interface LobbyState {
     | MatchSettings
     | WordGameSettings
     | BaraGameSettings
-    | MafiaSettings;
+    | MafiaSettings
+    | SketchDrawSettings;
   isSpectator?: boolean;
   /** Server allows `room:dev:*` bot fillers (hide UI when false). */
   devBotsEnabled?: boolean;
@@ -85,3 +100,5 @@ export const SCORE_CAP_OPTIONS = [50, 100, 150, 200] as const;
 export const WORD_POINTS_OPTIONS = [3, 5, 10] as const;
 export const WORD_CATEGORY_OPTIONS = ['custom', 'lol-champions'] as const;
 export const BARA_ROUNDS_OPTIONS = [3, 5, 7] as const;
+export const SKETCH_DRAW_ROUNDS_OPTIONS = [3, 5, 7, 10] as const;
+export const SKETCH_DRAW_TIMER_OPTIONS = [90, 120, 180] as const;

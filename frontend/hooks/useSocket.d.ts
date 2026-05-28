@@ -3,6 +3,7 @@ import type {
   WordGameSettings,
   BaraGameSettings,
   MafiaSettings,
+  SketchDrawSettings,
   HubPresenceState,
   ChatMessage,
 } from '@/lib/hub/types';
@@ -13,12 +14,45 @@ import type {
   MafiaGameState,
   MafiaNarratorAction,
 } from '@/games/mafia/types';
+import type { SketchDrawGameState, SketchStrokeBatch } from '@/games/sketch-draw/types';
 
 export type HubGameState =
   | GameState
   | WordGameState
   | BaraGameState
-  | MafiaGameState;
+  | MafiaGameState
+  | SketchDrawGameState;
+
+export interface SketchDrawLocalHint {
+  id: string;
+  messageAr: string;
+  messageEn: string;
+  at: number;
+}
+
+export interface SketchDrawRoomAlert {
+  id: string;
+  message: string;
+  kind?: string;
+  at: number;
+}
+
+export interface SketchDrawGuessFeedItem {
+  id: string;
+  playerId: string;
+  displayName: string;
+  text: string;
+  at: number;
+}
+
+export interface SketchDrawTimeTick {
+  roomId: string;
+  phase: string;
+  remainingMs: number;
+  phaseEndsAt: number | null;
+  stateVersion: number;
+  at: number;
+}
 
 export interface UseSocketReturn {
   connected: boolean;
@@ -45,12 +79,16 @@ export interface UseSocketReturn {
     roomId: string,
     displayName: string
   ) => Promise<{ ok: boolean; spectating: boolean }>;
-  leaveRoom: () => void;
+  leaveRoom: () => Promise<void>;
   /** Leave room/game, clear client session; keeps player id and display name. */
   hardResetPlayer: () => Promise<void>;
   updateRoomSettings: (
     settings: Partial<
-      MatchSettings | WordGameSettings | BaraGameSettings | MafiaSettings
+      | MatchSettings
+      | WordGameSettings
+      | BaraGameSettings
+      | MafiaSettings
+      | SketchDrawSettings
     >
   ) => Promise<boolean>;
   startGame: () => Promise<boolean>;
@@ -69,6 +107,29 @@ export interface UseSocketReturn {
   baraAdvanceInterrogation: () => Promise<boolean>;
   baraVote: (targetPlayerId: string) => Promise<boolean>;
   baraGuess: (guess: string) => Promise<boolean>;
+  sketchDrawSelectWord: (index: number) => Promise<boolean>;
+  sketchDrawStrokeBatch: (batch: SketchStrokeBatch & { strokeComplete?: boolean }) => void;
+  sketchDrawCanvasUndo: () => Promise<boolean>;
+  sketchDrawCanvasRedo: () => Promise<boolean>;
+  sketchDrawCanvasClear: () => Promise<boolean>;
+  sketchDrawCanvasFill: (x: number, y: number, color: string) => Promise<boolean>;
+  sketchDrawSubmitGuess: (
+    guess: string
+  ) => Promise<{ ok: boolean; outcome?: string; error?: string }>;
+  sketchDrawLocalHints: SketchDrawLocalHint[];
+  sketchDrawRoomAlerts: SketchDrawRoomAlert[];
+  sketchDrawGuessFeed: SketchDrawGuessFeedItem[];
+  sketchDrawTimeTick: SketchDrawTimeTick | null;
+  sketchDrawDisbandAt: number;
+  sketchDrawDisbandRoom: () => Promise<boolean>;
+  sketchDrawRemoteBatch: (SketchStrokeBatch & { _at?: number }) | null;
+  sketchDrawCanvasSync: {
+    canvasBuffer: SketchStrokeBatch[];
+    canvasBufferVersion: number;
+    at: number;
+  } | null;
+  requestSketchCanvasRecovery: () => void;
+  clearSketchDrawLocalHints: () => void;
   mafiaAcknowledgeRole: () => Promise<boolean>;
   mafiaNarratorAction: (
     action: MafiaNarratorAction,
@@ -77,9 +138,97 @@ export interface UseSocketReturn {
   /** Dev only — fill lobby with fake players */
   addDevBots: (count?: number) => Promise<{ ok: boolean; added?: number; error?: string }>;
   removeDevBots: () => Promise<{ ok: boolean; removed?: number; error?: string }>;
+  registerSocketListener: (
+    event: string,
+    handler: (...args: unknown[]) => void
+  ) => () => void;
+  emitInviteSend: (payload: {
+    targetPlayerId: string;
+    roomId: string;
+    gameType: string;
+    sessionToken: string;
+  }) => Promise<{
+    error?: string;
+    success?: boolean;
+    inviteId?: string;
+    expiresAt?: number;
+  }>;
+  emitInviteRespond: (payload: {
+    inviteId: string;
+    accept: boolean;
+    sessionToken: string;
+  }) => Promise<{
+    error?: string;
+    success?: boolean;
+    accepted?: boolean;
+    roomId?: string;
+    gameType?: string;
+  }>;
 }
 
 export function useSocket(): UseSocketReturn;
+
+export function useGameTimer(): SketchDrawTimeTick | null;
+
+export function useSketchCanvas(): Pick<
+  UseSocketReturn,
+  | 'sketchDrawRemoteBatch'
+  | 'sketchDrawCanvasSync'
+  | 'sketchDrawStrokeBatch'
+  | 'sketchDrawCanvasUndo'
+  | 'sketchDrawCanvasRedo'
+  | 'sketchDrawCanvasClear'
+  | 'sketchDrawCanvasFill'
+  | 'requestSketchCanvasRecovery'
+>;
+
+export function useGameState(): Pick<
+  UseSocketReturn,
+  | 'lobby'
+  | 'gameState'
+  | 'isSpectator'
+  | 'hubPresence'
+  | 'chatMessages'
+  | 'sketchDrawLocalHints'
+  | 'sketchDrawRoomAlerts'
+  | 'sketchDrawGuessFeed'
+  | 'sketchDrawDisbandAt'
+  | 'clearSketchDrawLocalHints'
+  | 'sendChat'
+>;
+
+export function useSocketConnection(): {
+  connected: boolean;
+  playerId: string;
+  error: string | null;
+  hardResetInFlight: boolean;
+  socketRef: import('react').MutableRefObject<
+    import('socket.io-client').Socket | null
+  >;
+  actionsRef: import('react').MutableRefObject<Record<string, unknown>>;
+};
+
+export function useSocketActions(): Omit<
+  UseSocketReturn,
+  | 'connected'
+  | 'playerId'
+  | 'lobby'
+  | 'gameState'
+  | 'isSpectator'
+  | 'error'
+  | 'hardResetInFlight'
+  | 'hubPresence'
+  | 'chatMessages'
+  | 'sketchDrawLocalHints'
+  | 'sketchDrawRoomAlerts'
+  | 'sketchDrawGuessFeed'
+  | 'sketchDrawTimeTick'
+  | 'sketchDrawDisbandAt'
+  | 'sketchDrawRemoteBatch'
+  | 'sketchDrawCanvasSync'
+  | 'requestSketchCanvasRecovery'
+  | 'clearSketchDrawLocalHints'
+>;
 
 export interface UseHubLiveReturn {
   connected: boolean;

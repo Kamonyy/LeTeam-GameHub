@@ -6,6 +6,14 @@
 
 @layer base {
 	:root {
+		--safe-top: env(safe-area-inset-top, 0px);
+		--safe-right: env(safe-area-inset-right, 0px);
+		--safe-bottom: env(safe-area-inset-bottom, 0px);
+		--safe-left: env(safe-area-inset-left, 0px);
+		--app-header-h: 4.25rem;
+		--arena-chrome: 5rem;
+		--glass-blur: 12px;
+
 		/* Mafia medieval theme — stone / amber / rose */
 		--background: 240 10% 3.9%; /* zinc-950 */
 		--foreground: 60 9.1% 97.8%; /* stone-50 */
@@ -29,26 +37,68 @@
 		--radius: 0.625rem;
 	}
 
+	html {
+		min-height: 100vh;
+		min-height: 100dvh;
+		overscroll-behavior-y: none;
+		-webkit-text-size-adjust: 100%;
+		text-size-adjust: 100%;
+	}
+
 	body {
+		min-height: 100vh;
+		min-height: 100dvh;
+		-webkit-tap-highlight-color: transparent;
 		@apply bg-hub-bg text-gray-100 antialiased;
+	}
+
+	button,
+	input,
+	select,
+	textarea {
+		-webkit-appearance: none;
+		appearance: none;
+	}
+
+	input[type="checkbox"],
+	input[type="radio"] {
+		-webkit-appearance: auto;
+		appearance: auto;
 	}
 }
 
 @layer components {
+	.glass-blur {
+		-webkit-backdrop-filter: blur(var(--glass-blur, 12px));
+		backdrop-filter: blur(var(--glass-blur, 12px));
+	}
+
+	.glass-blur-sm {
+		--glass-blur: 8px;
+		-webkit-backdrop-filter: blur(8px);
+		backdrop-filter: blur(8px);
+	}
+
+	.glass-blur-md {
+		--glass-blur: 12px;
+		-webkit-backdrop-filter: blur(12px);
+		backdrop-filter: blur(12px);
+	}
+
 	.btn-primary {
-		@apply px-5 py-2.5 bg-hub-accent hover:bg-hub-accent-dim text-white font-medium rounded-lg
-           transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed;
+		@apply appearance-none px-5 py-2.5 bg-hub-accent hover:bg-hub-accent-dim text-white font-medium rounded-lg
+           transition-colors duration-ui disabled:opacity-40 disabled:cursor-not-allowed;
 	}
 
 	.btn-secondary {
-		@apply px-5 py-2.5 bg-hub-card hover:bg-hub-border text-gray-200 font-medium rounded-lg
-           border border-hub-border transition-colors duration-200;
+		@apply appearance-none px-5 py-2.5 bg-hub-card hover:bg-hub-border text-gray-200 font-medium rounded-lg
+           border border-hub-border transition-colors duration-ui;
 	}
 
 	.input-field {
-		@apply w-full px-4 py-2.5 bg-hub-surface border border-hub-border rounded-lg
+		@apply appearance-none w-full px-4 py-2.5 bg-hub-surface border border-hub-border rounded-lg
            text-gray-100 placeholder-hub-muted focus:outline-none focus:border-hub-accent
-           transition-colors duration-200 uppercase tracking-widest text-center font-mono;
+           transition-colors duration-ui uppercase tracking-widest text-center font-mono;
 	}
 
 	.card {
@@ -72,21 +122,24 @@
 	.hands-around-table {
 		position: relative;
 		width: 100%;
-		max-width: 680px;
+		max-width: min(90vw, 680px);
 		margin-inline: auto;
 		flex: 1 1 auto;
+		min-height: 0;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		min-height: clamp(22rem, min(92vw, 680px), 44rem);
+		max-height: min(50dvh, 680px);
 	}
 
 	.domino-table-square {
-		aspect-ratio: 1;
+		aspect-ratio: 1 / 1;
 		width: 100%;
-		max-width: min(92vw, 680px);
-		min-height: min(72vw, 680px);
+		max-width: min(90vw, 680px);
+		max-height: min(50dvh, 680px);
+		height: auto;
 		margin: 0 auto;
+		flex-shrink: 0;
 		background-color: #0c2118;
 		background-image:
 			url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E"),
@@ -142,7 +195,7 @@
 	.domino-hand-arc--bottom {
 		position: absolute;
 		left: 50%;
-		bottom: -0.35rem;
+		bottom: max(-0.35rem, var(--safe-bottom));
 		z-index: 40;
 		width: min(100%, 680px);
 		transform: translateX(-50%);
@@ -243,7 +296,7 @@
 		border-radius: 9999px;
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		background: rgba(15, 17, 23, 0.82);
-		backdrop-filter: blur(8px);
+		@apply glass-blur-sm;
 		transition:
 			border-color 0.4s,
 			box-shadow 0.4s,
@@ -357,6 +410,22 @@
 		.domino-opponent-seat--left,
 		.domino-opponent-seat--right {
 			max-width: 5.5rem;
+		}
+
+		.domino-hand-pip-badge--player {
+			bottom: calc(8.25rem + var(--safe-bottom));
+		}
+
+		.domino-hand-pip-badge--opponent-top {
+			top: calc(4.5rem + var(--safe-top));
+		}
+
+		.domino-player-hand-hint {
+			bottom: calc(7.75rem + var(--safe-bottom));
+		}
+
+		.domino-boneyard-float {
+			right: max(0.25rem, var(--safe-right));
 		}
 	}
 
@@ -561,7 +630,7 @@
 		color: rgba(167, 243, 208, 0.95);
 		background: rgba(0, 0, 0, 0.45);
 		border: 1px solid rgba(52, 211, 153, 0.25);
-		backdrop-filter: blur(6px);
+		@apply glass-blur-sm;
 	}
 
 	.domino-hand-pip-badge--player {
@@ -778,8 +847,9 @@
 	.bara-flip-card {
 		@apply relative shrink-0;
 		width: min(100%, 17rem);
+		max-height: min(50dvh, 22rem);
 		aspect-ratio: 3 / 4;
-		min-height: 13.5rem;
+		height: auto;
 		perspective: 1200px;
 		overflow: hidden;
 	}
@@ -802,7 +872,7 @@
 		@apply relative rounded-2xl border border-white/10;
 		backface-visibility: hidden;
 		background: linear-gradient(145deg, #222633, #0f1117);
-		min-height: 13.5rem;
+		min-height: 100%;
 	}
 
 	.bara-lock-layer {
@@ -858,7 +928,7 @@
 		background: rgba(180, 83, 9, 0.9);
 		border: 1px solid rgba(251, 191, 36, 0.45);
 		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
-		backdrop-filter: blur(6px);
+		@apply glass-blur-sm;
 		transition:
 			background 0.15s ease,
 			transform 0.15s ease,
@@ -881,5 +951,14 @@
 	.stuck-reset-btn:focus-visible {
 		outline: 2px solid #fbbf24;
 		outline-offset: 2px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.glass-blur,
+	.glass-blur-sm,
+	.glass-blur-md {
+		-webkit-backdrop-filter: none;
+		backdrop-filter: none;
 	}
 }

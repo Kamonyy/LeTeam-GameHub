@@ -6,6 +6,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX, Loader2 } from 'lucide-react';
 import { useSocket } from '@/hooks/useSocket';
+import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
+import { suppressRoomAutoJoinRef } from '@/lib/hub/room-auto-join';
 import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
@@ -36,7 +38,6 @@ export default function BaraAlsalafaClient() {
     clearError,
     createRoom,
     joinRoom,
-    leaveRoom,
     updateRoomSettings,
     startGame,
     kickPlayer,
@@ -55,6 +56,7 @@ export default function BaraAlsalafaClient() {
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [autoJoined, setAutoJoined] = useState(false);
   const [inviteJoin, setInviteJoin] = useState(false);
+  const leaveToHub = useLeaveToHub();
 
   useEffect(() => {
     setInviteJoin(!!roomParam && !hasDisplayName());
@@ -76,6 +78,7 @@ export default function BaraAlsalafaClient() {
 
   useEffect(() => {
     if (
+      suppressRoomAutoJoinRef.current ||
       !baraEnabled ||
       !connected ||
       hardResetInFlight ||
@@ -310,10 +313,7 @@ export default function BaraAlsalafaClient() {
               await startGame();
               setStarting(false);
             }}
-            onLeave={() => {
-              leaveRoom();
-              router.push('/bara-alsalafa');
-            }}
+            onLeave={() => void leaveToHub()}
             starting={starting}
           />
         )}
