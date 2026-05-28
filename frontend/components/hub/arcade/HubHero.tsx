@@ -2,41 +2,74 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Zap, Radio } from 'lucide-react';
+import { GAMES } from '@/lib/hub/games-registry';
+import { sampleRoastLines } from '@/lib/hub/hub-hero-roasts';
+import { gameLabelForPresence } from '@/lib/hub/groupOnlinePlayers';
 import type { HubPresenceState } from '@/lib/hub/types';
+
 interface HubHeroProps {
   connected: boolean;
   hubPresence: HubPresenceState;
 }
 
+function formatGameNameList(names: string[]): string {
+  if (names.length === 0) return '';
+  if (names.length === 1) return names[0]!;
+  if (names.length === 2) return `${names[0]} & ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]!}`;
+}
+
 export default function HubHero({ connected, hubPresence }: HubHeroProps) {
   const [tick, setTick] = useState(0);
 
+  const liveGameNames = useMemo(
+    () => GAMES.filter((g) => g.active).map((g) => g.name),
+    []
+  );
+  const soonGameNames = useMemo(
+    () => GAMES.filter((g) => !g.active).map((g) => g.name),
+    []
+  );
+
   const messages = useMemo(() => {
     const list: string[] = [];
-    const activeGames = ['Secret Word', 'برا السالفة'];
     if (hubPresence.total > 0) {
       list.push(
         `• ${hubPresence.total} ${hubPresence.total === 1 ? 'player' : 'players'} in the arcade lounge`
       );
-      const others = hubPresence.players.slice(0, 2);
-      others.forEach((p, i) => {
-        const game = activeGames[i % activeGames.length];
+      for (const p of hubPresence.players.slice(0, 2)) {
         const where =
-          p.status === 'playing' ? 'in a match' : (
-            p.status === 'lobby' ? 'in a lobby'
-          : 'in the lounge');
-        list.push(`• ${p.displayName} is ${where} — ${game} awaits`);
-      });
+          p.status === 'playing' ? 'in a match' :
+          p.status === 'lobby' ? 'in a lobby' :
+          'in the lounge';
+        const gameLabel =
+          p.gameType && p.status !== 'hub' ?
+            gameLabelForPresence(p.gameType)
+          : null;
+        list.push(
+          gameLabel ?
+            `• ${p.displayName} is ${where} — ${gameLabel}`
+          : `• ${p.displayName} is ${where}`
+        );
+      }
+      list.push(...sampleRoastLines(hubPresence.players, 5));
     } else if (connected) {
       list.push('• The lounge is quiet — be the first to deal a room');
     } else {
       list.push('• Connecting to the live hub…');
     }
-    list.push('• 2 live games ready — Secret Word & برا السالفة');
-    list.push('• Dominoes returns soon — polish in the workshop');
+    if (liveGameNames.length > 0) {
+      const n = liveGameNames.length;
+      list.push(
+        `• ${n} live ${n === 1 ? 'cabinet' : 'cabinets'} — ${formatGameNameList(liveGameNames)}`
+      );
+    }
+    if (soonGameNames.length > 0) {
+      list.push(`• ${formatGameNameList(soonGameNames)} in the workshop`);
+    }
     list.push('• Create a room, share the code, play in seconds');
     return list;
-  }, [connected, hubPresence]);
+  }, [connected, hubPresence, liveGameNames, soonGameNames]);
 
   useEffect(() => {
     const id = window.setInterval(() => setTick((t) => t + 1), 4200);
