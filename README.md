@@ -26,9 +26,22 @@ The `server/` Socket.io process is for **local/LAN development only** (`HOST=0.0
 
 ## Deploy
 
+Local:
+
 ```bash
 npm run deploy
 ```
+
+### GitHub Actions (recommended on push to `main`)
+
+The [Deploy Worker](.github/workflows/deploy.yml) workflow runs `npm run build` then `wrangler deploy`.
+
+Add these repository secrets (Settings → Secrets and variables → Actions):
+
+- `CLOUDFLARE_API_TOKEN` — API token with **Workers Scripts** edit and **Workers Routes** edit (and Durable Objects if prompted).
+- `CLOUDFLARE_ACCOUNT_ID` — your Cloudflare account ID.
+
+If you also use **Workers Builds** in the Cloudflare dashboard, either disable it to avoid double deploys, or disable the GitHub workflow. Workers Builds does **not** read `[build]` from `wrangler.toml`; set the dashboard **Build command** to `npm run build` and **Deploy command** to `npx wrangler deploy`, with Node.js **20**.
 
 ## Layout
 
