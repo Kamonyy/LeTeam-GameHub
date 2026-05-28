@@ -27,8 +27,38 @@ interface GameArcadeCardProps {
 	staggerIndex: number;
 }
 
-const WORD_PREVIEW_TARGET = "GUESS";
+/** Sample secret words for hub Word Game card preview (silly + light trash-talk) */
+const WORD_PREVIEW_WORDS = [
+	"YEET",
+	"SUS",
+	"BRUH",
+	"NOOB",
+	"RIZZ",
+	"OOF",
+	"POG",
+	"CAP",
+	"LAG",
+	"AFK",
+	"BOZO",
+	"CLOWN",
+	"MID",
+	"TRASH",
+	"COPE",
+	"LOSER",
+	"NPC",
+	"MALD",
+	"RAT",
+	"LAME",
+] as const;
+
 const WORD_MATRIX_CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#%&*";
+
+const WORD_PREVIEW_SCRAMBLE_MS = 28;
+const WORD_PREVIEW_INITIAL_SCRAMBLE_MS = 240;
+const WORD_PREVIEW_FIRST_LETTER_MS = 240;
+const WORD_PREVIEW_LETTER_BASE_MS = 180;
+const WORD_PREVIEW_LETTER_STEP_MS = 52;
+const WORD_PREVIEW_HOLD_MS = 2200;
 
 function randomMatrixChar(): string {
 	return WORD_MATRIX_CHARSET[
@@ -36,75 +66,145 @@ function randomMatrixChar(): string {
 	];
 }
 
+function pickRandomWordPreview(exclude?: string): string {
+	const pool = exclude
+		? WORD_PREVIEW_WORDS.filter((w) => w !== exclude)
+		: [...WORD_PREVIEW_WORDS];
+	return pool[Math.floor(Math.random() * pool.length)] ?? WORD_PREVIEW_WORDS[0];
+}
+
+function emptyWordSlots(length: number): { slots: string[]; locked: boolean[] } {
+	return {
+		slots: Array.from({ length }, () => "·"),
+		locked: Array.from({ length }, () => false),
+	};
+}
+
 function WordPreview({ active }: { active: boolean }) {
-	const [slots, setSlots] = useState(() =>
-		WORD_PREVIEW_TARGET.split("").map(() => "·"),
+	const [target, setTarget] = useState<string>(WORD_PREVIEW_WORDS[0]);
+	const [slots, setSlots] = useState<string[]>(() =>
+		emptyWordSlots(WORD_PREVIEW_WORDS[0].length).slots,
 	);
-	const [lockedMask, setLockedMask] = useState(() =>
-		WORD_PREVIEW_TARGET.split("").map(() => false),
+	const [lockedMask, setLockedMask] = useState<boolean[]>(() =>
+		emptyWordSlots(WORD_PREVIEW_WORDS[0].length).locked,
 	);
 	const [complete, setComplete] = useState(false);
-	const lockIndexRef = useRef(0);
-	const timersRef = useRef<{ tick?: number; lock?: number }>({});
+	const activeRef = useRef(false);
+	const timersRef = useRef<{
+		tick?: number;
+		lock?: number;
+		cycle?: number;
+	}>({});
+
+	useEffect(() => {
+		activeRef.current = active;
+	}, [active]);
 
 	useEffect(() => {
 		const clearTimers = () => {
 			if (timersRef.current.tick) window.clearInterval(timersRef.current.tick);
 			if (timersRef.current.lock) window.clearTimeout(timersRef.current.lock);
+			if (timersRef.current.cycle) window.clearTimeout(timersRef.current.cycle);
 			timersRef.current = {};
+		};
+
+		const startWordCycle = (word: string) => {
+			if (!activeRef.current) return;
+
+			const letters = word.split("");
+			const len = letters.length;
+			let lockIndex = 0;
+
+			setTarget(word);
+			setComplete(false);
+			setLockedMask(emptyWordSlots(len).locked);
+			setSlots(emptyWordSlots(len).slots);
+
+			const scramble = () => {
+				setSlots(
+					letters.map((letter, i) => {
+						if (i < lockIndex) return letter;
+						return Math.random() > 0.04 ? randomMatrixChar() : "·";
+					}),
+				);
+			};
+
+			const lockNext = () => {
+				if (!activeRef.current) return;
+
+				if (lockIndex >= len) {
+					if (timersRef.current.tick) {
+						window.clearInterval(timersRef.current.tick);
+					}
+					setComplete(true);
+					timersRef.current.cycle = window.setTimeout(() => {
+						if (activeRef.current) {
+							startWordCycle(pickRandomWordPreview(word));
+						}
+					}, WORD_PREVIEW_HOLD_MS);
+					return;
+				}
+
+				const i = lockIndex;
+				lockIndex += 1;
+				setLockedMask((prev) => {
+					const next = [...prev];
+					next[i] = true;
+					return next;
+				});
+				setSlots((prev) => {
+					const next = [...prev];
+					next[i] = letters[i];
+					return next;
+				});
+
+				const delayMs =
+					lockIndex === 1
+						? WORD_PREVIEW_FIRST_LETTER_MS
+						: WORD_PREVIEW_LETTER_BASE_MS + lockIndex * WORD_PREVIEW_LETTER_STEP_MS;
+				timersRef.current.lock = window.setTimeout(lockNext, delayMs);
+			};
+
+			scramble();
+			timersRef.current.tick = window.setInterval(scramble, WORD_PREVIEW_SCRAMBLE_MS);
+			timersRef.current.lock = window.setTimeout(
+				lockNext,
+				WORD_PREVIEW_INITIAL_SCRAMBLE_MS,
+			);
 		};
 
 		if (!active) {
 			clearTimers();
-			lockIndexRef.current = 0;
+			const idle = emptyWordSlots(5);
+			setTarget("·····");
 			setComplete(false);
-			setLockedMask(WORD_PREVIEW_TARGET.split("").map(() => false));
-			setSlots(WORD_PREVIEW_TARGET.split("").map(() => "·"));
+			setLockedMask(idle.locked);
+			setSlots(idle.slots);
 			return clearTimers;
 		}
 
-		lockIndexRef.current = 0;
-		setComplete(false);
-		setLockedMask(WORD_PREVIEW_TARGET.split("").map(() => false));
+		const reducedMotion = window.matchMedia(
+			"(prefers-reduced-motion: reduce)",
+		).matches;
 
-		const scramble = () => {
-			const lockedThrough = lockIndexRef.current;
-			setSlots(
-				WORD_PREVIEW_TARGET.split("").map((letter, i) => {
-					if (i < lockedThrough) return letter;
-					return Math.random() > 0.04 ? randomMatrixChar() : "·";
-				}),
-			);
-		};
-
-		const lockNext = () => {
-			const i = lockIndexRef.current;
-			if (i >= WORD_PREVIEW_TARGET.length) {
-				clearTimers();
+		if (reducedMotion) {
+			let word = pickRandomWordPreview();
+			const apply = (w: string) => {
+				setTarget(w);
 				setComplete(true);
-				return;
-			}
+				setLockedMask(w.split("").map(() => true));
+				setSlots(w.split(""));
+			};
+			apply(word);
+			timersRef.current.tick = window.setInterval(() => {
+				if (!activeRef.current) return;
+				word = pickRandomWordPreview(word);
+				apply(word);
+			}, 3500);
+			return clearTimers;
+		}
 
-			lockIndexRef.current = i + 1;
-			setLockedMask((prev) => {
-				const next = [...prev];
-				next[i] = true;
-				return next;
-			});
-			setSlots((prev) => {
-				const next = [...prev];
-				next[i] = WORD_PREVIEW_TARGET[i];
-				return next;
-			});
-
-			const delayMs = i === 0 ? 280 : 220 + i * 55;
-			timersRef.current.lock = window.setTimeout(lockNext, delayMs);
-		};
-
-		scramble();
-		timersRef.current.tick = window.setInterval(scramble, 26);
-		timersRef.current.lock = window.setTimeout(lockNext, 240);
-
+		startWordCycle(pickRandomWordPreview());
 		return clearTimers;
 	}, [active]);
 
@@ -117,23 +217,23 @@ function WordPreview({ active }: { active: boolean }) {
 			)}
 			aria-hidden
 		>
-			{WORD_PREVIEW_TARGET.split("").map((_, i) => (
+			{target.split("").map((_, i) => (
 				<span
-					key={i}
+					key={`${target}-${i}`}
 					className={clsx(
 						"hub-word-slot",
 						lockedMask[i] && "hub-word-slot--locked",
 						active && !lockedMask[i] && "hub-word-slot--scramble",
 					)}
 				>
-					<span className="hub-word-slot__char">{slots[i]}</span>
+					<span className="hub-word-slot__char">{slots[i] ?? "·"}</span>
 				</span>
 			))}
 		</div>
 	);
 }
 
-/** Sample secret words for hub Bara card preview (برا السالفة). */
+/** Sample secret words for hub Bara card preview (برا السالفة) — topics + roast banter */
 const BARA_PREVIEW_WORDS = [
 	"بيتزا",
 	"قهوة",
@@ -145,9 +245,28 @@ const BARA_PREVIEW_WORDS = [
 	"تلفون",
 	"مستشفى",
 	"حديقة",
+	"حمار",
+	"غبي",
+	"كذاب",
+	"فاشل",
+	"معتوه",
+	"أحمق",
+	"وسخ",
+	"تافه",
+	"قرد",
+	"مخرف",
+	"أبله",
 ] as const;
 
 const BARA_SCAN_CHARS = "ابتثجحخدذرزسشصضطظعغفقكلمنهوي";
+
+/** Hub preview timing (ms) — letter lock build-up */
+const BARA_PREVIEW_SCRAMBLE_MS = 40;
+const BARA_PREVIEW_INITIAL_SCRAMBLE_MS = 320;
+const BARA_PREVIEW_FIRST_LETTER_MS = 260;
+const BARA_PREVIEW_LETTER_BASE_MS = 200;
+const BARA_PREVIEW_LETTER_STEP_MS = 65;
+const BARA_PREVIEW_HOLD_MS = 2400;
 
 function randomBaraGlyph(): string {
 	return BARA_SCAN_CHARS[Math.floor(Math.random() * BARA_SCAN_CHARS.length)];
@@ -216,7 +335,7 @@ function BaraPreview({ active }: { active: boolean }) {
 						if (activeRef.current) {
 							startWordCycle(pickRandomBaraWord(targetWord));
 						}
-					}, 3200);
+					}, BARA_PREVIEW_HOLD_MS);
 					return;
 				}
 
@@ -227,13 +346,19 @@ function BaraPreview({ active }: { active: boolean }) {
 						.join(""),
 				);
 
-				const delayMs = lockIndex === 1 ? 420 : 340 + lockIndex * 110;
+				const delayMs =
+					lockIndex === 1
+						? BARA_PREVIEW_FIRST_LETTER_MS
+						: BARA_PREVIEW_LETTER_BASE_MS + lockIndex * BARA_PREVIEW_LETTER_STEP_MS;
 				timersRef.current.lock = window.setTimeout(lockNext, delayMs);
 			};
 
 			scramble();
-			timersRef.current.tick = window.setInterval(scramble, 58);
-			timersRef.current.lock = window.setTimeout(lockNext, 520);
+			timersRef.current.tick = window.setInterval(scramble, BARA_PREVIEW_SCRAMBLE_MS);
+			timersRef.current.lock = window.setTimeout(
+				lockNext,
+				BARA_PREVIEW_INITIAL_SCRAMBLE_MS,
+			);
 		};
 
 		if (!active) {
@@ -276,7 +401,9 @@ function BaraPreview({ active }: { active: boolean }) {
 		>
 			<div className="hub-bara-preview__card">
 				<span className="hub-bara-preview__label">الكلمة السرية</span>
-				<span className="hub-bara-preview__word">{display}</span>
+				<div className="hub-bara-preview__word-wrap">
+					<span className="hub-bara-preview__word">{display}</span>
+				</div>
 			</div>
 			<p className="hub-bara-preview__hint">
 				{phase === "reveal" ? "واحد برا السالفة…" : "منو برا السالفة؟"}

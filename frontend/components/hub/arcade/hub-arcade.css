@@ -1157,26 +1157,41 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	justify-content: center;
 	gap: 4px;
+	width: 100%;
 	padding: 8px 10px;
 	border-radius: 8px;
 	background: rgba(0, 0, 0, 0.35);
 	border: 1px dashed rgba(244, 63, 94, 0.28);
+	text-align: center;
 }
 
 .hub-bara-preview__label {
+	width: 100%;
 	font-size: 0.65rem;
 	font-weight: 600;
 	color: rgba(251, 113, 133, 0.85);
 	letter-spacing: 0.04em;
+	text-align: center;
+}
+
+.hub-bara-preview__word-wrap {
+	display: flex;
+	width: 100%;
+	min-height: 1.5rem;
+	align-items: center;
+	justify-content: center;
 }
 
 .hub-bara-preview__word {
+	display: block;
 	font-size: 1.15rem;
 	font-weight: 800;
 	color: #fecdd3;
-	min-height: 1.4rem;
-	min-width: 5ch;
+	line-height: 1.35;
+	text-align: center;
+	unicode-bidi: plaintext;
 	text-shadow: 0 0 12px rgba(244, 63, 94, 0.35);
 	transition:
 		color 0.25s ease,
