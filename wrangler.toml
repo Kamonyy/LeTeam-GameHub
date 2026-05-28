@@ -8,8 +8,8 @@ DISABLE_DEV_BOTS = "true"
 # Temporary: Mafia lobby test bots on production (host-only, lobby phase)
 ALLOW_MAFIA_DEV_BOTS = "true"
 
-[build]
-command = "npm run build"
+# No [build] here — Workers Builds runs `npm run build` first; local deploy uses `npm run deploy`.
+# A wrangler [build] would rebuild frontend/out again during `wrangler deploy`.
 
 [[routes]]
 pattern = "gamehub.mohamed-hussein.net"

@@ -30,8 +30,8 @@ The `server/` Socket.io process is for **local/LAN development only** (`HOST=0.0
 
 Workers Builds does **not** read `[build]` from `wrangler.toml`. In Build settings use:
 
-- **Build command:** `npm run build`
-- **Deploy command:** `npx wrangler deploy`
+- **Build command:** `npm ci && npm run build` (installs worker deps + exports `frontend/out`)
+- **Deploy command:** `npx wrangler deploy` (upload only — do not add a second build in `wrangler.toml`)
 - **Node.js:** 20 (or match `.node-version`)
 
 **Local:**
