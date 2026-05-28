@@ -12,6 +12,18 @@ interface HubHeroProps {
   hubPresence: HubPresenceState;
 }
 
+const TICKER_BASE_MS = 5000;
+const TICKER_ROAST_EXTRA_MS = 1000;
+
+type TickerMessage = {
+  text: string;
+  isRoast: boolean;
+};
+
+function tickerLine(text: string, isRoast = false): TickerMessage {
+  return { text, isRoast };
+}
+
 function formatGameNameList(names: string[]): string {
   if (names.length === 0) return '';
   if (names.length === 1) return names[0]!;
@@ -20,7 +32,7 @@ function formatGameNameList(names: string[]): string {
 }
 
 export default function HubHero({ connected, hubPresence }: HubHeroProps) {
-  const [tick, setTick] = useState(0);
+  const [messageIndex, setMessageIndex] = useState(0);
 
   const liveGameNames = useMemo(
     () => GAMES.filter((g) => g.active).map((g) => g.name),
@@ -32,10 +44,12 @@ export default function HubHero({ connected, hubPresence }: HubHeroProps) {
   );
 
   const messages = useMemo(() => {
-    const list: string[] = [];
+    const list: TickerMessage[] = [];
     if (hubPresence.total > 0) {
       list.push(
-        `• ${hubPresence.total} ${hubPresence.total === 1 ? 'player' : 'players'} in the arcade lounge`
+        tickerLine(
+          `• ${hubPresence.total} ${hubPresence.total === 1 ? 'player' : 'players'} in the arcade lounge`
+        )
       );
       for (const p of hubPresence.players.slice(0, 2)) {
         const where =
@@ -47,34 +61,37 @@ export default function HubHero({ connected, hubPresence }: HubHeroProps) {
             gameLabelForPresence(p.gameType)
           : null;
         list.push(
-          gameLabel ?
-            `• ${p.displayName} is ${where} — ${gameLabel}`
-          : `• ${p.displayName} is ${where}`
+          tickerLine(
+            gameLabel ?
+              `• ${p.displayName} is ${where} — ${gameLabel}`
+            : `• ${p.displayName} is ${where}`
+          )
         );
       }
-      list.push(...sampleRoastLines(hubPresence.players, 5));
+      for (const roast of sampleRoastLines(hubPresence.players, 5)) {
+        list.push(tickerLine(roast, true));
+      }
     } else if (connected) {
-      list.push('• The lounge is quiet — be the first to deal a room');
+      list.push(tickerLine('• The lounge is quiet — be the first to deal a room'));
     } else {
-      list.push('• Connecting to the live hub…');
+      list.push(tickerLine('• Connecting to the live hub…'));
     }
     if (liveGameNames.length > 0) {
       const n = liveGameNames.length;
       list.push(
-        `• ${n} live ${n === 1 ? 'cabinet' : 'cabinets'} — ${formatGameNameList(liveGameNames)}`
+        tickerLine(
+          `• ${n} live ${n === 1 ? 'cabinet' : 'cabinets'} — ${formatGameNameList(liveGameNames)}`
+        )
       );
     }
     if (soonGameNames.length > 0) {
-      list.push(`• ${formatGameNameList(soonGameNames)} in the workshop`);
+      list.push(
+        tickerLine(`• ${formatGameNameList(soonGameNames)} in the workshop`)
+      );
     }
-    list.push('• Create a room, share the code, play in seconds');
+    list.push(tickerLine('• Create a room, share the code, play in seconds'));
     return list;
   }, [connected, hubPresence, liveGameNames, soonGameNames]);
-
-  useEffect(() => {
-    const id = window.setInterval(() => setTick((t) => t + 1), 4200);
-    return () => window.clearInterval(id);
-  }, []);
 
   const presenceKey = useMemo(
     () =>
@@ -85,10 +102,28 @@ export default function HubHero({ connected, hubPresence }: HubHeroProps) {
   );
 
   useEffect(() => {
-    setTick(0);
+    setMessageIndex(0);
   }, [presenceKey]);
 
-  const statusText = messages[tick % messages.length];
+  const safeIndex = messages.length > 0 ? messageIndex % messages.length : 0;
+  const currentMessage = messages[safeIndex];
+
+  useEffect(() => {
+    if (!currentMessage || messages.length === 0) return;
+
+    const delayMs =
+      currentMessage.isRoast ?
+        TICKER_BASE_MS + TICKER_ROAST_EXTRA_MS
+      : TICKER_BASE_MS;
+
+    const id = window.setTimeout(() => {
+      setMessageIndex((i) => (i + 1) % messages.length);
+    }, delayMs);
+
+    return () => window.clearTimeout(id);
+  }, [currentMessage, messages.length, safeIndex]);
+
+  const statusText = currentMessage?.text ?? '';
 
   return (
     <section className="hub-enter-hero flex-1 min-w-0 text-center lg:text-left py-8 lg:py-12">
@@ -109,7 +144,7 @@ export default function HubHero({ connected, hubPresence }: HubHeroProps) {
         </span>
         <span className="flex items-center gap-2 text-sm text-gray-300 min-w-0">
           <Radio className="w-3.5 h-3.5 text-hub-accent shrink-0" aria-hidden />
-          <span key={tick} className="hub-ticker-text truncate">
+          <span key={safeIndex} className="hub-ticker-text truncate">
             {statusText}
           </span>
         </span>
