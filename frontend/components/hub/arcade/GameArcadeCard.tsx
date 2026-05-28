@@ -133,48 +133,133 @@ function WordPreview({ active }: { active: boolean }) {
 	);
 }
 
-const BARA_SAMPLE_WORD = "بيتزا";
+/** Sample secret words for hub Bara card preview (برا السالفة). */
+const BARA_PREVIEW_WORDS = [
+	"بيتزا",
+	"قهوة",
+	"مطار",
+	"سينما",
+	"شاطئ",
+	"مطعم",
+	"سيارة",
+	"تلفون",
+	"مستشفى",
+	"حديقة",
+] as const;
+
 const BARA_SCAN_CHARS = "ابتثجحخدذرزسشصضطظعغفقكلمنهوي";
 
 function randomBaraGlyph(): string {
 	return BARA_SCAN_CHARS[Math.floor(Math.random() * BARA_SCAN_CHARS.length)];
 }
 
+function pickRandomBaraWord(exclude?: string): string {
+	const pool = exclude
+		? BARA_PREVIEW_WORDS.filter((w) => w !== exclude)
+		: [...BARA_PREVIEW_WORDS];
+	return pool[Math.floor(Math.random() * pool.length)] ?? BARA_PREVIEW_WORDS[0];
+}
+
 function BaraPreview({ active }: { active: boolean }) {
 	const [phase, setPhase] = useState<"idle" | "scan" | "reveal">("idle");
-	const [scramble, setScramble] = useState("·····");
-	const timersRef = useRef<{ scan?: number; reveal?: number }>({});
+	const [display, setDisplay] = useState("·····");
+	const activeRef = useRef(false);
+	const timersRef = useRef<{
+		tick?: number;
+		lock?: number;
+		cycle?: number;
+	}>({});
+
+	useEffect(() => {
+		activeRef.current = active;
+	}, [active]);
 
 	useEffect(() => {
 		const clearTimers = () => {
-			if (timersRef.current.scan) window.clearInterval(timersRef.current.scan);
-			if (timersRef.current.reveal)
-				window.clearTimeout(timersRef.current.reveal);
+			if (timersRef.current.tick) window.clearInterval(timersRef.current.tick);
+			if (timersRef.current.lock) window.clearTimeout(timersRef.current.lock);
+			if (timersRef.current.cycle) window.clearTimeout(timersRef.current.cycle);
 			timersRef.current = {};
+		};
+
+		const startWordCycle = (targetWord: string) => {
+			if (!activeRef.current) return;
+
+			const letters = Array.from(targetWord);
+			const len = letters.length;
+			let lockIndex = 0;
+
+			setPhase("scan");
+			setDisplay(letters.map(() => "·").join(""));
+
+			const scramble = () => {
+				setDisplay(
+					letters
+						.map((ch, i) => {
+							if (i < lockIndex) return ch;
+							return Math.random() > 0.1 ? randomBaraGlyph() : "·";
+						})
+						.join(""),
+				);
+			};
+
+			const lockNext = () => {
+				if (!activeRef.current) return;
+
+				if (lockIndex >= len) {
+					if (timersRef.current.tick) {
+						window.clearInterval(timersRef.current.tick);
+					}
+					setPhase("reveal");
+					setDisplay(targetWord);
+					timersRef.current.cycle = window.setTimeout(() => {
+						if (activeRef.current) {
+							startWordCycle(pickRandomBaraWord(targetWord));
+						}
+					}, 3200);
+					return;
+				}
+
+				lockIndex += 1;
+				setDisplay(
+					letters
+						.map((ch, i) => (i < lockIndex ? ch : randomBaraGlyph()))
+						.join(""),
+				);
+
+				const delayMs = lockIndex === 1 ? 420 : 340 + lockIndex * 110;
+				timersRef.current.lock = window.setTimeout(lockNext, delayMs);
+			};
+
+			scramble();
+			timersRef.current.tick = window.setInterval(scramble, 58);
+			timersRef.current.lock = window.setTimeout(lockNext, 520);
 		};
 
 		if (!active) {
 			clearTimers();
 			setPhase("idle");
-			setScramble("·····");
+			setDisplay("·····");
 			return clearTimers;
 		}
 
-		setPhase("scan");
-		timersRef.current.scan = window.setInterval(() => {
-			setScramble(
-				Array.from({ length: 5 }, () =>
-					Math.random() > 0.2 ? randomBaraGlyph() : "·",
-				).join(""),
-			);
-		}, 70);
+		const reducedMotion = window.matchMedia(
+			"(prefers-reduced-motion: reduce)",
+		).matches;
 
-		timersRef.current.reveal = window.setTimeout(() => {
-			if (timersRef.current.scan) window.clearInterval(timersRef.current.scan);
+		if (reducedMotion) {
+			let word = pickRandomBaraWord();
 			setPhase("reveal");
-			setScramble(BARA_SAMPLE_WORD);
-		}, 850);
+			setDisplay(word);
+			timersRef.current.tick = window.setInterval(() => {
+				if (!activeRef.current) return;
+				word = pickRandomBaraWord(word);
+				setDisplay(word);
+			}, 4000);
+			return clearTimers;
+		}
 
+		startWordCycle(pickRandomBaraWord());
 		return clearTimers;
 	}, [active]);
 
@@ -183,6 +268,7 @@ function BaraPreview({ active }: { active: boolean }) {
 			className={clsx(
 				"hub-bara-preview mt-4",
 				active && "hub-bara-preview--live",
+				phase === "scan" && "hub-bara-preview--building",
 				phase === "reveal" && "hub-bara-preview--reveal",
 			)}
 			dir="rtl"
@@ -190,7 +276,7 @@ function BaraPreview({ active }: { active: boolean }) {
 		>
 			<div className="hub-bara-preview__card">
 				<span className="hub-bara-preview__label">الكلمة السرية</span>
-				<span className="hub-bara-preview__word">{scramble}</span>
+				<span className="hub-bara-preview__word">{display}</span>
 			</div>
 			<p className="hub-bara-preview__hint">
 				{phase === "reveal" ? "واحد برا السالفة…" : "منو برا السالفة؟"}

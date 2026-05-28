@@ -1142,6 +1142,11 @@
 	border-color: rgba(244, 63, 94, 0.32);
 }
 
+.hub-bara-preview--building .hub-bara-preview__word {
+	letter-spacing: 0.06em;
+	filter: brightness(1.08);
+}
+
 .hub-bara-preview--reveal {
 	box-shadow:
 		inset 0 0 22px rgba(244, 63, 94, 0.1),
@@ -1171,7 +1176,11 @@
 	font-weight: 800;
 	color: #fecdd3;
 	min-height: 1.4rem;
+	min-width: 5ch;
 	text-shadow: 0 0 12px rgba(244, 63, 94, 0.35);
+	transition:
+		color 0.25s ease,
+		filter 0.25s ease;
 }
 
 .hub-bara-preview--reveal .hub-bara-preview__word {
