@@ -3,7 +3,6 @@
 import {
   RATE_LIMITS,
 } from './constants.js';
-import { isDevBotsEnabled } from './devBots.js';
 import {
   normalizeRoomId,
   sanitizeDisplayName,
@@ -151,25 +150,23 @@ export function registerHandlers(socket, roomManager) {
     ack?.({ success: true, roomId: result.roomId, isSpectator: true });
   });
 
-  if (isDevBotsEnabled()) {
-    socket.on('room:dev:add-bots', ({ count }, ack) => {
-      const result = roomManager.addDevBots(socket, count);
-      if (result?.error) {
-        ack?.({ error: result.error });
-        return;
-      }
-      ack?.({ success: true, added: result.added });
-    });
+  socket.on('room:dev:add-bots', ({ count }, ack) => {
+    const result = roomManager.addDevBots(socket, count);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, added: result.added });
+  });
 
-    socket.on('room:dev:remove-bots', (_payload, ack) => {
-      const result = roomManager.removeDevBots(socket);
-      if (result?.error) {
-        ack?.({ error: result.error });
-        return;
-      }
-      ack?.({ success: true, removed: result.removed });
-    });
-  }
+  socket.on('room:dev:remove-bots', (_payload, ack) => {
+    const result = roomManager.removeDevBots(socket);
+    if (result?.error) {
+      ack?.({ error: result.error });
+      return;
+    }
+    ack?.({ success: true, removed: result.removed });
+  });
 
   socket.on('room:leave', (payload, ack) => {
     const options =

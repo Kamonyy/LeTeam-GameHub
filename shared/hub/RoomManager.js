@@ -807,16 +807,15 @@ export class RoomManager {
 	}
 
 	addDevBots(socket, requestedCount) {
-		if (!isDevBotsEnabled()) {
-			return { error: "Dev bots are not enabled on this server" };
-		}
-
 		const hostId = this.socketToPlayer.get(socket.id);
 		const roomId = this.playerToRoom.get(hostId);
 		if (!roomId) return { error: "Not in a room" };
 
 		const room = this.rooms.get(roomId);
 		if (!room) return { error: "Room not found" };
+		if (!isDevBotsEnabled(room.gameType)) {
+			return { error: "Dev bots are not enabled for this game" };
+		}
 		if (room.hostId !== hostId) {
 			return { error: "Only the host can add dev bots" };
 		}
@@ -853,16 +852,15 @@ export class RoomManager {
 	}
 
 	removeDevBots(socket) {
-		if (!isDevBotsEnabled()) {
-			return { error: "Dev bots are not enabled on this server" };
-		}
-
 		const hostId = this.socketToPlayer.get(socket.id);
 		const roomId = this.playerToRoom.get(hostId);
 		if (!roomId) return { error: "Not in a room" };
 
 		const room = this.rooms.get(roomId);
 		if (!room) return { error: "Room not found" };
+		if (!isDevBotsEnabled(room.gameType)) {
+			return { error: "Dev bots are not enabled for this game" };
+		}
 		if (room.hostId !== hostId) {
 			return { error: "Only the host can remove dev bots" };
 		}
@@ -1627,7 +1625,7 @@ export class RoomManager {
 			})),
 			minPlayers: gameDef?.minPlayers ?? 2,
 			maxPlayers: gameDef?.maxPlayers ?? 4,
-			devBotsEnabled: isDevBotsEnabled(),
+			devBotsEnabled: isDevBotsEnabled(room.gameType),
 		};
 
 		for (const player of room.players) {
@@ -1755,7 +1753,7 @@ export class RoomManager {
 			minPlayers: getGame(room.gameType)?.minPlayers ?? 2,
 			maxPlayers: getGame(room.gameType)?.maxPlayers ?? 4,
 			isSpectator,
-			devBotsEnabled: isDevBotsEnabled(),
+			devBotsEnabled: isDevBotsEnabled(room.gameType),
 		});
 
 		if (room.game) {

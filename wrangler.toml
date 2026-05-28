@@ -1,10 +1,12 @@
 name = "gamehub"
 main = "worker/index.js"
 compatibility_date = "2024-08-21"
-compatibility_flags = ["nodejs_compat_v2"]
+compatibility_flags = ["nodejs_compat_v2", "nodejs_compat_populate_process_env"]
 
 [vars]
 DISABLE_DEV_BOTS = "true"
+# Temporary: Mafia lobby test bots on production (host-only, lobby phase)
+ALLOW_MAFIA_DEV_BOTS = "true"
 
 [build]
 command = "npm run build"

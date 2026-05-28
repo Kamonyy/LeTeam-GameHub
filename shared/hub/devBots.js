@@ -1,11 +1,16 @@
 /**
- * Dev-only fake players for solo local testing.
- * Enabled only when ALLOW_DEV_BOTS=true or NODE_ENV=development (and not DISABLE_DEV_BOTS).
+ * Dev-only fake players for solo / lobby testing.
+ * Production: set ALLOW_MAFIA_DEV_BOTS=true (Mafia only) or ALLOW_DEV_BOTS=true (all games).
  */
 
-/** @returns {boolean} */
-export function isDevBotsEnabled() {
+/** @param {string | undefined} [gameType] */
+export function isDevBotsEnabled(gameType) {
 	if (typeof process === "undefined" || !process.env) return false;
+
+	if (gameType === "mafia" && process.env.ALLOW_MAFIA_DEV_BOTS === "true") {
+		return true;
+	}
+
 	if (process.env.DISABLE_DEV_BOTS === "true") return false;
 	if (process.env.ALLOW_DEV_BOTS === "true") return true;
 	if (process.env.NODE_ENV === "development") return true;
