@@ -8,12 +8,12 @@ import StuckResetButton from '@/components/shared/StuckResetButton';
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ClientStorageProvider>
-      <SocketProvider>
-        <ViewTransitionProvider>
+      <ViewTransitionProvider>
+        <SocketProvider>
           <StuckResetButton />
           {children}
-        </ViewTransitionProvider>
-      </SocketProvider>
+        </SocketProvider>
+      </ViewTransitionProvider>
     </ClientStorageProvider>
   );
 }
