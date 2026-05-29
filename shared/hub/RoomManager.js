@@ -46,10 +46,13 @@ import { isValidRoomReaction } from "./engagementCatalog.js";
 import { INVITE_TTL_MS, MAX_ROOMS, RATE_LIMIT_WINDOW_MS } from "./constants.js";
 import { cryptoRandomInt } from "../games/dominoes/random.js";
 import {
+	shouldPreservePlayerSeat,
+	shouldPreserveRoomFromIdlePurge,
+} from "./player-seat.js";
+import {
 	isActiveWordGameSession,
 	isWordGameRoom,
 	isWordGameWon,
-	shouldPreserveWordGameRoom,
 } from "./wordgame-session.js";
 import {
 	parseScratchpadRoundNumber,
@@ -808,6 +811,7 @@ export class RoomManager {
 				return {
 					reconnected: true,
 					roomId,
+					gameType: room.gameType,
 					isSpectator: false,
 					sessionToken: session.sessionToken,
 				};
@@ -832,6 +836,7 @@ export class RoomManager {
 				return {
 					reconnected: true,
 					roomId,
+					gameType: room.gameType,
 					isSpectator: true,
 					sessionToken: session.sessionToken,
 				};
@@ -1137,14 +1142,16 @@ export class RoomManager {
 			player.disconnectTimer = null;
 		}
 
-		if (room && isActiveWordGameSession(room) && !force) {
+		if (room && shouldPreservePlayerSeat(room) && !force) {
 			if (player) {
 				player.connected = false;
 			}
 			this.playerToRoom.delete(playerId);
 			if (this.useSocketRooms) socket.leave(roomId);
 			this.broadcastLobbyState(roomId);
-			this.broadcastGameState(roomId);
+			if (room.game) {
+				this.broadcastGameState(roomId);
+			}
 			this._scheduleBroadcastHubPresence();
 			return { success: true, left: false, softDisconnect: true };
 		}
@@ -1546,11 +1553,17 @@ export class RoomManager {
 			room.status === "finished" &&
 			room.game?.phase === "match_over";
 
+		const finishedMafiaMatch =
+			room.gameType === "mafia" &&
+			room.status === "finished" &&
+			room.game?.phase === "match_over";
+
 		if (
 			room.status !== "playing" &&
 			!finishedWordMatch &&
 			!finishedSketchMatch &&
-			!finishedBaraMatch
+			!finishedBaraMatch &&
+			!finishedMafiaMatch
 		) {
 			return { error: "No match in progress" };
 		}
@@ -1951,7 +1964,8 @@ export class RoomManager {
 			if (
 				room.gameType === "mafia" &&
 				room.status === "playing" &&
-				room.game?.silencedForDay?.includes(playerId)
+				typeof room.game?.isPlayerSilencedForDay === "function" &&
+				room.game.isPlayerSilencedForDay(playerId)
 			) {
 				return { error: "You are silenced and cannot chat today" };
 			}
@@ -2549,7 +2563,7 @@ export class RoomManager {
 		// stale socket ids are overwritten in registerPlayer.
 		const roomId = this.playerToRoom.get(playerId);
 		const room = roomId ? this.rooms.get(roomId) : null;
-		if (!isActiveWordGameSession(room)) {
+		if (!shouldPreservePlayerSeat(room)) {
 			if (this.playerToSocket.get(playerId) === socket.id) {
 				this.playerToSocket.delete(playerId);
 			}
@@ -2570,38 +2584,23 @@ export class RoomManager {
 
 		player.connected = false;
 
-		if (
-			room.game &&
-			(room.status === "playing" || isActiveWordGameSession(room))
-		) {
+		if (shouldPreservePlayerSeat(room)) {
 			if (isActiveWordGameSession(room) && player.tabFocused !== false) {
 				player.tabFocused = false;
 				this._broadcastWordTabFocus(room);
 			}
-			if (typeof room.game.pauseTurnTimer === "function") {
+			if (room.game && typeof room.game.pauseTurnTimer === "function") {
 				room.game.pauseTurnTimer();
 			}
-			this.broadcastGameState(roomId);
+			if (room.game) {
+				this.broadcastGameState(roomId);
+			}
 			this.broadcastLobbyState(roomId);
 			return;
 		}
 
 		if (isWordGameWon(room)) {
 			this.broadcastLobbyState(roomId);
-			return;
-		}
-
-		// Pre-game lobby: drop immediately so hub presence does not show a ghost lobby.
-		if (room.status === "lobby") {
-			if (player.disconnectTimer) {
-				clearTimeout(player.disconnectTimer);
-				player.disconnectTimer = null;
-			}
-			if (this.useSocketRooms) socket.leave(roomId);
-			this._removePlayerFromRoom(playerId, roomId);
-			if (this.playerToSocket.get(playerId) === socket.id) {
-				this.playerToSocket.delete(playerId);
-			}
 			return;
 		}
 
@@ -2642,7 +2641,7 @@ export class RoomManager {
 			room.status === "playing" &&
 			gameDef &&
 			room.players.length < gameDef.minPlayers &&
-			!shouldPreserveWordGameRoom(room)
+			!shouldPreservePlayerSeat(room)
 		) {
 			room.status = "finished";
 		}
@@ -2676,8 +2675,8 @@ export class RoomManager {
 	_lobbySettingsForViewer(room, viewerId) {
 		const settings = { ...room.settings };
 		if (viewerId !== room.hostId && room.gameType === "mafia") {
+			// Pre-game manual role picks stay host-only; role counts are public in lobby.
 			delete settings.roleAssignments;
-			delete settings.roleCounts;
 		}
 		return settings;
 	}
@@ -3090,7 +3089,7 @@ export class RoomManager {
 			const now = Date.now();
 			for (const [roomId, room] of this.rooms) {
 				if (room.status === "playing") continue;
-				if (shouldPreserveWordGameRoom(room)) continue;
+				if (shouldPreserveRoomFromIdlePurge(room)) continue;
 
 				const allDisconnected = room.players.every((p) => !p.connected);
 				const lastActive = room.lastActivityAt ?? room.createdAt;

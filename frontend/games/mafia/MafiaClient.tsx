@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -74,12 +74,14 @@ export default function MafiaClient() {
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [postMatchBusy, setPostMatchBusy] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
   const [ackBusy, setAckBusy] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const leaveToHub = useLeaveToHub();
   const [isNarrowViewport, setIsNarrowViewport] = useState(false);
+  const hadLobbyRef = useRef(false);
 
   const {
     connected,
@@ -94,6 +96,7 @@ export default function MafiaClient() {
     startGame,
     kickPlayer,
     cancelMatch,
+    disbandRoom,
     mafiaAcknowledgeRole,
     mafiaNarratorAction,
     addDevBots,
@@ -149,6 +152,27 @@ export default function MafiaClient() {
       setCancelConfirmOpen(false);
     }
   }, [tcState?.phase]);
+
+  useEffect(() => {
+    if (tcLobby) hadLobbyRef.current = true;
+    if (hadLobbyRef.current && connected && !lobby) {
+      hadLobbyRef.current = false;
+      navigateWithTransition("/", { replace: true });
+    }
+  }, [lobby, connected, navigateWithTransition, tcLobby]);
+
+  const handleReturnToLobby = async () => {
+    setPostMatchBusy(true);
+    await cancelMatch();
+    setPostMatchBusy(false);
+  };
+
+  const handleExitRoom = async () => {
+    setPostMatchBusy(true);
+    const ok = await disbandRoom();
+    setPostMatchBusy(false);
+    if (ok) navigateWithTransition("/", { replace: true });
+  };
 
   const handleCreate = async () => {
     if (!displayName.trim()) return;
@@ -303,12 +327,16 @@ export default function MafiaClient() {
     <TooltipProvider delayDuration={280}>
     <main
       data-mafia-theme
-      className="relative min-h-dvh overflow-x-hidden bg-[color:var(--p1-abyss)] text-[color:var(--p1-ink)]"
+      className={cn(
+        "mf-app-canvas relative min-h-dvh overflow-x-hidden bg-[color:var(--p1-abyss)] text-[color:var(--p1-ink)]",
+        atmosphere === "night" && "mf-app-canvas--night",
+        atmosphere === "morning" && "mf-app-canvas--morning",
+      )}
     >
       <RoomEngagementLayer roomId={tcLobby?.roomId} />
       <MafiaAtmosphere variant={atmosphere} reduced={atmosphereReduced} />
 
-      <header className="sticky top-0 z-40 border-b border-[color:var(--mf-glass-border)] bg-[color:var(--mf-glass-bg)] pt-[env(safe-area-inset-top,0px)] shadow-[var(--mf-shadow-panel)] backdrop-blur-[var(--mf-glass-blur)] before:pointer-events-none before:absolute before:inset-x-[6%] before:bottom-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-amber-500/70 before:to-transparent">
+      <header className="mf-app-header sticky top-0 z-40 border-b border-[color:var(--mf-glass-border)] bg-[color:var(--mf-glass-bg)] pt-[env(safe-area-inset-top,0px)] shadow-[var(--mf-shadow-panel)] backdrop-blur-[var(--mf-glass-blur)] before:pointer-events-none before:absolute before:inset-x-[6%] before:bottom-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-amber-500/70 before:to-transparent">
         <div className="mx-auto flex max-w-[76rem] flex-wrap items-center justify-between gap-x-4 gap-y-3 px-5 py-3.5 max-md:gap-y-2 max-md:px-3.5 max-md:py-2.5">
           <div className="flex min-w-0 items-center gap-3">
             <Link
@@ -490,27 +518,13 @@ export default function MafiaClient() {
       <MafiaMatchOverModal
         open={!!inGame && tcState?.phase === "match_over" && !!tcState.winnerTeam}
         winnerTeam={tcState?.winnerTeam ?? "good"}
-        isNarrator={isNarrator}
         isHost={!!isHost}
-        busy={actionBusy || cancelling}
-        onPlayAgain={
-          isNarrator
-            ? async () => {
-                setActionBusy(true);
-                await onNarratorAction("reset_match");
-                setActionBusy(false);
-              }
-            : undefined
+        busy={postMatchBusy}
+        onReturnToLobby={
+          isHost ? () => void handleReturnToLobby() : undefined
         }
-        onBackToLobby={
-          isHost
-            ? async () => {
-                setCancelling(true);
-                await cancelMatch();
-                setCancelling(false);
-              }
-            : undefined
-        }
+        onExit={isHost ? () => void handleExitRoom() : undefined}
+        onLeave={!isHost ? () => void leaveToHub() : undefined}
       />
 
       <ErrorToast message={error} onDismiss={clearError} />

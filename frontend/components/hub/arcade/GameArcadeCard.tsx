@@ -625,7 +625,7 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
 					}
 				</div>
 
-				<h4 className="text-xl font-bold mb-2 text-gray-50 group-hover:text-white transition-colors">
+				<h4 className="text-xl font-bold mb-2 text-foreground group-hover:text-white transition-colors">
 					{game.name}
 				</h4>
 				<p className="text-hub-muted text-sm mb-3 leading-snug line-clamp-2">

@@ -45,6 +45,7 @@ export function useGameRoom(options: UseGameRoomOptions): UseGameRoomReturn {
     isSpectator,
     joinRoom,
     spectateRoom,
+    clearError,
     requestSketchCanvasRecovery,
   } = socket;
 
@@ -60,6 +61,7 @@ export function useGameRoom(options: UseGameRoomOptions): UseGameRoomReturn {
     playerId,
     joinRoom,
     spectateRoom,
+    clearError,
   });
 
   const wasConnectedRef = useRef(false);

@@ -77,7 +77,7 @@ export default function BaraLobby({
       <BaraAboutSidebar />
 
       <div className="bara-card w-full min-w-0">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-3">
           <span className="text-2xl" aria-hidden>
             🕵️
           </span>
@@ -93,6 +93,10 @@ export default function BaraLobby({
           onKickPlayer={onKickPlayer}
           starting={starting}
           canStartOverride={canStart}
+          rosterBeforeSettings
+          compactRoster
+          rosterClassName="bara-lobby-roster"
+          compactEmptySlotLabel="فارغ"
           roomCodeLabel="رمز الغرفة"
           playersLabel={`${lobby.players.length} / ${lobby.maxPlayers} لاعبين`}
           startLabel={starting ? 'جاري البدء…' : 'ابدأ اللعبة'}
@@ -118,6 +122,7 @@ export default function BaraLobby({
                   onChange={setCategories}
                   disabled={!isHost}
                   variant="detailed"
+                  scrollbar="mafia"
                   label="حزم الفئات (اختر واحدة أو أكثر)"
                   hint="كل جولة تُختار فئة عشوائية من الفئات المحددة، ثم تُسحب كلمة سرية من تلك الفئة. كلما زادت الفئات، تنوّعت الجولات أكثر."
                   showSelectAll={isHost}
@@ -129,7 +134,13 @@ export default function BaraLobby({
               </div>
 
               <div>
-                <label className="bara-label block mb-2">جولات للفوز</label>
+                <label className="bara-label block mb-1">عدد جولات المباراة</label>
+                <p className="text-[11px] bara-muted leading-snug mb-2">
+                  تُلعب المباراة هذا العدد من الجولات بالكامل (مثلاً 3 جولات = 3 جولات
+                  كاملة، دون إيقاف مبكر). بعد الجولة الأخيرة تنتهي المباراة تلقائياً؛
+                  يفوز من حقق انتصارات جولات أكثر: فريق الداخلون جميعاً أو برا السالفة
+                  وحده.
+                </p>
                 <div className="grid grid-cols-3 gap-2">
                   {BARA_ROUNDS_OPTIONS.map((r) => (
                     <button

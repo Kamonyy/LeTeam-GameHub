@@ -57,10 +57,11 @@ export interface BaraGameState {
 	scores: Record<string, number>;
 	/** Outcast personal round wins (display). */
 	roundWins: Record<string, number>;
-	/** Insider team round victories toward roundsToWin. */
+	/** Insider round victories tallied across the match. */
 	insiderRoundWins: number;
-	/** Outcast team round victories toward roundsToWin. */
+	/** Outcast round victories tallied across the match. */
 	outcastRoundWins: number;
+	/** Total rounds played in the match (lobby setting). */
 	roundsToWin: number;
 	roundNumber: number;
 	categoryPackageIds: string[];

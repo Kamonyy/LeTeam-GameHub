@@ -14,6 +14,7 @@ import {
 } from '@/components/mafia/mafia-panel';
 import type { MafiaChronicleSection } from '../types';
 import { formatPlayerChronicleEntry } from '../lib/formatPlayerChronicleEntry';
+import { seerAlignmentTextClass } from '../lib/alignmentDisplay';
 import MafiaDaySunIcon from './icons/MafiaDaySunIcon';
 import MafiaNightMoonIcon from './icons/MafiaNightMoonIcon';
 import { MafiaChronicleIcon } from './icons/MafiaChronicleIcon';
@@ -161,8 +162,18 @@ function PlayerActivityLog({
                                   {text}
                                 </p>
                                 {detail && (
-                                  <p className="mt-0.5 text-sm italic text-stone-500">
-                                    {detail}
+                                  <p
+                                    className={clsx(
+                                      'mt-0.5 text-sm',
+                                      entry.alignment ?
+                                        clsx(
+                                          'font-semibold tracking-wide',
+                                          seerAlignmentTextClass(entry.alignment)
+                                        )
+                                      : 'italic text-stone-500'
+                                    )}
+                                  >
+                                    {entry.alignment ? `Result: ${detail}` : detail}
                                   </p>
                                 )}
                               </div>

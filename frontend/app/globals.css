@@ -99,7 +99,12 @@
 		--destructive: 343 87.5% 15.7%; /* rose-950 */
 		--destructive-foreground: 0 85.7% 97.3%; /* red-50 */
 		--muted: 20 14.3% 4.1%; /* stone-950 */
-		--muted-foreground: 24 5.4% 63.9%; /* stone-400 */
+		--muted-foreground: 220 10% 74%; /* readable secondary / hint text */
+
+		/* Hub text hierarchy — single source for body copy contrast */
+		--hub-text-secondary: 220 12% 86%;
+		--hub-text-muted: 220 10% 74%;
+		--hub-text-faint: 220 8% 62%;
 		--accent: 24 5.7% 15.9%; /* stone-900 */
 		--accent-foreground: 60 9.1% 97.8%;
 		--popover: 24 9.8% 10%;
@@ -131,7 +136,8 @@
 		min-height: 100vh;
 		min-height: 100dvh;
 		-webkit-tap-highlight-color: transparent;
-		@apply bg-hub-bg text-gray-100 antialiased;
+		@apply bg-hub-bg text-foreground antialiased;
+		font-feature-settings: "kern" 1, "liga" 1;
 	}
 
 	button,
@@ -173,13 +179,13 @@
 	}
 
 	.btn-secondary {
-		@apply appearance-none px-5 py-2.5 bg-hub-card hover:bg-hub-border text-gray-200 font-medium rounded-lg
+		@apply appearance-none px-5 py-2.5 bg-hub-card hover:bg-hub-border text-hub-text-secondary font-medium rounded-lg
            border border-hub-border transition-colors duration-ui;
 	}
 
 	.input-field {
 		@apply appearance-none w-full px-4 py-2.5 bg-hub-surface border border-hub-border rounded-lg
-           text-gray-100 placeholder-hub-muted focus:outline-none focus:border-hub-accent
+           text-foreground placeholder:text-hub-muted focus:outline-none focus:border-hub-accent
            transition-colors duration-ui uppercase tracking-widest text-center font-mono;
 	}
 

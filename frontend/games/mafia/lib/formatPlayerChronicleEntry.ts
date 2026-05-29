@@ -52,7 +52,7 @@ export function formatPlayerChronicleEntry(
     case 'player_silenced':
       return {
         icon: '🤐',
-        text: 'You were silenced — you cannot speak today',
+        text: 'You were silenced — you cannot speak or vote today',
       };
     case 'player_doctor_action':
       return entry.skipped ?
@@ -61,6 +61,11 @@ export function formatPlayerChronicleEntry(
             icon: '⚕️',
             text: `You protected ${playerName(entry.targetId!)}`,
           };
+    case 'player_doctor_blocked_kill':
+      return {
+        icon: '🛡️',
+        text: 'Your protection blocked a kill attempt tonight',
+      };
     case 'player_mafia_action':
       return entry.skipped ?
           { icon: '⏭️', text: 'Your faction took no kill tonight' }
@@ -68,13 +73,18 @@ export function formatPlayerChronicleEntry(
             icon: '🗡️',
             text: `Your faction targeted ${playerName(entry.targetId!)}`,
           };
+    case 'player_mafia_kill_blocked':
+      return {
+        icon: '🛡️',
+        text: "Your faction's kill was blocked tonight",
+      };
     case 'player_seer_action':
       return entry.skipped ?
           { icon: '⏭️', text: 'You did not inspect anyone tonight' }
         : {
             icon: '🔮',
             text: `You inspected ${playerName(entry.targetId!)}`,
-            detail: 'The narrator knows the alignment — not shown here',
+            detail: entry.alignment ?? undefined,
           };
     case 'player_sniper_action':
       return entry.skipped ?

@@ -13,7 +13,7 @@ type LobbyChatPanelProps = {
   lobby: LobbyState;
   className?: string;
   defaultOpen?: boolean;
-  scrollbar?: 'default' | 'hextech';
+  scrollbar?: 'default' | 'hextech' | 'mafia';
 };
 
 export default function LobbyChatPanel({
@@ -49,7 +49,7 @@ export default function LobbyChatPanel({
                 <span
                   className={clsx(
                     'font-semibold text-xs truncate',
-                    isYou ? 'text-hub-accent' : 'text-gray-200',
+                    isYou ? 'text-hub-accent' : 'text-hub-text-secondary',
                   )}
                 >
                   {msg.displayName}
@@ -61,7 +61,7 @@ export default function LobbyChatPanel({
                   })}
                 </time>
               </div>
-              <p className="text-gray-100 break-words whitespace-pre-wrap">
+              <p className="text-foreground break-words whitespace-pre-wrap">
                 {msg.message}
               </p>
             </>
@@ -83,7 +83,7 @@ export default function LobbyChatPanel({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-200 hover:bg-hub-bg/40 transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-hub-text-secondary hover:bg-hub-bg/40 transition-colors"
         aria-expanded={open}
       >
         <MessageSquare className="w-4 h-4 text-hub-accent shrink-0" />

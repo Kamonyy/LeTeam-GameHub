@@ -77,7 +77,7 @@ export default function InvitationOverlay() {
           <button
             type="button"
             onClick={dismissIncoming}
-            className="absolute top-2 right-2 z-10 p-1 text-stone-500 hover:text-stone-300 transition-colors text-lg leading-none"
+            className="absolute top-2 right-2 z-10 p-1 text-hub-faint hover:text-hub-text-secondary transition-colors text-lg leading-none"
             aria-label="Decline invite"
           >
             ×
@@ -87,7 +87,7 @@ export default function InvitationOverlay() {
             <span
               className={clsx(
                 'inline-block text-[9px] font-mono uppercase tracking-[0.2em] px-2 py-0.5 rounded',
-                'bg-stone-800/80 text-stone-300',
+                'bg-secondary/80 text-hub-text-secondary',
                 urgent && 'animate-pulse duration-500 text-red-400'
               )}
             >
@@ -100,15 +100,15 @@ export default function InvitationOverlay() {
           <div className="flex items-center gap-2.5 px-3 pb-2">
             <div
               className={clsx(
-                'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-stone-100',
-                'bg-stone-800',
-                urgent ? 'ring-2 ring-red-500/50' : 'ring-1 ring-stone-600'
+                'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-foreground',
+                'bg-secondary',
+                urgent ? 'ring-2 ring-red-500/50' : 'ring-1 ring-border'
               )}
             >
               {initial}
             </div>
-            <p className="min-w-0 flex-1 pr-5 text-xs text-stone-400 leading-snug">
-              <span className="font-medium text-stone-200">
+            <p className="min-w-0 flex-1 pr-5 text-xs text-muted-foreground leading-snug">
+              <span className="font-medium text-hub-text-secondary">
                 {incomingInvite.fromName}
               </span>
               {' invited you'}
@@ -116,7 +116,7 @@ export default function InvitationOverlay() {
           </div>
 
           <div className="flex items-center justify-between gap-2 px-3 pb-2">
-            <span className="font-mono text-[10px] tracking-wider text-stone-500 uppercase">
+            <span className="font-mono text-[10px] tracking-wider text-hub-faint uppercase">
               ROOM {incomingInvite.roomId}
             </span>
             <span
@@ -124,7 +124,7 @@ export default function InvitationOverlay() {
                 'font-mono tabular-nums text-xs tracking-wider',
                 urgent ?
                   'text-red-500 animate-pulse duration-500'
-                : 'text-stone-400'
+                : 'text-muted-foreground'
               )}
             >
               {secondsRemaining}s

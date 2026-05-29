@@ -15,6 +15,9 @@ export interface MafiaRoleView {
   nameAr: string;
   descriptionEn: string;
   descriptionAr: string;
+  /** Short “what you do” copy for the role reveal card */
+  summaryEn?: string;
+  summaryAr?: string;
   icon: string;
   team: RoleTeam;
   accentColor: string;

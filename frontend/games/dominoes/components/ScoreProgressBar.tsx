@@ -30,7 +30,7 @@ export default function ScoreProgressBar({
       )}
     >
       <div className="flex items-center justify-between mb-1.5 gap-2">
-        <span className="text-xs font-medium text-gray-200 truncate">{label}</span>
+        <span className="text-xs font-medium text-hub-text-secondary truncate">{label}</span>
         <span className="text-xs font-mono text-hub-muted shrink-0">
           {score}/{cap}
         </span>

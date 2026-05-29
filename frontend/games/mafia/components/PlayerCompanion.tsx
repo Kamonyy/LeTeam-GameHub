@@ -56,6 +56,7 @@ function CompactRoleBadge({
 	return (
 		<MafiaCard
 			variant="elevated"
+			interactive={false}
 			className="border-l-4"
 			style={{
 				...roleThemeStyleFromRole(role.id, role.accentColor),
@@ -63,7 +64,7 @@ function CompactRoleBadge({
 			}}
 			aria-label={`Your role: ${role.nameEn}`}
 		>
-			<MafiaCardContent className="flex items-center gap-3.5 p-4">
+			<MafiaCardContent className="flex items-center justify-center gap-3.5 p-4 text-center">
 				<span
 					className="inline-flex h-[3.2rem] w-[3.2rem] shrink-0 items-center justify-center rounded-full border-2 text-[1.7rem]"
 					style={roleIconBadgeStyle(role.id, role.accentColor)}
@@ -71,7 +72,7 @@ function CompactRoleBadge({
 				>
 					{role.icon}
 				</span>
-				<div className="flex min-w-0 flex-col gap-0.5">
+				<div className="flex min-w-0 flex-col items-center gap-0.5">
 					<span className="font-cinzel text-[1.1rem] text-[color:var(--p1-ink-soft)]">
 						{role.nameAr}
 					</span>
@@ -97,13 +98,13 @@ function NightCalloutCard({
 	return (
 		<MafiaCard
 			role="status"
+			interactive={false}
 			variant={variant === "yours" ? "elevated" : "glass"}
 			className={clsx(
 				"text-center",
-				variant === "yours" &&
-					"animate-in zoom-in-95 border-amber-500/60 duration-300 motion-safe:animate-[pulse_2.4s_ease-in-out_infinite]",
-				variant === "dormant" &&
-					"animate-in zoom-in-95 border-indigo-500/40 bg-gradient-to-b from-indigo-950/50 to-stone-950/90 duration-300",
+				variant === "yours" ?
+					"mf-night-callout mf-night-callout--yours animate-in zoom-in-95 duration-300 motion-safe:animate-[pulse_2.6s_ease-in-out_infinite]"
+				:	"mf-night-callout mf-night-callout--dormant animate-in zoom-in-95 duration-300",
 			)}
 		>
 			<MafiaCardContent className="space-y-2 p-4">{children}</MafiaCardContent>
@@ -134,9 +135,8 @@ function PlayerCompanion({
 	return (
 		<div
 				className={clsx(
-					"relative mx-auto flex w-full max-w-lg flex-col gap-4 px-4 pt-6",
+					"mf-game-stage relative mx-auto flex w-full max-w-lg flex-col gap-4 px-4 pt-6",
 					"pb-[max(2.5rem,env(safe-area-inset-bottom))]",
-					"after:pointer-events-none after:fixed after:inset-0 after:z-[-1] after:bg-[radial-gradient(ellipse_at_50%_42%,rgba(180,120,40,0.07)_0%,transparent_58%)] max-md:after:opacity-0",
 				)}
 			>
 				<PhaseCeremony label={phaseLabel} />
@@ -156,7 +156,7 @@ function PlayerCompanion({
 				{!roleReveal && (
 					<div
 						key={`${state.phase}-${state.dayNumber}-${state.nightNumber}`}
-						className="flex flex-col gap-4 [&>*]:animate-in [&>*]:fade-in [&>*]:slide-in-from-bottom-2 [&>*]:duration-300"
+						className="mf-game-stage__stack flex flex-col gap-4 [&>*]:animate-in [&>*]:fade-in [&>*]:slide-in-from-bottom-2 [&>*]:duration-300"
 					>
 						{state.myRole && <CompactRoleBadge role={state.myRole} />}
 
@@ -208,11 +208,11 @@ function PlayerCompanion({
 
 						{state.iAmSilenced && state.phase === "day" && (
 							<p className="rounded border border-dashed border-amber-900/50 bg-amber-950/30 px-3 py-2 text-center text-sm italic text-amber-200/80">
-								You are silenced today.
+								You are silenced today — you cannot speak or vote.
 							</p>
 						)}
 
-						<MafiaCard variant="glass" className="w-full">
+						<MafiaCard variant="glass" interactive={false} className="w-full">
 							<MafiaCardHeader className="space-y-0 border-b border-stone-800 p-4 pb-3">
 								<MafiaCardTitle className="font-cinzel text-[0.72rem] font-bold uppercase tracking-[0.32em] text-amber-200">
 									<span className="mr-1 text-[0.55rem] text-amber-500" aria-hidden>
@@ -232,13 +232,9 @@ function PlayerCompanion({
 											<li
 												key={card.id}
 												className={clsx(
-													"grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded border px-2.5 py-2 text-[0.95rem] text-[color:var(--p1-ink-soft)] transition-colors",
-													isDead
-														? "border-stone-800/80 bg-stone-950/50 opacity-45 grayscale"
-														: "border-stone-700/80 bg-stone-800/40 hover:border-stone-600 hover:bg-stone-800/60",
-													isSelf &&
-														!isDead &&
-														"border-amber-500/60 bg-gradient-to-b from-amber-950/40 to-stone-900/80 shadow-[0_0_14px_-3px_rgba(245,158,11,0.35)]",
+													"mf-player-chip grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md px-2.5 py-2 text-[0.95rem] text-[color:var(--p1-ink-soft)]",
+													isDead && "mf-player-chip--dead",
+													isSelf && !isDead && "mf-player-chip--self",
 												)}
 											>
 												<span

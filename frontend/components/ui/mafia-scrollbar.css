@@ -1,0 +1,266 @@
+/* Mafia — carved gold rail, wax-seal thumb, torchlit finials */
+
+.mafia-scroll-row {
+	display: flex;
+	min-height: 0;
+	gap: 0.55rem;
+	padding: 0.15rem 0.4rem 0.15rem 0;
+}
+
+.mafia-scroll-content {
+	flex: 1 1 0;
+	min-width: 0;
+	min-height: 0;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.mafia-scroll-content::-webkit-scrollbar {
+	display: none;
+	width: 0;
+	height: 0;
+}
+
+.mafia-scroll-bar {
+	flex: 0 0 auto;
+	width: 14px;
+	align-self: stretch;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: stretch;
+	gap: 0.2rem;
+	padding: 0.15rem 0;
+	opacity: 1;
+}
+
+.mafia-scroll-bar--idle {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.mafia-scroll-bar__finial {
+	flex-shrink: 0;
+	font-family: var(--p1-font-display, "Cinzel", Georgia, serif);
+	font-size: 0.5rem;
+	line-height: 1;
+	color: var(--p1-bronze-bright, #e0b85a);
+	text-shadow:
+		0 0 8px var(--p1-gold-glow, rgba(255, 217, 122, 0.45)),
+		0 1px 2px rgba(0, 0, 0, 0.85);
+	opacity: 0.88;
+	user-select: none;
+}
+
+.mafia-scroll-bar__finial--bottom {
+	transform: rotate(180deg);
+}
+
+.mafia-scroll-bar__track-wrap {
+	flex: 1 1 auto;
+	min-height: 2.5rem;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+}
+
+.mafia-scroll-bar__track {
+	position: relative;
+	width: 7px;
+	height: 100%;
+	min-height: 2rem;
+	border-radius: 3px;
+	border: 1px solid var(--mf-glass-border, rgba(154, 116, 40, 0.45));
+	background:
+		var(--p1-noise, none),
+		repeating-linear-gradient(
+			180deg,
+			rgba(154, 116, 40, 0.05) 0px,
+			rgba(154, 116, 40, 0.05) 1px,
+			transparent 1px,
+			transparent 5px
+		),
+		linear-gradient(
+			180deg,
+			rgba(7, 5, 4, 0.98) 0%,
+			rgba(28, 20, 12, 0.94) 22%,
+			rgba(18, 12, 8, 0.96) 50%,
+			rgba(24, 18, 10, 0.94) 78%,
+			rgba(6, 5, 4, 0.98) 100%
+		);
+	background-blend-mode: overlay, normal, normal;
+	box-shadow:
+		var(--mf-shadow-panel, inset 0 0 12px rgba(0, 0, 0, 0.7)),
+		inset 0 1px 0 rgba(248, 228, 168, 0.12),
+		0 0 10px rgba(180, 90, 40, 0.1);
+	cursor: pointer;
+}
+
+.mafia-scroll-bar__track::before,
+.mafia-scroll-bar__track::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	width: 1px;
+	height: 5px;
+	margin-left: -0.5px;
+	border-radius: 1px;
+	background: linear-gradient(
+		180deg,
+		transparent,
+		var(--p1-gold-bright, #ffd97a) 45%,
+		transparent
+	);
+	pointer-events: none;
+	opacity: 0.55;
+}
+
+.mafia-scroll-bar__track::before {
+	top: 3px;
+}
+
+.mafia-scroll-bar__track::after {
+	bottom: 3px;
+	transform: scaleY(-1);
+}
+
+.mafia-scroll-bar__thumb {
+	position: absolute;
+	top: 0;
+	left: 50%;
+	width: 7px;
+	margin-left: -3.5px;
+	border-radius: 3px;
+	border: 1px solid var(--p1-bronze-bright, rgba(248, 228, 168, 0.5));
+	background: linear-gradient(
+		180deg,
+		var(--p1-bronze-glint, #f8e4a8) 0%,
+		var(--p1-gold-bright, #ffd97a) 12%,
+		var(--p1-gold, #c9a227) 42%,
+		var(--p1-bronze, #9a7428) 72%,
+		var(--p1-bronze-dark, #3d2e0c) 100%
+	);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.5),
+		inset 0 -2px 4px rgba(61, 46, 12, 0.55),
+		var(--mf-shadow-glow-gold, 0 0 10px rgba(201, 162, 39, 0.35)),
+		var(--mf-shadow-glow-torch, 0 0 6px rgba(180, 90, 40, 0.25));
+	cursor: grab;
+	touch-action: none;
+	transition:
+		border-color 0.2s var(--mf-ease-out, ease),
+		box-shadow 0.22s var(--mf-ease-out, ease);
+	animation: mafia-scroll-torch 4s ease-in-out infinite;
+}
+
+.mafia-scroll-bar__thumb::before {
+	content: '';
+	position: absolute;
+	inset: 2px 2px auto;
+	height: 35%;
+	border-radius: 2px 2px 50% 50%;
+	background: linear-gradient(
+		180deg,
+		rgba(255, 255, 255, 0.35),
+		transparent
+	);
+	pointer-events: none;
+}
+
+.mafia-scroll-bar__thumb::after {
+	content: '';
+	position: absolute;
+	top: 22%;
+	bottom: 22%;
+	left: 50%;
+	width: 1px;
+	margin-left: -0.5px;
+	border-radius: 1px;
+	background: linear-gradient(
+		180deg,
+		transparent,
+		rgba(255, 248, 220, 0.55) 40%,
+		rgba(255, 248, 220, 0.2) 60%,
+		transparent
+	);
+	pointer-events: none;
+}
+
+.mafia-scroll-bar__thumb:hover {
+	border-color: var(--p1-gold-bright, #ffd97a);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.6),
+		0 0 14px rgba(255, 200, 110, 0.45),
+		0 0 10px rgba(201, 162, 39, 0.42);
+}
+
+.mafia-scroll-bar__thumb--dragging,
+.mafia-scroll-bar__thumb:active {
+	cursor: grabbing;
+	border-color: var(--p1-gold-bright, #ffe7a8);
+	animation: none;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.55),
+		0 0 16px rgba(255, 200, 110, 0.5),
+		0 0 12px rgba(201, 162, 39, 0.48);
+}
+
+@keyframes mafia-scroll-torch {
+	0%,
+	100% {
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.5),
+			inset 0 -2px 4px rgba(61, 46, 12, 0.55),
+			0 0 8px rgba(201, 162, 39, 0.28),
+			0 0 4px rgba(180, 90, 40, 0.18);
+	}
+	50% {
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.55),
+			inset 0 -2px 4px rgba(61, 46, 12, 0.5),
+			0 0 14px rgba(255, 200, 110, 0.38),
+			0 0 10px rgba(201, 162, 39, 0.4);
+	}
+}
+
+/* Radix ScrollArea thumb (narrator chronicle, activity log) */
+[data-mafia-theme] [data-radix-scroll-area-scrollbar] {
+	width: 12px !important;
+	padding: 2px 0 !important;
+	border-left: none !important;
+	background: transparent;
+}
+
+[data-mafia-theme] [data-radix-scroll-area-scrollbar]::before {
+	content: '◆';
+	display: block;
+	font-family: var(--p1-font-display, "Cinzel", Georgia, serif);
+	font-size: 0.45rem;
+	line-height: 1;
+	text-align: center;
+	color: var(--p1-bronze-bright, #e0b85a);
+	opacity: 0.75;
+	margin-bottom: 2px;
+}
+
+[data-mafia-theme] [data-radix-scroll-area-thumb] {
+	border-radius: 3px !important;
+	border: 1px solid rgba(248, 228, 168, 0.45) !important;
+	background: linear-gradient(
+		180deg,
+		#f8e4a8 0%,
+		#ffd97a 15%,
+		#c9a227 50%,
+		#9a7428 85%,
+		#3d2e0c 100%
+	) !important;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.45),
+		0 0 8px rgba(201, 162, 39, 0.3) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mafia-scroll-bar__thumb {
+		animation: none;
+	}
+}

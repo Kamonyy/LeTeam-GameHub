@@ -38,7 +38,7 @@ export default function ChatPanel({ className }: ChatPanelProps) {
                 <span
                   className={clsx(
                     'font-semibold text-xs truncate',
-                    isYou ? 'text-hub-accent' : 'text-gray-200',
+                    isYou ? 'text-hub-accent' : 'text-hub-text-secondary',
                   )}
                 >
                   {msg.displayName}
@@ -50,7 +50,7 @@ export default function ChatPanel({ className }: ChatPanelProps) {
                   })}
                 </time>
               </div>
-              <p className="text-gray-100 break-words whitespace-pre-wrap">{msg.message}</p>
+              <p className="text-foreground break-words whitespace-pre-wrap">{msg.message}</p>
             </>
           ),
         };

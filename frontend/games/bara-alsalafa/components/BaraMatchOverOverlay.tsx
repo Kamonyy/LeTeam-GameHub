@@ -73,8 +73,8 @@ export default function BaraMatchOverOverlay({
         </div>
 
         <p className="bara-match-over-modal__teams tabular-nums">
-          الداخلون {gameState.insiderRoundWins}/{gameState.roundsToWin} · برا السالفة{' '}
-          {gameState.outcastRoundWins}/{gameState.roundsToWin}
+          {gameState.roundsToWin} جولات — انتصارات: الداخلون {gameState.insiderRoundWins} · برا
+          السالفة {gameState.outcastRoundWins}
           {winningSide === 'insiders' ?
             ' — فاز فريق الداخلين'
           : winningSide === 'outcast' ?

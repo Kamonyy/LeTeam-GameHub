@@ -32,6 +32,8 @@ export interface BaraPlayerSeatProps {
   role?: 'asker' | 'answerer' | null;
   eliminated?: boolean;
   gridSize?: 'sm' | 'md' | 'lg';
+  /** Horizontal chip layout for reveal/ready sidebar */
+  compact?: boolean;
   className?: string;
   /** Grid seats only — used for fly-to-hero targeting */
   dataSeatId?: string;
@@ -59,6 +61,7 @@ export default function BaraPlayerSeat({
   role = null,
   eliminated = false,
   gridSize = 'lg',
+  compact = false,
   className,
   dataSeatId,
   landAnimating = false,
@@ -120,22 +123,32 @@ export default function BaraPlayerSeat({
         {initial}
       </div>
 
-      <div className={clsx(isVote && 'bara-seat__vote-body')}>
+      <div
+        className={clsx(
+          isVote && 'bara-seat__vote-body',
+          compact && 'bara-seat__compact-body min-w-0 flex-1',
+        )}
+      >
         <p
           className={clsx(
             'bara-seat__name font-semibold truncate',
             isHero ? 'text-base max-w-[9rem]'
             : isVote ? 'text-sm max-w-full'
+            : compact ? 'text-xs max-w-[6.5rem]'
             : 'text-sm max-w-[7rem]'
           )}
         >
           {displayName}
+          {compact && isMe && (
+            <span className="text-hub-muted font-normal text-[10px]"> (أنت)</span>
+          )}
         </p>
 
         {!isHero && (
           <span
             className={clsx(
               isVote ? 'bara-vote-status' : 'bara-pill text-[10px] px-2 py-0.5 rounded-full',
+              compact && !isVote && 'bara-pill--compact',
               !isVote && microStatus === 'role_revealed' && 'bara-pill--revealed',
               !isVote && microStatus === 'ready' && 'bara-pill--ready',
               !isVote && microStatus === 'waiting_reveal' && 'bara-pill--waiting',
@@ -167,7 +180,7 @@ export default function BaraPlayerSeat({
         )}
       </div>
 
-      {isMe && !isVote && (
+      {isMe && !isVote && !compact && (
         <span className="text-[10px] text-hub-muted bara-seat__you-tag">
           {isHero ? 'أنت' : '(أنت)'}
         </span>

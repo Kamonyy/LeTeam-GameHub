@@ -23,7 +23,12 @@ import { isSameOriginServer, resolveServerUrl } from '@/lib/socket-url';
 import { HubLiveProvider } from '@/lib/hub/HubLiveContext';
 import { HardResetProvider } from '@/lib/hub/HardResetContext';
 import { hubPresenceEqual, lobbyStateEqual } from '@/lib/hub/hub-live';
-import { resolveClientIsSpectator } from '@/lib/hub/resolveClientIsSpectator';
+import { resolveClientIsSpectator, isLobbyPlayer } from '@/lib/hub/resolveClientIsSpectator';
+import {
+  clearCoreSessionActiveRoom,
+  readCoreSessionActiveRoom,
+  setCoreSessionActiveRoom,
+} from '@/lib/session/core-session';
 import { isGameActive } from '@/lib/hub/games-registry';
 import { stripNarratorSecrets } from '@/games/mafia/lib/redactMafiaState';
 import { InvitationProvider } from '@/context/InvitationContext';
@@ -244,13 +249,19 @@ export function SocketProvider({ children }) {
           setReconnectedRoomId(res.roomId);
           setReconnectedAsSpectator(!!res.isSpectator);
           setIsSpectator(!!res.isSpectator);
+          if (res.gameType) {
+            setCoreSessionActiveRoom(res.roomId, res.gameType);
+          }
         } else {
           setReconnectedRoomId(null);
           setReconnectedAsSpectator(false);
           if (!res.reconnected) {
-            setLobby(null);
-            setGameState(null);
-            setIsSpectator(false);
+            const active = readCoreSessionActiveRoom();
+            if (!active) {
+              setLobby(null);
+              setGameState(null);
+              setIsSpectator(false);
+            }
           }
         }
         return true;
@@ -333,8 +344,8 @@ export function SocketProvider({ children }) {
         setConnected(false);
         setSessionReady(false);
         setReconnectAssessed(false);
-        setReconnectedRoomId(null);
-        setReconnectedAsSpectator(false);
+        // Keep lobby/game/activeRoom until register or join confirms the seat is gone
+        // (same pattern as Secret Word — refresh must not flash the hub lobby).
         registerReadyRef.current = createUnsettledRegistration();
         wordActionInFlightRef.current = false;
       });
@@ -358,6 +369,13 @@ export function SocketProvider({ children }) {
             playerIdRef.current
           );
           setIsSpectator((was) => (was === nextSpectator ? was : nextSpectator));
+          if (
+            state?.roomId &&
+            state?.gameType &&
+            (isLobbyPlayer(state, playerIdRef.current) || nextSpectator)
+          ) {
+            setCoreSessionActiveRoom(state.roomId, state.gameType);
+          }
           return state;
         });
       });
@@ -386,9 +404,18 @@ export function SocketProvider({ children }) {
       socket.on('reconnect:sync', (payload) => {
         if (leavingRoomRef.current) return;
         setLobby((prev) => (lobbyStateEqual(prev, payload) ? prev : payload));
-        setIsSpectator(
-          resolveClientIsSpectator(payload, playerIdRef.current)
+        const nextSpectator = resolveClientIsSpectator(
+          payload,
+          playerIdRef.current
         );
+        setIsSpectator(nextSpectator);
+        if (
+          payload?.roomId &&
+          payload?.gameType &&
+          (isLobbyPlayer(payload, playerIdRef.current) || nextSpectator)
+        ) {
+          setCoreSessionActiveRoom(payload.roomId, payload.gameType);
+        }
         if (payload?.status === 'lobby') {
           setGameState(null);
           setWordGuessedCelebration(null);
@@ -403,6 +430,7 @@ export function SocketProvider({ children }) {
         setLobby(null);
         setGameState(null);
         setWordGuessedCelebration(null);
+        clearCoreSessionActiveRoom();
         socketDispatchRegistry.setGameTimerTick?.(null);
         socketDispatchRegistry.clearSketchStreams?.();
         if (payload?.message) setError(payload.message);
@@ -707,6 +735,10 @@ export function SocketProvider({ children }) {
           );
         }
 
+        if (res.roomId) {
+          setCoreSessionActiveRoom(res.roomId, gameType);
+        }
+
         return res.roomId ?? null;
       };
 
@@ -717,7 +749,7 @@ export function SocketProvider({ children }) {
 
   const joinRoom = useCallback(
     async (roomId, displayName, options = {}) => {
-      const { spectate = false } = options;
+      const { spectate = false, suppressError = false } = options;
       const registered = await ensureRegistered();
       if (!registered) {
         setError('Could not register with server. Check your connection.');
@@ -746,7 +778,7 @@ export function SocketProvider({ children }) {
         return false;
       }
       if (res.error) {
-        setError(res.error);
+        if (!suppressError) setError(res.error);
         return false;
       }
 
@@ -756,8 +788,8 @@ export function SocketProvider({ children }) {
     [ensureRegistered, setError]
   );
 
-  const spectateRoom = useCallback((roomId, displayName) => {
-    return joinRoom(roomId, displayName, { spectate: true });
+  const spectateRoom = useCallback((roomId, displayName, options = {}) => {
+    return joinRoom(roomId, displayName, { spectate: true, ...options });
   }, [joinRoom]);
 
   /**
@@ -831,6 +863,7 @@ export function SocketProvider({ children }) {
       setGameState(null);
       setWordGuessedCelebration(null);
       setIsSpectator(false);
+      clearCoreSessionActiveRoom();
       clearSketchDrawSession();
     };
 

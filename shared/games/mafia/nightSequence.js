@@ -34,8 +34,10 @@ export const NIGHT_SEQUENCE = [
 		roleId: "sniper",
 		titleEn: "Sniper action",
 		titleAr: "فعل القنّاص",
-		instructionEn: "Ask the Sniper who they want to silence tomorrow.",
-		instructionAr: "اسأل القنّاص من يريد إسكاته غداً.",
+		instructionEn:
+			"Ask the Sniper who they want to silence tomorrow. They cannot pick the same player two nights in a row.",
+		instructionAr:
+			"اسأل القنّاص من يريد إسكاته غداً. لا يمكن اختيار نفس اللاعب ليلتين متتاليتين.",
 		requiresTarget: true,
 		allowSkip: true,
 	},
@@ -66,8 +68,10 @@ export const NIGHT_SEQUENCE = [
 		roleId: "sheriff",
 		titleEn: "Sheriff action",
 		titleAr: "فعل الشريف",
-		instructionEn: "Ask the Sheriff who they want to judge.",
-		instructionAr: "اسأل الشريف من يريد الحكم عليه.",
+		instructionEn:
+			"Ask the Sheriff who they want to judge (not themselves).",
+		instructionAr:
+			"اسأل الشريف من يريد الحكم عليه (غير نفسه).",
 		requiresTarget: true,
 		allowSkip: true,
 	},

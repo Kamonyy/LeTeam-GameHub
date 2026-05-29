@@ -1,13 +1,13 @@
-/* Phone / tablet — brighter panels and text (OLED + outdoor readability) */
+/* Phone / tablet — brighter panels (OLED + outdoor readability) */
 @media (max-width: 767px) {
   [data-mafia-theme],
   .mf-shell {
-    --p1-ink: #faf6ec;
-    --p1-ink-soft: rgba(250, 246, 236, 0.98);
-    --p1-ink-dim: rgba(250, 246, 236, 0.9);
+    --p1-ink: #fffcf4;
+    --p1-ink-soft: #f8f2e6;
+    --p1-ink-dim: rgba(255, 252, 244, 0.92);
     --mf-glass-bg: rgba(28, 24, 18, 0.94);
     --mf-glass-border: rgba(180, 140, 60, 0.48);
-    --muted-foreground: 38 28% 78%;
+    --muted-foreground: 38 28% 82%;
   }
 
   .mf-atmosphere {
@@ -54,7 +54,7 @@
   [data-mafia-narrator] .text-stone-300\/90,
   [data-mafia-narrator] .text-stone-400,
   [data-mafia-narrator] .text-stone-500 {
-    color: rgba(232, 220, 200, 0.92) !important;
+    color: var(--p1-ink-soft) !important;
   }
 
   [data-mafia-narrator] .text-\[color\:var\(--p1-ink-soft\)\]\/75,
@@ -87,13 +87,13 @@
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
   }
 
-  /* Player companion */
+  /* Player companion — mobile bump */
   [data-mafia-theme] .text-stone-200 {
-    color: #ece4d4 !important;
+    color: var(--p1-ink) !important;
   }
 
   [data-mafia-theme] .text-stone-500 {
-    color: rgba(220, 208, 188, 0.88) !important;
+    color: var(--p1-ink-dim) !important;
   }
 
   [data-mafia-theme] .border-stone-700\/80.bg-stone-800\/40 {

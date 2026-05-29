@@ -62,6 +62,10 @@ export class MafiaEngine extends BaseGameEngine {
 		this.roleByPlayer = {};
 		/** @type {string[]} */
 		this.silencedForDay = new Set();
+		/** @type {string | null} */
+		this.pendingSilencedForDay = null;
+		/** @type {string | null} */
+		this.lastSilencedPlayerId = null;
 		this._aliveMafiaHolderIdsCache = null;
 		/** @type {Record<string, string | null>} */
 		this.nightTargets = {};
@@ -362,6 +366,16 @@ export class MafiaEngine extends BaseGameEngine {
 		}
 	}
 
+	/** Silence applies during day only (talk + vote), never during night actions. */
+	_isSilencedForDay(playerId) {
+		return this.phase === "day" && this.silencedForDay.has(playerId);
+	}
+
+	/** @param {string} playerId */
+	isPlayerSilencedForDay(playerId) {
+		return this._isSilencedForDay(playerId);
+	}
+
 	/** @param {string | null | undefined} playerId */
 	_isAliveTarget(playerId) {
 		return !!playerId && !!this.players[playerId]?.alive;
@@ -447,6 +461,7 @@ export class MafiaEngine extends BaseGameEngine {
 		this._seerResults = {};
 		this._lastSeerReveal = null;
 		this.silencedForDay = new Set();
+		this.pendingSilencedForDay = null;
 		this._aliveMafiaHolderIdsCache = null;
 		this._logEntry("phase_night", { nightNumber: this.nightNumber });
 		this._advanceToApplicableNightStep();
@@ -542,12 +557,31 @@ export class MafiaEngine extends BaseGameEngine {
 				error: "Doctor cannot heal the same player two nights in a row",
 			};
 		}
+		if (
+			step.key === "sniper" &&
+			targetId != null &&
+			targetId === this.lastSilencedPlayerId
+		) {
+			return {
+				success: false,
+				error: "Sniper cannot silence the same player two nights in a row",
+			};
+		}
 		if (step.key === "seer" && targetId != null) {
 			const seerIds = this._playersWithRole("seer");
 			if (seerIds.includes(targetId)) {
 				return {
 					success: false,
 					error: "Seer cannot inspect themselves",
+				};
+			}
+		}
+		if (step.key === "sheriff" && targetId != null) {
+			const sheriffIds = this._playersWithRole("sheriff");
+			if (sheriffIds.includes(targetId)) {
+				return {
+					success: false,
+					error: "Sheriff cannot judge themselves",
 				};
 			}
 		}
@@ -678,21 +712,25 @@ export class MafiaEngine extends BaseGameEngine {
 		}
 
 		if (this._roleInNightRecap("sheriff") && sheriffTarget) {
-			const targetEvil = isEvilRole(this.roleByPlayer[sheriffTarget]);
 			const sheriffIds = this._playersWithRole("sheriff");
 			const sheriffId =
 				sheriffIds.find((id) => this.players[id]?.alive) ?? sheriffIds[0] ?? null;
-			let outcome;
-			if (targetEvil) {
-				outcome = "sheriff_executed_evil";
-			} else if (sheriffId && uniqueDeaths.includes(sheriffId)) {
-				outcome = "sheriff_misfire";
+			if (sheriffTarget === sheriffId) {
+				recap.push(this._nightRecapBeat("sheriff", null, "skipped"));
 			} else {
-				outcome = "sheriff_executed_innocent";
+				const targetEvil = isEvilRole(this.roleByPlayer[sheriffTarget]);
+				let outcome;
+				if (targetEvil) {
+					outcome = "sheriff_executed_evil";
+				} else if (sheriffId && uniqueDeaths.includes(sheriffId)) {
+					outcome = "sheriff_misfire";
+				} else {
+					outcome = "sheriff_executed_innocent";
+				}
+				recap.push(
+					this._nightRecapBeat("sheriff", sheriffTarget, outcome),
+				);
 			}
-			recap.push(
-				this._nightRecapBeat("sheriff", sheriffTarget, outcome),
-			);
 		} else if (this._roleInNightRecap("sheriff")) {
 			recap.push(this._nightRecapBeat("sheriff", null, "skipped"));
 		}
@@ -742,17 +780,28 @@ export class MafiaEngine extends BaseGameEngine {
 			this.lastHealedPlayerId = saveTarget;
 		}
 
-		// 2. Silences (alive sniper only)
+		// 2. Silences (alive sniper only) — takes effect next day, not this night
 		if (this._hasAliveRoleHolder("sniper") && sniperTarget) {
-			this.silencedForDay = new Set([sniperTarget]);
+			this.pendingSilencedForDay = sniperTarget;
+			this.lastSilencedPlayerId = sniperTarget;
+		} else if (this._hasAliveRoleHolder("sniper")) {
+			this.pendingSilencedForDay = null;
 		}
 
-		// 3. Kills — sheriff (alive sheriff only)
-		if (this._hasAliveRoleHolder("sheriff") && sheriffTarget) {
+		const silencedNextDay = this.pendingSilencedForDay ?
+			[this.pendingSilencedForDay]
+		:	[];
+
+		// 3. Kills — sheriff (alive sheriff only; cannot judge themselves)
+		const sheriffIds = this._playersWithRole("sheriff");
+		const sheriffId =
+			sheriffIds.find((id) => this.players[id]?.alive) ?? null;
+		if (
+			this._hasAliveRoleHolder("sheriff") &&
+			sheriffTarget &&
+			sheriffTarget !== sheriffId
+		) {
 			const targetEvil = isEvilRole(this.roleByPlayer[sheriffTarget]);
-			const sheriffIds = this._playersWithRole("sheriff");
-			const sheriffId =
-				sheriffIds.find((id) => this.players[id]?.alive) ?? null;
 			if (targetEvil) {
 				if (!deaths.includes(sheriffTarget)) deaths.push(sheriffTarget);
 			} else if (sheriffId) {
@@ -786,7 +835,7 @@ export class MafiaEngine extends BaseGameEngine {
 				roleId: this.revealRoleOnDeath ? this.roleByPlayer[id] : null,
 			})),
 			saved: saved.map((id) => ({ playerId: id })),
-			silenced: [...this.silencedForDay],
+			silenced: silencedNextDay,
 			seerInsights: { ...this._seerResults },
 			mafiaAttempted: mafiaTargets[0] ?? null,
 			mafiaAttempts: mafiaTargets,
@@ -797,7 +846,7 @@ export class MafiaEngine extends BaseGameEngine {
 		this._logEntry("night_resolved", {
 			deaths: uniqueDeaths,
 			saved,
-			silenced: [...this.silencedForDay],
+			silenced: silencedNextDay,
 			nightNumber: this.nightNumber,
 		});
 	}
@@ -879,6 +928,34 @@ export class MafiaEngine extends BaseGameEngine {
 						success: false,
 						error: "Doctor cannot heal the same player two nights in a row",
 					};
+				}
+				if (
+					step.key === "sniper" &&
+					target != null &&
+					target === this.lastSilencedPlayerId
+				) {
+					return {
+						success: false,
+						error: "Sniper cannot silence the same player two nights in a row",
+					};
+				}
+				if (step.key === "seer" && target != null) {
+					const seerIds = this._playersWithRole("seer");
+					if (seerIds.includes(target)) {
+						return {
+							success: false,
+							error: "Seer cannot inspect themselves",
+						};
+					}
+				}
+				if (step.key === "sheriff" && target != null) {
+					const sheriffIds = this._playersWithRole("sheriff");
+					if (sheriffIds.includes(target)) {
+						return {
+							success: false,
+							error: "Sheriff cannot judge themselves",
+						};
+					}
 				}
 			}
 		}
@@ -975,6 +1052,12 @@ export class MafiaEngine extends BaseGameEngine {
 			return { success: false, error: "Not in morning phase" };
 		}
 		if (this._checkWin()) return { success: true };
+		if (this.pendingSilencedForDay) {
+			this.silencedForDay = new Set([this.pendingSilencedForDay]);
+			this.pendingSilencedForDay = null;
+		} else {
+			this.silencedForDay = new Set();
+		}
 		this.phase = "day";
 		if (this.dayNumber === 0) {
 			this.dayNumber = 1;
@@ -1026,6 +1109,9 @@ export class MafiaEngine extends BaseGameEngine {
 		if (step.key === "healer" && this.lastHealedPlayerId) {
 			blockedTargetIds.push(this.lastHealedPlayerId);
 		}
+		if (step.key === "sniper" && this.lastSilencedPlayerId) {
+			blockedTargetIds.push(this.lastSilencedPlayerId);
+		}
 		if (step.key === "seer") {
 			for (const id of this._playersWithRole("seer")) {
 				if (!blockedTargetIds.includes(id)) blockedTargetIds.push(id);
@@ -1033,6 +1119,11 @@ export class MafiaEngine extends BaseGameEngine {
 		}
 		if (step.key === "mafia") {
 			for (const id of this._aliveMafiaHolderIds()) {
+				if (!blockedTargetIds.includes(id)) blockedTargetIds.push(id);
+			}
+		}
+		if (step.key === "sheriff") {
+			for (const id of this._playersWithRole("sheriff")) {
 				if (!blockedTargetIds.includes(id)) blockedTargetIds.push(id);
 			}
 		}
@@ -1101,7 +1192,7 @@ export class MafiaEngine extends BaseGameEngine {
 			roleNameEn: showRole && role ? role.nameEn : null,
 			roleNameAr: showRole && role ? role.nameAr : null,
 			roleIcon: showRole && role ? role.icon : null,
-			silenced: this.silencedForDay.has(playerId),
+			silenced: this._isSilencedForDay(playerId),
 		};
 	}
 
@@ -1218,6 +1309,8 @@ export class MafiaEngine extends BaseGameEngine {
 						nameAr: myRole.nameAr,
 						descriptionEn: myRole.descriptionEn,
 						descriptionAr: myRole.descriptionAr,
+						summaryEn: myRole.summaryEn ?? myRole.descriptionEn,
+						summaryAr: myRole.summaryAr ?? myRole.descriptionAr,
 						icon: myRole.icon,
 						team: myRole.team,
 						accentColor: getRoleAccent(myRoleId),
@@ -1229,6 +1322,8 @@ export class MafiaEngine extends BaseGameEngine {
 						nameAr: myRole.nameAr,
 						descriptionEn: myRole.descriptionEn,
 						descriptionAr: myRole.descriptionAr,
+						summaryEn: myRole.summaryEn ?? myRole.descriptionEn,
+						summaryAr: myRole.summaryAr ?? myRole.descriptionAr,
 						icon: myRole.icon,
 						team: myRole.team,
 						accentColor: getRoleAccent(myRoleId),
@@ -1237,7 +1332,7 @@ export class MafiaEngine extends BaseGameEngine {
 				:	null,
 			myColor: self?.color ?? null,
 			iAmAlive: self?.alive ?? true,
-			iAmSilenced: this.silencedForDay.has(viewerId),
+			iAmSilenced: this._isSilencedForDay(viewerId),
 		};
 	}
 }

@@ -69,7 +69,7 @@ export default function ChatComposer({
         placeholder={disabled ? 'Offline' : placeholder}
         className={clsx(
           'appearance-none flex-1 min-w-0 px-3 py-2 text-sm bg-hub-bg border border-hub-border rounded-lg',
-          'text-gray-100 placeholder-hub-muted focus:outline-none focus:border-hub-accent',
+          'text-foreground placeholder:text-hub-muted focus:outline-none focus:border-hub-accent',
           'normal-case tracking-normal text-left disabled:opacity-40',
           inputClassName,
         )}

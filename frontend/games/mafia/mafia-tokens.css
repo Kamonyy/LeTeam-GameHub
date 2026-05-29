@@ -1,9 +1,9 @@
 /* Design tokens — scoped to Mafia routes */
 [data-mafia-theme],
 .mf-shell {
-  --p1-ink: #f3ead8;
-  --p1-ink-soft: rgba(243, 234, 216, 0.94);
-  --p1-ink-dim: rgba(243, 234, 216, 0.74);
+  --p1-ink: #faf6ec;
+  --p1-ink-soft: #f3ece0;
+  --p1-ink-dim: rgba(250, 246, 236, 0.88);
 
   --mf-text-on-panel: var(--p1-ink);
   --mf-text-muted-on-panel: var(--p1-ink-soft);
@@ -13,14 +13,50 @@
   --p1-night: #090b10;
   --p1-mid: #14161c;
 
-  --mf-glass-bg: rgba(12, 10, 8, 0.88);
-  --mf-glass-border: rgba(154, 116, 40, 0.38);
-  --mf-glass-blur: 14px;
+  --mf-glass-bg: rgba(16, 12, 8, 0.94);
+  --mf-glass-border: rgba(154, 116, 40, 0.48);
+  --mf-glass-blur: 6px;
 
+  /* Carved wood / iron-bound panel depth */
   --mf-shadow-panel:
-    0 10px 36px -8px rgba(0, 0, 0, 0.65),
-    inset 0 1px 0 rgba(248, 228, 168, 0.14),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.55);
+    0 8px 22px -8px rgba(0, 0, 0, 0.78),
+    inset 0 1px 0 rgba(248, 228, 168, 0.12),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 1px rgba(61, 46, 12, 0.55);
+  --mf-shadow-elevated:
+    0 4px 6px rgba(0, 0, 0, 0.55),
+    0 16px 36px -12px rgba(0, 0, 0, 0.8),
+    0 0 36px -10px rgba(160, 85, 28, 0.2),
+    inset 0 1px 0 rgba(255, 235, 200, 0.14),
+    inset 0 -4px 14px rgba(0, 0, 0, 0.58),
+    inset 0 0 0 1px rgba(61, 46, 12, 0.65);
+  --mf-shadow-float:
+    0 20px 48px -14px rgba(0, 0, 0, 0.88),
+    0 0 40px -8px rgba(180, 100, 32, 0.22);
+  --mf-shadow-inset-deep:
+    inset 0 3px 8px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 1px rgba(61, 46, 12, 0.75),
+    inset 0 -1px 0 rgba(255, 235, 200, 0.05);
+  --mf-shadow-inset-niche:
+    inset 0 4px 12px rgba(0, 0, 0, 0.72),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 235, 200, 0.04);
+  --mf-rim-light: linear-gradient(
+    180deg,
+    rgba(240, 198, 106, 0.26) 0%,
+    rgba(120, 90, 40, 0.1) 14%,
+    transparent 42%
+  );
+  --mf-parchment-bg: linear-gradient(
+    175deg,
+    rgba(38, 28, 18, 0.96) 0%,
+    rgba(14, 10, 6, 0.99) 100%
+  );
+  --mf-wood-bg: linear-gradient(
+    180deg,
+    rgba(32, 22, 14, 0.97) 0%,
+    rgba(12, 8, 5, 0.99) 100%
+  );
   --mf-shadow-glow-gold: 0 0 22px -4px rgba(201, 162, 39, 0.45);
   --mf-shadow-glow-torch: 0 0 40px -8px rgba(180, 90, 40, 0.32);
 
@@ -58,18 +94,18 @@
 
   /* shadcn semantic bridge (warm medieval, not zinc hub) */
   --background: 30 8% 4%;
-  --foreground: 43 35% 92%;
+  --foreground: 43 38% 94%;
   --card: 25 14% 9%;
-  --card-foreground: 43 35% 92%;
+  --card-foreground: 43 38% 94%;
   --border: 32 24% 26%;
   --primary: 38 72% 42%;
-  --primary-foreground: 48 96% 92%;
+  --primary-foreground: 48 96% 94%;
   --secondary: 25 12% 12%;
-  --secondary-foreground: 43 30% 88%;
+  --secondary-foreground: 43 34% 90%;
   --muted: 25 10% 8%;
-  --muted-foreground: 38 24% 72%;
+  --muted-foreground: 38 28% 84%;
   --accent: 32 28% 18%;
-  --accent-foreground: 43 35% 92%;
+  --accent-foreground: 43 38% 94%;
   --destructive: 343 75% 18%;
   --destructive-foreground: 0 85% 97%;
   --ring: 38 72% 42%;
@@ -92,7 +128,7 @@
 :root:has([data-mafia-theme]) .mf-tooltip-content {
   border-color: var(--mf-glass-border);
   background-color: var(--mf-glass-bg);
-  color: var(--p1-ink-soft);
+  color: var(--p1-ink);
   box-shadow: var(--mf-shadow-panel);
   -webkit-backdrop-filter: blur(var(--mf-glass-blur));
   backdrop-filter: blur(var(--mf-glass-blur));

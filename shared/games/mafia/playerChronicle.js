@@ -92,38 +92,65 @@ export function buildPlayerLogEntries(
 			}
 			case "night_step": {
 				if (!viewerRoleId || viewerRoleId === "villager") break;
+				// Seer inspect result is logged separately via seer_result
+				if (e.stepKey === "seer" && !e.skipped) break;
 				const action = transformNightStepForViewer(e, viewerRoleId);
 				if (action) filtered.push(action);
 				break;
 			}
 			case "seer_result":
+				if (viewerRoleId === "seer" && e.targetId && e.alignment) {
+					filtered.push({
+						at: e.at,
+						kind: "player_seer_action",
+						period: e.period,
+						targetId: e.targetId,
+						alignment: e.alignment,
+						skipped: false,
+						nightNumber: e.nightNumber,
+					});
+				}
 				break;
 			case "night_resolved": {
 				const deaths = e.deaths ?? [];
+				const saved = e.saved ?? [];
 				const silenced = e.silenced ?? [];
-				const seesPublicNightDeaths =
-					!viewerRoleId || viewerRoleId === "villager";
-				if (
-					deaths.length === 0 &&
-					!silenced.includes(viewerId) &&
-					!seesPublicNightDeaths
-				) {
+
+				if (saved.length > 0 && viewerRoleId === "doctor") {
+					filtered.push({
+						at: e.at,
+						kind: "player_doctor_blocked_kill",
+						period: e.period,
+						nightNumber: e.nightNumber,
+					});
+				}
+				if (saved.length > 0 && viewerRoleId === "mafia") {
+					filtered.push({
+						at: e.at,
+						kind: "player_mafia_kill_blocked",
+						period: e.period,
+						nightNumber: e.nightNumber,
+					});
+				}
+
+				if (deaths.length === 0) {
 					filtered.push({
 						at: e.at,
 						kind: "player_peaceful_night",
 						period: e.period,
 						nightNumber: e.nightNumber,
 					});
-				}
-				for (const id of deaths) {
-					if (seesPublicNightDeaths && id !== viewerId) continue;
-					filtered.push({
-						at: e.at,
-						kind: id === viewerId ? "player_you_died" : "player_death",
-						period: e.period,
-						targetId: id,
-						nightNumber: e.nightNumber,
-					});
+				} else {
+					for (const id of deaths) {
+						filtered.push({
+							at: e.at,
+							kind:
+								id === viewerId ? "player_you_died" : "player_death",
+							period: e.period,
+							targetId: id,
+							nightNumber: e.nightNumber,
+						});
+					}
 				}
 				if (silenced.includes(viewerId)) {
 					filtered.push({

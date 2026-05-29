@@ -32,6 +32,21 @@ export function hubPresenceEqual(
   return true;
 }
 
+function shallowRecordEqual(
+  a: unknown,
+  b: unknown,
+): boolean {
+  if (a === b) return true;
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
+  const ar = a as Record<string, unknown>;
+  const br = b as Record<string, unknown>;
+  const keys = new Set([...Object.keys(ar), ...Object.keys(br)]);
+  for (const k of keys) {
+    if (ar[k] !== br[k]) return false;
+  }
+  return true;
+}
+
 function settingsEqual(
   a: LobbyState['settings'],
   b: LobbyState['settings']
@@ -57,6 +72,10 @@ function settingsEqual(
   const keys = new Set([...Object.keys(ar), ...Object.keys(br)]);
   for (const k of keys) {
     if (k === 'categoryPackageIds' || k === 'categoryPackageId') continue;
+    if (k === 'roleCounts' || k === 'roleAssignments') {
+      if (!shallowRecordEqual(ar[k], br[k])) return false;
+      continue;
+    }
     if (ar[k] !== br[k]) return false;
   }
   return true;

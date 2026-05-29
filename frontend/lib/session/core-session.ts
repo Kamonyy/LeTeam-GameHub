@@ -10,6 +10,11 @@ const LEGACY_SKETCH_MUTED = 'sketch-draw-sfx-muted';
 
 export const HUB_NAVIGATING_KEY = 'hub-navigating-game';
 
+export interface CoreSessionActiveRoom {
+  roomId: string;
+  gameType: string;
+}
+
 export interface CoreSessionV1 {
   v: 1;
   player: {
@@ -22,6 +27,8 @@ export interface CoreSessionV1 {
     vol: number;
     sketchMuted: boolean;
   };
+  /** Last joined room — used to restore ?room= after refresh. */
+  activeRoom?: CoreSessionActiveRoom | null;
 }
 
 const DEFAULT_PREFS: CoreSessionV1['prefs'] = {
@@ -37,6 +44,22 @@ function generatePlayerId(): string {
   return uuidv4();
 }
 
+function parseActiveRoom(
+  raw: unknown,
+): CoreSessionActiveRoom | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const roomId =
+    typeof (raw as CoreSessionActiveRoom).roomId === 'string' ?
+      (raw as CoreSessionActiveRoom).roomId.trim().toUpperCase()
+    : '';
+  const gameType =
+    typeof (raw as CoreSessionActiveRoom).gameType === 'string' ?
+      (raw as CoreSessionActiveRoom).gameType.trim()
+    : '';
+  if (!roomId || !gameType) return null;
+  return { roomId, gameType };
+}
+
 function clampVol(n: number): number {
   if (!Number.isFinite(n)) return DEFAULT_PREFS.vol;
   return Math.min(1, Math.max(0, n));
@@ -48,6 +71,8 @@ function parseSession(raw: string): CoreSessionV1 | null {
     if (data?.v !== 1 || !data.player || typeof data.player.id !== 'string') {
       return null;
     }
+    const activeRoom = parseActiveRoom(data.activeRoom);
+
     return {
       v: 1,
       player: {
@@ -60,6 +85,7 @@ function parseSession(raw: string): CoreSessionV1 | null {
         vol: clampVol(Number(data.prefs?.vol ?? DEFAULT_PREFS.vol)),
         sketchMuted: !!data.prefs?.sketchMuted,
       },
+      activeRoom,
     };
   } catch {
     return null;
@@ -143,10 +169,29 @@ export function writeCoreSession(session: CoreSessionV1): void {
   }
 }
 
+export function setCoreSessionActiveRoom(
+  roomId: string,
+  gameType: string,
+): void {
+  const code = roomId.trim().toUpperCase();
+  const type = gameType.trim();
+  if (!code || !type) return;
+  patchCoreSession({ activeRoom: { roomId: code, gameType: type } });
+}
+
+export function clearCoreSessionActiveRoom(): void {
+  patchCoreSession({ activeRoom: null });
+}
+
+export function readCoreSessionActiveRoom(): CoreSessionActiveRoom | null {
+  return readCoreSession()?.activeRoom ?? null;
+}
+
 export function patchCoreSession(
   patch: Partial<{
     player: Partial<CoreSessionV1['player']>;
     prefs: Partial<CoreSessionV1['prefs']>;
+    activeRoom: CoreSessionActiveRoom | null;
   }>
 ): CoreSessionV1 {
   const current =
@@ -160,6 +205,8 @@ export function patchCoreSession(
     v: 1,
     player: { ...current.player, ...patch.player },
     prefs: { ...current.prefs, ...patch.prefs },
+    activeRoom:
+      patch.activeRoom !== undefined ? patch.activeRoom : current.activeRoom ?? null,
   };
   writeCoreSession(next);
   return next;

@@ -17,7 +17,7 @@ type ChatFeedProps = {
   /** When false, skip auto-scroll on new items (e.g. user scrolled up). */
   autoScroll?: boolean;
   /** Custom Hextech rail (hides native scrollbar). */
-  scrollbar?: 'default' | 'hextech';
+  scrollbar?: 'default' | 'hextech' | 'mafia';
 };
 
 export default function ChatFeed({
@@ -50,16 +50,27 @@ export default function ChatFeed({
     </>
   );
 
-  if (scrollbar === 'hextech') {
+  if (scrollbar === 'hextech' || scrollbar === 'mafia') {
+    const rowClass =
+      scrollbar === 'mafia' ? 'mafia-scroll-row' : 'hextech-scroll-row';
+    const contentClass =
+      scrollbar === 'mafia' ? 'mafia-scroll-content' : 'hextech-scroll-content';
     return (
-      <div className={clsx('hextech-scroll-row flex-1 min-h-0', className)}>
+      <div className={clsx(rowClass, 'flex-1 min-h-0', className)}>
         <div
           ref={listRef}
-          className="hextech-scroll-content flex-1 overflow-y-auto overscroll-contain px-2 py-2 space-y-2"
+          className={clsx(
+            contentClass,
+            'flex-1 overflow-y-auto overscroll-contain px-2 py-2 space-y-2',
+          )}
         >
           {feedBody}
         </div>
-        <HextechScrollbar scrollRef={listRef} contentKey={items.length} />
+        <HextechScrollbar
+          scrollRef={listRef}
+          contentKey={items.length}
+          variant={scrollbar === 'mafia' ? 'mafia' : 'hextech'}
+        />
       </div>
     );
   }

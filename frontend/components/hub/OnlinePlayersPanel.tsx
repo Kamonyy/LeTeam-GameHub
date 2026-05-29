@@ -84,7 +84,7 @@ function PlayerRow({
         statusFlash={statusFlash}
       />
       <span
-        className="hub-player-row__name text-sm font-medium text-gray-100"
+        className="hub-player-row__name text-sm font-medium text-foreground"
         title={displayName}
       >
         {displayName}
@@ -270,7 +270,7 @@ function OnlinePlayersPanelInner() {
                         groupFlashKeys.has(groupKey) && 'hub-presence-dot--flash'
                       )}
                     />
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-300 shrink-0">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-hub-text-secondary shrink-0">
                       {statusLabel}
                     </span>
                     {lobbyCapacity && (
@@ -278,7 +278,7 @@ function OnlinePlayersPanelInner() {
                         className={clsx(
                           'text-[10px] font-bold tabular-nums shrink-0 px-1.5 py-0.5 rounded',
                           lobbyCapacity.occupied >= lobbyCapacity.max ?
-                            'text-stone-500 bg-stone-800/60'
+                            'text-hub-faint bg-secondary/60'
                           : 'text-hub-accent bg-hub-accent/10'
                         )}
                         title={`${lobbyCapacity.occupied} of ${lobbyCapacity.max} players`}
@@ -324,9 +324,9 @@ function OnlinePlayersPanelInner() {
                       )}
                     </div>
                   </div>
-                  <p className="text-xs text-stone-400 mt-0.5 truncate min-w-0">
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate min-w-0">
                     {gameLabelForPresence(group.gameType)}
-                    <span className="font-mono text-[10px] text-stone-500 ml-1.5">
+                    <span className="font-mono text-[10px] text-hub-faint ml-1.5">
                       {group.roomId}
                     </span>
                   </p>

@@ -53,9 +53,9 @@ export default function HubLobbyStatusBar() {
         <span className="hub-lobby-status__dot hub-lobby-status__dot--active" aria-hidden />
         <span className="hub-lobby-status__line truncate">
           <span className="font-semibold">{statusWord}</span>
-          <span className="text-stone-500"> · </span>
+          <span className="text-hub-faint"> · </span>
           <span>{gameName}</span>
-          <span className="text-stone-500"> · </span>
+          <span className="text-hub-faint"> · </span>
           <span className="font-mono tabular-nums">{lobby.roomId}</span>
         </span>
       </button>

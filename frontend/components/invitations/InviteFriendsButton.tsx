@@ -30,7 +30,7 @@ export default function InviteFriendsButton({
           'inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium rounded-xl',
           'border border-hub-border/80 bg-hub-surface/70 hover:bg-hub-accent/10 hover:border-hub-accent/40',
           'shadow-sm hover:shadow-md hover:shadow-hub-accent/5',
-          'text-gray-200 transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none',
+          'text-hub-text-secondary transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none',
           className
         )}
       >

@@ -20,7 +20,7 @@ export default function GameLobbyPendingOverlay({
       aria-busy="true"
     >
       <Loader2 className="w-7 h-7 animate-spin text-hub-accent" aria-hidden />
-      <p className="text-sm font-medium text-gray-100">{message}</p>
+      <p className="text-sm font-medium text-foreground">{message}</p>
     </div>
   );
 }

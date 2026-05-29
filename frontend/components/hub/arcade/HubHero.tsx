@@ -146,7 +146,7 @@ export default function HubHero({ connected, hubPresence }: HubHeroProps) {
 					<span className="absolute inline-flex h-full w-full rounded-full bg-hub-success opacity-60 animate-ping" />
 					<span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-hub-success" />
 				</span>
-				<span className="flex items-center gap-2 text-sm text-gray-300 min-w-0">
+				<span className="flex items-center gap-2 text-sm text-hub-text-secondary min-w-0">
 					<Radio className="w-3.5 h-3.5 text-hub-accent shrink-0" aria-hidden />
 					<span key={safeIndex} className="hub-ticker-text truncate">
 						{statusText}

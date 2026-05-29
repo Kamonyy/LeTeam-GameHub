@@ -95,7 +95,7 @@ export default function ConfirmDialog({
             <Icon className="h-7 w-7" aria-hidden />
           </div>
 
-          <DialogTitle className="text-xl font-bold text-stone-100 tracking-tight">
+          <DialogTitle className="text-xl font-bold text-foreground tracking-tight">
             {title}
           </DialogTitle>
           <DialogDescription className="text-sm leading-relaxed max-w-sm mx-auto">

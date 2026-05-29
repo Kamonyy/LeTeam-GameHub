@@ -79,19 +79,20 @@ export default function ConnectionStatus({
   return (
     <div
       className={cn(
-        'flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border',
+        'flex max-w-full items-center gap-1.5 text-xs font-medium rounded-full border px-2 py-1 sm:gap-1.5 sm:px-2.5 sm:py-1',
         toneClass
       )}
       role="status"
+      aria-label={connected ? labels.on : labels.off}
     >
       {connected ?
         <>
-          <Wifi className="w-3 h-3" />
-          {labels.on}
+          <Wifi className="w-3 h-3 shrink-0" />
+          <span className="max-[380px]:sr-only">{labels.on}</span>
         </>
       : <>
-          <WifiOff className="w-3 h-3" />
-          {labels.off}
+          <WifiOff className="w-3 h-3 shrink-0" />
+          <span className="max-[380px]:sr-only">{labels.off}</span>
         </>
       }
     </div>

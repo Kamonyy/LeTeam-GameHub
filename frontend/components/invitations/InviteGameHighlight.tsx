@@ -67,7 +67,7 @@ export default function InviteGameHighlight({
             {gameName}
           </p>
           {players && (
-            <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-stone-400">
+            <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               {players} players
             </p>
           )}

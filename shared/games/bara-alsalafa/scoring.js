@@ -1,8 +1,12 @@
 /**
- * برا السالفة / Out of the Loop — scoring rules.
+ * برا السالفة / Out of the Loop — official round scoring.
  *
- * Points (نقاط): cumulative per player; tie-breaker at match end.
- * Round victories (فوز الجولة): outcast alone vs insider team toward roundsToWin.
+ * Points (نقاط) — cumulative per player; tie-breaker if round wins are tied at match end:
+ * - wrong_accusation: vote eliminated an insider → +2 outcast, outcast round win
+ * - outcast_stole_win: outcast voted out, guesses secret word → +2 outcast, outcast round win
+ * - insiders_win: outcast voted out, wrong guess → +1 each insider, insiders round win
+ *
+ * Round victories: insiders team vs outcast across a fixed number of match rounds.
  */
 
 /** @typedef {'outcast_stole_win' | 'wrong_accusation' | 'insiders_win'} BaraRoundOutcomeType */
@@ -99,16 +103,13 @@ export function applyBaraRoundScoring(state) {
 }
 
 /**
- * @param {number} insiderRoundWins
- * @param {number} outcastRoundWins
- * @param {number} roundsToWin
+ * Match ends after `totalRounds` complete rounds (not first-to-N wins).
+ *
+ * @param {number} roundNumber — current round index (1-based)
+ * @param {number} totalRounds — lobby setting (roundsToWin)
  */
-export function isBaraMatchOver(
-	insiderRoundWins,
-	outcastRoundWins,
-	roundsToWin,
-) {
-	return insiderRoundWins >= roundsToWin || outcastRoundWins >= roundsToWin;
+export function isBaraMatchOver(roundNumber, totalRounds) {
+	return roundNumber >= totalRounds;
 }
 
 /**

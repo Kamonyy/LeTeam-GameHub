@@ -56,13 +56,13 @@ export default function GameClientFrame({
       <button
         type="button"
         onClick={onLeave}
-        className="text-hub-muted hover:text-white transition-colors"
+        className="text-hub-muted hover:text-foreground transition-colors"
         aria-label="Leave game"
       >
         <BackIcon className="w-5 h-5" />
       </button>
     : <HubBackLink
-        className="text-hub-muted hover:text-white transition-colors"
+        className="text-hub-muted hover:text-foreground transition-colors"
         aria-label="Back to hub"
       >
         <BackIcon className="w-5 h-5" />

@@ -71,7 +71,7 @@ export class BaraAlsalafaEngine extends BaseGameEngine {
 		this.scores = {};
 		/** @type {Record<string, number>} — personal round wins (outcast only) */
 		this.roundWins = {};
-		/** Team round victories — insiders vs outcast toward roundsToWin */
+		/** Team round victories — insiders vs outcast (tally across match rounds) */
 		this.insiderRoundWins = 0;
 		this.outcastRoundWins = 0;
 		/** @type {Record<string, { roleRevealed: boolean, microStatus: string, eliminated: boolean }>} */
@@ -695,13 +695,7 @@ export class BaraAlsalafaEngine extends BaseGameEngine {
 	startNextRound() {
 		if (this.phase !== "round_end") return false;
 
-		if (
-			isBaraMatchOver(
-				this.insiderRoundWins,
-				this.outcastRoundWins,
-				this.roundsToWin,
-			)
-		) {
+		if (isBaraMatchOver(this.roundNumber, this.roundsToWin)) {
 			const winnerId = resolveBaraMatchWinnerId(
 				this.insiderRoundWins,
 				this.outcastRoundWins,

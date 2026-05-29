@@ -91,6 +91,7 @@ export default function MafiaLobby({
 }: MafiaLobbyProps) {
   const [botsBusy, setBotsBusy] = useState(false);
   const isHost = lobby.hostId === playerId;
+  const canEditSettings = isHost && !!onSettingsChange;
   const showDevBots = !!lobby.devBotsEnabled && isHost && !!onAddDevBots;
   const connectedCount = lobby.players.filter((p) => p.connected).length;
   const settings = parseSettings(lobby);
@@ -127,7 +128,7 @@ export default function MafiaLobby({
     connectedCount <= lobby.maxPlayers;
 
   const setRoleCount = (roleId: string, delta: number) => {
-    if (!onSettingsChange || !settings.roleCounts) return;
+    if (!canEditSettings || !onSettingsChange || !settings.roleCounts) return;
     const counts = settings.roleCounts;
     if (delta > 0) {
       const { roleTotal } = validateLobbySetup(gameplayCount, counts);
@@ -143,10 +144,13 @@ export default function MafiaLobby({
   const renderPlayerExtra = (p: LobbyPlayer) => (
     <>
       {p.id === settings.narratorId && (
-        <Mic className="h-4 w-4 shrink-0 text-rose-300" aria-label="Narrator" />
+        <Mic
+          className="h-3.5 w-3.5 shrink-0 text-rose-300"
+          aria-label="Narrator"
+        />
       )}
       {p.isBot && (
-        <span className="shrink-0 rounded-sm border border-emerald-600/45 bg-emerald-950/80 px-1.5 py-0.5 font-cinzel text-[0.58rem] uppercase tracking-widest text-emerald-200">
+        <span className="shrink-0 rounded-sm border border-emerald-600/45 bg-emerald-950/80 px-1 py-0.5 font-cinzel text-[0.5rem] uppercase tracking-widest text-emerald-200">
           bot
         </span>
       )}
@@ -187,8 +191,14 @@ export default function MafiaLobby({
         startLabel={starting ? "Summoning…" : "Deal Roles & Begin"}
         leaveLabel="Depart"
         waitingForHostLabel="Awaiting the host to start the game"
-        className="card max-w-none border border-stone-700/45 bg-stone-950/55 p-4 sm:p-5 shadow-none animate-none"
+        className="mafia-lobby-chamber card mf-surface mf-surface--glass max-w-none border border-stone-700/45 bg-stone-950/55 p-4 sm:p-5 shadow-none animate-none"
         renderPlayerExtra={renderPlayerExtra}
+        lobbyChatScrollbar="mafia"
+        rosterBeforeSettings
+        compactRoster
+        rosterClassName="mafia-lobby-roster"
+        compactYouLabel=" (you)"
+        compactEmptySlotLabel="Open"
         settingsSlot={
           <>
             {showDevBots && (
@@ -250,35 +260,45 @@ export default function MafiaLobby({
               </MafiaCard>
             )}
 
-            {isHost && onSettingsChange && (
-              <MafiaCard variant="glass" interactive={false} className="mb-3.5">
-                <MafiaCardContent className={clsx("space-y-3.5", lobbyCardBodyClass)}>
-                  <h2 className={sectionTitleClass}>
+            <MafiaCard variant="glass" interactive={false} className="mb-3.5">
+              <MafiaCardContent className={clsx("space-y-3.5", lobbyCardBodyClass)}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className={clsx(sectionTitleClass, "mb-0")}>
                     <span className="text-[0.55rem] text-amber-400">◆</span>
                     Game Settings
                   </h2>
+                  {!canEditSettings && (
+                    <span className="font-cinzel text-[0.58rem] uppercase tracking-widest text-[color:var(--p1-ink-dim)]">
+                      View only
+                    </span>
+                  )}
+                </div>
 
+                {canEditSettings && (
                   <MafiaSelect
                     label="Narrator (only active controller)"
                     value={settings.narratorId ?? ""}
                     onChange={(narratorId) =>
-                      onSettingsChange({ narratorId: narratorId || null })
+                      onSettingsChange?.({ narratorId: narratorId || null })
                     }
                     options={lobby.players.map((p) => ({
                       value: p.id,
                       label: p.displayName,
                     }))}
                   />
+                )}
 
-                  <MafiaToggle
-                    checked={settings.revealRoleOnDeath}
-                    onChange={(revealRoleOnDeath) =>
-                      onSettingsChange({ revealRoleOnDeath })
-                    }
-                  >
-                    Reveal role on death
-                  </MafiaToggle>
+                <MafiaToggle
+                  checked={settings.revealRoleOnDeath}
+                  onChange={(revealRoleOnDeath) =>
+                    onSettingsChange?.({ revealRoleOnDeath })
+                  }
+                  disabled={!canEditSettings}
+                >
+                  Reveal role on death
+                </MafiaToggle>
 
+                {canEditSettings && (
                   <MafiaCard variant="inset" className="mt-1 space-y-1 p-2.5" aria-live="polite">
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                       <p className="font-cinzel text-[0.65rem] font-semibold uppercase tracking-widest text-amber-100">
@@ -354,26 +374,31 @@ export default function MafiaLobby({
                       </p>
                     )}
                   </MafiaCard>
+                )}
 
-                  <div>
-                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                      <p className="font-cinzel text-[0.72rem] font-semibold uppercase tracking-widest text-amber-100/95">
-                        Role balance
-                      </p>
+                <div>
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-cinzel text-[0.72rem] font-semibold uppercase tracking-widest text-amber-100/95">
+                      Role balance
+                    </p>
+                    {canEditSettings && (
                       <MafiaButton
                         type="button"
                         variant="ghost"
                         size="sm"
                         className="text-xs"
                         onClick={() =>
-                          onSettingsChange({
+                          onSettingsChange?.({
                             roleCounts: { ...suggested.counts },
                           })
                         }
                       >
                         Apply balanced setup
                       </MafiaButton>
-                    </div>
+                    )}
+                  </div>
+
+                  {canEditSettings ?
                     <ul className="space-y-2">
                       {ROLE_IDS.map((id) => {
                         const count = settings.roleCounts?.[id] ?? 0;
@@ -427,10 +452,39 @@ export default function MafiaLobby({
                         );
                       })}
                     </ul>
-                  </div>
-                </MafiaCardContent>
-              </MafiaCard>
-            )}
+                  : activeRoleSummary.length > 0 ?
+                    <ul className="mafia-lobby-role-compact m-0 flex list-none flex-wrap gap-1.5 p-0">
+                      {ROLE_IDS.filter((id) => (settings.roleCounts?.[id] ?? 0) > 0).map(
+                        (id) => {
+                          const count = settings.roleCounts?.[id] ?? 0;
+                          return (
+                            <li
+                              key={id}
+                              className="inline-flex items-center gap-1.5 rounded-md border border-stone-800/55 bg-stone-950/50 px-2 py-1 font-cinzel text-[0.68rem] leading-none tracking-wide"
+                            >
+                              <span
+                                className="mf-role-dot h-2 w-2 shrink-0 rounded-full"
+                                style={roleDotStyle(id)}
+                                aria-hidden
+                              />
+                              <span style={{ color: getRoleAccent(id) }}>
+                                {ROLE_LABELS[id] ?? id}
+                              </span>
+                              <span className="tabular-nums text-amber-100/95">
+                                ×{count}
+                              </span>
+                            </li>
+                          );
+                        },
+                      )}
+                    </ul>
+                  : <p className={clsx("m-0 text-[0.7rem]", lobbyMutedClass)}>
+                      Roles not configured yet
+                    </p>
+                  }
+                </div>
+              </MafiaCardContent>
+            </MafiaCard>
           </>
         }
         footerSlot={

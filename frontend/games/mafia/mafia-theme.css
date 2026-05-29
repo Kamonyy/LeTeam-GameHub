@@ -342,3 +342,24 @@
     opacity: 0.28;
   }
 }
+
+/* Lobby — compact player grid below chamber code */
+[data-mafia-theme] .mafia-lobby-roster {
+	padding: 0.65rem 0.75rem;
+	border-radius: 0.5rem;
+	border: 1px solid var(--mf-glass-border, rgba(154, 116, 40, 0.38));
+	background: rgba(8, 6, 4, 0.55);
+	box-shadow: var(--mf-shadow-panel);
+}
+
+[data-mafia-theme] .mafia-lobby-roster ul {
+	max-height: min(11rem, 38vh);
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(201, 162, 39, 0.35) transparent;
+}
+
+[data-mafia-theme] .mafia-lobby-roster .bg-hub-accent\/10 {
+	background: rgba(201, 162, 39, 0.08) !important;
+	border-color: rgba(201, 162, 39, 0.35) !important;
+}

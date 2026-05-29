@@ -32,7 +32,7 @@ export default function TurnIndicator({
         'flex items-center justify-center gap-3 px-5 py-2.5 rounded-full border transition-all duration-300',
         isMyTurn
           ? 'bg-hub-accent/15 border-hub-accent/40 text-hub-accent'
-          : 'bg-hub-surface border-hub-border text-gray-400',
+          : 'bg-hub-surface border-hub-border text-muted-foreground',
         urgent && isMyTurn && 'animate-pulse-soft border-hub-danger/50 text-hub-danger'
       )}
     >

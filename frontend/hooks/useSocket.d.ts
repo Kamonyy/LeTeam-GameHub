@@ -83,9 +83,13 @@ export interface UseSocketReturn {
   joinRoom: (
     roomId: string,
     displayName: string,
-    options?: { spectate?: boolean }
+    options?: { spectate?: boolean; suppressError?: boolean }
   ) => Promise<boolean>;
-  spectateRoom: (roomId: string, displayName: string) => Promise<boolean>;
+  spectateRoom: (
+    roomId: string,
+    displayName: string,
+    options?: { suppressError?: boolean }
+  ) => Promise<boolean>;
   joinRoomOrSpectate: (
     roomId: string,
     displayName: string,

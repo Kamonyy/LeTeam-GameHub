@@ -34,7 +34,7 @@ export default function GameAboutPanel({
       dir={isBara ? 'rtl' : undefined}
     >
       {!isThemed && (
-        <p className="text-xs font-semibold uppercase tracking-wider text-gray-300">
+        <p className="text-xs font-semibold uppercase tracking-wider text-hub-text-secondary">
           About {game.name}
         </p>
       )}

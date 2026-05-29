@@ -53,7 +53,7 @@ export default function OpponentHandSeat({
 					{name.charAt(0)}
 				</div>
 				<div className="min-w-0 text-left">
-					<p className="text-xs font-semibold text-gray-100 truncate max-w-[88px]">
+					<p className="text-xs font-semibold text-foreground truncate max-w-[88px]">
 						{name}
 					</p>
 					{isTeamMode && teamId && (

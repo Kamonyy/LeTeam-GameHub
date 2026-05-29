@@ -129,7 +129,7 @@ export default function PlayerGrid({
   return (
     <div
       className={clsx(
-        compact ? 'bara-player-strip' : 'bara-player-grid',
+        compact ? 'bara-player-strip bara-player-strip--compact' : 'bara-player-grid',
         !compact && layoutClass(count)
       )}
       dir="rtl"
@@ -156,9 +156,11 @@ export default function PlayerGrid({
               microStatus={card.microStatus}
               eliminated={card.eliminated}
               gridSize={compact ? 'sm' : avatarSize}
+              compact={compact}
               dataSeatId={card.id}
               className={clsx(
                 'w-full',
+                compact && 'bara-seat--compact',
                 gameState.currentInterviewerId === card.id &&
                   !inDuel &&
                   'bara-seat--interviewer',

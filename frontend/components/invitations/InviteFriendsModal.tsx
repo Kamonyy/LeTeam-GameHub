@@ -95,9 +95,9 @@ export default function InviteFriendsModal({
                 <DialogTitle className="text-lg font-semibold text-white tracking-tight">
                   Invite friends
                 </DialogTitle>
-                <DialogDescription className="text-sm text-stone-400 mt-1">
+                <DialogDescription className="text-sm text-muted-foreground mt-1">
                   Pick someone online — they&apos;ll get a live notification.
-                  <span className="font-mono text-[11px] text-stone-500 ml-1.5 tracking-wider block mt-1">
+                  <span className="font-mono text-[11px] text-hub-faint ml-1.5 tracking-wider block mt-1">
                     ROOM {roomId}
                   </span>
                 </DialogDescription>
@@ -107,8 +107,8 @@ export default function InviteFriendsModal({
             {connected && (
               <div className="flex items-center gap-2 rounded-2xl bg-white/[0.04] border border-white/[0.06] px-3 py-2">
                 <Sparkles className="h-3.5 w-3.5 text-hub-accent shrink-0" />
-                <p className="text-xs text-stone-400">
-                  <span className="tabular-nums font-medium text-stone-200">
+                <p className="text-xs text-muted-foreground">
+                  <span className="tabular-nums font-medium text-hub-text-secondary">
                     {inviteableCount}
                   </span>{' '}
                   {inviteableCount === 1 ? 'player' : 'players'} available · lobby mates
@@ -180,7 +180,7 @@ export default function InviteFriendsModal({
                     <p
                       className={clsx(
                         'text-sm font-medium truncate',
-                        inMyLobby ? 'text-stone-500' : 'text-gray-100'
+                        inMyLobby ? 'text-hub-faint' : 'text-foreground'
                       )}
                     >
                       {player.displayName}
@@ -189,7 +189,7 @@ export default function InviteFriendsModal({
                       <p
                         className={clsx(
                           'text-[10px] uppercase tracking-wider font-mono mt-0.5',
-                          tag.tone === 'room' && 'text-stone-500',
+                          tag.tone === 'room' && 'text-hub-faint',
                           tag.tone === 'warn' && 'text-amber-500/90',
                           tag.tone === 'muted' && 'text-hub-muted'
                         )}
@@ -206,13 +206,13 @@ export default function InviteFriendsModal({
                     className={clsx(
                       'shrink-0 text-[11px] font-mono uppercase tracking-wider px-3 py-1.5 rounded-xl border transition-all duration-200',
                       sent &&
-                        'text-stone-500 border-stone-700/80 bg-stone-800/60 cursor-default',
+                        'text-hub-faint border-border/80 bg-secondary/60 cursor-default',
                       !sent &&
                         canInvite &&
                         'text-white border-white/20 hover:border-white/30 hover:bg-white/10',
                       !sent &&
                         !canInvite &&
-                        'text-stone-600 border-stone-800/80 cursor-not-allowed'
+                        'text-hub-faint border-border/60 cursor-not-allowed'
                     )}
                     style={
                       !sent && canInvite ?

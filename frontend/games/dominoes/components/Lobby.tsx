@@ -78,7 +78,7 @@ export default function Lobby({
       }}
       settingsSlot={
         <div className="mb-6 p-4 rounded-xl border border-hub-border bg-hub-surface/60">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-200 mb-4">
+          <div className="flex items-center gap-2 text-sm font-medium text-hub-text-secondary mb-4">
             <Settings2 className="w-4 h-4 text-hub-accent" />
             Match Settings
           </div>
@@ -154,7 +154,7 @@ export default function Lobby({
 
             <div className="flex items-center justify-between text-xs text-hub-muted pt-1 border-t border-hub-border/60">
               <span>Hand size</span>
-              <span className="font-mono text-gray-300">7 tiles / player</span>
+              <span className="font-mono text-hub-text-secondary">7 tiles / player</span>
             </div>
           </div>
 

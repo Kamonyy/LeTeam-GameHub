@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 /** Medieval glass / bronze panel shells — use instead of flat `bg-stone-900/80 shadow-none`. */
 export const mafiaPanelVariants = cva(
   [
-    'relative rounded-lg border text-[color:var(--mf-text-on-panel)]',
+    'mf-surface relative rounded-lg border text-[color:var(--mf-text-on-panel)]',
     'transition-all duration-200 ease-out',
     '[background-image:var(--p1-noise)] [background-blend-mode:overlay]',
   ],
@@ -24,12 +24,14 @@ export const mafiaPanelVariants = cva(
     variants: {
       variant: {
         glass: [
+          'mf-surface--glass',
           'border-[color:var(--mf-glass-border)] bg-[color:var(--mf-glass-bg)]',
-          'shadow-[var(--mf-shadow-panel)] backdrop-blur-[var(--mf-glass-blur)]',
+          'shadow-[var(--mf-shadow-panel)] backdrop-blur-[var(--mf-glass-blur)] saturate-[0.92]',
         ],
         elevated: [
-          'border-amber-900/40 bg-gradient-to-b from-stone-950/95 to-black/95',
-          'shadow-[var(--mf-shadow-panel),var(--mf-shadow-glow-torch)] backdrop-blur-md',
+          'mf-surface--elevated',
+          'rounded-[8px] border-amber-900/50',
+          'shadow-[var(--mf-shadow-elevated)] backdrop-blur-[6px] saturate-[0.94]',
         ],
         codex: [
           'overflow-hidden rounded-md border-amber-800/55',

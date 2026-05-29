@@ -3,8 +3,11 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import clsx from 'clsx';
 import './hextech-scrollbar.css';
+import './mafia-scrollbar.css';
 
 const MIN_THUMB_PX = 28;
+
+type ScrollbarVariant = 'hextech' | 'mafia';
 
 type ScrollMetrics = {
   overflows: boolean;
@@ -17,13 +20,21 @@ export type HextechScrollbarProps = {
   /** Bumps layout when scroll content changes. */
   contentKey?: string | number;
   className?: string;
+  /** `mafia` — gold torch rail; default `hextech` — crystal/teal rail. */
+  variant?: ScrollbarVariant;
 };
 
 export default function HextechScrollbar({
   scrollRef,
   contentKey,
   className,
+  variant = 'hextech',
 }: HextechScrollbarProps) {
+  const bar = `${variant}-scroll-bar`;
+  const barIdle = `${variant}-scroll-bar--idle`;
+  const track = `${variant}-scroll-bar__track`;
+  const thumb = `${variant}-scroll-bar__thumb`;
+  const thumbDragging = `${variant}-scroll-bar__thumb--dragging`;
   const trackRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [metrics, setMetrics] = useState<ScrollMetrics>({
@@ -170,37 +181,56 @@ export default function HextechScrollbar({
     scrollByThumbPosition(e.clientY);
   };
 
+  const trackInner = (
+    <div
+      ref={trackRef}
+      className={track}
+      onPointerDown={onTrackPointerDown}
+    >
+      {metrics.overflows && (
+        <div
+          className={clsx(thumb, isDragging && thumbDragging)}
+          style={{
+            height: metrics.thumbHeight,
+            transform: `translateY(${metrics.thumbTop}px)`,
+          }}
+          onPointerDown={onThumbPointerDown}
+          onPointerMove={onThumbPointerMove}
+          onPointerUp={endThumbDrag}
+          onPointerCancel={endThumbDrag}
+        />
+      )}
+    </div>
+  );
+
+  const trackNode =
+    variant === 'mafia' ?
+      <div className="mafia-scroll-bar__track-wrap">{trackInner}</div>
+    : trackInner;
+
+  if (variant === 'mafia') {
+    return (
+      <div
+        className={clsx(bar, !metrics.overflows && barIdle, className)}
+        aria-hidden
+      >
+        <span className="mafia-scroll-bar__finial mafia-scroll-bar__finial--top">
+          ◆
+        </span>
+        {trackNode}
+        <span className="mafia-scroll-bar__finial mafia-scroll-bar__finial--bottom">
+          ◆
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={clsx(
-        'hextech-scroll-bar',
-        !metrics.overflows && 'hextech-scroll-bar--idle',
-        className,
-      )}
+      className={clsx(bar, !metrics.overflows && barIdle, className)}
       aria-hidden
     >
-      <div
-        ref={trackRef}
-        className="hextech-scroll-bar__track"
-        onPointerDown={onTrackPointerDown}
-      >
-        {metrics.overflows && (
-          <div
-            className={clsx(
-              'hextech-scroll-bar__thumb',
-              isDragging && 'hextech-scroll-bar__thumb--dragging',
-            )}
-            style={{
-              height: metrics.thumbHeight,
-              transform: `translateY(${metrics.thumbTop}px)`,
-            }}
-            onPointerDown={onThumbPointerDown}
-            onPointerMove={onThumbPointerMove}
-            onPointerUp={endThumbDrag}
-            onPointerCancel={endThumbDrag}
-          />
-        )}
-      </div>
+      {trackNode}
     </div>
   );
 }

@@ -76,21 +76,38 @@ export function roleBorderAccentStyle(
   };
 }
 
-/** Ability + restriction lines for role ability tooltips */
-export function roleAbilityTooltipLines(roleId?: string | null): string[] {
+export interface RoleAbilityLine {
+  en: string;
+  ar: string;
+}
+
+/** Ability + restriction lines (EN + AR) for role reveal UI */
+export function roleAbilityLines(roleId?: string | null): RoleAbilityLine[] {
   const role = getRole(roleId ?? '');
   if (!role) return [];
 
-  const lines: string[] = [];
-  if (role.abilities.length > 0) {
-    lines.push(...role.abilities);
-  }
-  if (role.restrictions.length > 0) {
-    for (const restriction of role.restrictions) {
-      lines.push(`Restriction: ${restriction}`);
-    }
-  }
+  const lines: RoleAbilityLine[] = [];
+  const abilitiesAr = role.abilitiesAr ?? [];
+
+  role.abilities.forEach((en, index) => {
+    lines.push({ en, ar: abilitiesAr[index] ?? en });
+  });
+
+  const restrictionsAr = role.restrictionsAr ?? [];
+  role.restrictions.forEach((en, index) => {
+    const ar = restrictionsAr[index] ?? en;
+    lines.push({
+      en: `Restriction: ${en}`,
+      ar: `ممنوع: ${ar}`,
+    });
+  });
+
   return lines;
+}
+
+/** English-only lines for compact tooltips */
+export function roleAbilityTooltipLines(roleId?: string | null): string[] {
+  return roleAbilityLines(roleId).map((line) => line.en);
 }
 
 export function roleAbilityTooltipText(roleId?: string | null): string | null {

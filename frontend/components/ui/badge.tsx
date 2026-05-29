@@ -11,10 +11,10 @@ const badgeVariants = cva(
 				default:
 					"border-amber-500/40 bg-amber-700/90 text-amber-50 shadow-[0_0_10px_rgba(180,83,9,0.25)]",
 				secondary:
-					"border-stone-700 bg-stone-800/80 text-stone-300",
+					"border-border bg-secondary/80 text-hub-text-secondary",
 				destructive:
 					"border-rose-500/50 bg-gradient-to-b from-red-950 to-red-950/80 text-red-100",
-				outline: "border-stone-700 bg-transparent text-stone-400",
+				outline: "border-border bg-transparent text-muted-foreground",
 				dead: "border-rose-500/50 bg-gradient-to-b from-red-950 to-red-950/80 text-red-100",
 				pending:
 					"border-amber-500/50 bg-gradient-to-b from-amber-950 to-amber-950/80 text-amber-200",

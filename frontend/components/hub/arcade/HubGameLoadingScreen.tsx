@@ -8,7 +8,7 @@ import {
   resolveGameIdFromPath,
 } from '@/lib/hub/games-registry';
 import { useClientStorage } from '@/lib/session/ClientStorageContext';
-import { HUB_NAVIGATING_KEY } from '@/lib/session/core-session';
+import { peekHubGameNavigationIntent } from '@/lib/hub/hubGameNavigation';
 import HubArcadeLoadingEnvironment from './HubArcadeLoadingEnvironment';
 
 interface HubGameLoadingScreenProps {
@@ -17,17 +17,7 @@ interface HubGameLoadingScreenProps {
 }
 
 function readSessionNavigationHint(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const stored = sessionStorage.getItem(HUB_NAVIGATING_KEY);
-    if (stored) {
-      sessionStorage.removeItem(HUB_NAVIGATING_KEY);
-      return stored;
-    }
-  } catch {
-    /* ignore */
-  }
-  return null;
+  return peekHubGameNavigationIntent();
 }
 
 type LoadingPanelProps = {

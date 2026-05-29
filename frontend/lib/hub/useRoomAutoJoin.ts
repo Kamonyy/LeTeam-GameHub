@@ -1,12 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { suppressRoomAutoJoinRef } from '@/lib/hub/room-auto-join';
 import { getDisplayName, hasDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
 import { isLobbyPlayer } from '@/lib/hub/resolveClientIsSpectator';
+import { consumeHubGameNavigationIntent } from '@/lib/hub/hubGameNavigation';
+import {
+  clearCoreSessionActiveRoom,
+  readCoreSessionActiveRoom,
+} from '@/lib/session/core-session';
 import type { LobbyState } from '@/lib/hub/types';
+
+export type RoomJoinOptions = {
+  spectate?: boolean;
+  /** Auto-join recovery — do not surface toast when the room is gone. */
+  suppressError?: boolean;
+};
 
 export interface UseRoomAutoJoinOptions {
   gameType: string;
@@ -22,8 +33,17 @@ export interface UseRoomAutoJoinOptions {
   hardResetInFlight: boolean;
   lobby: LobbyState | null;
   playerId: string;
-  joinRoom: (roomId: string, displayName: string) => Promise<boolean>;
-  spectateRoom?: (roomId: string, displayName: string) => Promise<boolean>;
+  joinRoom: (
+    roomId: string,
+    displayName: string,
+    options?: RoomJoinOptions,
+  ) => Promise<boolean>;
+  spectateRoom?: (
+    roomId: string,
+    displayName: string,
+    options?: Pick<RoomJoinOptions, 'suppressError'>,
+  ) => Promise<boolean>;
+  clearError?: () => void;
   onAutoJoinLoading?: (loading: boolean) => void;
 }
 
@@ -43,26 +63,87 @@ export function useRoomAutoJoin({
   playerId,
   joinRoom,
   spectateRoom,
+  clearError,
   onAutoJoinLoading,
 }: UseRoomAutoJoinOptions) {
   const router = useRouter();
-  const [joinCode, setJoinCode] = useState(roomParam || '');
+  const openedFromHubRef = useRef<boolean | null>(null);
+  if (openedFromHubRef.current === null) {
+    openedFromHubRef.current = consumeHubGameNavigationIntent(gameType);
+  }
+  const storedRoomCode = useMemo(() => {
+    const stored = readCoreSessionActiveRoom();
+    if (!stored || stored.gameType !== gameType) return null;
+    return normalizeRoomCode(stored.roomId);
+  }, [gameType]);
+  // Hub card navigation opens a fresh lobby — do not resurrect a stale stored room.
+  const skipStoredAutoJoin =
+    !roomParam && openedFromHubRef.current && !!storedRoomCode;
+  const targetRoomCode = roomParam
+    ? normalizeRoomCode(roomParam)
+    : skipStoredAutoJoin
+      ? null
+      : storedRoomCode;
+  const [joinCode, setJoinCode] = useState(targetRoomCode || '');
   const [autoJoined, setAutoJoined] = useState(false);
   const [inviteJoin, setInviteJoin] = useState(false);
 
+  const joinRoomRef = useRef(joinRoom);
+  const spectateRoomRef = useRef(spectateRoom);
+  const clearErrorRef = useRef(clearError);
+  const onAutoJoinLoadingRef = useRef(onAutoJoinLoading);
+  /** Prevents re-entering auto-join for the same room (incl. after failure). */
+  const autoJoinAttemptedRef = useRef<string | null>(null);
+
+  joinRoomRef.current = joinRoom;
+  spectateRoomRef.current = spectateRoom;
+  clearErrorRef.current = clearError;
+  onAutoJoinLoadingRef.current = onAutoJoinLoading;
+
   useEffect(() => {
-    setJoinCode(roomParam || '');
-  }, [roomParam]);
+    autoJoinAttemptedRef.current = null;
+  }, [targetRoomCode]);
+
+  useEffect(() => {
+    setJoinCode(targetRoomCode || '');
+  }, [targetRoomCode]);
 
   useEffect(() => {
     setInviteJoin(!!roomParam && !hasDisplayName());
   }, [roomParam]);
 
   useEffect(() => {
-    if (!roomParam) {
+    if (!targetRoomCode) {
       setAutoJoined(false);
     }
-  }, [roomParam]);
+  }, [targetRoomCode]);
+
+  // Restore ?room= after refresh when the server re-attaches this player.
+  useEffect(() => {
+    if (!connected || !sessionReady || !reconnectAssessed) return;
+
+    const code = reconnectedRoomId ? normalizeRoomCode(reconnectedRoomId) : null;
+    if (!code) return;
+
+    const urlCode = roomParam ? normalizeRoomCode(roomParam) : null;
+    if (urlCode === code) return;
+
+    router.replace(
+      spectateParam ? `${basePath}?room=${code}&spectate=1` : `${basePath}?room=${code}`,
+      { scroll: false },
+    );
+    setJoinCode(code);
+    setAutoJoined(true);
+  }, [
+    connected,
+    sessionReady,
+    reconnectAssessed,
+    reconnectedRoomId,
+    roomParam,
+    basePath,
+    spectateParam,
+    router,
+  ]);
 
   useEffect(() => {
     if (lobby?.gameType === gameType && lobby.roomId) {
@@ -71,11 +152,11 @@ export function useRoomAutoJoin({
   }, [lobby?.gameType, lobby?.roomId, gameType]);
 
   useEffect(() => {
-    if (!connected || !sessionReady || !reconnectAssessed || !roomParam) {
+    if (!connected || !sessionReady || !reconnectAssessed || !targetRoomCode) {
       return;
     }
 
-    const code = normalizeRoomCode(roomParam);
+    const code = targetRoomCode;
     if (!code) return;
 
     const reconnectedCode =
@@ -94,10 +175,18 @@ export function useRoomAutoJoin({
       console.warn(
         'Player belongs to an alternate active session:',
         reconnectedCode,
-        '(URL room:',
+        '(target room:',
         code,
-        ')'
+        ')',
       );
+      router.replace(
+        spectateParam && reconnectedAsSpectator ?
+          `${basePath}?room=${reconnectedCode}&spectate=1`
+        : `${basePath}?room=${reconnectedCode}`,
+        { scroll: false },
+      );
+      setJoinCode(reconnectedCode);
+      setAutoJoined(true);
       return;
     }
 
@@ -122,26 +211,55 @@ export function useRoomAutoJoin({
     }
     if (lobby && lobby.gameType !== gameType) return;
 
+    if (autoJoinAttemptedRef.current === code) {
+      return;
+    }
+    autoJoinAttemptedRef.current = code;
+
     let cancelled = false;
 
-    const attemptJoin = async () => {
-      onAutoJoinLoading?.(true);
-      const name = getDisplayName();
+    const recoverFromFailedAutoJoin = () => {
+      const stored = readCoreSessionActiveRoom();
+      if (
+        stored?.gameType === gameType &&
+        normalizeRoomCode(stored.roomId) === code
+      ) {
+        clearCoreSessionActiveRoom();
+      }
+      if (roomParam) {
+        router.replace(basePath, { scroll: false });
+      }
+      setJoinCode('');
+      clearErrorRef.current?.();
+    };
 
-      if (spectateParam && spectateRoom) {
-        const ok = await spectateRoom(code, name);
+    const attemptJoin = async () => {
+      onAutoJoinLoadingRef.current?.(true);
+      const name = getDisplayName();
+      const joinOpts = { suppressError: true as const };
+
+      let ok = false;
+      if (spectateParam && spectateRoomRef.current) {
+        ok = await spectateRoomRef.current(code, name, joinOpts);
         if (!cancelled && ok) {
           router.replace(`${basePath}?room=${code}&spectate=1`, { scroll: false });
         }
       } else {
-        const ok = await joinRoom(code, name);
+        ok = await joinRoomRef.current(code, name, joinOpts);
         if (!cancelled && ok) {
           router.replace(`${basePath}?room=${code}`, { scroll: false });
         }
       }
+
       if (!cancelled) {
-        setAutoJoined(true);
-        onAutoJoinLoading?.(false);
+        if (ok) {
+          setAutoJoined(true);
+        } else {
+          recoverFromFailedAutoJoin();
+          // Mark auto-join finished so the effect does not retry in a loop.
+          setAutoJoined(true);
+        }
+        onAutoJoinLoadingRef.current?.(false);
       }
     };
 
@@ -159,16 +277,14 @@ export function useRoomAutoJoin({
     reconnectedRoomId,
     reconnectedAsSpectator,
     hardResetInFlight,
+    targetRoomCode,
     roomParam,
     lobby,
     autoJoined,
     inviteJoin,
     spectateParam,
-    joinRoom,
-    spectateRoom,
     playerId,
     router,
-    onAutoJoinLoading,
   ]);
 
   return {

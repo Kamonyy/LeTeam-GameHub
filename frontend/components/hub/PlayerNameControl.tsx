@@ -108,9 +108,9 @@ export default function PlayerNameControl({
               : 'border-[rgba(244,63,94,0.4)] bg-[rgba(244,63,94,0.12)] text-rose-200 hover:bg-[rgba(244,63,94,0.18)]',
             ]
           : [
-              'min-h-11 px-3 py-2.5',
+              'min-h-10 max-w-full px-2 py-2 sm:min-h-11 sm:px-3 sm:py-2.5',
               showName ?
-                'border-hub-border bg-hub-surface/80 text-gray-100 hover:border-hub-accent/40'
+                'border-hub-border bg-hub-surface/80 text-foreground hover:border-hub-accent/40'
               : 'border-hub-accent/40 bg-hub-accent/10 text-hub-accent hover:bg-hub-accent/20',
             ],
           locked && 'cursor-not-allowed opacity-60',
@@ -120,7 +120,7 @@ export default function PlayerNameControl({
         <User className="h-4 w-4 shrink-0" />
         <span
           className={clsx(
-            'max-w-[9rem] break-words leading-snug',
+            'min-w-0 max-w-[4.75rem] truncate leading-snug sm:max-w-[9rem]',
             isMafia || isBara ? 'normal-case tracking-normal text-right' : 'text-left',
           )}
         >
@@ -128,7 +128,7 @@ export default function PlayerNameControl({
         </span>
         <ChevronDown
           className={clsx(
-            'h-3.5 w-3.5 transition-transform',
+            'h-3.5 w-3.5 shrink-0 transition-transform max-[380px]:hidden',
             isMafia ? 'text-amber-400/85' : 'text-hub-muted',
             open && 'rotate-180',
             disabled && 'opacity-40',

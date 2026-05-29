@@ -26,22 +26,22 @@ export default function HomePage() {
     >
       <HubArcadeShell hubRootRef={hubRootRef} />
 
-      <header className="relative z-40 border-b border-hub-border/80 bg-hub-surface/40 glass-blur-md sticky top-0 pt-safe-top">
+      <header className="relative z-40 sticky top-0 overflow-x-clip border-b border-hub-border/80 bg-hub-surface/40 glass-blur-md pt-safe-top">
         <div className="hub-header-inner max-w-7xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3">
           <div
             className="hub-header-brand flex items-center gap-2 sm:gap-3 min-w-0 hub-enter-hero"
             style={{ animationDelay: '0ms' }}
           >
             <Gamepad2 className="w-6 h-6 sm:w-7 sm:h-7 text-hub-accent shrink-0" />
-            <h1 className="text-base sm:text-xl font-bold tracking-tight truncate bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+            <h1 className="text-base sm:text-xl font-bold tracking-tight truncate bg-gradient-to-r from-white to-hub-text-secondary bg-clip-text text-transparent">
               LeTeam Game Hub
             </h1>
           </div>
           <div className="hub-header-lobby">
             <HubLobbyStatusBar />
           </div>
-          <div className="hub-header-actions flex items-center gap-2 sm:gap-3 shrink-0">
-            <ConnectionStatus connected={connected} />
+          <div className="hub-header-actions flex min-w-0 flex-wrap items-center justify-end gap-1.5 max-[380px]:justify-between sm:gap-2 md:gap-3">
+            <ConnectionStatus connected={connected} variant="hub" />
             <PlayerNameControl />
           </div>
         </div>
