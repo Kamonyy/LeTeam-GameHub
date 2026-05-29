@@ -1,7 +1,6 @@
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import HubGameLoadingScreen from '@/components/hub/arcade/HubGameLoadingScreen';
-import '@/app/hub-arcade.css';
 
 const BaraAlsalafaClient = dynamic(
   () => import('@/games/bara-alsalafa/BaraAlsalafaClient'),

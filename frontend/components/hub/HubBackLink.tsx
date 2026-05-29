@@ -19,6 +19,7 @@ export default function HubBackLink({
   return (
     <Link
       href="/"
+      prefetch={false}
       onClick={(e) => {
         onClick?.(e);
         if (

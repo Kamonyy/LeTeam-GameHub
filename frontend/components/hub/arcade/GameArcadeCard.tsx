@@ -682,6 +682,7 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
 			<Link
 				ref={cardRef as React.RefObject<HTMLAnchorElement>}
 				href={game.href}
+				prefetch={false}
 				className={clsx(
 					cardClass,
 					"outline-none focus-visible:ring-2 focus-visible:ring-hub-accent",

@@ -12,7 +12,6 @@ import GameArcadeCard from '@/components/hub/arcade/GameArcadeCard';
 import ErrorToast from '@/components/shared/ErrorToast';
 import { useHubLive } from '@/lib/hub/HubLiveContext';
 import { GAMES } from '@/lib/hub/games-registry';
-import './hub-arcade.css';
 
 export default function HomePage() {
   const hubRootRef = useRef<HTMLElement>(null);

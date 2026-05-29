@@ -11,7 +11,6 @@ import {
 } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import HubGameLoadingScreen from '@/components/hub/arcade/HubGameLoadingScreen';
-import '@/app/hub-arcade.css';
 import { resolveGameIdFromPath } from '@/lib/hub/games-registry';
 import { normalizePathname } from '@/lib/hub/pathname';
 import { MOTION_UI_MS } from '@/hooks/useDelayedUnmount';
