@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Plus, LogIn, UserPlus, Loader2 } from 'lucide-react';
 import { useGameRoom, useCoreSession } from '@/hooks/useSocket';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
-import { useNotifyRouteContentReady } from '@/lib/hub/ViewTransitionProvider';
+import {
+  useNotifyRouteContentReady,
+  useViewNavigator,
+} from '@/lib/hub/ViewTransitionProvider';
+import { navigateToGameLobby } from '@/lib/hub/navigateToGameLobby';
 import HubGameLoadingScreen from '@/components/hub/arcade/HubGameLoadingScreen';
 import { setDisplayName, getDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
@@ -35,7 +39,7 @@ import '@/games/wordgame/wordgame.css';
 
 export default function WordGameClient() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const navigateWithTransition = useViewNavigator();
   const roomParam = searchParams.get('room');
   const spectateParam =
     searchParams.get('spectate') === '1' || searchParams.get('spectate') === 'true';
@@ -113,7 +117,7 @@ export default function WordGameClient() {
       const roomId = await createRoom(displayName.trim(), 'wordgame');
       if (roomId) {
         setAutoJoined(true);
-        router.push(`/wordgame?room=${roomId}`);
+        navigateToGameLobby(navigateWithTransition, roomId, 'wordgame');
       }
     } finally {
       setLoading(false);
@@ -131,7 +135,7 @@ export default function WordGameClient() {
       const ok = await joinRoom(code, displayName.trim());
       if (ok) {
         setAutoJoined(true);
-        router.push(`/wordgame?room=${code}`);
+        navigateToGameLobby(navigateWithTransition, code, 'wordgame');
       }
     } finally {
       setLoading(false);
@@ -146,7 +150,9 @@ export default function WordGameClient() {
     setDisplayName(displayName);
     const ok = await joinRoom(code, displayName.trim());
     if (ok) {
-      router.replace(`/wordgame?room=${code}`, { scroll: false });
+      navigateToGameLobby(navigateWithTransition, code, 'wordgame', {
+        replace: true,
+      });
     }
     setAutoJoined(true);
     setLoading(false);
@@ -168,10 +174,12 @@ export default function WordGameClient() {
 
   useEffect(() => {
     if (!spectateParam || !roomParam || !isRoomPlayer) return;
-    router.replace(`/wordgame?room=${normalizeRoomCode(roomParam)}`, {
-      scroll: false,
+    const code = normalizeRoomCode(roomParam);
+    if (!code) return;
+    navigateToGameLobby(navigateWithTransition, code, 'wordgame', {
+      replace: true,
     });
-  }, [spectateParam, roomParam, isRoomPlayer, router]);
+  }, [spectateParam, roomParam, isRoomPlayer, navigateWithTransition]);
 
   useSpectatorAutoLeave({ lobby: wordLobby, isSpectator: viewingAsSpectator });
 

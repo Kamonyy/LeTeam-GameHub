@@ -1,5 +1,5 @@
 import { getGameEntry, isGameActive } from '@/lib/hub/games-registry';
-import { HUB_NAVIGATING_KEY } from '@/lib/session/core-session';
+import { markHubGameNavigation } from '@/lib/hub/hubGameNavigation';
 import type { OnlinePlayerRoomGroup } from '@/lib/hub/groupOnlinePlayers';
 
 /** Matches RoomManager.spectateRoom allowlist + hub-active games. */
@@ -40,10 +40,7 @@ export function canShowSpectateForPresenceGroup(
   return true;
 }
 
-export function markHubNavigating(): void {
-  try {
-    sessionStorage.setItem(HUB_NAVIGATING_KEY, '1');
-  } catch {
-    /* ignore */
-  }
+/** @deprecated Prefer `markHubGameNavigation(gameType)` — forwards for hub spectate flows. */
+export function markHubNavigating(gameType: string): void {
+  markHubGameNavigation(gameType);
 }

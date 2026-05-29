@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -23,7 +23,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { MafiaButton } from "@/components/mafia/mafia-button";
 import { useGameRoom, useCoreSession } from "@/hooks/useSocket";
 import { useLeaveToHub } from "@/lib/hub/useLeaveToHub";
-import { useNotifyRouteContentReady } from "@/lib/hub/ViewTransitionProvider";
+import {
+  useNotifyRouteContentReady,
+  useViewNavigator,
+} from "@/lib/hub/ViewTransitionProvider";
+import { navigateToGameLobby } from "@/lib/hub/navigateToGameLobby";
 import HubGameLoadingScreen from "@/components/hub/arcade/HubGameLoadingScreen";
 import { setDisplayName, getDisplayName } from "@/lib/player";
 import ConnectionStatus from "@/components/hub/ConnectionStatus";
@@ -60,7 +64,7 @@ import "@/games/mafia/mafia.css";
 
 export default function MafiaClient() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const navigateWithTransition = useViewNavigator();
   const roomParam = searchParams.get("room");
 
   const enabled = isGameActive("mafia");
@@ -151,7 +155,9 @@ export default function MafiaClient() {
     setLoading(true);
     setDisplayName(displayName);
     const roomId = await createRoom(displayName.trim(), "mafia");
-    if (roomId) router.push(`/mafia?room=${roomId}`);
+    if (roomId) {
+      navigateToGameLobby(navigateWithTransition, roomId, 'mafia');
+    }
     setLoading(false);
   };
 
@@ -161,7 +167,9 @@ export default function MafiaClient() {
     setLoading(true);
     setDisplayName(displayName);
     const ok = await joinRoom(code, displayName.trim());
-    if (ok) router.push(`/mafia?room=${code}`);
+    if (ok) {
+      navigateToGameLobby(navigateWithTransition, code, 'mafia');
+    }
     setLoading(false);
   };
 
@@ -171,7 +179,9 @@ export default function MafiaClient() {
     setLoading(true);
     setDisplayName(displayName);
     const ok = await joinRoom(code, displayName.trim());
-    if (ok) router.replace(`/mafia?room=${code}`, { scroll: false });
+    if (ok) {
+      navigateToGameLobby(navigateWithTransition, code, 'mafia', { replace: true });
+    }
     setAutoJoined(true);
     setLoading(false);
   };

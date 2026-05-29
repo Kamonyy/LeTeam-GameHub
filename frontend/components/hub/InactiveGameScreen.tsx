@@ -1,8 +1,8 @@
 'use client';
 
 import clsx from 'clsx';
-import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import HubBackLink from '@/components/hub/HubBackLink';
 import GameAboutPanel from '@/components/hub/GameAboutPanel';
 import { getGameEntry } from '@/lib/hub/games-registry';
 
@@ -33,8 +33,7 @@ export default function InactiveGameScreen({ gameId }: InactiveGameScreenProps) 
               'اللعبة غير متاحة مؤقتاً.'
             :	'This game is temporarily unavailable.')}
         </p>
-        <Link
-          href="/"
+        <HubBackLink
           className={
             isBara ?
               'bara-btn-primary inline-flex items-center gap-2'
@@ -50,7 +49,7 @@ export default function InactiveGameScreen({ gameId }: InactiveGameScreenProps) 
               <ArrowLeft className="w-4 h-4" />
               Back to games
             </>}
-        </Link>
+        </HubBackLink>
       </div>
       <GameAboutPanel gameId={gameId} variant={isBara ? 'bara' : 'hub'} />
     </div>

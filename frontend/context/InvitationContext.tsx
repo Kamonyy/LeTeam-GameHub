@@ -10,14 +10,14 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   useGameState,
   useSocketActions,
   useSocketConnection,
 } from '@/hooks/useSocket';
 import { getSessionToken } from '@/lib/player';
-import { getGameEntry } from '@/lib/hub/games-registry';
+import { navigateToGameLobby } from '@/lib/hub/navigateToGameLobby';
+import { useViewNavigator } from '@/lib/hub/ViewTransitionProvider';
 import InvitationOverlay from '@/components/InvitationOverlay';
 import {
   playInviteReceivedSound,
@@ -63,7 +63,7 @@ const InvitationContext = createContext<InvitationContextValue | null>(null);
 const EXIT_ANIMATION_MS = 200;
 
 export function InvitationProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
+  const navigateWithTransition = useViewNavigator();
   const { connected } = useSocketConnection();
   const { lobby } = useGameState();
   const { registerSocketListener, emitInviteSend, emitInviteRespond } =
@@ -213,12 +213,13 @@ export function InvitationProvider({ children }: { children: ReactNode }) {
     if (!pendingNavigateRef.current || !lobby) return;
     const pending = pendingNavigateRef.current;
     if (lobby.roomId !== pending.roomId) return;
-    const entry = getGameEntry(pending.gameType);
-    if (entry) {
-      router.push(`${entry.href}?room=${pending.roomId}`);
-    }
+    navigateToGameLobby(
+      navigateWithTransition,
+      pending.roomId,
+      pending.gameType
+    );
     pendingNavigateRef.current = null;
-  }, [lobby, router]);
+  }, [lobby, navigateWithTransition]);
 
   const sendInvite = useCallback(
     async (targetPlayerId: string, roomId: string, gameType: string) => {
@@ -278,14 +279,17 @@ export function InvitationProvider({ children }: { children: ReactNode }) {
           roomId: invite.roomId,
           gameType: invite.gameType,
         };
-        const entry = getGameEntry(invite.gameType);
-        if (lobby?.roomId === invite.roomId && entry) {
-          router.push(`${entry.href}?room=${invite.roomId}`);
+        if (lobby?.roomId === invite.roomId) {
+          navigateToGameLobby(
+            navigateWithTransition,
+            invite.roomId,
+            invite.gameType
+          );
           pendingNavigateRef.current = null;
         }
       }
     },
-    [runExitAnimation, emitInviteRespond, lobby?.roomId, router]
+    [runExitAnimation, emitInviteRespond, lobby?.roomId, navigateWithTransition]
   );
 
   const dismissIncoming = useCallback(() => {

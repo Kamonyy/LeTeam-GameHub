@@ -2,12 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Plus, LogIn, UserPlus, Loader2 } from 'lucide-react';
 import { translateBaraError } from '@/lib/bara/translate-error';
 import { useGameRoom, useCoreSession } from '@/hooks/useSocket';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
-import { useNotifyRouteContentReady } from '@/lib/hub/ViewTransitionProvider';
+import {
+  useNotifyRouteContentReady,
+  useViewNavigator,
+} from '@/lib/hub/ViewTransitionProvider';
+import { navigateToGameLobby } from '@/lib/hub/navigateToGameLobby';
 import HubGameLoadingScreen from '@/components/hub/arcade/HubGameLoadingScreen';
 import { suppressRoomAutoJoinRef } from '@/lib/hub/room-auto-join';
 import { setDisplayName, getDisplayName } from '@/lib/player';
@@ -29,7 +33,7 @@ import '@/games/bara-alsalafa/bara-alsalafa.css';
 
 export default function BaraAlsalafaClient() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const navigateWithTransition = useViewNavigator();
   const roomParam = searchParams.get('room');
 
   const baraEnabled = isGameActive('bara-alsalafa');
@@ -97,12 +101,12 @@ export default function BaraAlsalafaClient() {
     if (!hadBaraRoomRef.current || baraLobby || !roomParam) return;
     hadBaraRoomRef.current = false;
     suppressRoomAutoJoinRef.current = true;
-    router.replace('/');
+    navigateWithTransition('/', { replace: true });
     const timer = window.setTimeout(() => {
       suppressRoomAutoJoinRef.current = false;
     }, 500);
     return () => window.clearTimeout(timer);
-  }, [baraLobby, roomParam, router]);
+  }, [baraLobby, roomParam, navigateWithTransition]);
 
   useEffect(() => {
     if (isHydrated) {
@@ -119,7 +123,9 @@ export default function BaraAlsalafaClient() {
     setLoading(true);
     setDisplayName(displayName);
     const roomId = await createRoom(displayName.trim(), 'bara-alsalafa');
-    if (roomId) router.push(`/bara-alsalafa?room=${roomId}`);
+    if (roomId) {
+      navigateToGameLobby(navigateWithTransition, roomId, 'bara-alsalafa');
+    }
     setLoading(false);
   };
 
@@ -129,7 +135,9 @@ export default function BaraAlsalafaClient() {
     setLoading(true);
     setDisplayName(displayName);
     const ok = await joinRoom(code, displayName.trim());
-    if (ok) router.push(`/bara-alsalafa?room=${code}`);
+    if (ok) {
+      navigateToGameLobby(navigateWithTransition, code, 'bara-alsalafa');
+    }
     setLoading(false);
   };
 
@@ -139,7 +147,11 @@ export default function BaraAlsalafaClient() {
     setLoading(true);
     setDisplayName(displayName);
     const ok = await joinRoom(code, displayName.trim());
-    if (ok) router.replace(`/bara-alsalafa?room=${code}`, { scroll: false });
+    if (ok) {
+      navigateToGameLobby(navigateWithTransition, code, 'bara-alsalafa', {
+        replace: true,
+      });
+    }
     setAutoJoined(true);
     setLoading(false);
   };
@@ -172,7 +184,7 @@ export default function BaraAlsalafaClient() {
     setPostMatchBusy(true);
     const ok = await disbandRoom();
     setPostMatchBusy(false);
-    if (ok) router.push('/');
+    if (ok) navigateWithTransition('/', { replace: true });
   };
 
   return (

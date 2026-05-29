@@ -1,12 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Plus, LogIn, Loader2 } from 'lucide-react';
 import { useGameRoom, useCoreSession } from '@/hooks/useSocket';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
-import { useNotifyRouteContentReady } from '@/lib/hub/ViewTransitionProvider';
+import {
+  useNotifyRouteContentReady,
+  useViewNavigator,
+} from '@/lib/hub/ViewTransitionProvider';
+import { navigateToGameLobby } from '@/lib/hub/navigateToGameLobby';
 import HubGameLoadingScreen from '@/components/hub/arcade/HubGameLoadingScreen';
 import { setDisplayName, getDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
@@ -23,7 +27,7 @@ import '@/games/sketch-draw/sketch-draw.css';
 
 export default function SketchDrawClient() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const navigateWithTransition = useViewNavigator();
   const roomParam = searchParams.get('room');
 
   const gameEnabled = isGameActive('sketch-draw');
@@ -78,9 +82,9 @@ export default function SketchDrawClient() {
 
   useEffect(() => {
     if (sketchDrawDisbandAt > 0) {
-      router.push('/');
+      navigateWithTransition('/', { replace: true });
     }
-  }, [sketchDrawDisbandAt, router]);
+  }, [sketchDrawDisbandAt, navigateWithTransition]);
 
   useEffect(() => {
     if (isHydrated) {
@@ -99,7 +103,11 @@ export default function SketchDrawClient() {
     setLoading(true);
     const roomId = await createRoom(name, 'sketch-draw');
     setLoading(false);
-    if (roomId) router.replace(`/sketch-draw?room=${roomId}`, { scroll: false });
+    if (roomId) {
+      navigateToGameLobby(navigateWithTransition, roomId, 'sketch-draw', {
+        replace: true,
+      });
+    }
   };
 
   const handleJoin = async () => {
@@ -111,7 +119,11 @@ export default function SketchDrawClient() {
     setLoading(true);
     const ok = await joinRoom(code, name);
     setLoading(false);
-    if (ok) router.replace(`/sketch-draw?room=${code}`, { scroll: false });
+    if (ok) {
+      navigateToGameLobby(navigateWithTransition, code, 'sketch-draw', {
+        replace: true,
+      });
+    }
   };
 
   const handleStart = async () => {
@@ -160,7 +172,7 @@ export default function SketchDrawClient() {
           onReturnToLobby={() => void cancelMatch()}
           onDisbandRoom={async () => {
             const ok = await sketchDrawDisbandRoom();
-            if (ok) router.push('/');
+            if (ok) navigateWithTransition('/', { replace: true });
           }}
         />
       )}

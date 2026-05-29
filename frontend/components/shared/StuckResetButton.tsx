@@ -1,23 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useHardResetPlayer } from '@/lib/hub/HardResetContext';
+import { useViewNavigator } from '@/lib/hub/ViewTransitionProvider';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 
 export default function StuckResetButton() {
   const [open, setOpen] = useState(false);
   const hardResetPlayer = useHardResetPlayer();
-  const router = useRouter();
-
-  useEffect(() => {
-    router.prefetch('/');
-  }, [router]);
+  const navigateWithTransition = useViewNavigator();
 
   const handleConfirm = () => {
     setOpen(false);
     void hardResetPlayer().finally(() => {
-      router.replace('/');
+      navigateWithTransition('/', { replace: true });
     });
   };
 

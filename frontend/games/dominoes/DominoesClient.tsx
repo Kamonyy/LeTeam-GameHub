@@ -2,12 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import clsx from 'clsx';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, LogIn, UserPlus } from 'lucide-react';
 import { useGameRoom, useCoreSession } from '@/hooks/useSocket';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
-import { useNotifyRouteContentReady } from '@/lib/hub/ViewTransitionProvider';
+import {
+  useNotifyRouteContentReady,
+  useViewNavigator,
+} from '@/lib/hub/ViewTransitionProvider';
+import { navigateToGameLobby } from '@/lib/hub/navigateToGameLobby';
 import HubGameLoadingScreen from '@/components/hub/arcade/HubGameLoadingScreen';
 import { setDisplayName, getDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
@@ -29,7 +33,7 @@ import type { GameState } from '@/games/dominoes/types';
 
 export default function DominoesClient() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const navigateWithTransition = useViewNavigator();
   const roomParam = searchParams.get('room');
   const spectateParam =
     searchParams.get('spectate') === '1' || searchParams.get('spectate') === 'true';
@@ -98,7 +102,9 @@ export default function DominoesClient() {
     setLoading(true);
     setDisplayName(displayName);
     const roomId = await createRoom(displayName.trim(), 'dominoes');
-    if (roomId) router.push(`/dominoes?room=${roomId}`);
+    if (roomId) {
+      navigateToGameLobby(navigateWithTransition, roomId, 'dominoes');
+    }
     setLoading(false);
   };
 
@@ -109,9 +115,9 @@ export default function DominoesClient() {
     setDisplayName(displayName);
     const result = await joinRoomOrSpectate(code, displayName.trim());
     if (result.ok) {
-      router.push(
-        result.spectating ? `/dominoes?room=${code}&spectate=1` : `/dominoes?room=${code}`
-      );
+      navigateToGameLobby(navigateWithTransition, code, 'dominoes', {
+        spectate: result.spectating,
+      });
     }
     setLoading(false);
   };
@@ -122,7 +128,11 @@ export default function DominoesClient() {
     setLoading(true);
     setDisplayName(displayName);
     const ok = await spectateRoom(code, displayName.trim());
-    if (ok) router.push(`/dominoes?room=${code}&spectate=1`);
+    if (ok) {
+      navigateToGameLobby(navigateWithTransition, code, 'dominoes', {
+        spectate: true,
+      });
+    }
     setLoading(false);
   };
 
@@ -133,12 +143,19 @@ export default function DominoesClient() {
     setDisplayName(displayName);
     if (spectateParam) {
       const ok = await spectateRoom(code, displayName.trim());
-      if (ok) router.replace(`/dominoes?room=${code}&spectate=1`, { scroll: false });
+      if (ok) {
+        navigateToGameLobby(navigateWithTransition, code, 'dominoes', {
+          spectate: true,
+          replace: true,
+        });
+      }
     } else {
       const result = await joinRoomOrSpectate(code, displayName.trim());
       if (result.ok) {
-        const query = result.spectating ? `?room=${code}&spectate=1` : `?room=${code}`;
-        router.replace(`/dominoes${query}`, { scroll: false });
+        navigateToGameLobby(navigateWithTransition, code, 'dominoes', {
+          spectate: result.spectating,
+          replace: true,
+        });
       }
     }
     setAutoJoined(true);

@@ -53,3 +53,8 @@ DESIGN.md
 
 # Local docs (not published with the repo)
 docs/
+
+# Allow tracking of authoritative architecture specs only
+!docs/
+!docs/architecture/
+!docs/architecture/*.md

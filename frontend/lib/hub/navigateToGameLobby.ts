@@ -27,15 +27,23 @@ export function buildGameLobbyHref(
  * Navigate to the game route for an active room (lobby or in-progress).
  * Pass `useViewNavigator()` (or `router.push`) as the navigator driver.
  */
+export type NavigateToGameLobbyOptions = GameLobbyNavigatorOptions & {
+  spectate?: boolean;
+};
+
 export function navigateToGameLobby(
   navigator: GameLobbyNavigator,
   roomId: string,
   gameType: string,
+  options?: NavigateToGameLobbyOptions,
 ): boolean {
   const href = buildGameLobbyHref(roomId, gameType);
   if (!href) return false;
 
+  const { spectate, ...navigatorOptions } = options ?? {};
+  const targetHref = spectate ? `${href}&spectate=1` : href;
+
   markHubGameNavigation(gameType);
-  navigator(href);
+  navigator(targetHref, navigatorOptions);
   return true;
 }

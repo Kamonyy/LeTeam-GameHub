@@ -1,15 +1,15 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useSocketActions } from '@/hooks/useSocket';
 import { useGameState } from '@/lib/hub/socket/GameStateContext';
 import { useHubLive } from '@/lib/hub/HubLiveContext';
 import { getDisplayName, hasDisplayName } from '@/lib/player';
 import { buildGameSpectateHref, markHubNavigating } from '@/lib/hub/spectateFromHub';
+import { useViewNavigator } from '@/lib/hub/ViewTransitionProvider';
 
 export function useSpectateRoomFromHub() {
-  const router = useRouter();
+  const navigateWithTransition = useViewNavigator();
   const { lobby } = useGameState();
   const { spectateRoom } = useSocketActions();
   const { clearError } = useHubLive();
@@ -35,14 +35,14 @@ export function useSpectateRoomFromHub() {
         if (!ok) {
           return { ok: false as const };
         }
-        markHubNavigating();
-        router.push(href);
+        markHubNavigating(gameType);
+        navigateWithTransition(href);
         return { ok: true as const };
       } finally {
         setSpectateInFlightRoomId(null);
       }
     },
-    [clearError, spectateRoom, router]
+    [clearError, spectateRoom, navigateWithTransition]
   );
 
   return {
