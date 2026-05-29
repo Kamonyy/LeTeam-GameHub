@@ -1,0 +1,11 @@
+{
+  "extends": "./frontend/tsconfig.json",
+  "include": [
+    "frontend/**/*.ts",
+    "frontend/**/*.tsx",
+    "frontend/**/*.js",
+    "frontend/next-env.d.ts",
+    "frontend/.next/types/**/*.ts"
+  ],
+  "exclude": ["frontend/node_modules", "frontend/.next", "server", "node_modules"]
+}

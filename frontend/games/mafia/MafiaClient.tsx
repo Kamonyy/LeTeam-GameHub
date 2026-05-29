@@ -308,7 +308,7 @@ export default function MafiaClient() {
       <RoomEngagementLayer roomId={tcLobby?.roomId} />
       <MafiaAtmosphere variant={atmosphere} reduced={atmosphereReduced} />
 
-      <header className="sticky top-0 z-40 border-b border-[color:var(--mf-glass-border)] bg-[color:var(--mf-glass-bg)] pt-[env(safe-area-inset-top,0px)] shadow-[var(--mf-shadow-panel)] backdrop-blur-[length:var(--mf-glass-blur)] before:pointer-events-none before:absolute before:inset-x-[6%] before:bottom-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-amber-500/70 before:to-transparent">
+      <header className="sticky top-0 z-40 border-b border-[color:var(--mf-glass-border)] bg-[color:var(--mf-glass-bg)] pt-[env(safe-area-inset-top,0px)] shadow-[var(--mf-shadow-panel)] backdrop-blur-[var(--mf-glass-blur)] before:pointer-events-none before:absolute before:inset-x-[6%] before:bottom-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-amber-500/70 before:to-transparent">
         <div className="mx-auto flex max-w-[76rem] flex-wrap items-center justify-between gap-x-4 gap-y-3 px-5 py-3.5 max-md:gap-y-2 max-md:px-3.5 max-md:py-2.5">
           <div className="flex min-w-0 items-center gap-3">
             <Link
