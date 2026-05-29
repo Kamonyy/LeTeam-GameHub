@@ -111,6 +111,7 @@ export interface UseSocketReturn {
   submitSecretChampion: (championId: string) => Promise<boolean>;
   confirmWordGuessed: () => Promise<boolean>;
   reportWordTabFocus: (focused: boolean) => void;
+  syncWordScratchpad: (roundNumber: number, notes: unknown[]) => void;
   baraReveal: () => Promise<boolean>;
   baraReady: () => Promise<boolean>;
   baraAdvanceInterrogation: () => Promise<boolean>;

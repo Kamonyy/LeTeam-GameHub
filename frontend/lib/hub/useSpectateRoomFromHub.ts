@@ -11,9 +11,7 @@ import { buildGameSpectateHref, markHubNavigating } from '@/lib/hub/spectateFrom
 export function useSpectateRoomFromHub() {
   const router = useRouter();
   const { lobby } = useGameState();
-  const { spectateRoom } = useSocketActions<{
-    spectateRoom: (roomId: string, displayName: string) => Promise<boolean>;
-  }>();
+  const { spectateRoom } = useSocketActions();
   const { clearError } = useHubLive();
   const [spectateInFlightRoomId, setSpectateInFlightRoomId] = useState<string | null>(
     null

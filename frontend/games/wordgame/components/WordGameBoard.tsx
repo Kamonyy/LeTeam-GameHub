@@ -53,9 +53,7 @@ export default function WordGameBoard({
   const opponentId = gameState.playerIds.find((id) => id !== playerId) ?? '';
   const opponentName = playerNames[opponentId] || 'Opponent';
 
-  const { syncWordScratchpad } = useSocketActions<{
-    syncWordScratchpad: (roundNumber: number, notes: unknown[]) => void;
-  }>();
+  const { syncWordScratchpad } = useSocketActions();
 
   const handleScratchpadSync = useCallback(
     (roundNumber: number, notes: ScratchpadNote[]) => {
