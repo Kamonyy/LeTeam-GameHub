@@ -1,4 +1,5 @@
 import { isGameEnabled } from '@shared/games/availability.js';
+import { normalizePathname } from '@/lib/hub/pathname';
 
 export interface GameCatalogEntry {
   id: string;
@@ -24,7 +25,7 @@ const CATALOG: Omit<GameCatalogEntry, 'active'>[] = [
       'The first player to play all their tiles wins the round and scores the pips left in everyone else\'s hands. Play to a point cap in Free-for-All or 2v2 teams.',
       'This mode is temporarily offline while we improve fairness, layout, and polish.',
     ],
-    href: '/dominoes',
+    href: '/dominoes/',
     disabledReason: 'Temporarily unavailable while we improve the experience.',
     players: '2–4',
     icon: '🁢',
@@ -39,7 +40,7 @@ const CATALOG: Omit<GameCatalogEntry, 'active'>[] = [
       'In the lobby, choose Custom words or the League of Legends roster with champion search and portraits.',
       'Best with exactly 2 players in the same call (Discord, Zoom, etc.).',
     ],
-    href: '/wordgame',
+    href: '/wordgame/',
     players: '2',
     icon: '🔮',
   },
@@ -52,7 +53,7 @@ const CATALOG: Omit<GameCatalogEntry, 'active'>[] = [
       'استجواب، تصويت سري، وربما تخمين أخير لسرقة الفوز — من 3 إلى 12 لاعباً.',
       'في اللوبي ستجد شرحاً مفصلاً تحت «كيف تلعب».',
     ],
-    href: '/bara-alsalafa',
+    href: '/bara-alsalafa/',
     players: '3–12',
     icon: '🕵️',
   },
@@ -66,7 +67,7 @@ const CATALOG: Omit<GameCatalogEntry, 'active'>[] = [
       'Pick word categories, add custom words, and race the timer with live scoring.',
       'This mode is temporarily offline while we finish polish and stability.',
     ],
-    href: '/sketch-draw',
+    href: '/sketch-draw/',
     disabledReason: 'Temporarily unavailable while we finish polish.',
     players: '3–12',
     icon: '🎨',
@@ -82,7 +83,7 @@ const CATALOG: Omit<GameCatalogEntry, 'active'>[] = [
       'Everyone else joins on their phone to read their secret role and alive/dead status only.',
       '5–12 players with balanced Mafia, Seer, Doctor, Sniper, Sheriff, and Villagers.',
     ],
-    href: '/mafia',
+    href: '/mafia/',
     players: '5–12',
     icon: '🎭',
   },
@@ -96,6 +97,13 @@ export const GAMES: GameCatalogEntry[] = CATALOG.map((entry) => ({
 
 export function getGameEntry(id: string): GameCatalogEntry | undefined {
   return GAMES.find((g) => g.id === id);
+}
+
+/** Resolve catalog id from a route path or href (e.g. `/mafia/` → `mafia`). */
+export function resolveGameIdFromPath(pathOrHref: string): string | null {
+  const target = normalizePathname(pathOrHref);
+  if (target === '/') return null;
+  return GAMES.find((g) => normalizePathname(g.href) === target)?.id ?? null;
 }
 
 /** Whether the game can be played (hub cards, routes, room create). */

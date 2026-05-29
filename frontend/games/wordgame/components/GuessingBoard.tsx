@@ -78,26 +78,28 @@ export default function GuessingBoard({
       <WordPanelFrame
         panelEnter={false}
         embers={false}
-        className="sw-round-reveal-panel p-3.5 sm:p-4 text-center sw-animate-reveal sw-panel--round-reveal"
+        className="sw-round-reveal-panel sw-animate-reveal sw-panel--round-reveal"
       >
         <header className="sw-round-reveal-panel__head">
-          <div className="sw-victory-icon sw-victory-icon--compact" aria-hidden>
-            <Trophy className="w-5 h-5" strokeWidth={1.5} />
-          </div>
-          <div className="sw-round-reveal-panel__head-copy">
+          <div className="sw-round-reveal-panel__head-main">
+            <div className="sw-victory-icon sw-victory-icon--compact" aria-hidden>
+              <Trophy className="w-5 h-5" strokeWidth={1.5} />
+            </div>
             <h3 className="sw-round-reveal-panel__title">
               {isLol ? 'Champion Revealed' : 'Word Revealed'}
             </h3>
-            <p className="sw-round-reveal-panel__points">
-              <span className="sw-text-accent font-semibold">{guesserName}</span> earns the point
-            </p>
           </div>
+          <p className="sw-round-reveal-panel__points-badge">
+            <span className="sw-round-reveal-panel__points-name">{guesserName}</span>
+            <span className="sw-round-reveal-panel__points-label">earns the point</span>
+          </p>
         </header>
 
         <div className="sw-round-reveal-panel__body">
           <RoundRevealBoard
             compact
             horizontal
+            className="sw-round-reveal--in-panel"
             wordCategory={wordCategory}
             revealedWord={revealedWord}
             revealedChampionId={revealedChampionId}
@@ -114,10 +116,10 @@ export default function GuessingBoard({
           />
         </div>
 
-        <p className="sw-round-reveal-panel__next animate-pulse-soft">
-          <Sparkles className="w-3 h-3 text-[#c9a227]" aria-hidden />
-          Next round approaches…
-        </p>
+        <footer className="sw-round-reveal-panel__foot">
+          <Sparkles className="w-3.5 h-3.5 text-[#c9a227]" aria-hidden />
+          <span>Next round approaches…</span>
+        </footer>
       </WordPanelFrame>
     );
   }

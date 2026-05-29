@@ -72,6 +72,11 @@ export interface UseSocketReturn {
   hubPresence: HubPresenceState;
   chatMessages: ChatMessage[];
   sendChat: (message: string) => void;
+  sendRoomReaction: (
+    roomId: string,
+    reactionId: string,
+    type: 'emoji' | 'sound',
+  ) => void;
   clearError: () => void;
   refreshDisplayName: (name: string) => void;
   createRoom: (displayName: string, gameType?: string) => Promise<string | null>;

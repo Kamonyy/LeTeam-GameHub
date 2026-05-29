@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Plus, LogIn, UserPlus, Loader2 } from 'lucide-react';
 import { useGameRoom, useCoreSession } from '@/hooks/useSocket';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
+import { useNotifyRouteContentReady } from '@/lib/hub/ViewTransitionProvider';
+import HubGameLoadingScreen from '@/components/hub/arcade/HubGameLoadingScreen';
 import { setDisplayName, getDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
 import { useSpectatorAutoLeave } from '@/lib/hub/useSpectatorAutoLeave';
@@ -24,6 +26,11 @@ import WordPanelFrame from '@/games/wordgame/components/WordPanelFrame';
 import WordGameAudioProvider from '@/games/wordgame/components/WordGameAudioProvider';
 import GameLobbyPendingOverlay from '@/components/hub/GameLobbyPendingOverlay';
 import GameClientFrame from '@/components/ui/GameClientFrame';
+import {
+  useDelayedUnmount,
+  MOTION_UI_MS,
+} from '@/hooks/useDelayedUnmount';
+import clsx from 'clsx';
 import '@/games/wordgame/wordgame.css';
 
 export default function WordGameClient() {
@@ -35,6 +42,7 @@ export default function WordGameClient() {
 
   const wordgameEnabled = isGameActive('wordgame');
   const { isHydrated } = useCoreSession();
+  const notifyRouteContentReady = useNotifyRouteContentReady();
   const [displayName, setDisplayNameState] = useState('');
   const [loading, setLoading] = useState(false);
   const [pendingAction, setPendingAction] = useState<'create' | 'join' | null>(
@@ -89,6 +97,12 @@ export default function WordGameClient() {
   useEffect(() => {
     setDisplayNameState(getDisplayName());
   }, []);
+
+  useEffect(() => {
+    if (isHydrated) {
+      notifyRouteContentReady();
+    }
+  }, [isHydrated, notifyRouteContentReady]);
 
   const handleCreate = async () => {
     if (!displayName.trim()) return;
@@ -178,6 +192,21 @@ export default function WordGameClient() {
     wordLobby?.status === 'playing' &&
     wordState;
 
+  const lobbyMounted = !!(inLobby && wordLobby);
+  const gameMounted = !!(inGame && wordState && wordLobby);
+
+  /** Lobby unmounted but engine payload not yet received over the socket. */
+  const isHydratingGamePayload =
+    !!wordLobby &&
+    wordLobby.status === 'playing' &&
+    !wordState &&
+    (isRoomPlayer || viewingAsSpectator);
+
+  const { shouldRender: renderLobby, animationState: lobbyPhase } =
+    useDelayedUnmount(lobbyMounted, MOTION_UI_MS);
+  const { shouldRender: renderGame, animationState: gamePhase } =
+    useDelayedUnmount(gameMounted, MOTION_UI_MS);
+
   const handlePlayAgain = async () => {
     setPostMatchBusy(true);
     clearError();
@@ -210,18 +239,14 @@ export default function WordGameClient() {
   );
 
   if (!isHydrated) {
-    return (
-      <>
-        <WordGameAtmosphere />
-        <GameLobbyPendingOverlay message="Loading session…" />
-      </>
-    );
+    return <HubGameLoadingScreen gameId="wordgame" />;
   }
 
   return (
     <WordGameAudioProvider enabled={isLolAudioEnabled}>
       <GameClientFrame
         className="sw-shell min-h-dvh relative overflow-x-hidden"
+        engagementRoomId={wordLobby?.roomId}
         headerClassName="sw-header border-0 bg-transparent"
         contentClassName={
           viewingAsSpectator && (showSpectatorMatch || spectatorWaiting) ?
@@ -405,24 +430,6 @@ export default function WordGameClient() {
           </div>
         )}
 
-        {inLobby && wordLobby && (
-          <div key="word-lobby" className="sw-view-mount">
-            <WordLobby
-              lobby={wordLobby}
-              playerId={playerId}
-              onKickPlayer={kickPlayer}
-              onSettingsChange={updateRoomSettings}
-              onStartGame={async () => {
-                setStarting(true);
-                await startGame();
-                setStarting(false);
-              }}
-              onLeave={() => void leaveToHub()}
-              starting={starting}
-            />
-          </div>
-        )}
-
         {showSpectatorMatch && wordState && wordLobby && (
           <div key="word-spectator" className="sw-view-mount space-y-3">
             <WordSpectatorBanner
@@ -436,22 +443,75 @@ export default function WordGameClient() {
           </div>
         )}
 
-        {inGame && wordState && wordLobby && (
-          <div key="word-game" className="sw-view-mount">
-            <WordGameBoard
-              gameState={wordState}
-              lobby={wordLobby}
-              playerId={playerId}
-              isHost={isHost}
-              postMatchBusy={postMatchBusy}
-              tabFocusActive={matchInProgress}
-              selfTabFocused={selfTabFocused}
-              onHostPlayAgain={isHost ? handlePlayAgain : undefined}
-              onHostReturnToLobby={isHost ? handleReturnToLobby : undefined}
-              onSubmitWord={submitSecretWord}
-              onSubmitChampion={submitSecretChampion}
-              onConfirmGuessed={confirmWordGuessed}
-            />
+        {(renderLobby || renderGame || isHydratingGamePayload) && (
+          <div className="relative w-full min-h-[min(28rem,60dvh)] motion-layer-isolated">
+            {renderLobby && wordLobby && (
+              <div
+                className={clsx(
+                  'w-full transition-all duration-ui ease-premium-fluid motion-reduce:transition-none',
+                  lobbyPhase === 'exiting' &&
+                    'pointer-events-none opacity-0 -translate-y-6',
+                  (lobbyPhase === 'idle' || lobbyPhase === 'entering') &&
+                    'translate-y-0 opacity-100',
+                )}
+              >
+                <WordLobby
+                  lobby={wordLobby}
+                  playerId={playerId}
+                  onKickPlayer={kickPlayer}
+                  onSettingsChange={updateRoomSettings}
+                  onStartGame={async () => {
+                    setStarting(true);
+                    await startGame();
+                    setStarting(false);
+                  }}
+                  onLeave={() => void leaveToHub()}
+                  starting={starting}
+                />
+              </div>
+            )}
+
+            {isHydratingGamePayload && (
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-hub-bg/80 motion-reduce:animate-none animate-radix-enter"
+                role="status"
+                aria-live="polite"
+                aria-busy="true"
+              >
+                <Loader2
+                  className="h-8 w-8 animate-spin text-hub-accent"
+                  aria-hidden
+                />
+                <p className="text-sm text-hub-muted">Loading match…</p>
+              </div>
+            )}
+
+            {renderGame && wordState && wordLobby && (
+              <div
+                className={clsx(
+                  'absolute inset-0 w-full transition-all duration-ui ease-premium-in motion-reduce:transition-none',
+                  gamePhase === 'entering' &&
+                    'translate-y-4 scale-[0.98] opacity-0',
+                  gamePhase !== 'entering' &&
+                    'translate-y-0 scale-100 opacity-100',
+                )}
+              >
+                <WordGameBoard
+                  gameState={wordState}
+                  lobby={wordLobby}
+                  playerId={playerId}
+                  isHost={isHost}
+                  postMatchBusy={postMatchBusy}
+                  tabFocusActive={matchInProgress}
+                  selfTabFocused={selfTabFocused}
+                  onHostPlayAgain={isHost ? handlePlayAgain : undefined}
+                  onHostReturnToLobby={isHost ? handleReturnToLobby : undefined}
+                  onSubmitWord={submitSecretWord}
+                  onSubmitChampion={submitSecretChampion}
+                  onConfirmGuessed={confirmWordGuessed}
+                />
+              </div>
+            )}
           </div>
         )}
       </GameClientFrame>

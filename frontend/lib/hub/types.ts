@@ -3,12 +3,15 @@ export interface HubPresenceState {
   players: OnlinePlayer[];
 }
 
+export type ChatChannel = 'lobby' | 'match';
+
 export interface ChatMessage {
   roomId: string | null;
   playerId: string;
   displayName: string;
   message: string;
   timestamp: number;
+  channel?: ChatChannel;
 }
 
 export type OnlinePlayerStatus = 'hub' | 'lobby' | 'playing' | 'spectating';
@@ -100,6 +103,8 @@ export interface LobbyState {
   isSpectator?: boolean;
   /** Server allows `room:dev:*` bot fillers (hide UI when false). */
   devBotsEnabled?: boolean;
+  /** Consecutive match wins within this room session (players only). */
+  winStreaks?: Record<string, number>;
 }
 
 export const SCORE_CAP_OPTIONS = [50, 100, 150, 200] as const;

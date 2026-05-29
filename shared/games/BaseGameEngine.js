@@ -4,6 +4,9 @@
  * Spectator baseline: docs/architecture/platform-spectator-contract.md
  * — serializeBase: symmetric public shell only
  * — serializeForPlayer / serializeForSpectator: override any asymmetric base fields
+ *
+ * Persistence baseline: docs/architecture/persistence-boundaries.md
+ * — no hub/network/database imports; phase gates only (round_end, round_over, match_over)
  */
 
 export class BaseGameEngine {

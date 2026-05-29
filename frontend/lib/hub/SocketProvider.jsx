@@ -27,6 +27,7 @@ import { resolveClientIsSpectator } from '@/lib/hub/resolveClientIsSpectator';
 import { isGameActive } from '@/lib/hub/games-registry';
 import { stripNarratorSecrets } from '@/games/mafia/lib/redactMafiaState';
 import { InvitationProvider } from '@/context/InvitationContext';
+import { RoomReactionFeedProvider } from '@/lib/engagement/RoomReactionFeedContext';
 import { socketDispatchRegistry } from '@/lib/hub/socket/dispatch-registry';
 import { GameTimerProvider } from '@/lib/hub/socket/GameTimerContext';
 import { SketchCanvasProvider } from '@/lib/hub/socket/SketchCanvasContext';
@@ -190,6 +191,7 @@ export function SocketProvider({ children }) {
   const skipNextConnectRegisterRef = useRef(false);
   const hardResetInFlightRef = useRef(false);
   const leavingRoomRef = useRef(false);
+  const roomReactionSubscribersRef = useRef(new Set());
 
   const setError = useCallback((message) => {
     if (message != null && hardResetInFlightRef.current) return;
@@ -512,6 +514,16 @@ export function SocketProvider({ children }) {
           const next = [...prev, msg];
           return next.length > 200 ? next.slice(-200) : next;
         });
+      });
+      socket.on('room:reaction:broadcast', (payload) => {
+        if (!payload?.roomId || !payload?.reactionId || !payload?.senderId) return;
+        for (const listener of roomReactionSubscribersRef.current) {
+          try {
+            listener(payload);
+          } catch {
+            /* ignore subscriber errors */
+          }
+        }
       });
       socket.on('sketch-draw:guess:close', (payload) => {
         if (!payload) return;
@@ -1180,6 +1192,29 @@ export function SocketProvider({ children }) {
     })();
   }, [ensureRegistered]);
 
+  const subscribeRoomReactions = useCallback((listener) => {
+    roomReactionSubscribersRef.current.add(listener);
+    return () => {
+      roomReactionSubscribersRef.current.delete(listener);
+    };
+  }, []);
+
+  const sendRoomReaction = useCallback(
+    (roomId, reactionId, type) => {
+      if (!roomId || typeof reactionId !== 'string' || !reactionId) return;
+      if (type !== 'emoji' && type !== 'sound') return;
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) return;
+        socket.emit('room:reaction', { reactionId, type }, (res) => {
+          if (res?.error) setError(res.error);
+        });
+      })();
+    },
+    [ensureRegistered, setError],
+  );
+
   const confirmWordGuessed = useCallback(() => {
     return new Promise((resolve) => {
       (async () => {
@@ -1669,6 +1704,7 @@ export function SocketProvider({ children }) {
     emitInviteRespond,
     joinLobbyByTargetPlayer,
     sendChat,
+    sendRoomReaction,
   };
 
   const connectionValue = useMemo(
@@ -1755,7 +1791,9 @@ export function SocketProvider({ children }) {
           <GameTimerProvider>
             <SketchCanvasProvider>
               <GameStateProvider value={gameStateValue}>
-                <InvitationProvider>{children}</InvitationProvider>
+                <RoomReactionFeedProvider subscribe={subscribeRoomReactions}>
+                  <InvitationProvider>{children}</InvitationProvider>
+                </RoomReactionFeedProvider>
               </GameStateProvider>
             </SketchCanvasProvider>
           </GameTimerProvider>

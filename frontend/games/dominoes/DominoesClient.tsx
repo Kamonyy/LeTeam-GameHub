@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { Plus, LogIn, UserPlus } from 'lucide-react';
 import { useGameRoom, useCoreSession } from '@/hooks/useSocket';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
+import { useNotifyRouteContentReady } from '@/lib/hub/ViewTransitionProvider';
+import HubGameLoadingScreen from '@/components/hub/arcade/HubGameLoadingScreen';
 import { setDisplayName, getDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
 import { isLobbyPlayer } from '@/lib/hub/resolveClientIsSpectator';
@@ -35,6 +37,7 @@ export default function DominoesClient() {
   const dominoesEnabled = isGameActive('dominoes');
   const dominoesMeta = getGameEntry('dominoes');
   const { isHydrated } = useCoreSession();
+  const notifyRouteContentReady = useNotifyRouteContentReady();
   const [displayName, setDisplayNameState] = useState('');
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -80,12 +83,14 @@ export default function DominoesClient() {
     setDisplayNameState(getDisplayName());
   }, []);
 
+  useEffect(() => {
+    if (isHydrated) {
+      notifyRouteContentReady();
+    }
+  }, [isHydrated, notifyRouteContentReady]);
+
   if (!isHydrated) {
-    return (
-      <main className="min-h-dvh relative">
-        <GameLobbyPendingOverlay message="Loading session…" />
-      </main>
-    );
+    return <HubGameLoadingScreen gameId="dominoes" />;
   }
 
   const handleCreate = async () => {
@@ -182,6 +187,7 @@ export default function DominoesClient() {
         title="Dominoes"
         subtitle={dominoesMeta?.tagline}
         connected={connected}
+        engagementRoomId={dominoLobby?.roomId}
         onCancelMatch={
           isHost && inActiveMatch ? () => setCancelConfirmOpen(true) : undefined
         }

@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { useGameState, useSocketActions, useSocketConnection } from '@/hooks/useSocket';
 import { navigateToGameLobby } from '@/lib/hub/navigateToGameLobby';
+import { useViewNavigator } from '@/lib/hub/ViewTransitionProvider';
 
 export function useJoinLobbyByTarget() {
-  const router = useRouter();
+  const navigateWithTransition = useViewNavigator();
   const { playerId } = useSocketConnection();
   const { lobby } = useGameState();
   const { joinLobbyByTargetPlayer } = useSocketActions();
@@ -19,10 +19,10 @@ export function useJoinLobbyByTarget() {
     if (!pendingNavigateRef.current || !lobby) return;
     const pending = pendingNavigateRef.current;
     if (lobby.roomId !== pending.roomId) return;
-    if (navigateToGameLobby(router, pending.roomId, pending.gameType)) {
+    if (navigateToGameLobby(navigateWithTransition, pending.roomId, pending.gameType)) {
       pendingNavigateRef.current = null;
     }
-  }, [lobby, router]);
+  }, [lobby, navigateWithTransition]);
 
   const joinLobby = useCallback(
     async (targetPlayerId: string) => {
@@ -40,11 +40,11 @@ export function useJoinLobbyByTarget() {
       }
 
       pendingNavigateRef.current = { roomId, gameType };
-      navigateToGameLobby(router, roomId, gameType);
+      navigateToGameLobby(navigateWithTransition, roomId, gameType);
 
       return { ok: true as const, roomId, gameType };
     },
-    [playerId, joinLobbyByTargetPlayer, router]
+    [playerId, joinLobbyByTargetPlayer, navigateWithTransition]
   );
 
   return { joinLobby, playerId };

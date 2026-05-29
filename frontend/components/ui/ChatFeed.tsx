@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from 'react';
 import clsx from 'clsx';
+import HextechScrollbar from '@/components/ui/HextechScrollbar';
 
 export type ChatFeedItem = {
   id: string;
@@ -15,6 +16,8 @@ type ChatFeedProps = {
   className?: string;
   /** When false, skip auto-scroll on new items (e.g. user scrolled up). */
   autoScroll?: boolean;
+  /** Custom Hextech rail (hides native scrollbar). */
+  scrollbar?: 'default' | 'hextech';
 };
 
 export default function ChatFeed({
@@ -22,6 +25,7 @@ export default function ChatFeed({
   emptyMessage,
   className,
   autoScroll = true,
+  scrollbar = 'default',
 }: ChatFeedProps) {
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -32,14 +36,8 @@ export default function ChatFeed({
     el.scrollTop = el.scrollHeight;
   }, [items.length, autoScroll]);
 
-  return (
-    <div
-      ref={listRef}
-      className={clsx(
-        'flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-2 space-y-2 scrollbar-thin',
-        className,
-      )}
-    >
+  const feedBody = (
+    <>
       {items.length === 0 && emptyMessage != null && (
         <p className="text-xs text-hub-muted text-center py-8">{emptyMessage}</p>
       )}
@@ -49,6 +47,32 @@ export default function ChatFeed({
           {item.content}
         </div>
       ))}
+    </>
+  );
+
+  if (scrollbar === 'hextech') {
+    return (
+      <div className={clsx('hextech-scroll-row flex-1 min-h-0', className)}>
+        <div
+          ref={listRef}
+          className="hextech-scroll-content flex-1 overflow-y-auto overscroll-contain px-2 py-2 space-y-2"
+        >
+          {feedBody}
+        </div>
+        <HextechScrollbar scrollRef={listRef} contentKey={items.length} />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={listRef}
+      className={clsx(
+        'flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-2 space-y-2 scrollbar-thin',
+        className,
+      )}
+    >
+      {feedBody}
     </div>
   );
 }

@@ -7,6 +7,8 @@ import { Plus, LogIn, UserPlus, Loader2 } from 'lucide-react';
 import { translateBaraError } from '@/lib/bara/translate-error';
 import { useGameRoom, useCoreSession } from '@/hooks/useSocket';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
+import { useNotifyRouteContentReady } from '@/lib/hub/ViewTransitionProvider';
+import HubGameLoadingScreen from '@/components/hub/arcade/HubGameLoadingScreen';
 import { suppressRoomAutoJoinRef } from '@/lib/hub/room-auto-join';
 import { setDisplayName, getDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
@@ -32,6 +34,7 @@ export default function BaraAlsalafaClient() {
 
   const baraEnabled = isGameActive('bara-alsalafa');
   const { isHydrated } = useCoreSession();
+  const notifyRouteContentReady = useNotifyRouteContentReady();
   const [displayName, setDisplayNameState] = useState('');
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -101,13 +104,14 @@ export default function BaraAlsalafaClient() {
     return () => window.clearTimeout(timer);
   }, [baraLobby, roomParam, router]);
 
+  useEffect(() => {
+    if (isHydrated) {
+      notifyRouteContentReady();
+    }
+  }, [isHydrated, notifyRouteContentReady]);
+
   if (!isHydrated) {
-    return (
-      <>
-        <BaraAtmosphere />
-        <GameLobbyPendingOverlay message="جاري تحميل الجلسة…" />
-      </>
-    );
+    return <HubGameLoadingScreen gameId="bara-alsalafa" />;
   }
 
   const handleCreate = async () => {
@@ -175,6 +179,7 @@ export default function BaraAlsalafaClient() {
     <>
       <GameClientFrame
         className="bara-shell"
+        engagementRoomId={baraLobby?.roomId}
         headerClassName="bara-header border-0 bg-transparent"
         contentClassName={clsx('bara-content', inGame && 'bara-content--game')}
         dir="rtl"

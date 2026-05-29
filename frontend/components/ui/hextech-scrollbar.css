@@ -1,0 +1,164 @@
+/* Hextech rail — crystal track + gold/teal thumb (shared with Secret Word scratchpad) */
+
+.hextech-scroll-row {
+	display: flex;
+	min-height: 0;
+	flex: 1 1 auto;
+	gap: 0.35rem;
+	padding: 0.25rem 0.35rem 0.25rem 0;
+}
+
+.hextech-scroll-content {
+	flex: 1 1 0;
+	min-width: 0;
+	min-height: 0;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.hextech-scroll-content::-webkit-scrollbar {
+	display: none;
+	width: 0;
+	height: 0;
+}
+
+.hextech-scroll-bar {
+	flex: 0 0 12px;
+	width: 12px;
+	align-self: stretch;
+	display: flex;
+	justify-content: center;
+	padding: 0.35rem 0;
+	opacity: 1;
+}
+
+.hextech-scroll-bar--idle {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.hextech-scroll-bar__track {
+	position: relative;
+	width: 6px;
+	height: 100%;
+	min-height: 2rem;
+	border-radius: 999px;
+	border: 1px solid rgba(76, 201, 240, 0.28);
+	background:
+		repeating-linear-gradient(
+			-32deg,
+			transparent,
+			transparent 2px,
+			rgba(76, 201, 240, 0.04) 2px,
+			rgba(76, 201, 240, 0.04) 3px
+		),
+		linear-gradient(
+			180deg,
+			rgba(4, 8, 18, 0.95) 0%,
+			rgba(12, 24, 42, 0.9) 45%,
+			rgba(8, 16, 32, 0.92) 55%,
+			rgba(4, 8, 18, 0.95) 100%
+		);
+	box-shadow:
+		inset 0 0 8px rgba(0, 0, 0, 0.5),
+		inset 0 1px 0 rgba(201, 162, 39, 0.12),
+		0 0 6px rgba(76, 201, 240, 0.06);
+	cursor: pointer;
+}
+
+.hextech-scroll-bar__track::before,
+.hextech-scroll-bar__track::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	width: 1px;
+	margin-left: -0.5px;
+	height: 4px;
+	border-radius: 1px;
+	background: linear-gradient(
+		180deg,
+		rgba(76, 201, 240, 0.35),
+		rgba(201, 162, 39, 0.2)
+	);
+	pointer-events: none;
+	opacity: 0.7;
+}
+
+.hextech-scroll-bar__track::before {
+	top: 2px;
+}
+
+.hextech-scroll-bar__track::after {
+	bottom: 2px;
+	transform: scaleY(-1);
+}
+
+.hextech-scroll-bar__thumb {
+	position: absolute;
+	top: 0;
+	left: 50%;
+	width: 5px;
+	margin-left: -2.5px;
+	border-radius: 999px;
+	border: 1px solid rgba(255, 248, 220, 0.45);
+	background: linear-gradient(
+		180deg,
+		rgba(255, 252, 235, 0.95) 0%,
+		rgba(240, 215, 140, 0.9) 18%,
+		rgba(201, 162, 39, 0.85) 50%,
+		rgba(94, 184, 212, 0.55) 82%,
+		rgba(26, 107, 138, 0.7) 100%
+	);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.55),
+		inset 0 -1px 0 rgba(26, 107, 138, 0.4),
+		0 0 6px rgba(201, 162, 39, 0.28),
+		0 0 4px rgba(76, 201, 240, 0.15);
+	cursor: grab;
+	touch-action: none;
+	transition:
+		box-shadow 0.18s ease,
+		border-color 0.18s ease,
+		width 0.12s ease;
+}
+
+.hextech-scroll-bar__thumb::after {
+	content: '';
+	position: absolute;
+	top: 15%;
+	bottom: 15%;
+	left: 50%;
+	width: 1px;
+	margin-left: -0.5px;
+	border-radius: 1px;
+	background: linear-gradient(
+		180deg,
+		transparent,
+		rgba(255, 255, 255, 0.45) 40%,
+		rgba(255, 255, 255, 0.2) 60%,
+		transparent
+	);
+	pointer-events: none;
+}
+
+.hextech-scroll-bar__thumb:hover {
+	width: 5px;
+	margin-left: -2.5px;
+	border-color: rgba(255, 252, 235, 0.6);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.6),
+		0 0 10px rgba(76, 201, 240, 0.28),
+		0 0 8px rgba(201, 162, 39, 0.32);
+}
+
+.hextech-scroll-bar__thumb--dragging,
+.hextech-scroll-bar__thumb:active {
+	width: 5px;
+	margin-left: -2.5px;
+	cursor: grabbing;
+	border-color: rgba(76, 201, 240, 0.5);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.5),
+		0 0 12px rgba(76, 201, 240, 0.4),
+		0 0 10px rgba(201, 162, 39, 0.35);
+}

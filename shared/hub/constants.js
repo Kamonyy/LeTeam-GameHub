@@ -100,4 +100,5 @@ export const RATE_LIMITS = {
 	inviteSend: 15,
 	inviteRespond: 30,
 	joinByTargetPlayer: 15,
+	roomReaction: 20,
 };

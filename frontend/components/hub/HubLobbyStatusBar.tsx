@@ -1,22 +1,22 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { LogOut } from 'lucide-react';
 import { useGameState } from '@/hooks/useSocket';
 import { gameLabelForPresence } from '@/lib/hub/groupOnlinePlayers';
 import { navigateToGameLobby } from '@/lib/hub/navigateToGameLobby';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
+import { useViewNavigator } from '@/lib/hub/ViewTransitionProvider';
 
 export default function HubLobbyStatusBar() {
-  const router = useRouter();
+  const navigateWithTransition = useViewNavigator();
   const { lobby } = useGameState();
   const leaveToHub = useLeaveToHub();
 
   const goToLobby = useCallback(() => {
     if (!lobby?.roomId || !lobby.gameType) return;
-    navigateToGameLobby(router, lobby.roomId, lobby.gameType);
-  }, [lobby, router]);
+    navigateToGameLobby(navigateWithTransition, lobby.roomId, lobby.gameType);
+  }, [lobby, navigateWithTransition]);
 
   const handleLeave = useCallback(
     (e: React.MouseEvent) => {

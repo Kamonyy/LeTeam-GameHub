@@ -92,6 +92,7 @@ export default function WordLobby({
           playersLabel={`${lobby.players.length} / ${lobby.maxPlayers} champions`}
           startLabel="Begin Match"
           waitingForHostLabel="Awaiting host…"
+          lobbyChatScrollbar="hextech"
           className="card max-w-none border-0 bg-transparent p-0 shadow-none animate-none"
           getPlayerRowClassName={(player, index) =>
             player.id === playerId ?

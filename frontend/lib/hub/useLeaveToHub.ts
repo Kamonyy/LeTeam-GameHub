@@ -1,13 +1,13 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { useSocketConnection } from '@/hooks/useSocket';
 import { suppressRoomAutoJoinRef } from '@/lib/hub/room-auto-join';
+import { useViewNavigator } from '@/lib/hub/ViewTransitionProvider';
 
 /** Leave the current room on the server and return to the main hub. */
 export function useLeaveToHub() {
-  const router = useRouter();
+  const navigateWithTransition = useViewNavigator();
   const { actionsRef } = useSocketConnection();
 
   return useCallback(async () => {
@@ -24,11 +24,11 @@ export function useLeaveToHub() {
       if (typeof leaveRoom === 'function') {
         await leaveRoom();
       }
-      router.replace('/');
+      navigateWithTransition('/', { replace: true });
     } finally {
       window.setTimeout(() => {
         suppressRoomAutoJoinRef.current = false;
       }, 500);
     }
-  }, [actionsRef, router]);
+  }, [actionsRef, navigateWithTransition]);
 }

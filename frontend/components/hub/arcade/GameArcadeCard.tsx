@@ -6,7 +6,8 @@ import { ArrowRight, Clock, Loader2 } from "lucide-react";
 import clsx from "clsx";
 import type { GameCatalogEntry } from "@/lib/hub/games-registry";
 import HubDominoTile from "./HubDominoTile";
-import { markHubGameNavigation } from "./hubGameNavigation";
+import { markHubGameNavigation } from "@/lib/hub/hubGameNavigation";
+import { useViewNavigator } from "@/lib/hub/ViewTransitionProvider";
 
 const SPARKS = [
 	{ sx: "6px", sy: "-18px", delay: "0s" },
@@ -467,6 +468,7 @@ function MafiaPreview({ active }: { active: boolean }) {
 }
 
 function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
+	const navigateWithTransition = useViewNavigator();
 	const cardRef = useRef<HTMLAnchorElement | HTMLDivElement>(null);
 	const [hovered, setHovered] = useState(false);
 	const [isNavigating, setIsNavigating] = useState(false);
@@ -510,6 +512,25 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
 		setIsNavigating(true);
 		markHubGameNavigation(game.id);
 	}, [game.id, isNavigating]);
+
+	const handleLinkClick = useCallback(
+		(e: React.MouseEvent<HTMLAnchorElement>) => {
+			if (
+				e.defaultPrevented ||
+				e.button !== 0 ||
+				e.metaKey ||
+				e.ctrlKey ||
+				e.shiftKey ||
+				e.altKey
+			) {
+				return;
+			}
+			e.preventDefault();
+			handleNavigate();
+			navigateWithTransition(game.href);
+		},
+		[game.href, handleNavigate, navigateWithTransition],
+	);
 
 	const cardClass = clsx(
 		"hub-game-card hub-enter-card group block rounded-2xl border border-hub-border bg-hub-card p-6 overflow-hidden min-h-[220px]",
@@ -667,7 +688,7 @@ function GameArcadeCard({ game, staggerIndex }: GameArcadeCardProps) {
 				)}
 				style={style}
 				aria-busy={isNavigating}
-				onClick={handleNavigate}
+				onClick={handleLinkClick}
 				{...interactionProps}
 			>
 				{inner}

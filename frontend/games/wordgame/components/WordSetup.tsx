@@ -92,8 +92,8 @@ export default function WordSetup({
       >
         <div className="sw-seal">
           <span className="sw-seal__ring sw-seal__ring--outer" aria-hidden />
-          <span className="sw-seal__ring" aria-hidden />
-          <span className="sw-seal__flame" aria-hidden />
+          <span className="sw-seal__aura" aria-hidden />
+          <span className="sw-seal__ring sw-seal__ring--inner" aria-hidden />
           <span className="sw-seal__icon">
             <Flame className="w-8 h-8" strokeWidth={1.5} />
           </span>

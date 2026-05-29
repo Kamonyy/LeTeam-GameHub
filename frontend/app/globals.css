@@ -4,6 +4,79 @@
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
+@layer utilities {
+	.motion-premium-fade {
+		transition: opacity var(--duration-ui) var(--ease-premium-fluid);
+	}
+
+	.motion-layer-isolated {
+		transform: translateZ(0);
+		backface-visibility: hidden;
+		will-change: transform, opacity;
+	}
+
+	.canvas-isolate-wrapper {
+		contain: paint;
+		transform: translateZ(0);
+	}
+}
+
+@keyframes radix-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes radix-scale-in {
+	from {
+		transform: scale(0.95);
+	}
+	to {
+		transform: scale(1);
+	}
+}
+
+@keyframes radix-fade-out {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes fade-out {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes scale-up-entrance {
+	from {
+		transform: scale(0.98);
+		opacity: 0;
+	}
+	to {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+/* Reserved if native document.startViewTransition is re-enabled for App Router */
+::view-transition-old(root) {
+	animation: 200ms var(--ease-premium-exit) both fade-out;
+}
+
+::view-transition-new(root) {
+	animation: 280ms var(--ease-premium-entrance) both scale-up-entrance;
+}
+
 @layer base {
 	:root {
 		--safe-top: env(safe-area-inset-top, 0px);
@@ -35,6 +108,15 @@
 		--input: 24 5.7% 25.9%;
 		--ring: 26 90.5% 37.1%; /* amber-700 */
 		--radius: 0.625rem;
+
+		/* Premium motion tokens */
+		--ease-premium-entrance: cubic-bezier(0.21, 1.02, 0.43, 1.01);
+		--ease-premium-exit: cubic-bezier(0.74, 0.03, 0.94, 0.46);
+		--ease-premium-fluid: cubic-bezier(0.65, 0, 0.35, 1);
+		--ease-premium-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+		--duration-fast: 150ms;
+		--duration-ui: 280ms;
+		--duration-ceremony: 580ms;
 	}
 
 	html {
@@ -955,6 +1037,21 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+		animation: none !important;
+	}
+
 	.glass-blur,
 	.glass-blur-sm,
 	.glass-blur-md {

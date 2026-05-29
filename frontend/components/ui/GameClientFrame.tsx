@@ -1,11 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import { ArrowLeft, ArrowRight, OctagonX } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { AppShell, AppShellHeader } from '@/components/layout/AppShell';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
+import HubBackLink from '@/components/hub/HubBackLink';
+import RoomEngagementLayer from '@/components/engagement/RoomEngagementLayer';
 
 export type GameClientFrameProps = {
   title: string;
@@ -25,6 +26,8 @@ export type GameClientFrameProps = {
   maxWidthClass?: string;
   dir?: 'ltr' | 'rtl';
   lang?: string;
+  /** When set, mounts room reaction overlay + picker for this room. */
+  engagementRoomId?: string | null;
 };
 
 export default function GameClientFrame({
@@ -45,6 +48,7 @@ export default function GameClientFrame({
   maxWidthClass = 'max-w-6xl',
   dir,
   lang,
+  engagementRoomId,
 }: GameClientFrameProps) {
   const BackIcon = dir === 'rtl' ? ArrowRight : ArrowLeft;
   const backControl =
@@ -57,12 +61,16 @@ export default function GameClientFrame({
       >
         <BackIcon className="w-5 h-5" />
       </button>
-    : <Link href="/" className="text-hub-muted hover:text-white transition-colors" aria-label="Back to hub">
+    : <HubBackLink
+        className="text-hub-muted hover:text-white transition-colors"
+        aria-label="Back to hub"
+      >
         <BackIcon className="w-5 h-5" />
-      </Link>;
+      </HubBackLink>;
 
   return (
     <AppShell className={className} safeHeader dir={dir} lang={lang}>
+      <RoomEngagementLayer roomId={engagementRoomId} />
       <AppShellHeader className={headerClassName}>
         <div
           className={cn(
@@ -101,7 +109,14 @@ export default function GameClientFrame({
         </div>
       </AppShellHeader>
 
-      <div className={cn('mx-auto px-6 py-10 w-full', maxWidthClass, contentClassName)}>
+      <div
+        className={cn(
+          'mx-auto px-6 py-10 w-full',
+          engagementRoomId && 'pb-14 sm:pb-16',
+          maxWidthClass,
+          contentClassName,
+        )}
+      >
         {children}
       </div>
     </AppShell>

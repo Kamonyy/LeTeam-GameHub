@@ -66,9 +66,16 @@ module.exports = {
 				"safe-bottom": "var(--safe-bottom)",
 				"safe-left": "var(--safe-left)",
 			},
+			transitionTimingFunction: {
+				"premium-in": "var(--ease-premium-entrance)",
+				"premium-out": "var(--ease-premium-exit)",
+				"premium-fluid": "var(--ease-premium-fluid)",
+				"premium-bounce": "var(--ease-premium-bounce)",
+			},
 			transitionDuration: {
-				"ui-fast": "150ms",
-				ui: "250ms",
+				"ui-fast": "var(--duration-fast)",
+				ui: "var(--duration-ui)",
+				ceremony: "var(--duration-ceremony)",
 				overlay: "350ms",
 				enter: "500ms",
 			},
@@ -78,6 +85,9 @@ module.exports = {
 				cormorant: ["Cormorant Garamond", "Cinzel", "Georgia", "serif"],
 			},
 			animation: {
+				"radix-enter":
+					"radixFadeIn var(--duration-fast) var(--ease-premium-entrance) forwards, radixScaleIn var(--duration-fast) var(--ease-premium-entrance) forwards",
+				"radix-leave": "radixFadeOut 100ms var(--ease-premium-exit) forwards",
 				"fade-in": "fadeIn 0.3s ease-out",
 				"slide-up": "slideUp 0.3s ease-out",
 				"pulse-soft": "pulseSoft 2s ease-in-out infinite",
@@ -116,12 +126,26 @@ module.exports = {
 				"arcade-slide-in":
 					"arcadeSlideIn 250ms cubic-bezier(0.25, 1, 0.5, 1) both",
 				"arcade-slide-out": "arcadeSlideOut 200ms ease-out both",
+				"reaction-float":
+					"reactionFloat 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards",
 			},
 			backgroundImage: {
 				"mf-cobblestone":
 					"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='%23c8cdd8' fill-opacity='0.55'%3E%3Cellipse cx='28' cy='24' rx='20' ry='12'/%3E%3Cellipse cx='62' cy='32' rx='18' ry='11'/%3E%3Cellipse cx='98' cy='22' rx='19' ry='12'/%3E%3C/g%3E%3C/svg%3E\")",
 			},
 			keyframes: {
+				radixFadeIn: {
+					from: { opacity: "0" },
+					to: { opacity: "1" },
+				},
+				radixScaleIn: {
+					from: { transform: "scale(0.95)" },
+					to: { transform: "scale(1)" },
+				},
+				radixFadeOut: {
+					from: { opacity: "1" },
+					to: { opacity: "0" },
+				},
 				torchFlicker: {
 					"0%, 100%": { opacity: "0.72", transform: "scale(0.96)" },
 					"14%": { opacity: "0.98", transform: "scale(1.04)" },
@@ -370,6 +394,20 @@ module.exports = {
 				mfPhaseMistDrift: {
 					"0%, 100%": { opacity: "0.55" },
 					"50%": { opacity: "0.82" },
+				},
+				reactionFloat: {
+					"0%": {
+						opacity: "0",
+						transform: "translateY(0) scale(0.5)",
+					},
+					"15%": {
+						opacity: "1",
+						transform: "translateY(-20px) scale(1.2)",
+					},
+					"100%": {
+						opacity: "0",
+						transform: "translateY(-400px) scale(0.8)",
+					},
 				},
 			},
 		},

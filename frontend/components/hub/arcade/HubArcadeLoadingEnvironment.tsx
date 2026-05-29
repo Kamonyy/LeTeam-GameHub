@@ -1,17 +1,16 @@
 'use client';
 
-import { memo, type RefObject } from 'react';
+import type { ReactNode } from 'react';
 import HubArcadeBackdrop from './HubArcadeBackdrop';
-import HubParticleCanvas from './HubParticleCanvas';
-import HubCustomCursor from './HubCustomCursor';
 
-type HubArcadeShellProps = {
-  hubRootRef?: RefObject<HTMLElement | null>;
-};
-
-function HubArcadeShellInner({ hubRootRef }: HubArcadeShellProps) {
+/** Shared arcade lounge backdrop for full-screen loading states. */
+export default function HubArcadeLoadingEnvironment({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
-    <>
+    <div className="hub-arcade min-h-dvh relative overflow-x-hidden">
       <HubArcadeBackdrop />
       <div className="hub-aura hub-aura--emerald" aria-hidden />
       <div className="hub-aura hub-aura--indigo" aria-hidden />
@@ -27,16 +26,9 @@ function HubArcadeShellInner({ hubRootRef }: HubArcadeShellProps) {
         }}
         aria-hidden
       />
-      <div
-        className="canvas-isolate-wrapper pointer-events-none fixed inset-0 z-[2]"
-        aria-hidden
-      >
-        <HubParticleCanvas />
+      <div className="relative z-10 flex min-h-dvh items-center justify-center px-6 py-12">
+        {children}
       </div>
-      <HubCustomCursor hubRootRef={hubRootRef} />
-    </>
+    </div>
   );
 }
-
-const HubArcadeShell = memo(HubArcadeShellInner);
-export default HubArcadeShell;

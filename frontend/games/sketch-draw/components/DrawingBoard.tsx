@@ -70,7 +70,7 @@ export default function DrawingBoard({
     >
       <div
         ref={board.containerRef}
-        className="sketch-fabric-host absolute inset-0 w-full h-full"
+        className="sketch-fabric-host canvas-isolate-wrapper absolute inset-0 w-full h-full"
       >
         <canvas
           ref={board.canvasElRef}

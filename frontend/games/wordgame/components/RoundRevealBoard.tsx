@@ -196,8 +196,8 @@ export default function RoundRevealBoard({
     >
       {horizontal ?
         <>
-          {othersSection}
           {answerSection}
+          {othersSection}
         </>
       : <>
           {answerSection}

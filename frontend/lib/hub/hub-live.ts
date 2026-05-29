@@ -107,5 +107,20 @@ export function lobbyStateEqual(a: LobbyState | null, b: LobbyState | null): boo
       return false;
     }
   }
+  if (!winStreaksEqual(a.winStreaks, b.winStreaks)) return false;
   return settingsEqual(a.settings, b.settings);
 }
+
+function winStreaksEqual(
+  a: Record<string, number> | undefined,
+  b: Record<string, number> | undefined,
+): boolean {
+  const ak = Object.keys(a ?? {});
+  const bk = Object.keys(b ?? {});
+  if (ak.length !== bk.length) return false;
+  for (const key of ak) {
+    if ((a ?? {})[key] !== (b ?? {})[key]) return false;
+  }
+  return true;
+}
+

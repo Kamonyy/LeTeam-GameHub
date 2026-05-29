@@ -22,7 +22,7 @@ const TooltipContent = React.forwardRef<
         'mf-tooltip-content z-50 max-w-xs rounded-md border border-border bg-popover/95 px-3 py-2 text-xs text-popover-foreground shadow-md backdrop-blur-sm',
         '[data-mafia-theme]_&:border-[color:var(--mf-glass-border)] [data-mafia-theme]_&:bg-[color:var(--mf-glass-bg)]',
         '[data-mafia-theme]_&:text-[color:var(--p1-ink-soft)] [data-mafia-theme]_&:shadow-[var(--mf-shadow-panel)]',
-        'animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',
+        'data-[state=open]:animate-radix-enter data-[state=closed]:animate-radix-leave motion-reduce:animate-none',
         'data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
         className
       )}

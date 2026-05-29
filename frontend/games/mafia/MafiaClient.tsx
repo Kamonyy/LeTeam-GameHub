@@ -23,6 +23,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { MafiaButton } from "@/components/mafia/mafia-button";
 import { useGameRoom, useCoreSession } from "@/hooks/useSocket";
 import { useLeaveToHub } from "@/lib/hub/useLeaveToHub";
+import { useNotifyRouteContentReady } from "@/lib/hub/ViewTransitionProvider";
+import HubGameLoadingScreen from "@/components/hub/arcade/HubGameLoadingScreen";
 import { setDisplayName, getDisplayName } from "@/lib/player";
 import ConnectionStatus from "@/components/hub/ConnectionStatus";
 import { normalizeRoomCode } from "@/lib/hub/room";
@@ -42,6 +44,7 @@ import MafiaLobby from "@/games/mafia/components/MafiaLobby";
 import NarratorDashboard from "@/games/mafia/components/NarratorDashboard";
 import PlayerCompanion from "@/games/mafia/components/PlayerCompanion";
 import MafiaMatchOverModal from "@/games/mafia/components/MafiaMatchOverModal";
+import RoomEngagementLayer from "@/components/engagement/RoomEngagementLayer";
 import { mafiaAtmosphereVariant } from "@/games/mafia/lib/atmosphereVariant";
 import { stripNarratorSecrets } from "@/games/mafia/lib/redactMafiaState";
 import { cn } from "@/lib/utils";
@@ -62,6 +65,7 @@ export default function MafiaClient() {
 
   const enabled = isGameActive("mafia");
   const { isHydrated } = useCoreSession();
+  const notifyRouteContentReady = useNotifyRouteContentReady();
   const [displayName, setDisplayNameState] = useState("");
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -223,12 +227,14 @@ export default function MafiaClient() {
     );
   }, [tcState]);
 
+  useEffect(() => {
+    if (isHydrated) {
+      notifyRouteContentReady();
+    }
+  }, [isHydrated, notifyRouteContentReady]);
+
   if (!isHydrated) {
-    return (
-      <main className="min-h-dvh relative">
-        <GameLobbyPendingOverlay message="Loading session…" />
-      </main>
-    );
+    return <HubGameLoadingScreen gameId="mafia" />;
   }
 
   const gameBody = (
@@ -286,6 +292,7 @@ export default function MafiaClient() {
       data-mafia-theme
       className="relative min-h-dvh overflow-x-hidden bg-[color:var(--p1-abyss)] text-[color:var(--p1-ink)]"
     >
+      <RoomEngagementLayer roomId={tcLobby?.roomId} />
       <MafiaAtmosphere variant={atmosphere} reduced={atmosphereReduced} />
 
       <header className="sticky top-0 z-40 border-b border-[color:var(--mf-glass-border)] bg-[color:var(--mf-glass-bg)] pt-[env(safe-area-inset-top,0px)] shadow-[var(--mf-shadow-panel)] backdrop-blur-[length:var(--mf-glass-blur)] before:pointer-events-none before:absolute before:inset-x-[6%] before:bottom-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-amber-500/70 before:to-transparent">
@@ -332,6 +339,7 @@ export default function MafiaClient() {
       <div
         className={cn(
           "relative z-[2] isolate mx-auto max-w-[76rem] pb-10",
+          tcLobby?.roomId && "pb-14 sm:pb-16",
           !inLobby && !inGame && "px-4",
         )}
       >

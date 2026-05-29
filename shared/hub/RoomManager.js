@@ -1,6 +1,9 @@
 /**
  * Hub room manager — game-agnostic lobby/session layer.
  * useSocketRooms: true for Node (socket.join); false for Cloudflare DO (direct emit).
+ *
+ * Persistence demarcation: docs/architecture/persistence-boundaries.md
+ * — sole orchestrator for connection maps, transient memory, and phase-boundary dispatch.
  */
 
 import {
@@ -39,6 +42,7 @@ import { getGame, isGameEnabled } from "../games/registry.js";
 import { RateLimiter } from "./RateLimiter.js";
 import { verifyPlayerSession } from "./session.js";
 import { sanitizeChatMessage, sanitizeDisplayName } from "./validate.js";
+import { isValidRoomReaction } from "./engagementCatalog.js";
 import { INVITE_TTL_MS, MAX_ROOMS, RATE_LIMIT_WINDOW_MS } from "./constants.js";
 import { cryptoRandomInt } from "../games/dominoes/random.js";
 import {
@@ -61,15 +65,23 @@ import {
 	isDevBotsEnabled,
 	createBotPlayer,
 } from "./devBots.js";
+import { createNoopPersistenceAdapter } from "./persistenceAdapter.js";
+import {
+	buildPhaseBoundaryPayload,
+	isPhaseBoundary,
+	phaseBoundaryKey,
+} from "./phaseBoundaries.js";
 
 export class RoomManager {
 	/**
 	 * @param {import('socket.io').Server} io
-	 * @param {{ useSocketRooms?: boolean }} options
+	 * @param {{ useSocketRooms?: boolean, persistenceAdapter?: import('./persistenceAdapter.js').PersistenceAdapter }} options
 	 */
-	constructor(io, { useSocketRooms = false } = {}) {
+	constructor(io, { useSocketRooms = false, persistenceAdapter } = {}) {
 		this.io = io;
 		this.useSocketRooms = useSocketRooms;
+		this.persistenceAdapter =
+			persistenceAdapter ?? createNoopPersistenceAdapter();
 		this.rooms = new Map();
 		this.socketToPlayer = new Map();
 		this.playerToSocket = new Map();
@@ -917,6 +929,9 @@ export class RoomManager {
 			autoPlayTimer: null,
 			autoPlayPending: false,
 			createdAt: Date.now(),
+			engagement: {
+				winStreaks: {},
+			},
 		};
 
 		this._rebuildPlayersById(room);
@@ -1217,6 +1232,8 @@ export class RoomManager {
 				return { error: setup.errors[0] };
 			}
 		}
+
+		this._resetMatchOverEngagementGate(room);
 
 		const engineSettings =
 			room.gameType === "bara-alsalafa" ?
@@ -1739,6 +1756,7 @@ export class RoomManager {
 
 		this._clearNextRoundTimer(room);
 		this._clearAutoPlayTimer(room);
+		this._resetMatchOverEngagementGate(room);
 		room.game = gameDef.createEngine(
 			playersToStart.map((p) => p.id),
 			room.settings,
@@ -1844,6 +1862,70 @@ export class RoomManager {
 		return this.hubPresence.get(playerId)?.displayName ?? "Player";
 	}
 
+	_ensureRoomEngagement(room) {
+		if (!room.engagement) {
+			room.engagement = { winStreaks: {} };
+		}
+		return room.engagement;
+	}
+
+	_resetMatchOverEngagementGate(room) {
+		const eng = this._ensureRoomEngagement(room);
+		delete eng.lastProcessedMatchOver;
+	}
+
+	_resolveMatchWinnerPlayerIds(room) {
+		const game = room.game;
+		if (!game || game.phase !== "match_over") return [];
+
+		if (room.gameType === "dominoes") {
+			const mid = game.matchWinnerId;
+			if (!mid) return [];
+			if (mid === "team1" || mid === "team2") {
+				const teamIds = game.teamIds ?? {};
+				return (game.playerIds ?? []).filter((id) => teamIds[id] === mid);
+			}
+			return [mid];
+		}
+
+		if (room.gameType === "wordgame" || room.gameType === "sketch-draw") {
+			const wid = game.winnerId;
+			return wid ? [wid] : [];
+		}
+
+		if (room.gameType === "bara-alsalafa") {
+			const wid =
+				game.winnerId ??
+				(game.lastAction?.type === "match_over" ?
+					game.lastAction.winnerId
+				:	null);
+			return wid ? [wid] : [];
+		}
+
+		return [];
+	}
+
+	_applyMatchOverEngagement(room) {
+		if (room.game?.phase !== "match_over") return;
+
+		const eng = this._ensureRoomEngagement(room);
+		const versionKey = String(room.game.stateVersion ?? 0);
+		if (eng.lastProcessedMatchOver === versionKey) return;
+		eng.lastProcessedMatchOver = versionKey;
+
+		const winners = this._resolveMatchWinnerPlayerIds(room);
+		const winnerSet = new Set(winners);
+
+		for (const player of room.players) {
+			if (!winnerSet.has(player.id)) {
+				eng.winStreaks[player.id] = 0;
+			}
+		}
+		for (const winnerId of winners) {
+			eng.winStreaks[winnerId] = (eng.winStreaks[winnerId] ?? 0) + 1;
+		}
+	}
+
 	_broadcastHubChat(payload) {
 		for (const [socketId, pid] of this.socketToPlayer) {
 			if (this.playerToRoom.has(pid)) continue;
@@ -1877,6 +1959,7 @@ export class RoomManager {
 				displayName: this._getChatDisplayName(playerId, roomId),
 				message,
 				timestamp: Date.now(),
+				channel: room.status === "lobby" ? "lobby" : "match",
 			};
 			this._touchRoomActivity(room);
 			this._emitToRoom(room, "chat:message", payload);
@@ -1890,6 +1973,35 @@ export class RoomManager {
 			};
 			this._broadcastHubChat(payload);
 		}
+
+		return { success: true };
+	}
+
+	handleRoomReaction(socket, payload) {
+		const playerId = this.socketToPlayer.get(socket.id);
+		if (!playerId) return { error: "Not registered" };
+
+		const roomId = this._getRoomIdForSocket(playerId);
+		if (!roomId) return { error: "Not in a room" };
+
+		const room = this.rooms.get(roomId);
+		if (!room) return { error: "Room not found" };
+
+		const reactionId = payload?.reactionId;
+		const type = payload?.type;
+		if (!isValidRoomReaction(reactionId, type)) {
+			return { error: "Invalid reaction" };
+		}
+
+		this._touchRoomActivity(room);
+		this._emitToRoom(room, "room:reaction:broadcast", {
+			roomId,
+			senderId: playerId,
+			displayName: this._getChatDisplayName(playerId, roomId),
+			reactionId,
+			type,
+			timestamp: Date.now(),
+		});
 
 		return { success: true };
 	}
@@ -2572,6 +2684,9 @@ export class RoomManager {
 		if (!room) return;
 
 		const gameDef = getGame(room.gameType);
+		const eng = this._ensureRoomEngagement(room);
+		const winStreaks = { ...eng.winStreaks };
+
 		const basePayload = {
 			roomId: room.id,
 			hostId: room.hostId,
@@ -2592,6 +2707,7 @@ export class RoomManager {
 			minPlayers: gameDef?.minPlayers ?? 2,
 			maxPlayers: gameDef?.maxPlayers ?? 4,
 			devBotsEnabled: isDevBotsEnabled(room.gameType),
+			winStreaks,
 		};
 
 		for (const player of room.players) {
@@ -2637,6 +2753,7 @@ export class RoomManager {
 			this._dominoTurnRoomIds.delete(roomId);
 			this._baraPhaseRoomIds.delete(roomId);
 			this._sketchPhaseRoomIds.delete(roomId);
+			this._applyMatchOverEngagement(room);
 		} else if (
 			room.game.phase === "round_over" ||
 			room.game.phase === "round_end"
@@ -2668,6 +2785,34 @@ export class RoomManager {
 		if (room.game.phase === "match_over") {
 			this.broadcastLobbyState(roomId);
 		}
+
+		this._maybeDispatchPhaseBoundary(room);
+	}
+
+	_ensurePersistenceBoundaryKeys(room) {
+		if (!room._persistenceBoundaryKeys) {
+			room._persistenceBoundaryKeys = new Set();
+		}
+		return room._persistenceBoundaryKeys;
+	}
+
+	/** Fire-and-forget persistence at round_end / round_over / match_over only. */
+	_maybeDispatchPhaseBoundary(room) {
+		const phase = room.game?.phase;
+		if (!isPhaseBoundary(phase)) return;
+
+		const roundNumber = room.game.roundNumber ?? 0;
+		const key = phaseBoundaryKey(phase, roundNumber);
+		const keys = this._ensurePersistenceBoundaryKeys(room);
+		if (keys.has(key)) return;
+		keys.add(key);
+
+		const payload = buildPhaseBoundaryPayload(room, phase);
+		Promise.resolve(this.persistenceAdapter.onPhaseBoundary(payload)).catch(
+			(err) => {
+				console.error("[RoomManager] persistence phase boundary failed", err);
+			},
+		);
 	}
 
 	_initWordScratchpads(room) {

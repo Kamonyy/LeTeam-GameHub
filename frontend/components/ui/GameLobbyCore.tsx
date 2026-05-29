@@ -14,6 +14,7 @@ import {
 import type { LobbyPlayer, LobbyState } from '@/lib/hub/types';
 import { buildShareUrl } from '@/lib/hub/share-url';
 import InviteFriendsButton from '@/components/invitations/InviteFriendsButton';
+import LobbyChatPanel from '@/components/hub/LobbyChatPanel';
 
 export type GameLobbyCoreProps = {
   lobby: LobbyState;
@@ -39,6 +40,9 @@ export type GameLobbyCoreProps = {
   leaveLabel?: string;
   waitingForHostLabel?: string;
   showEmptySlots?: boolean;
+  /** Collapsible lobby chat below roster (default true). */
+  showLobbyChat?: boolean;
+  lobbyChatScrollbar?: 'default' | 'hextech';
 };
 
 export default function GameLobbyCore({
@@ -62,6 +66,8 @@ export default function GameLobbyCore({
   leaveLabel = 'Leave',
   waitingForHostLabel = 'Waiting for host to start…',
   showEmptySlots = true,
+  showLobbyChat = true,
+  lobbyChatScrollbar = 'default',
 }: GameLobbyCoreProps) {
   const [copied, setCopied] = useState(false);
   const [kickingId, setKickingId] = useState<string | null>(null);
@@ -137,7 +143,10 @@ export default function GameLobbyCore({
         </div>
 
         <ul className="space-y-2">
-          {lobby.players.map((player, index) => (
+          {lobby.players.map((player, index) => {
+            const streak = lobby.winStreaks?.[player.id] ?? 0;
+            const showStreakAura = streak >= 2;
+            return (
             <li
               key={player.id}
               className={clsx(
@@ -145,6 +154,7 @@ export default function GameLobbyCore({
                 player.id === playerId ?
                   'bg-hub-accent/10 border-hub-accent/30'
                 : 'bg-hub-surface border-hub-border',
+                showStreakAura && 'ring-1 ring-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.15)]',
                 getPlayerRowClassName?.(player, index),
               )}
             >
@@ -153,8 +163,19 @@ export default function GameLobbyCore({
                   <Crown className="w-4 h-4 text-hub-warning shrink-0" />
                 )}
                 {renderPlayerExtra?.(player, index)}
-                <span className="font-medium truncate">
+                <span
+                  className={clsx(
+                    'font-medium truncate',
+                    showStreakAura && 'animate-pulse-soft',
+                  )}
+                  title={showStreakAura ? `Room win streak: ${streak}` : undefined}
+                >
                   {player.displayName}
+                  {showStreakAura && (
+                    <span className="text-amber-400/90 text-xs ml-1.5 tabular-nums">
+                      ×{streak}
+                    </span>
+                  )}
                   {player.id === playerId && (
                     <span className="text-hub-muted text-sm ml-1">(you)</span>
                   )}
@@ -188,7 +209,8 @@ export default function GameLobbyCore({
                   )}
               </div>
             </li>
-          ))}
+          );
+          })}
 
           {showEmptySlots &&
             Array.from({ length: lobby.maxPlayers - lobby.players.length }).map(
@@ -203,6 +225,14 @@ export default function GameLobbyCore({
             )}
         </ul>
       </div>
+
+      {showLobbyChat && lobby.status === 'lobby' && (
+        <LobbyChatPanel
+          lobby={lobby}
+          className="mb-6"
+          scrollbar={lobbyChatScrollbar}
+        />
+      )}
 
       {footerSlot}
 

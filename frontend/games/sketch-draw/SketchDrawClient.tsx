@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { ArrowLeft, Plus, LogIn, Loader2 } from 'lucide-react';
 import { useGameRoom, useCoreSession } from '@/hooks/useSocket';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
+import { useNotifyRouteContentReady } from '@/lib/hub/ViewTransitionProvider';
+import HubGameLoadingScreen from '@/components/hub/arcade/HubGameLoadingScreen';
 import { setDisplayName, getDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
 import ErrorToast from '@/components/shared/ErrorToast';
@@ -26,6 +28,7 @@ export default function SketchDrawClient() {
 
   const gameEnabled = isGameActive('sketch-draw');
   const { isHydrated } = useCoreSession();
+  const notifyRouteContentReady = useNotifyRouteContentReady();
   const [displayName, setDisplayNameState] = useState('');
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -79,12 +82,14 @@ export default function SketchDrawClient() {
     }
   }, [sketchDrawDisbandAt, router]);
 
+  useEffect(() => {
+    if (isHydrated) {
+      notifyRouteContentReady();
+    }
+  }, [isHydrated, notifyRouteContentReady]);
+
   if (!isHydrated) {
-    return (
-      <main className="min-h-dvh relative sketch-arcade z-10">
-        <GameLobbyPendingOverlay message="Loading session…" />
-      </main>
-    );
+    return <HubGameLoadingScreen gameId="sketch-draw" />;
   }
 
   const handleCreate = async () => {
@@ -234,6 +239,7 @@ export default function SketchDrawClient() {
           title="What is that"
           subtitle="Draw and guess with friends"
           connected={connected}
+          engagementRoomId={sketchLobby?.roomId}
           className="min-h-dvh relative sketch-arcade z-10"
           headerClassName="border-hub-border/60 bg-hub-surface/30"
           contentClassName="p-0"

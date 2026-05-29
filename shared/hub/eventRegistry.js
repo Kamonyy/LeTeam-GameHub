@@ -1,6 +1,7 @@
 /** Socket event configs for the unified executeSecureEvent pipeline. */
 
 import { RATE_LIMITS } from './constants.js';
+import { isValidRoomReaction } from './engagementCatalog.js';
 import {
   normalizeRoomId,
   sanitizeDisplayName,
@@ -263,6 +264,10 @@ function chatSend(socket, payload, roomManager) {
   return roomManager.handleChatSend(socket, message);
 }
 
+function roomReaction(socket, payload, roomManager) {
+  return roomManager.handleRoomReaction(socket, payload);
+}
+
 function inviteSend(socket, payload, roomManager) {
   const { targetPlayerId, roomId, gameType, sessionToken } = payload ?? {};
   const normalized = normalizeRoomId(roomId);
@@ -383,6 +388,13 @@ function validateBaraGuess(payload) {
 
 function validatePlainObject(payload) {
   if (!isPlainObject(payload)) return 'Invalid payload';
+  return null;
+}
+
+function validateRoomReaction(payload) {
+  if (!isPlainObject(payload)) return 'Invalid payload';
+  const { reactionId, type } = payload;
+  if (!isValidRoomReaction(reactionId, type)) return 'Invalid reaction';
   return null;
 }
 
@@ -726,6 +738,14 @@ export const ALL_EVENTS = [
     actionKey: 'chat',
     rateLimit: RATE_LIMITS.chat,
     handler: chatSend,
+  },
+  {
+    event: 'room:reaction',
+    actionKey: 'roomReaction',
+    rateLimit: RATE_LIMITS.roomReaction,
+    requiresRegistered: true,
+    validate: validateRoomReaction,
+    handler: roomReaction,
   },
   {
     event: 'invite:send',

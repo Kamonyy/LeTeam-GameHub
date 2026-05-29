@@ -1,77 +1,124 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { useMemo, useRef } from 'react';
 import clsx from 'clsx';
-import { getGameEntry } from '@/lib/hub/games-registry';
+import { usePathname } from 'next/navigation';
+import {
+  getGameEntry,
+  resolveGameIdFromPath,
+} from '@/lib/hub/games-registry';
 import { useClientStorage } from '@/lib/session/ClientStorageContext';
 import { HUB_NAVIGATING_KEY } from '@/lib/session/core-session';
+import HubArcadeLoadingEnvironment from './HubArcadeLoadingEnvironment';
 
 interface HubGameLoadingScreenProps {
-  /** Fallback when session hint is missing (e.g. direct URL). */
+  /** Authoritative game id when known (route bridge, page dynamic import). */
   gameId?: string;
 }
 
-export default function HubGameLoadingScreen({ gameId }: HubGameLoadingScreenProps) {
-  const { isStorageReady, hubNavigatingGameId } = useClientStorage();
-  const [resolvedId, setResolvedId] = useState<string | undefined>(gameId);
-
-  useEffect(() => {
-    if (!isStorageReady) return;
-
-    const fromBoot = hubNavigatingGameId ?? gameId;
-    if (fromBoot) {
-      setResolvedId(fromBoot);
-      return;
+function readSessionNavigationHint(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = sessionStorage.getItem(HUB_NAVIGATING_KEY);
+    if (stored) {
+      sessionStorage.removeItem(HUB_NAVIGATING_KEY);
+      return stored;
     }
-
-    try {
-      const stored = sessionStorage.getItem(HUB_NAVIGATING_KEY);
-      if (stored) {
-        setResolvedId(stored);
-        sessionStorage.removeItem(HUB_NAVIGATING_KEY);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [isStorageReady, hubNavigatingGameId, gameId]);
-
-  if (!isStorageReady) {
-    return (
-      <main className="hub-arcade min-h-dvh relative flex items-center justify-center px-6">
-        <div className="h-8 w-8 rounded-full border-2 border-gray-400 border-t-transparent animate-spin" />
-      </main>
-    );
+  } catch {
+    /* ignore */
   }
+  return null;
+}
+
+type LoadingPanelProps = {
+  resolvedId?: string;
+  gameName?: string;
+  gameIcon?: string;
+  showLive?: boolean;
+  ariaLabel: string;
+};
+
+function LoadingPanel({
+  resolvedId,
+  gameName,
+  gameIcon = '🎮',
+  showLive,
+  ariaLabel,
+}: LoadingPanelProps) {
+  const modifier = resolvedId ? `hub-game-loading--${resolvedId}` : '';
+
+  return (
+    <div
+      className={clsx('hub-game-loading hub-game-loading--enter', modifier)}
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={ariaLabel}
+    >
+      {showLive ?
+        <div className="hub-game-loading__meta">
+          <span className="hub-game-loading__live">Live</span>
+        </div>
+      : null}
+
+      <div className="hub-game-loading__mark" aria-hidden>
+        <span className="hub-game-loading__spinner" />
+        <span className="hub-game-loading__icon">{gameIcon}</span>
+      </div>
+
+      <div className="hub-game-loading__copy">
+        <p className="hub-game-loading__title">
+          {gameName ? `Opening ${gameName}` : 'Loading game'}
+        </p>
+        <p className="hub-game-loading__subtitle">
+          {gameName ?
+            'Preparing your lobby'
+          :	'Connecting to the arcade'}
+        </p>
+      </div>
+
+      <div className="hub-game-loading__track" aria-hidden>
+        <span className="hub-game-loading__track-fill" />
+      </div>
+    </div>
+  );
+}
+
+export default function HubGameLoadingScreen({ gameId }: HubGameLoadingScreenProps) {
+  const pathname = usePathname();
+  const { isStorageReady } = useClientStorage();
+  const sessionHintRef = useRef<string | null | undefined>(undefined);
+
+  if (sessionHintRef.current === undefined) {
+    sessionHintRef.current = readSessionNavigationHint();
+  }
+
+  const resolvedId = useMemo(() => {
+    if (gameId) return gameId;
+    const fromPath = resolveGameIdFromPath(pathname);
+    if (fromPath) return fromPath;
+    return sessionHintRef.current ?? undefined;
+  }, [gameId, pathname]);
 
   const game = resolvedId ? getGameEntry(resolvedId) : null;
 
+  if (!isStorageReady && !resolvedId) {
+    return (
+      <HubArcadeLoadingEnvironment>
+        <LoadingPanel ariaLabel="Loading" gameIcon="🎮" />
+      </HubArcadeLoadingEnvironment>
+    );
+  }
+
   return (
-    <main className="hub-arcade min-h-dvh relative flex items-center justify-center px-6 overflow-x-hidden">
-      <div
-        className={clsx(
-          'hub-game-loading text-center max-w-sm',
-          resolvedId && `hub-game-loading--${resolvedId}`
-        )}
-        role="status"
-        aria-live="polite"
-        aria-busy="true"
-      >
-        <div className="hub-game-loading__spinner mx-auto mb-5" aria-hidden>
-          <Loader2 className="w-10 h-10 animate-spin" />
-        </div>
-        <p className="text-lg font-semibold text-gray-100 mb-1">
-          {game ? `Opening ${game.name}` : 'Loading game'}
-          <span className="hub-game-loading__dots" aria-hidden>
-            …
-          </span>
-        </p>
-        <p className="text-sm text-hub-muted">
-          {game ?
-            'Preparing your lobby — one moment'
-          :	'Connecting to the arcade server'}
-        </p>
-      </div>
-    </main>
+    <HubArcadeLoadingEnvironment>
+      <LoadingPanel
+        resolvedId={resolvedId}
+        gameName={game?.name}
+        gameIcon={game?.icon ?? '🎮'}
+        showLive={game?.active}
+        ariaLabel={game ? `Opening ${game.name}` : 'Loading game'}
+      />
+    </HubArcadeLoadingEnvironment>
   );
 }
