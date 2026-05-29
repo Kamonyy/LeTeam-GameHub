@@ -136,7 +136,7 @@ function PlayerCompanion({
 				className={clsx(
 					"relative mx-auto flex w-full max-w-lg flex-col gap-4 px-4 pt-6",
 					"pb-[max(2.5rem,env(safe-area-inset-bottom))]",
-					"after:pointer-events-none after:fixed after:inset-0 after:z-[-1] after:bg-[radial-gradient(ellipse_at_50%_42%,rgba(180,120,40,0.07)_0%,transparent_58%)] max-[959px]:after:opacity-0",
+					"after:pointer-events-none after:fixed after:inset-0 after:z-[-1] after:bg-[radial-gradient(ellipse_at_50%_42%,rgba(180,120,40,0.07)_0%,transparent_58%)] max-md:after:opacity-0",
 				)}
 			>
 				<PhaseCeremony label={phaseLabel} />

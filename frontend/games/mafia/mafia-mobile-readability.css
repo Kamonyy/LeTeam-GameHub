@@ -1,5 +1,5 @@
 /* Phone / tablet — brighter panels and text (OLED + outdoor readability) */
-@media (max-width: 959px) {
+@media (max-width: 767px) {
   [data-mafia-theme],
   .mf-shell {
     --p1-ink: #faf6ec;
@@ -182,7 +182,7 @@
   }
 }
 
-@media (max-width: 959px) and (prefers-reduced-motion: no-preference) {
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
   [data-mafia-narrator] [data-narrator-panel][data-visible] {
     animation: mf-fade-rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
   }

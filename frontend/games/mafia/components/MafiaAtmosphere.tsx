@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import MafiaAtmosphereThemes from './MafiaAtmosphereThemes';
 
-const MOBILE_MQ = '(max-width: 959px)';
+const MOBILE_MQ = '(max-width: 767px)';
 
 const EMBER_COUNT_FULL = 14;
 const EMBER_COUNT_REDUCED = 0;

@@ -29,7 +29,7 @@ export function AppShell({
 			dir={dir}
 			lang={lang}
 			className={cn(
-				"flex min-h-dvh w-full flex-col overflow-x-hidden",
+				"flex min-h-0 min-h-dvh w-full flex-col overflow-x-hidden",
 				safeHeader && "pt-safe-top",
 				safeFooter && "pb-safe-bottom",
 				className,

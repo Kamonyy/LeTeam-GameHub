@@ -943,7 +943,10 @@ export class RoomManager {
 		this._upsertHubPresence(playerId, safeName, socket.id);
 		this._scheduleBroadcastHubPresence();
 		this.broadcastLobbyState(roomId);
-		return { roomId };
+		return {
+			roomId,
+			lobby: this._lobbyStatePayload(room, playerId),
+		};
 	}
 
 	joinRoom(socket, roomId, displayName) {
@@ -2679,15 +2682,10 @@ export class RoomManager {
 		return settings;
 	}
 
-	broadcastLobbyState(roomId) {
-		const room = this.rooms.get(roomId);
-		if (!room) return;
-
+	_lobbyStatePayload(room, viewerId) {
 		const gameDef = getGame(room.gameType);
 		const eng = this._ensureRoomEngagement(room);
-		const winStreaks = { ...eng.winStreaks };
-
-		const basePayload = {
+		return {
 			roomId: room.id,
 			hostId: room.hostId,
 			status: room.status,
@@ -2707,24 +2705,30 @@ export class RoomManager {
 			minPlayers: gameDef?.minPlayers ?? 2,
 			maxPlayers: gameDef?.maxPlayers ?? 4,
 			devBotsEnabled: isDevBotsEnabled(room.gameType),
-			winStreaks,
+			winStreaks: { ...eng.winStreaks },
+			settings: this._lobbySettingsForViewer(room, viewerId),
 		};
+	}
+
+	broadcastLobbyState(roomId) {
+		const room = this.rooms.get(roomId);
+		if (!room) return;
 
 		for (const player of room.players) {
 			const socketId = this.playerToSocket.get(player.id);
 			if (!socketId) continue;
-			this.io.to(socketId).emit("lobby:state", {
-				...basePayload,
-				settings: this._lobbySettingsForViewer(room, player.id),
-			});
+			this.io.to(socketId).emit(
+				"lobby:state",
+				this._lobbyStatePayload(room, player.id),
+			);
 		}
 		for (const spectator of room.spectators ?? []) {
 			const socketId = this.playerToSocket.get(spectator.id);
 			if (!socketId) continue;
-			this.io.to(socketId).emit("lobby:state", {
-				...basePayload,
-				settings: this._lobbySettingsForViewer(room, spectator.id),
-			});
+			this.io.to(socketId).emit(
+				"lobby:state",
+				this._lobbyStatePayload(room, spectator.id),
+			);
 		}
 
 		this._scheduleBroadcastHubPresence();

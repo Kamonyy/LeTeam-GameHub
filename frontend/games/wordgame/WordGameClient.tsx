@@ -117,7 +117,9 @@ export default function WordGameClient() {
       const roomId = await createRoom(displayName.trim(), 'wordgame');
       if (roomId) {
         setAutoJoined(true);
-        navigateToGameLobby(navigateWithTransition, roomId, 'wordgame');
+        navigateToGameLobby(navigateWithTransition, roomId, 'wordgame', {
+          replace: true,
+        });
       }
     } finally {
       setLoading(false);

@@ -120,7 +120,7 @@ export default function MafiaClient() {
   }, []);
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 959px)");
+    const mq = window.matchMedia("(max-width: 767px)");
     const sync = () => setIsNarrowViewport(mq.matches);
     sync();
     mq.addEventListener("change", sync);
@@ -156,7 +156,10 @@ export default function MafiaClient() {
     setDisplayName(displayName);
     const roomId = await createRoom(displayName.trim(), "mafia");
     if (roomId) {
-      navigateToGameLobby(navigateWithTransition, roomId, 'mafia');
+      setAutoJoined(true);
+      navigateToGameLobby(navigateWithTransition, roomId, 'mafia', {
+        replace: true,
+      });
     }
     setLoading(false);
   };
@@ -306,7 +309,7 @@ export default function MafiaClient() {
       <MafiaAtmosphere variant={atmosphere} reduced={atmosphereReduced} />
 
       <header className="sticky top-0 z-40 border-b border-[color:var(--mf-glass-border)] bg-[color:var(--mf-glass-bg)] pt-[env(safe-area-inset-top,0px)] shadow-[var(--mf-shadow-panel)] backdrop-blur-[length:var(--mf-glass-blur)] before:pointer-events-none before:absolute before:inset-x-[6%] before:bottom-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-amber-500/70 before:to-transparent">
-        <div className="mx-auto flex max-w-[76rem] flex-wrap items-center justify-between gap-x-4 gap-y-3 px-5 py-3.5 max-[959px]:gap-y-2 max-[959px]:px-3.5 max-[959px]:py-2.5">
+        <div className="mx-auto flex max-w-[76rem] flex-wrap items-center justify-between gap-x-4 gap-y-3 px-5 py-3.5 max-md:gap-y-2 max-md:px-3.5 max-md:py-2.5">
           <div className="flex min-w-0 items-center gap-3">
             <Link
               href="/"
@@ -316,17 +319,17 @@ export default function MafiaClient() {
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div className="min-w-0">
-              <h1 className="mf-title-gold font-cinzel text-xl font-bold uppercase tracking-[0.18em] max-[959px]:text-base max-[959px]:tracking-[0.14em]">
+              <h1 className="mf-title-gold font-cinzel text-xl font-bold uppercase tracking-[0.18em] max-md:text-base max-md:tracking-[0.14em]">
                 Mafia
               </h1>
               {gameMeta && (
-                <p className="font-cormorant max-w-[22rem] text-sm italic text-[color:var(--p1-ink-soft)] max-[959px]:hidden">
+                <p className="font-cormorant max-w-[22rem] text-sm italic text-[color:var(--p1-ink-soft)] max-md:hidden">
                   {gameMeta.tagline}
                 </p>
               )}
             </div>
           </div>
-          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[959px]:w-full max-[959px]:justify-between">
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-md:w-full max-md:justify-between">
             {isHost && inGame && (
               <MafiaButton
                 type="button"

@@ -57,6 +57,7 @@ export default function SketchDrawClient() {
     sketchDrawDisbandAt,
     requestRematch,
     autoJoined,
+    setAutoJoined,
     inviteJoin,
     joinCode,
     setJoinCode,
@@ -104,6 +105,7 @@ export default function SketchDrawClient() {
     const roomId = await createRoom(name, 'sketch-draw');
     setLoading(false);
     if (roomId) {
+      setAutoJoined(true);
       navigateToGameLobby(navigateWithTransition, roomId, 'sketch-draw', {
         replace: true,
       });
@@ -252,9 +254,9 @@ export default function SketchDrawClient() {
           subtitle="Draw and guess with friends"
           connected={connected}
           engagementRoomId={sketchLobby?.roomId}
-          className="min-h-dvh relative sketch-arcade z-10"
+          className="relative z-10 flex min-h-dvh flex-col sketch-arcade"
           headerClassName="border-hub-border/60 bg-hub-surface/30"
-          contentClassName="p-0"
+          contentClassName="!p-0 flex flex-1 flex-col min-h-0"
           onCancelMatch={
             isHost && inGame && !matchOver ?
               () => setCancelConfirmOpen(true)

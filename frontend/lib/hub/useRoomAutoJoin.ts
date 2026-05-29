@@ -106,12 +106,16 @@ export function useRoomAutoJoin({
       return;
     }
 
+    const inTargetRoom =
+      lobby?.gameType === gameType &&
+      normalizeRoomCode(lobby.roomId) === code;
+
     if (
       suppressRoomAutoJoinRef.current ||
       !gameEnabled ||
       hardResetInFlight ||
       inviteJoin ||
-      lobby?.gameType === gameType ||
+      inTargetRoom ||
       autoJoined
     ) {
       return;

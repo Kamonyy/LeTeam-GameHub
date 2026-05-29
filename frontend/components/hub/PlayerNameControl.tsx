@@ -108,7 +108,7 @@ export default function PlayerNameControl({
               : 'border-[rgba(244,63,94,0.4)] bg-[rgba(244,63,94,0.12)] text-rose-200 hover:bg-[rgba(244,63,94,0.18)]',
             ]
           : [
-              'px-3 py-1.5',
+              'min-h-11 px-3 py-2.5',
               showName ?
                 'border-hub-border bg-hub-surface/80 text-gray-100 hover:border-hub-accent/40'
               : 'border-hub-accent/40 bg-hub-accent/10 text-hub-accent hover:bg-hub-accent/20',

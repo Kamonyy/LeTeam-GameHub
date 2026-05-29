@@ -699,6 +699,14 @@ export function SocketProvider({ children }) {
           return null;
         }
 
+        if (res.lobby && typeof res.lobby === 'object') {
+          setLobby(res.lobby);
+          setGameState(null);
+          setIsSpectator(
+            resolveClientIsSpectator(res.lobby, playerIdRef.current)
+          );
+        }
+
         return res.roomId ?? null;
       };
 

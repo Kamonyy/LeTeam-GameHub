@@ -81,7 +81,7 @@ const NoteRow = memo(function NoteRow({
             {note.text}
           </p>
           {!readOnly && (
-            <div className="flex gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity shrink-0">
+            <div className="flex shrink-0 gap-0.5 opacity-100 transition-opacity lg:opacity-60 lg:group-hover:opacity-100">
               <button
                 type="button"
                 onClick={handleStartEdit}

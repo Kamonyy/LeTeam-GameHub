@@ -113,15 +113,17 @@ export function ViewTransitionProvider({ children }: { children: ReactNode }) {
       if (navigatingRef.current) return;
 
       const targetPath = normalizePathname(href);
+      const currentPath = normalizePathname(pathname);
       const gameId = resolveGameIdFromHref(href);
       const goingToHub = targetPath === '/';
+      const sameGameRoute = gameId != null && targetPath === currentPath;
 
       clearDismissTimer();
       setOverlayExiting(false);
       setRouteContentReady(false);
       navStartedAtRef.current = performance.now();
 
-      if (gameId && !goingToHub) {
+      if (gameId && !goingToHub && !sameGameRoute) {
         setPendingNavigation({ gameId, targetPath });
       } else {
         setPendingNavigation(null);
@@ -137,7 +139,7 @@ export function ViewTransitionProvider({ children }: { children: ReactNode }) {
         navigatingRef.current = false;
       }, 400);
     },
-    [router, clearDismissTimer],
+    [router, pathname, clearDismissTimer],
   );
 
   const showOverlay = pendingNavigation != null;

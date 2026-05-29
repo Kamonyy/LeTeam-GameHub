@@ -110,7 +110,7 @@ export default function SketchDrawGameBoard({
   useSketchDrawAudio(state.phase);
 
   return (
-    <div className="sketch-board-layout flex h-dvh max-h-dvh w-full max-w-[1600px] mx-auto overflow-hidden pb-[env(safe-area-inset-bottom)]">
+    <div className="sketch-board-layout flex min-h-0 w-full max-w-[1600px] flex-1 mx-auto overflow-hidden pb-safe-bottom">
       {state.phase === 'match_over' && (
         <WinnerPodium
           players={lobby.players}

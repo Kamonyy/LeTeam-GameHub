@@ -69,7 +69,7 @@ export default function GameClientFrame({
       </HubBackLink>;
 
   return (
-    <AppShell className={className} safeHeader dir={dir} lang={lang}>
+    <AppShell className={className} dir={dir} lang={lang}>
       <RoomEngagementLayer roomId={engagementRoomId} />
       <AppShellHeader className={headerClassName}>
         <div
@@ -111,7 +111,7 @@ export default function GameClientFrame({
 
       <div
         className={cn(
-          'mx-auto px-6 py-10 w-full',
+          'mx-auto flex w-full flex-1 flex-col min-h-0 px-6 py-10',
           engagementRoomId && 'pb-14 sm:pb-16',
           maxWidthClass,
           contentClassName,

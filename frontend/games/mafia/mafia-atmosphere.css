@@ -275,7 +275,7 @@
 }
 
 /* Mobile/tablet — lighter vignette for OLED readability (narrator breakpoint) */
-@media (max-width: 959px) {
+@media (max-width: 767px) {
   .mf-atmosphere {
     --mf-atmo-vignette-strength: 0.58;
     --mf-atmo-vignette-hole: 54%;

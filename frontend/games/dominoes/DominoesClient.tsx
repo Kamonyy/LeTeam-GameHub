@@ -103,7 +103,10 @@ export default function DominoesClient() {
     setDisplayName(displayName);
     const roomId = await createRoom(displayName.trim(), 'dominoes');
     if (roomId) {
-      navigateToGameLobby(navigateWithTransition, roomId, 'dominoes');
+      setAutoJoined(true);
+      navigateToGameLobby(navigateWithTransition, roomId, 'dominoes', {
+        replace: true,
+      });
     }
     setLoading(false);
   };

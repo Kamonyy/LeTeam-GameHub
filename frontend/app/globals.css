@@ -511,6 +511,24 @@
 		}
 	}
 
+	@media (min-width: 641px) and (max-width: 1024px) {
+		.domino-hand-pip-badge--player {
+			bottom: calc(8.25rem + var(--safe-bottom));
+		}
+
+		.domino-hand-pip-badge--opponent-top {
+			top: calc(4.5rem + var(--safe-top));
+		}
+
+		.domino-player-hand-hint {
+			bottom: calc(7.75rem + var(--safe-bottom));
+		}
+
+		.domino-boneyard-float {
+			right: max(0.25rem, var(--safe-right));
+		}
+	}
+
 	.domino-tile-dragging {
 		opacity: 0.5;
 		transform: scale(0.92) rotate(-2deg) !important;

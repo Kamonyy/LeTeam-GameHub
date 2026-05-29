@@ -36,7 +36,7 @@ export default function LeaderboardSidebar({
   );
 
   return (
-    <aside className="sketch-leaderboard w-56 lg:w-64 shrink-0 border-r border-stone-800 h-full flex flex-col">
+    <aside className="sketch-leaderboard hidden h-full w-56 shrink-0 flex-col border-r border-stone-800 lg:flex lg:w-64">
       <div className="px-4 py-3 border-b border-stone-800">
         <h3 className="text-sm font-bold uppercase tracking-wide text-stone-300">
           Leaderboard

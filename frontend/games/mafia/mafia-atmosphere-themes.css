@@ -321,8 +321,8 @@
   opacity: calc(var(--mf-atmo-prop-opacity) * 0.7);
 }
 
-/* Tablet/phone — soften parchment/decals (matches narrator 959px breakpoint) */
-@media (max-width: 959px) {
+/* Phone — soften parchment/decals (tablet uses desktop atmosphere) */
+@media (max-width: 767px) {
   .mf-atmosphere {
     --mf-atmo-parchment-opacity: 0.024;
     --mf-atmo-decal-opacity: 0.016;

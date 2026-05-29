@@ -74,7 +74,7 @@ function currentPeriodKey(state: MafiaNarratorGameState): string | undefined {
 }
 
 function panelVisibilityClass(tab: MobileTab, activeTab: MobileTab) {
-  return clsx(tab !== activeTab && "max-[959px]:hidden");
+  return clsx(tab !== activeTab && "max-md:hidden");
 }
 
 function NarratorDashboard({
@@ -126,8 +126,8 @@ function NarratorDashboard({
         variant="codex"
         className={clsx(
           'mf-codex-header relative mb-5',
-          'max-[959px]:shadow-[inset_0_1px_0_rgba(212,166,74,0.12),inset_0_-2px_0_rgba(0,0,0,0.55)]',
-          'max-[959px]:before:shadow-none',
+          'max-md:shadow-[inset_0_1px_0_rgba(212,166,74,0.12),inset_0_-2px_0_rgba(0,0,0,0.55)]',
+          'max-md:before:shadow-none',
         )}
       >
         <MafiaCardContent className="flex flex-col items-start justify-between gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
@@ -135,7 +135,7 @@ function NarratorDashboard({
             <h1
               className={clsx(
                 mfTitleGold,
-                'mb-1.5 text-xl tracking-[0.2em] max-[959px]:text-lg max-[959px]:tracking-[0.16em]',
+                'mb-1.5 text-xl tracking-[0.2em] max-md:text-lg max-md:tracking-[0.16em]',
               )}
             >
               Loremaster&apos;s Codex

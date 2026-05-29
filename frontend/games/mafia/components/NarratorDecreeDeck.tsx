@@ -282,8 +282,8 @@ function DecreeFooter({
       data-decree-footer=""
       data-decree-night={night ? "" : undefined}
       className={clsx(
-        "z-[2] rounded-b-md border-t border-amber-900/45 bg-gradient-to-t from-stone-950 via-stone-950/98 to-stone-950/90 p-3 pb-3.5 shadow-[inset_0_1px_0_rgba(212,166,74,0.1)] max-md:pb-[max(0.85rem,env(safe-area-inset-bottom,0px))]",
-        "max-md:sticky max-md:bottom-0 max-md:glass-blur-sm min-[960px]:sticky min-[960px]:bottom-0 min-[960px]:glass-blur-sm",
+        "z-[2] rounded-b-md border-t border-amber-900/45 bg-gradient-to-t from-stone-950 via-stone-950/98 to-stone-950/90 p-3 pb-3.5 shadow-[inset_0_1px_0_rgba(212,166,74,0.1)] max-lg:pb-[max(0.85rem,env(safe-area-inset-bottom,0px))]",
+        "max-lg:sticky max-lg:bottom-0 max-lg:glass-blur-sm",
         night && "border-violet-900/40 shadow-[inset_0_1px_0_rgba(167,139,250,0.12)]",
         className,
       )}
@@ -443,7 +443,7 @@ export default function NarratorDecreeDeck({
       interactive={false}
       className={clsx(
         "relative flex flex-col gap-4 rounded-md p-4 sm:p-5 before:pointer-events-none before:absolute before:inset-1 before:rounded before:border before:border-white/[0.06]",
-        isNight && "max-[959px]:gap-0 max-[959px]:p-3",
+        isNight && "max-md:gap-0 max-md:p-3",
       )}
       aria-labelledby="mf-decree-title"
     >
@@ -510,7 +510,7 @@ export default function NarratorDecreeDeck({
           }
         >
           <MobileNightDecreeHeader decreeContext={decreeContext} />
-          <div className="flex min-w-0 flex-col max-[959px]:overflow-visible min-[960px]:min-h-0">
+          <div className="flex min-w-0 flex-col max-md:overflow-visible md:min-h-0">
             <NightStepTrack
               currentIndex={step.index}
               total={step.total}

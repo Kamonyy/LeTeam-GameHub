@@ -124,7 +124,10 @@ export default function BaraAlsalafaClient() {
     setDisplayName(displayName);
     const roomId = await createRoom(displayName.trim(), 'bara-alsalafa');
     if (roomId) {
-      navigateToGameLobby(navigateWithTransition, roomId, 'bara-alsalafa');
+      setAutoJoined(true);
+      navigateToGameLobby(navigateWithTransition, roomId, 'bara-alsalafa', {
+        replace: true,
+      });
     }
     setLoading(false);
   };
