@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX, Loader2 } from 'lucide-react';
-import { useSocket } from '@/hooks/useSocket';
+import { Plus, LogIn, UserPlus, Loader2 } from 'lucide-react';
+import { translateBaraError } from '@/lib/bara/translate-error';
+import { useGameRoom, useCoreSession } from '@/hooks/useSocket';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
 import { suppressRoomAutoJoinRef } from '@/lib/hub/room-auto-join';
-import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
+import { setDisplayName, getDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
 import PlayerNameControl from '@/components/hub/PlayerNameControl';
@@ -19,8 +19,10 @@ import { getGameEntry, isGameActive } from '@/lib/hub/games-registry';
 import BaraAtmosphere from '@/games/bara-alsalafa/components/BaraAtmosphere';
 import BaraLobby from '@/games/bara-alsalafa/components/BaraLobby';
 import BaraGameBoard from '@/games/bara-alsalafa/components/BaraGameBoard';
+import BaraMatchOverOverlay from '@/games/bara-alsalafa/components/BaraMatchOverOverlay';
 import type { BaraGameState } from '@/games/bara-alsalafa/types';
 import GameLobbyPendingOverlay from '@/components/hub/GameLobbyPendingOverlay';
+import GameClientFrame from '@/components/ui/GameClientFrame';
 import '@/games/bara-alsalafa/bara-alsalafa.css';
 
 export default function BaraAlsalafaClient() {
@@ -28,13 +30,23 @@ export default function BaraAlsalafaClient() {
   const router = useRouter();
   const roomParam = searchParams.get('room');
 
+  const baraEnabled = isGameActive('bara-alsalafa');
+  const { isHydrated } = useCoreSession();
+  const [displayName, setDisplayNameState] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [postMatchBusy, setPostMatchBusy] = useState(false);
+  const leaveToHub = useLeaveToHub();
+  const hadBaraRoomRef = useRef(false);
+
   const {
     connected,
     playerId,
     lobby,
     gameState,
     error,
-    hardResetInFlight,
     clearError,
     createRoom,
     joinRoom,
@@ -42,27 +54,25 @@ export default function BaraAlsalafaClient() {
     startGame,
     kickPlayer,
     cancelMatch,
+    disbandRoom,
     baraReveal,
+    baraReady,
     baraAdvanceInterrogation,
+    baraRequestVoteEnd,
     baraVote,
     baraGuess,
-  } = useSocket();
-
-  const [displayName, setDisplayNameState] = useState('');
-  const [joinCode, setJoinCode] = useState(roomParam || '');
-  const [loading, setLoading] = useState(false);
-  const [starting, setStarting] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
-  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
-  const [autoJoined, setAutoJoined] = useState(false);
-  const [inviteJoin, setInviteJoin] = useState(false);
-  const leaveToHub = useLeaveToHub();
-
-  useEffect(() => {
-    setInviteJoin(!!roomParam && !hasDisplayName());
-  }, [roomParam]);
-
-  const baraEnabled = isGameActive('bara-alsalafa');
+    autoJoined,
+    inviteJoin,
+    joinCode,
+    setJoinCode,
+    setAutoJoined,
+  } = useGameRoom({
+    gameType: 'bara-alsalafa',
+    gameEnabled: baraEnabled,
+    basePath: '/bara-alsalafa',
+    roomParam,
+    onAutoJoinLoading: setLoading,
+  });
   const baraLobby = lobby?.gameType === 'bara-alsalafa' ? lobby : null;
   const baraState: BaraGameState | null =
     baraLobby &&
@@ -77,48 +87,28 @@ export default function BaraAlsalafaClient() {
   }, []);
 
   useEffect(() => {
-    if (
-      suppressRoomAutoJoinRef.current ||
-      !baraEnabled ||
-      !connected ||
-      hardResetInFlight ||
-      !roomParam ||
-      lobby?.gameType === 'bara-alsalafa' ||
-      autoJoined ||
-      inviteJoin
-    )
-      return;
-    if (lobby && lobby.gameType !== 'bara-alsalafa') return;
-    const code = normalizeRoomCode(roomParam);
-    if (!code) return;
+    if (baraLobby) hadBaraRoomRef.current = true;
+  }, [baraLobby]);
 
-    let cancelled = false;
+  useEffect(() => {
+    if (!hadBaraRoomRef.current || baraLobby || !roomParam) return;
+    hadBaraRoomRef.current = false;
+    suppressRoomAutoJoinRef.current = true;
+    router.replace('/');
+    const timer = window.setTimeout(() => {
+      suppressRoomAutoJoinRef.current = false;
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [baraLobby, roomParam, router]);
 
-    const attemptJoin = async () => {
-      setLoading(true);
-      const ok = await joinRoom(code, getDisplayName());
-      if (!cancelled) {
-        if (ok) router.replace(`/bara-alsalafa?room=${code}`, { scroll: false });
-        setAutoJoined(true);
-        setLoading(false);
-      }
-    };
-
-    attemptJoin();
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    baraEnabled,
-    connected,
-    hardResetInFlight,
-    roomParam,
-    lobby,
-    autoJoined,
-    inviteJoin,
-    joinRoom,
-    router,
-  ]);
+  if (!isHydrated) {
+    return (
+      <>
+        <BaraAtmosphere />
+        <GameLobbyPendingOverlay message="جاري تحميل الجلسة…" />
+      </>
+    );
+  }
 
   const handleCreate = async () => {
     if (!displayName.trim()) return;
@@ -160,47 +150,59 @@ export default function BaraAlsalafaClient() {
   const isHost = baraLobby?.hostId === playerId;
   const gameMeta = getGameEntry('bara-alsalafa');
   const inLobby = baraLobby?.status === 'lobby';
+  const matchOver = baraState?.phase === 'match_over';
   const inGame =
     baraLobby &&
     baraState &&
     (baraLobby.status === 'playing' ||
       baraLobby.status === 'finished' ||
-      baraState.phase === 'match_over');
+      matchOver);
+
+  const handleReturnToLobby = async () => {
+    setPostMatchBusy(true);
+    await cancelMatch();
+    setPostMatchBusy(false);
+  };
+
+  const handleDisbandRoom = async () => {
+    setPostMatchBusy(true);
+    const ok = await disbandRoom();
+    setPostMatchBusy(false);
+    if (ok) router.push('/');
+  };
 
   return (
-    <main className="bara-shell">
-      <BaraAtmosphere />
+    <>
+      <GameClientFrame
+        className="bara-shell"
+        headerClassName="bara-header border-0 bg-transparent"
+        contentClassName={clsx('bara-content', inGame && 'bara-content--game')}
+        dir="rtl"
+        lang="ar"
+        title="برا السالفة"
+        subtitle={gameMeta?.tagline}
+        connected={connected}
+        showConnection={false}
+        onCancelMatch={
+          isHost && inGame && !matchOver ?
+            () => setCancelConfirmOpen(true)
+          : undefined
+        }
+        cancelMatchDisabled={cancelling}
+        cancelMatchLabel={cancelling ? 'جاري الإلغاء…' : 'إلغاء الجولة'}
+        headerExtra={
+          <>
+            <ConnectionStatus connected={connected} variant="bara" />
+            <PlayerNameControl
+              disabled={!!inGame}
+              theme="bara"
+              disabledReason="لا يمكن تغيير الاسم أثناء المباراة"
+            />
+          </>
+        }
+      >
+        <BaraAtmosphere />
 
-      <header className="bara-header">
-        <div className="bara-header__inner">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="bara-header__back" aria-label="العودة للرئيسية">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div dir="rtl">
-              <h1 className="bara-header__title">برا السالفة</h1>
-              {gameMeta && <p className="bara-header__tagline">{gameMeta.tagline}</p>}
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {isHost && inGame && (
-              <button
-                type="button"
-                onClick={() => setCancelConfirmOpen(true)}
-                disabled={cancelling}
-                className="bara-btn-secondary text-sm py-2 text-red-300 border-red-500/30 hover:bg-red-500/10"
-              >
-                <OctagonX className="w-4 h-4" />
-                {cancelling ? 'جاري الإلغاء…' : 'إلغاء الجولة'}
-              </button>
-            )}
-            <ConnectionStatus connected={connected} />
-            <PlayerNameControl disabled={!!inGame} />
-          </div>
-        </div>
-      </header>
-
-      <div className={clsx('bara-content', inGame && 'bara-content--game')}>
         {!baraLobby && !baraEnabled && <InactiveGameScreen gameId="bara-alsalafa" />}
 
         {!baraLobby && baraEnabled && inviteJoin && (
@@ -319,20 +321,35 @@ export default function BaraAlsalafaClient() {
         )}
 
         {inGame && baraState && baraLobby && (
-          <BaraGameBoard
-            gameState={baraState}
-            lobby={baraLobby}
-            playerId={playerId}
-            isHost={isHost}
-            onReveal={baraReveal}
-            onAdvanceInterrogation={baraAdvanceInterrogation}
-            onVote={baraVote}
-            onGuess={baraGuess}
-          />
+          <>
+            <BaraGameBoard
+              gameState={baraState}
+              lobby={baraLobby}
+              playerId={playerId}
+              isHost={isHost}
+              onReveal={baraReveal}
+              onReady={baraReady}
+              onAdvanceInterrogation={baraAdvanceInterrogation}
+              onRequestVoteEnd={baraRequestVoteEnd}
+              onVote={baraVote}
+              onGuess={baraGuess}
+            />
+            {matchOver && (
+              <BaraMatchOverOverlay
+                gameState={baraState}
+                lobby={baraLobby}
+                isHost={isHost}
+                busy={postMatchBusy}
+                onReturnToLobby={() => void handleReturnToLobby()}
+                onDisbandRoom={() => void handleDisbandRoom()}
+                onLeave={() => void leaveToHub()}
+              />
+            )}
+          </>
         )}
-      </div>
+      </GameClientFrame>
 
-      <ErrorToast message={error} onDismiss={clearError} />
+      <ErrorToast message={translateBaraError(error)} onDismiss={clearError} />
 
       <ConfirmDialog
         open={cancelConfirmOpen}
@@ -346,6 +363,6 @@ export default function BaraAlsalafaClient() {
         onConfirm={handleCancelMatch}
         onCancel={() => !cancelling && setCancelConfirmOpen(false)}
       />
-    </main>
+    </>
   );
 }

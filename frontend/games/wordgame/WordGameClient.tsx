@@ -2,12 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX, Loader2 } from 'lucide-react';
-import { useSocket } from '@/hooks/useSocket';
+import { Plus, LogIn, UserPlus, Loader2 } from 'lucide-react';
+import { useGameRoom, useCoreSession } from '@/hooks/useSocket';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
-import { suppressRoomAutoJoinRef } from '@/lib/hub/room-auto-join';
-import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
+import { setDisplayName, getDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
 import WordGamePlayerProfile from '@/games/wordgame/components/WordGamePlayerProfile';
 import ErrorToast from '@/components/shared/ErrorToast';
@@ -17,11 +15,12 @@ import InactiveGameScreen from '@/components/hub/InactiveGameScreen';
 import { getGameEntry, isGameActive } from '@/lib/hub/games-registry';
 import WordGameBoard from '@/games/wordgame/components/WordGameBoard';
 import WordGameAtmosphere from '@/games/wordgame/components/WordGameAtmosphere';
-import WordConnectionBadge from '@/games/wordgame/components/WordConnectionBadge';
+import ConnectionStatus from '@/components/hub/ConnectionStatus';
 import { useWordGameTabFocus } from '@/games/wordgame/hooks/useWordGameTabFocus';
 import WordPanelFrame from '@/games/wordgame/components/WordPanelFrame';
 import WordGameAudioProvider from '@/games/wordgame/components/WordGameAudioProvider';
 import GameLobbyPendingOverlay from '@/components/hub/GameLobbyPendingOverlay';
+import GameClientFrame from '@/components/ui/GameClientFrame';
 import '@/games/wordgame/wordgame.css';
 
 export default function WordGameClient() {
@@ -29,13 +28,25 @@ export default function WordGameClient() {
   const router = useRouter();
   const roomParam = searchParams.get('room');
 
+  const wordgameEnabled = isGameActive('wordgame');
+  const { isHydrated } = useCoreSession();
+  const [displayName, setDisplayNameState] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'create' | 'join' | null>(
+    null
+  );
+  const [starting, setStarting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [postMatchBusy, setPostMatchBusy] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const leaveToHub = useLeaveToHub();
+
   const {
     connected,
     playerId,
     lobby,
     gameState,
     error,
-    hardResetInFlight,
     clearError,
     createRoom,
     joinRoom,
@@ -48,27 +59,18 @@ export default function WordGameClient() {
     submitSecretChampion,
     confirmWordGuessed,
     reportWordTabFocus,
-  } = useSocket();
-
-  const [displayName, setDisplayNameState] = useState('');
-  const [joinCode, setJoinCode] = useState(roomParam || '');
-  const [loading, setLoading] = useState(false);
-  const [pendingAction, setPendingAction] = useState<'create' | 'join' | null>(
-    null
-  );
-  const [starting, setStarting] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
-  const [postMatchBusy, setPostMatchBusy] = useState(false);
-  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
-  const [autoJoined, setAutoJoined] = useState(false);
-  /** Avoid SSR/client mismatch: localStorage is unavailable during server render. */
-  const [inviteJoin, setInviteJoin] = useState(false);
-  const leaveToHub = useLeaveToHub();
-
-  useEffect(() => {
-    setInviteJoin(!!roomParam && !hasDisplayName());
-  }, [roomParam]);
-  const wordgameEnabled = isGameActive('wordgame');
+    autoJoined,
+    inviteJoin,
+    joinCode,
+    setJoinCode,
+    setAutoJoined,
+  } = useGameRoom({
+    gameType: 'wordgame',
+    gameEnabled: wordgameEnabled,
+    basePath: '/wordgame',
+    roomParam,
+    onAutoJoinLoading: setLoading,
+  });
   const wordState =
     lobby?.gameType === 'wordgame' &&
     gameState &&
@@ -80,62 +82,6 @@ export default function WordGameClient() {
   useEffect(() => {
     setDisplayNameState(getDisplayName());
   }, []);
-
-  useEffect(() => {
-    if (!roomParam) {
-      setAutoJoined(false);
-    }
-  }, [roomParam]);
-
-  useEffect(() => {
-    if (lobby?.gameType === 'wordgame' && lobby.roomId) {
-      setAutoJoined(true);
-    }
-  }, [lobby?.gameType, lobby?.roomId]);
-
-  useEffect(() => {
-    if (
-      suppressRoomAutoJoinRef.current ||
-      !wordgameEnabled ||
-      !connected ||
-      hardResetInFlight ||
-      !roomParam ||
-      lobby?.gameType === 'wordgame' ||
-      autoJoined ||
-      inviteJoin
-    )
-      return;
-    if (lobby && lobby.gameType !== 'wordgame') return;
-    const code = normalizeRoomCode(roomParam);
-    if (!code) return;
-
-    let cancelled = false;
-
-    const attemptJoin = async () => {
-      setLoading(true);
-      const ok = await joinRoom(code, getDisplayName());
-      if (!cancelled) {
-        if (ok) router.replace(`/wordgame?room=${code}`, { scroll: false });
-        setAutoJoined(true);
-        setLoading(false);
-      }
-    };
-
-    attemptJoin();
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    wordgameEnabled,
-    connected,
-    hardResetInFlight,
-    roomParam,
-    lobby,
-    autoJoined,
-    inviteJoin,
-    joinRoom,
-    router,
-  ]);
 
   const handleCreate = async () => {
     if (!displayName.trim()) return;
@@ -232,48 +178,44 @@ export default function WordGameClient() {
   const matchInProgress = !!(inGame && !matchFinished);
   const selfTabFocused = useWordGameTabFocus(matchInProgress, reportWordTabFocus);
 
+  if (!isHydrated) {
+    return (
+      <>
+        <WordGameAtmosphere />
+        <GameLobbyPendingOverlay message="Loading session…" />
+      </>
+    );
+  }
+
   return (
     <WordGameAudioProvider enabled={isLolAudioEnabled}>
-    <main className="sw-shell min-h-dvh relative overflow-x-hidden">
-      <WordGameAtmosphere />
-
-      <header className="sw-header">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-4 min-w-0">
-            <Link href="/" className="sw-back-link shrink-0" aria-label="Back to hub">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div className="min-w-0">
-              <h1 className="sw-header__title text-base sm:text-lg">Secret Word</h1>
-              {wordGameMeta && (
-                <p className="text-[10px] sm:text-xs sw-muted truncate max-w-[200px] sm:max-w-md tracking-wide">
-                  {wordGameMeta.tagline}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            {isHost && inGame && !matchFinished && (
-              <button
-                type="button"
-                onClick={() => setCancelConfirmOpen(true)}
-                disabled={cancelling}
-                className="sw-btn-cancel-match"
-              >
-                <OctagonX className="w-4 h-4 shrink-0" aria-hidden />
-                <span>{cancelling ? 'Cancelling…' : 'End match'}</span>
-              </button>
-            )}
-            <WordConnectionBadge connected={connected} />
+      <GameClientFrame
+        className="sw-shell min-h-dvh relative overflow-x-hidden"
+        headerClassName="sw-header border-0 bg-transparent"
+        contentClassName="relative z-10 py-8 sm:py-12 px-4 sm:px-6"
+        title="Secret Word"
+        subtitle={wordGameMeta?.tagline}
+        connected={connected}
+        showConnection={false}
+        onCancelMatch={
+          isHost && inGame && !matchFinished ?
+            () => setCancelConfirmOpen(true)
+          : undefined
+        }
+        cancelMatchDisabled={cancelling}
+        cancelMatchLabel={cancelling ? 'Cancelling…' : 'End match'}
+        headerExtra={
+          <>
+            <ConnectionStatus connected={connected} variant="word" />
             <WordGamePlayerProfile
               nameLocked={!!inGame}
               audioEnabled={isLolAudioEnabled}
             />
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      >
+        <WordGameAtmosphere />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {!wordLobby && !wordgameEnabled && <InactiveGameScreen gameId="wordgame" />}
 
         {!wordLobby && wordgameEnabled && inviteJoin && (
@@ -452,7 +394,7 @@ export default function WordGameClient() {
             />
           </div>
         )}
-      </div>
+      </GameClientFrame>
 
       <ErrorToast message={error} onDismiss={clearError} />
 
@@ -468,7 +410,6 @@ export default function WordGameClient() {
         onConfirm={handleCancelMatch}
         onCancel={() => !cancelling && setCancelConfirmOpen(false)}
       />
-    </main>
     </WordGameAudioProvider>
   );
 }

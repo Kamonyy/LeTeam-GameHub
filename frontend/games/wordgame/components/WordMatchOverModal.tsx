@@ -5,12 +5,17 @@ import { createPortal } from 'react-dom';
 import { Crown, DoorOpen, Loader2, RotateCcw, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 import type { WordCategory } from '../types';
-import ChampionPortrait from './ChampionPortrait';
+import RoundRevealBoard from './RoundRevealBoard';
 
 interface WordMatchOverModalProps {
   wordCategory: WordCategory;
   revealedWord: string | null;
   revealedChampionId: string | null;
+  myChosenWord: string | null;
+  myChosenChampionId: string | null;
+  opponentChosenWord: string | null;
+  opponentChosenChampionId: string | null;
+  opponentName: string;
   winnerName: string;
   winnerId: string | null;
   myPlayerId: string;
@@ -18,6 +23,8 @@ interface WordMatchOverModalProps {
   scores: Record<string, number>;
   playerNames: Record<string, string>;
   playerIds: string[];
+  guesserPlayerId: string | null;
+  assignerPlayerId?: string | null;
   isHost: boolean;
   postMatchBusy?: boolean;
   onHostPlayAgain?: () => void;
@@ -28,6 +35,11 @@ export default function WordMatchOverModal({
   wordCategory,
   revealedWord,
   revealedChampionId,
+  myChosenWord,
+  myChosenChampionId,
+  opponentChosenWord,
+  opponentChosenChampionId,
+  opponentName,
   winnerName,
   winnerId,
   myPlayerId,
@@ -35,6 +47,8 @@ export default function WordMatchOverModal({
   scores,
   playerNames,
   playerIds,
+  guesserPlayerId,
+  assignerPlayerId,
   isHost,
   postMatchBusy = false,
   onHostPlayAgain,
@@ -43,6 +57,10 @@ export default function WordMatchOverModal({
   const [mounted, setMounted] = useState(false);
   const isLol = wordCategory === 'lol-champions';
   const iWon = winnerId === myPlayerId;
+  const guesserName =
+    guesserPlayerId != null ?
+      playerNames[guesserPlayerId] || 'Player'
+    : winnerName;
 
   useEffect(() => {
     setMounted(true);
@@ -105,20 +123,22 @@ export default function WordMatchOverModal({
         </ul>
 
         {revealedWord && (
-          <div className="sw-reveal-box sw-match-over-reveal">
-            <p className="text-[10px] sw-muted uppercase tracking-[0.2em] mb-3">
-              {isLol ? 'Final champion' : 'Final word'}
-            </p>
-            {isLol && revealedChampionId ?
-              <div className="flex justify-center">
-                <ChampionPortrait
-                  championId={revealedChampionId}
-                  size="lg"
-                  reveal
-                />
-              </div>
-            :	<p className="sw-word-reveal">{revealedWord}</p>}
-          </div>
+          <RoundRevealBoard
+            className="sw-match-over-reveals"
+            wordCategory={wordCategory}
+            revealedWord={revealedWord}
+            revealedChampionId={revealedChampionId}
+            myChosenWord={myChosenWord}
+            myChosenChampionId={myChosenChampionId}
+            opponentChosenWord={opponentChosenWord}
+            opponentChosenChampionId={opponentChosenChampionId}
+            opponentName={opponentName}
+            guesserName={guesserName}
+            playerId={myPlayerId}
+            playerIds={playerIds}
+            guesserPlayerId={guesserPlayerId ?? winnerId}
+            assignerPlayerId={assignerPlayerId}
+          />
         )}
 
         <footer className="sw-match-over-footer">

@@ -14,6 +14,9 @@ import {
 } from "./balancing.js";
 import { buildChronicleSections } from "./chronicle.js";
 import { buildPlayerChronicle } from "./playerChronicle.js";
+import { BaseGameEngine } from "../BaseGameEngine.js";
+
+const EVENT_LOG_SERIALIZE_CAP = 20;
 
 /** @typedef {'lobby'|'role_reveal'|'day'|'night'|'morning'|'match_over'} MafiaEnginePhase */
 
@@ -26,7 +29,7 @@ import { buildPlayerChronicle } from "./playerChronicle.js";
  *   roleAssignments?: Record<string, string>,
  * }} settings
  */
-export class MafiaEngine {
+export class MafiaEngine extends BaseGameEngine {
 	constructor(playerIds, settings = {}) {
 		if (playerIds.length < 5 || playerIds.length > 11) {
 			throw new Error("Mafia requires 5–11 gameplay players (plus narrator)");
@@ -38,7 +41,9 @@ export class MafiaEngine {
 			throw new Error("Narrator must not be a gameplay player");
 		}
 
-		this.playerIds = [...playerIds];
+		super(playerIds, settings);
+		this.stateVersion = 1;
+
 		this.narratorId = settings.narratorId;
 		this.revealRoleOnDeath = settings.revealRoleOnDeath === true;
 		this.roleCounts = normalizeRoleCounts(
@@ -50,20 +55,19 @@ export class MafiaEngine {
 		this.phase = "role_reveal";
 		this.dayNumber = 0;
 		this.nightNumber = 0;
-		this.stateVersion = 1;
 
 		/** @type {Record<string, { roleId: string, color: string, alive: boolean, roleAcknowledged: boolean }>} */
 		this.players = {};
 		/** @type {Record<string, string>} */
 		this.roleByPlayer = {};
 		/** @type {string[]} */
-		this.silencedForDay = [];
+		this.silencedForDay = new Set();
+		this._aliveMafiaHolderIdsCache = null;
 		/** @type {Record<string, string | null>} */
 		this.nightTargets = {};
 		this.nightStepIndex = 0;
 		/** @type {string | null} */
 		this.lastHealedPlayerId = null;
-		/** @type {{ at: number, message: string }[]} */
 		this.eventLog = [];
 		/** @type {import("./chronicle.js").ChronicleEntry[]} */
 		this.logEntries = [];
@@ -84,7 +88,7 @@ export class MafiaEngine {
 	}
 
 	_bump() {
-		this.stateVersion += 1;
+		this._bumpStateVersion();
 		this._chronicleSectionsCache = null;
 		this._playerChronicleCache.clear();
 	}
@@ -280,11 +284,17 @@ export class MafiaEngine {
 		);
 	}
 
+	_invalidateMafiaHolderCache() {
+		this._aliveMafiaHolderIdsCache = null;
+	}
+
 	/** Alive Mafia role holders (for kill quota and self-target rules). */
 	_aliveMafiaHolderIds() {
-		return this._playersWithRole("mafia").filter(
+		if (this._aliveMafiaHolderIdsCache) return this._aliveMafiaHolderIdsCache;
+		this._aliveMafiaHolderIdsCache = this._playersWithRole("mafia").filter(
 			(id) => this.players[id]?.alive,
 		);
+		return this._aliveMafiaHolderIdsCache;
 	}
 
 	/** Max victims per night: 2 when two or more living Mafia, otherwise 1. */
@@ -436,7 +446,8 @@ export class MafiaEngine {
 		this.nightTargets = {};
 		this._seerResults = {};
 		this._lastSeerReveal = null;
-		this.silencedForDay = [];
+		this.silencedForDay = new Set();
+		this._aliveMafiaHolderIdsCache = null;
 		this._logEntry("phase_night", { nightNumber: this.nightNumber });
 		this._advanceToApplicableNightStep();
 	}
@@ -459,6 +470,7 @@ export class MafiaEngine {
 			return { success: false, error: "Player is already dead" };
 		}
 		this.players[targetId].alive = false;
+		this._invalidateMafiaHolderCache();
 		const role = getRole(this.roleByPlayer[targetId]);
 		this._logEntry("day_elimination", {
 			targetId,
@@ -732,7 +744,7 @@ export class MafiaEngine {
 
 		// 2. Silences (alive sniper only)
 		if (this._hasAliveRoleHolder("sniper") && sniperTarget) {
-			this.silencedForDay = [sniperTarget];
+			this.silencedForDay = new Set([sniperTarget]);
 		}
 
 		// 3. Kills — sheriff (alive sheriff only)
@@ -756,6 +768,7 @@ export class MafiaEngine {
 		for (const id of uniqueDeaths) {
 			if (this.players[id]) this.players[id].alive = false;
 		}
+		if (uniqueDeaths.length > 0) this._invalidateMafiaHolderCache();
 
 		const nightRecap = this._buildNightRecap({
 			mafiaTargets,
@@ -1088,7 +1101,7 @@ export class MafiaEngine {
 			roleNameEn: showRole && role ? role.nameEn : null,
 			roleNameAr: showRole && role ? role.nameAr : null,
 			roleIcon: showRole && role ? role.icon : null,
-			silenced: this.silencedForDay.includes(playerId),
+			silenced: this.silencedForDay.has(playerId),
 		};
 	}
 
@@ -1111,10 +1124,8 @@ export class MafiaEngine {
 		const setupWarnings = [...lobbySetup.errors, ...lobbySetup.warnings];
 
 		const base = {
+			...this.serializeBase(viewerId),
 			gameType: "mafia",
-			stateVersion: this.stateVersion,
-			phase: this.phase,
-			playerIds: [...this.playerIds],
 			narratorId: this.narratorId,
 			dayNumber: this.dayNumber,
 			nightNumber: this.nightNumber,
@@ -1158,7 +1169,7 @@ export class MafiaEngine {
 					setupWarnings,
 					nightStep: this.phase === "night" ? this._getNightStepView() : null,
 					lastSeerReveal: this._lastSeerReveal,
-					eventLog: [...this.eventLog],
+					eventLog: this.eventLog.slice(-EVENT_LOG_SERIALIZE_CAP),
 					chronicle: this._getChronicleSections(),
 					seerResults: { ...this._seerResults },
 					canStartDay: false,
@@ -1226,7 +1237,7 @@ export class MafiaEngine {
 				:	null,
 			myColor: self?.color ?? null,
 			iAmAlive: self?.alive ?? true,
-			iAmSilenced: this.silencedForDay.includes(viewerId),
+			iAmSilenced: this.silencedForDay.has(viewerId),
 		};
 	}
 }

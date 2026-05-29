@@ -4,15 +4,14 @@ import { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Plus, LogIn, UserPlus, OctagonX } from 'lucide-react';
-import { useSocket } from '@/hooks/useSocket';
+import { Plus, LogIn, UserPlus } from 'lucide-react';
+import { useGameRoom, useCoreSession } from '@/hooks/useSocket';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
-import { suppressRoomAutoJoinRef } from '@/lib/hub/room-auto-join';
-import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
+import { setDisplayName, getDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
-import ConnectionStatus from '@/components/hub/ConnectionStatus';
 import PlayerNameControl from '@/components/hub/PlayerNameControl';
 import ChatPanel from '@/components/hub/ChatPanel';
+import GameClientFrame from '@/components/ui/GameClientFrame';
 import ErrorToast from '@/components/shared/ErrorToast';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import Lobby from '@/games/dominoes/components/Lobby';
@@ -20,6 +19,7 @@ import GameBoard from '@/games/dominoes/components/GameBoard';
 import SpectatorBanner from '@/games/dominoes/components/SpectatorBanner';
 import GameAboutPanel from '@/components/hub/GameAboutPanel';
 import InactiveGameScreen from '@/components/hub/InactiveGameScreen';
+import GameLobbyPendingOverlay from '@/components/hub/GameLobbyPendingOverlay';
 import { getGameEntry, isGameActive } from '@/lib/hub/games-registry';
 import type { GameState } from '@/games/dominoes/types';
 
@@ -30,6 +30,16 @@ export default function DominoesClient() {
   const spectateParam =
     searchParams.get('spectate') === '1' || searchParams.get('spectate') === 'true';
 
+  const dominoesEnabled = isGameActive('dominoes');
+  const dominoesMeta = getGameEntry('dominoes');
+  const { isHydrated } = useCoreSession();
+  const [displayName, setDisplayNameState] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const leaveToHub = useLeaveToHub();
+
   const {
     connected,
     playerId,
@@ -37,7 +47,6 @@ export default function DominoesClient() {
     gameState,
     isSpectator,
     error,
-    hardResetInFlight,
     clearError,
     createRoom,
     joinRoomOrSpectate,
@@ -51,84 +60,31 @@ export default function DominoesClient() {
     passTurn,
     continueRound,
     requestRematch,
-  } = useSocket();
-
-  const [displayName, setDisplayNameState] = useState('');
-  const [joinCode, setJoinCode] = useState(roomParam || '');
-  const [loading, setLoading] = useState(false);
-  const [starting, setStarting] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
-  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
-  const [autoJoined, setAutoJoined] = useState(false);
-  const [inviteJoin, setInviteJoin] = useState(false);
-  const leaveToHub = useLeaveToHub();
-
-  useEffect(() => {
-    setInviteJoin(!!roomParam && !hasDisplayName());
-  }, [roomParam]);
-  const dominoesEnabled = isGameActive('dominoes');
-  const dominoesMeta = getGameEntry('dominoes');
+    autoJoined,
+    inviteJoin,
+    joinCode,
+    setJoinCode,
+    setAutoJoined,
+  } = useGameRoom({
+    gameType: 'dominoes',
+    gameEnabled: dominoesEnabled,
+    basePath: '/dominoes',
+    roomParam,
+    spectateParam,
+    onAutoJoinLoading: setLoading,
+  });
 
   useEffect(() => {
     setDisplayNameState(getDisplayName());
   }, []);
 
-  useEffect(() => {
-    if (
-      suppressRoomAutoJoinRef.current ||
-      !dominoesEnabled ||
-      !connected ||
-      hardResetInFlight ||
-      !roomParam ||
-      lobby?.gameType === 'dominoes' ||
-      autoJoined ||
-      inviteJoin
-    )
-      return;
-    if (lobby && lobby.gameType !== 'dominoes') return;
-    const code = normalizeRoomCode(roomParam);
-    if (!code) return;
-
-    let cancelled = false;
-
-    const attemptJoin = async () => {
-      setLoading(true);
-      const name = getDisplayName();
-      if (spectateParam) {
-        const ok = await spectateRoom(code, name);
-        if (!cancelled && ok) {
-          router.replace(`/dominoes?room=${code}&spectate=1`, { scroll: false });
-        }
-      } else {
-        const result = await joinRoomOrSpectate(code, name);
-        if (!cancelled && result.ok) {
-          const query = result.spectating ? `?room=${code}&spectate=1` : `?room=${code}`;
-          router.replace(`/dominoes${query}`, { scroll: false });
-        }
-      }
-      if (!cancelled) {
-        setAutoJoined(true);
-        setLoading(false);
-      }
-    };
-
-    attemptJoin();
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    connected,
-    hardResetInFlight,
-    roomParam,
-    lobby,
-    autoJoined,
-    inviteJoin,
-    spectateParam,
-    joinRoomOrSpectate,
-    spectateRoom,
-    router,
-    dominoesEnabled,
-  ]);
+  if (!isHydrated) {
+    return (
+      <main className="min-h-dvh relative">
+        <GameLobbyPendingOverlay message="Loading session…" />
+      </main>
+    );
+  }
 
   const handleCreate = async () => {
     if (!displayName.trim()) return;
@@ -212,49 +168,18 @@ export default function DominoesClient() {
         showChatSidebar && 'lg:grid lg:grid-cols-[minmax(0,1fr)_20rem]',
       )}
     >
-      <div className="min-w-0 flex flex-col">
-      <header className="border-b border-hub-border bg-hub-surface/50 glass-blur-sm sticky top-0 z-40 pt-safe-top">
-        <div
-          className={clsx(
-            'mx-auto px-6 py-4 flex items-center justify-between w-full',
-            showGameBoard ? 'max-w-7xl' : 'max-w-6xl',
-          )}
-        >
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-hub-muted hover:text-white transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div>
-              <h1 className="text-lg font-semibold">Dominoes</h1>
-              {dominoesMeta && (
-                <p className="text-xs text-hub-muted truncate max-w-[200px] sm:max-w-none">
-                  {dominoesMeta.tagline}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {isHost && inActiveMatch && (
-              <button
-                onClick={() => setCancelConfirmOpen(true)}
-                disabled={cancelling}
-                className="btn-secondary flex items-center gap-2 text-sm py-2 text-hub-danger border-hub-danger/30 hover:bg-hub-danger/10"
-              >
-                <OctagonX className="w-4 h-4" />
-                {cancelling ? 'Cancelling…' : 'Cancel Match'}
-              </button>
-            )}
-            <ConnectionStatus connected={connected} />
-            <PlayerNameControl disabled={inActiveMatch} />
-          </div>
-        </div>
-      </header>
-
-      <div
-        className={clsx(
-          'mx-auto px-6 py-10 w-full',
-          showGameBoard ? 'max-w-none' : 'max-w-6xl',
-        )}
+      <GameClientFrame
+        title="Dominoes"
+        subtitle={dominoesMeta?.tagline}
+        connected={connected}
+        onCancelMatch={
+          isHost && inActiveMatch ? () => setCancelConfirmOpen(true) : undefined
+        }
+        cancelMatchDisabled={cancelling}
+        cancelMatchLabel={cancelling ? 'Cancelling…' : 'Cancel Match'}
+        headerExtra={<PlayerNameControl disabled={inActiveMatch} />}
+        maxWidthClass={showGameBoard ? 'max-w-7xl' : 'max-w-6xl'}
+        className="min-w-0"
       >
         {!dominoLobby && !dominoesEnabled && <InactiveGameScreen gameId="dominoes" />}
 
@@ -425,8 +350,7 @@ export default function DominoesClient() {
             />
           </>
         )}
-      </div>
-      </div>
+      </GameClientFrame>
 
       {showChatSidebar && (
         <ChatPanel className="hidden lg:flex lg:flex-col lg:col-start-2 lg:row-start-1 border-l border-hub-border bg-hub-surface/80 glass-blur-sm sticky top-0 pt-safe-top h-dvh min-h-0 pb-safe-bottom z-30" />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { memo, useCallback, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { StickyNote, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
 import type { ScratchpadNote } from '../hooks/useScratchpadNotes';
@@ -14,6 +14,90 @@ interface ScratchpadProps {
   /** League of Legends mode — hextech scrollbar + panel accents */
   isLol?: boolean;
 }
+
+type NoteRowProps = {
+  note: ScratchpadNote;
+  isEditing: boolean;
+  editText: string;
+  onEditTextChange: (value: string) => void;
+  onStartEdit: (note: ScratchpadNote) => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+  onDelete: (id: string) => void;
+};
+
+const NoteRow = memo(function NoteRow({
+  note,
+  isEditing,
+  editText,
+  onEditTextChange,
+  onStartEdit,
+  onSaveEdit,
+  onCancelEdit,
+  onDelete,
+}: NoteRowProps) {
+  const handleStartEdit = useCallback(() => onStartEdit(note), [note, onStartEdit]);
+  const handleDelete = useCallback(() => onDelete(note.id), [note.id, onDelete]);
+
+  return (
+    <li className="group rounded-lg border border-[rgba(201,162,39,0.12)] bg-[rgba(6,8,22,0.5)] p-3 animate-fade-in">
+      {isEditing ?
+        <div className="space-y-2">
+          <input
+            type="text"
+            value={editText}
+            onChange={(e) => onEditTextChange(e.target.value)}
+            className="sw-input py-1.5 text-sm normal-case tracking-normal"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') onSaveEdit();
+              if (e.key === 'Escape') onCancelEdit();
+            }}
+          />
+          <div className="flex gap-1 justify-end">
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="p-1.5 rounded sw-muted hover:text-white"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={onSaveEdit}
+              className="p-1.5 rounded text-[#86efac] hover:bg-[rgba(34,197,94,0.1)]"
+            >
+              <Check className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      : <div className="flex items-start gap-2">
+          <p className="flex-1 text-sm sw-text-accent leading-relaxed break-words">
+            {note.text}
+          </p>
+          <div className="flex gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity shrink-0">
+            <button
+              type="button"
+              onClick={handleStartEdit}
+              className="p-1.5 rounded sw-muted hover:text-[#f0d78c] hover:bg-[rgba(201,162,39,0.1)]"
+              aria-label="Edit note"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="p-1.5 rounded sw-muted hover:text-[#fca5a5] hover:bg-[rgba(239,68,68,0.1)]"
+              aria-label="Delete note"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      }
+    </li>
+  );
+});
 
 export default function Scratchpad({
   notes,
@@ -34,23 +118,23 @@ export default function Scratchpad({
     setDraft('');
   };
 
-  const startEdit = (note: ScratchpadNote) => {
+  const startEdit = useCallback((note: ScratchpadNote) => {
     setEditingId(note.id);
     setEditText(note.text);
-  };
+  }, []);
 
-  const saveEdit = () => {
+  const saveEdit = useCallback(() => {
     if (editingId && editText.trim()) {
       onUpdate(editingId, editText);
     }
     setEditingId(null);
     setEditText('');
-  };
+  }, [editingId, editText, onUpdate]);
 
-  const cancelEdit = () => {
+  const cancelEdit = useCallback(() => {
     setEditingId(null);
     setEditText('');
-  };
+  }, []);
 
   return (
     <aside
@@ -111,65 +195,17 @@ export default function Scratchpad({
           </li>
         )}
         {notes.map((note) => (
-          <li
+          <NoteRow
             key={note.id}
-            className="group rounded-lg border border-[rgba(201,162,39,0.12)] bg-[rgba(6,8,22,0.5)] p-3 animate-fade-in"
-          >
-            {editingId === note.id ?
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  className="sw-input py-1.5 text-sm normal-case tracking-normal"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') saveEdit();
-                    if (e.key === 'Escape') cancelEdit();
-                  }}
-                />
-                <div className="flex gap-1 justify-end">
-                  <button
-                    type="button"
-                    onClick={cancelEdit}
-                    className="p-1.5 rounded sw-muted hover:text-white"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={saveEdit}
-                    className="p-1.5 rounded text-[#86efac] hover:bg-[rgba(34,197,94,0.1)]"
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            :	<div className="flex items-start gap-2">
-                <p className="flex-1 text-sm sw-text-accent leading-relaxed break-words">
-                  {note.text}
-                </p>
-                <div className="flex gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => startEdit(note)}
-                    className="p-1.5 rounded sw-muted hover:text-[#f0d78c] hover:bg-[rgba(201,162,39,0.1)]"
-                    aria-label="Edit note"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDelete(note.id)}
-                    className="p-1.5 rounded sw-muted hover:text-[#fca5a5] hover:bg-[rgba(239,68,68,0.1)]"
-                    aria-label="Delete note"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            }
-          </li>
+            note={note}
+            isEditing={editingId === note.id}
+            editText={editText}
+            onEditTextChange={setEditText}
+            onStartEdit={startEdit}
+            onSaveEdit={saveEdit}
+            onCancelEdit={cancelEdit}
+            onDelete={onDelete}
+          />
         ))}
           </ul>
           <ScratchpadLolScrollbar

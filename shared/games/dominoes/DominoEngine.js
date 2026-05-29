@@ -3,6 +3,7 @@
  * Supports FFA and 2v2 team mode with match scoring to a configurable cap.
  */
 
+import { BaseGameEngine } from "../BaseGameEngine.js";
 import { cryptoRandomInt, fisherYatesShuffle } from "./random.js";
 
 /** @typedef {{ left: number, right: number }} Tile */
@@ -59,7 +60,7 @@ export function findTileIndex(hand, tile) {
 	);
 }
 
-export class DominoEngine {
+export class DominoEngine extends BaseGameEngine {
 	/**
 	 * @param {string[]} playerIds
 	 * @param {Partial<MatchSettings>} settings
@@ -69,22 +70,24 @@ export class DominoEngine {
 			throw new Error("Dominoes requires 2–4 players");
 		}
 
-		this.playerIds = [...playerIds];
-		this.settings = {
-			scoreCap: settings.scoreCap ?? 100,
-			mode: settings.mode ?? "ffa",
-			handSize: settings.handSize ?? 7,
-		};
-
-		if (this.settings.mode === "2v2" && playerIds.length !== 4) {
+		const mode = settings.mode ?? "ffa";
+		if (mode === "2v2" && playerIds.length !== 4) {
 			throw new Error("2v2 Team Mode requires exactly 4 players");
 		}
+
+		super(playerIds, settings);
+
+		this.settings = {
+			scoreCap: settings.scoreCap ?? 100,
+			mode,
+			handSize: settings.handSize ?? 7,
+		};
 
 		/** @type {Record<string, 'team1' | 'team2'>} */
 		this.teamIds = {};
 		if (this.settings.mode === "2v2") {
-			for (let i = 0; i < playerIds.length; i++) {
-				this.teamIds[playerIds[i]] = i % 2 === 0 ? "team1" : "team2";
+			for (let i = 0; i < this.playerIds.length; i++) {
+				this.teamIds[this.playerIds[i]] = i % 2 === 0 ? "team1" : "team2";
 			}
 		}
 
@@ -93,15 +96,12 @@ export class DominoEngine {
 		/** @type {BoardTile[]} */
 		this.board = [];
 		this.currentPlayerIndex = 0;
-		/** @type {'playing' | 'round_over' | 'match_over'} */
 		this.phase = "playing";
 		this.roundWinnerId = null;
 		this.matchWinnerId = null;
-		this.lastAction = null;
 		this.consecutivePasses = 0;
 		/** @type {Record<string, number>} */
 		this.matchScores = {};
-		this.roundNumber = 1;
 		this.turnStartedAt = Date.now();
 		this.turnTimerPaused = false;
 		this.turnTimerPausedAt = null;
@@ -390,10 +390,7 @@ export class DominoEngine {
 				return;
 			}
 
-			this.currentPlayerIndex =
-				(this.currentPlayerIndex + 1) % this.playerIds.length;
-			this.turnStartedAt = Date.now();
-			this.turnTimerRemainingMs = 30000;
+			this.nextTurn();
 		}
 	}
 
@@ -420,11 +417,15 @@ export class DominoEngine {
 		return this.passTurn(playerId);
 	}
 
-	_advanceTurn() {
+	nextTurn() {
 		this.currentPlayerIndex =
 			(this.currentPlayerIndex + 1) % this.playerIds.length;
 		this.turnStartedAt = Date.now();
 		this.turnTimerRemainingMs = 30000;
+	}
+
+	_advanceTurn() {
+		this.nextTurn();
 	}
 
 	_handPips(playerId) {
@@ -600,11 +601,10 @@ export class DominoEngine {
 		const revealHands =
 			this.phase === "round_over" || this.phase === "match_over";
 		return {
-			phase: state.phase,
+			...this.serializeBase(viewerId),
 			board: state.board,
 			openEnds: state.openEnds,
 			currentPlayerId: state.currentPlayerId,
-			playerIds: state.playerIds,
 			myHand: isPlayer ? state.myHand : [],
 			...(revealHands ?
 				{ handsByPlayer: this._handsByPlayerForReveal() }
@@ -614,7 +614,6 @@ export class DominoEngine {
 			matchScores: state.matchScores,
 			roundWinnerId: state.roundWinnerId,
 			matchWinnerId: state.matchWinnerId,
-			roundNumber: state.roundNumber,
 			settings: state.settings,
 			teamIds: state.teamIds,
 			lastAction: this._sanitizeLastAction(state.lastAction, viewerId),

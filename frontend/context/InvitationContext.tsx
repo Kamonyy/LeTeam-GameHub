@@ -90,6 +90,8 @@ export function InvitationProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  useEffect(() => () => clearExitTimer(), [clearExitTimer]);
+
   const runExitAnimation = useCallback(
     (onDone?: () => void) => {
       clearExitTimer();

@@ -30,6 +30,6 @@
 | B | `MafiaCard`, `card.tsx`, `mafia-button`, `PhaseCeremony` | `mafia-panel.tsx`, `mafia-button.tsx`, `PhaseCeremony.tsx` |
 | C | Shell: `MafiaClient`, phase transition, header glass | `MafiaClient.tsx`, `MafiaPhaseTransition.tsx` |
 | D | Narrator UI → MafiaCard codex/glass | `NarratorDashboard.tsx`, `NarratorDecreeDeck.tsx`, `NarratorChronicle.tsx`, `NarratorAskPrompt.tsx` |
-| E | Lobby, player, audit, roster | `MafiaLobby.tsx`, `PlayerCompanion.tsx`, `RoleRevealCard.tsx`, `ui-audit/page.tsx` |
+| E | Lobby, player, roster | `MafiaLobby.tsx`, `PlayerCompanion.tsx`, `RoleRevealCard.tsx` |
 
-Validate on `/mafia` and `/mafia/ui-audit`.
+Validate on `/mafia`.

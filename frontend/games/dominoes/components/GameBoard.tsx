@@ -45,6 +45,52 @@ interface GameBoardProps {
 	onRematch: () => Promise<boolean>;
 }
 
+type HandTileProps = {
+	tile: Tile;
+	playable: boolean;
+	unplayable: boolean;
+	selected: boolean;
+	dragging: boolean;
+	draggable: boolean;
+	onTileClick: (tile: Tile) => void;
+	onDragStart: (tile: Tile) => (e: DragEvent) => void;
+	onDragEnd: () => void;
+	className?: string;
+	style?: CSSProperties;
+};
+
+const HandTile = memo(function HandTile({
+	tile,
+	playable,
+	unplayable,
+	selected,
+	dragging,
+	draggable,
+	onTileClick,
+	onDragStart,
+	onDragEnd,
+	className,
+	style,
+}: HandTileProps) {
+	return (
+		<DominoTile
+			left={tile.left}
+			right={tile.right}
+			playable={playable}
+			unplayable={unplayable}
+			selected={selected}
+			dragging={dragging}
+			draggable={draggable}
+			inHand
+			onDragStart={onDragStart(tile)}
+			onDragEnd={onDragEnd}
+			onClick={() => onTileClick(tile)}
+			className={className}
+			style={style}
+		/>
+	);
+});
+
 function dominoBoardPropsEqual(
 	prev: GameBoardProps,
 	next: GameBoardProps,
@@ -383,20 +429,23 @@ function GameBoard({
 		finish();
 	};
 
-	const handleTileClick = (tile: Tile) => {
-		if (!isMyTurn) return;
-		const moves = isPlayable(tile);
-		if (moves.length === 0) return;
+	const handleTileClick = useCallback(
+		(tile: Tile) => {
+			if (!isMyTurn) return;
+			const moves = isPlayable(tile);
+			if (moves.length === 0) return;
 
-		if (moves.length === 1) {
-			playTile(tile, moves[0].end);
-			return;
-		}
+			if (moves.length === 1) {
+				playTile(tile, moves[0].end);
+				return;
+			}
 
-		setSelectedTile(
-			selectedTile && tilesMatch(selectedTile, tile) ? null : tile,
-		);
-	};
+			setSelectedTile((prev) =>
+				prev && tilesMatch(prev, tile) ? null : tile,
+			);
+		},
+		[isMyTurn, isPlayable, playTile],
+	);
 
 	const handleBoardEndClick = (end: "left" | "right") => {
 		const tile = dragTile || selectedTile;
@@ -689,18 +738,16 @@ function GameBoard({
 											zIndex: isSelected || isDragging ? 40 : i + 1,
 										}}
 									>
-										<DominoTile
-											left={tile.left}
-											right={tile.right}
+										<HandTile
+											tile={tile}
 											playable={playable && isMyTurn}
 											unplayable={unplayable}
 											selected={isSelected}
 											dragging={isDragging}
 											draggable={playable && isMyTurn}
-											inHand
-											onDragStart={handleDragStart(tile)}
+											onTileClick={handleTileClick}
+											onDragStart={handleDragStart}
 											onDragEnd={handleDragEnd}
-											onClick={() => handleTileClick(tile)}
 											className="animate-hand-deal"
 											style={{
 												animationDelay: `${i * 65}ms`,

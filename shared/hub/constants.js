@@ -2,7 +2,8 @@
 export const LOBBY_DISCONNECT_GRACE_MS = 30 * 60 * 1000;
 /** Legacy alias — active matches use in-room disconnect handling instead. */
 export const DISCONNECT_GRACE_MS = LOBBY_DISCONNECT_GRACE_MS;
-export const ROOM_IDLE_CLEANUP_MS = 86_400_000 * 7;
+/** Idle lobby (all disconnected) — purge room after 30 minutes without activity. */
+export const LOBBY_IDLE_PURGE_MS = 30 * 60 * 1000;
 export const TURN_TIMER_TICK_MS = 1000;
 export const DEFAULT_MIN_PLAYERS = 2;
 export const DEFAULT_MAX_PLAYERS = 4;
@@ -11,8 +12,6 @@ export const SCORE_CAP_OPTIONS = [50, 100, 150, 200];
 export const DEFAULT_HAND_SIZE = 7;
 export const ROUND_RESTART_DELAY_MS = 4000;
 export const WORD_ROUND_RESET_DELAY_MS = 6500;
-/** Secret Word matches are not ended by idle cleanup until won or host cancel. */
-export const WORD_GAME_PRESERVE_SESSION = true;
 export const WORD_GAME_MIN_PLAYERS = 2;
 export const WORD_GAME_MAX_PLAYERS = 2;
 export const WORD_POINTS_OPTIONS = [3, 5, 10];
@@ -58,8 +57,6 @@ export const DEFAULT_MATCH_SETTINGS = {
 	handSize: DEFAULT_HAND_SIZE,
 };
 
-export const WORD_CATEGORY_OPTIONS = ["custom", "lol-champions"];
-
 export const DEFAULT_WORD_GAME_SETTINGS = {
 	pointsToWin: 5,
 	wordCategory: "custom",
@@ -87,6 +84,8 @@ export const RATE_LIMITS = {
 	wordGuessed: 30,
 	wordChampionSubmit: 20,
 	baraReveal: 10,
+	baraReady: 20,
+	baraVoteEnd: 20,
 	baraVote: 20,
 	baraGuess: 30,
 	sketchDrawWordSelect: 10,

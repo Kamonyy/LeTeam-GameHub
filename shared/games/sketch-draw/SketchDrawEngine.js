@@ -2,6 +2,9 @@
  * SketchDrawEngine — authoritative drawing & guessing game state machine.
  */
 
+import { BaseGameEngine } from "../BaseGameEngine.js";
+import { shuffleArray } from "../utils/shuffle.js";
+import { getPhaseRemainingMs } from "../utils/phaseTimer.js";
 import { buildActiveWordPool, pickThreeWords } from "./wordPool.js";
 import { guessesMatchExactly, isCloseGuess, normalizeGuess } from "./guessValidation.js";
 import { drawerPoints, guesserPoints } from "./scoring.js";
@@ -16,26 +19,16 @@ const DRAW_TIMER_MAX_SEC = 600;
 const MAX_BATCHES = 2000;
 
 /**
- * @param {string[]} arr
- */
-function shuffleArray(arr) {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
-/**
  * @param {string[]} playerIds
  * @param {object} settings
  */
-export class SketchDrawEngine {
+export class SketchDrawEngine extends BaseGameEngine {
   constructor(playerIds, settings = {}) {
     if (playerIds.length < 3 || playerIds.length > 12) {
       throw new Error("Sketch Draw requires 3–12 players");
     }
+
+    super(playerIds, settings);
 
     const rounds = Number(settings.totalRounds);
     this.totalRounds =
@@ -63,13 +56,8 @@ export class SketchDrawEngine {
     if (error) throw new Error(error);
     this.activeWordPool = pool;
 
-    this.playerIds = [...playerIds];
-    this.turnOrder = shuffleArray(playerIds);
+    this.turnOrder = shuffleArray(this.playerIds);
     this.currentTurnIndex = 0;
-    this.roundNumber = 1;
-
-    /** @type {'word_select' | 'drawing' | 'round_end' | 'match_over'} */
-    this.phase = "word_select";
     this.phaseEndsAt = Date.now() + SKETCH_WORD_SELECT_MS;
 
     this.secretWord = "";
@@ -87,24 +75,20 @@ export class SketchDrawEngine {
 
     /** @type {Array<{ batchId: string, tool: string, color: string, size: number, points: number[][], strokeComplete?: boolean }>} */
     this.canvasBuffer = [];
+    /** @type {Map<string, typeof this.canvasBuffer[number]>} */
+    this.strokeMap = new Map();
     this.canvasBufferVersion = 0;
     /** @type {typeof this.canvasBuffer} */
     this.canvasRedoStack = [];
 
-    this.lastAction = null;
     this.lastRoundBreakdown = null;
     this.winnerId = null;
-    this.stateVersion = 0;
 
-    for (const id of playerIds) {
+    for (const id of this.playerIds) {
       this.scores[id] = 0;
     }
 
     this._beginWordSelect();
-  }
-
-  _bump() {
-    this.stateVersion += 1;
   }
 
   get currentDrawerId() {
@@ -125,7 +109,7 @@ export class SketchDrawEngine {
       drawerId: this.currentDrawerId,
       roundNumber: this.roundNumber,
     };
-    this._bump();
+    this._bumpStateVersion();
   }
 
   _enterDrawing(secretWord) {
@@ -140,13 +124,40 @@ export class SketchDrawEngine {
       drawerId: this.currentDrawerId,
       roundNumber: this.roundNumber,
     };
-    this._bump();
+    this._bumpStateVersion();
   }
 
   clearCanvasBuffer() {
     this.canvasBuffer = [];
+    this.strokeMap.clear();
     this.canvasRedoStack = [];
     this.canvasBufferVersion += 1;
+  }
+
+  /** @param {string} baseId */
+  _lookupStroke(baseId) {
+    const direct = this.strokeMap.get(baseId);
+    if (direct) return direct;
+    for (const batch of this.strokeMap.values()) {
+      if (
+        batch.batchId === baseId ||
+        batch.batchId.startsWith(`${baseId}-`) ||
+        baseId.startsWith(batch.batchId)
+      ) {
+        return batch;
+      }
+    }
+    return undefined;
+  }
+
+  /** @param {typeof this.canvasBuffer[number]} batch */
+  _indexStroke(batch) {
+    this.strokeMap.set(batch.batchId, batch);
+  }
+
+  /** @param {typeof this.canvasBuffer[number]} batch */
+  _unindexStroke(batch) {
+    if (batch?.batchId) this.strokeMap.delete(batch.batchId);
   }
 
   /**
@@ -231,12 +242,7 @@ export class SketchDrawEngine {
         rawId.slice(0, dash)
       : rawId;
 
-    const existing = this.canvasBuffer.find(
-      (b) =>
-        b.batchId === baseId ||
-        b.batchId.startsWith(`${baseId}-`) ||
-        baseId.startsWith(b.batchId)
-    );
+    const existing = this._lookupStroke(baseId);
 
     let stored;
     if (existing && rawId !== existing.batchId && existing.tool !== "fill") {
@@ -257,11 +263,12 @@ export class SketchDrawEngine {
         strokeComplete: baseMeta.strokeComplete,
       };
       this.canvasBuffer.push(stored);
+      this._indexStroke(stored);
     }
 
     this.canvasRedoStack = [];
     this.canvasBufferVersion += 1;
-    this._bump();
+    this._bumpStateVersion();
     return { success: true, batch: stored, batches: [stored] };
   }
 
@@ -277,9 +284,12 @@ export class SketchDrawEngine {
       return { success: false, error: "Nothing to undo" };
     }
     const removed = this.canvasBuffer.pop();
-    if (removed) this.canvasRedoStack.push(removed);
+    if (removed) {
+      this._unindexStroke(removed);
+      this.canvasRedoStack.push(removed);
+    }
     this.canvasBufferVersion += 1;
-    this._bump();
+    this._bumpStateVersion();
     return { success: true };
   }
 
@@ -296,8 +306,9 @@ export class SketchDrawEngine {
     }
     const batch = this.canvasRedoStack.pop();
     this.canvasBuffer.push(batch);
+    this._indexStroke(batch);
     this.canvasBufferVersion += 1;
-    this._bump();
+    this._bumpStateVersion();
     return { success: true, batch };
   }
 
@@ -310,7 +321,7 @@ export class SketchDrawEngine {
       return { success: false, error: "Only the drawer can clear" };
     }
     this.clearCanvasBuffer();
-    this._bump();
+    this._bumpStateVersion();
     return { success: true };
   }
 
@@ -345,9 +356,10 @@ export class SketchDrawEngine {
     };
 
     this.canvasBuffer.push(batch);
+    this._indexStroke(batch);
     this.canvasRedoStack = [];
     this.canvasBufferVersion += 1;
-    this._bump();
+    this._bumpStateVersion();
     return { success: true, batch };
   }
 
@@ -383,7 +395,7 @@ export class SketchDrawEngine {
         playerId,
         points: pts,
       };
-      this._bump();
+      this._bumpStateVersion();
 
       if (this._allGuessersSolved()) {
         this._endDrawingTurn();
@@ -439,7 +451,7 @@ export class SketchDrawEngine {
         ...this.lastRoundBreakdown,
       };
     }
-    this._bump();
+    this._bumpStateVersion();
 
     return { changed: true };
   }
@@ -481,8 +493,7 @@ export class SketchDrawEngine {
   }
 
   getPhaseTimeRemaining() {
-    if (!this.phaseEndsAt) return 0;
-    return Math.max(0, this.phaseEndsAt - Date.now());
+    return getPhaseRemainingMs(this.phaseEndsAt);
   }
 
   /**
@@ -494,19 +505,15 @@ export class SketchDrawEngine {
     const isPlayer = this.playerIds.includes(viewerId);
 
     const base = {
+      ...this.serializeBase(viewerId),
       gameType: "sketch-draw",
-      phase: this.phase,
-      stateVersion: this.stateVersion,
-      playerIds: this.playerIds,
       turnOrder: this.turnOrder,
       currentDrawerId: drawerId,
-      roundNumber: this.roundNumber,
       totalRounds: this.totalRounds,
       drawTimerSec: this.drawTimerSec,
       scores: { ...this.scores },
       phaseTimeRemaining: this.getPhaseTimeRemaining(),
       phaseEndsAt: this.phaseEndsAt,
-      lastAction: this.lastAction,
       lastRoundBreakdown: this.lastRoundBreakdown,
       winnerId: this.winnerId,
       canvasBufferVersion: this.canvasBufferVersion,

@@ -3,23 +3,31 @@
  */
 
 import { SKETCH_CATEGORY_PACKAGES } from "./word-packs.js";
+import {
+	normalizeCategoryPackageIds as normalizeCategoryPackageIdsUtil,
+	getMergedWordPool as getMergedWordPoolUtil,
+	formatCategoryNamesAr as formatCategoryNamesArUtil,
+	formatCategoryNamesEn as formatCategoryNamesEnUtil,
+	pickRandomWords as pickRandomWordsUtil,
+	getCategoryManifest as getCategoryManifestUtil,
+} from "../../utils/categoryPackages.js";
 
 export { SKETCH_CATEGORY_PACKAGES };
 
 export const SKETCH_CATEGORY_PACKAGE_IDS = SKETCH_CATEGORY_PACKAGES.map(
-  (p) => p.id,
+	(p) => p.id,
 );
 
 const PACK_BY_ID = new Map(SKETCH_CATEGORY_PACKAGES.map((p) => [p.id, p]));
 
 /** @param {string} id */
 export function getCategoryPackage(id) {
-  return PACK_BY_ID.get(id) ?? null;
+	return PACK_BY_ID.get(id) ?? null;
 }
 
 /** @param {string[]} ids */
 export function getCategoryPackages(ids) {
-  return ids.map((id) => getCategoryPackage(id)).filter(Boolean);
+	return ids.map((id) => getCategoryPackage(id)).filter(Boolean);
 }
 
 /**
@@ -27,46 +35,35 @@ export function getCategoryPackages(ids) {
  * @returns {string[]}
  */
 export function normalizeCategoryPackageIds(settings = {}) {
-  if (Array.isArray(settings.categoryPackageIds)) {
-    const raw = settings.categoryPackageIds
-      .slice(0, SKETCH_CATEGORY_PACKAGE_IDS.length)
-      .filter((id) => typeof id === "string");
-    const valid = raw.filter((id) => PACK_BY_ID.has(id));
-    if (valid.length > 0) return [...new Set(valid)];
-  }
-  if (
-    settings.categoryPackageId &&
-    SKETCH_CATEGORY_PACKAGE_IDS.includes(settings.categoryPackageId)
-  ) {
-    return [settings.categoryPackageId];
-  }
-  return ["animals"];
+	return normalizeCategoryPackageIdsUtil(
+		PACK_BY_ID,
+		SKETCH_CATEGORY_PACKAGE_IDS,
+		"animals",
+		settings,
+	);
 }
 
 /** @param {string[]} ids */
 export function getMergedWordPool(ids) {
-  const words = [];
-  for (const id of ids) {
-    const pkg = getCategoryPackage(id);
-    if (pkg) words.push(...pkg.words);
-  }
-  return [...new Set(words)];
+	return getMergedWordPoolUtil(PACK_BY_ID, ids);
 }
 
 /** @param {string[]} ids */
 export function formatCategoryNamesAr(ids) {
-  const names = getCategoryPackages(ids).map((p) => p.nameAr);
-  if (names.length === 0) return "";
-  if (names.length === 1) return names[0];
-  if (names.length === 2) return `${names[0]} و${names[1]}`;
-  return `${names.slice(0, -1).join("، ")} و${names[names.length - 1]}`;
+	return formatCategoryNamesArUtil(getCategoryPackages(ids));
 }
 
 /** @param {string[]} ids */
 export function formatCategoryNamesEn(ids) {
-  const names = getCategoryPackages(ids).map((p) => p.nameEn);
-  if (names.length === 0) return "";
-  if (names.length === 1) return names[0];
-  if (names.length === 2) return `${names[0]} & ${names[1]}`;
-  return `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}`;
+	return formatCategoryNamesEnUtil(getCategoryPackages(ids));
+}
+
+/** @param {string[]} pool @param {number} count */
+export function pickRandomWords(pool, count) {
+	return pickRandomWordsUtil(pool, count);
+}
+
+/** Lobby / UI manifest (no full word lists). */
+export function getCategoryManifest() {
+	return getCategoryManifestUtil(SKETCH_CATEGORY_PACKAGES);
 }

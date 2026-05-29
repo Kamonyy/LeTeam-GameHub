@@ -1,11 +1,15 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, type RefObject } from 'react';
 import HubArcadeBackdrop from './HubArcadeBackdrop';
 import HubParticleCanvas from './HubParticleCanvas';
 import HubCustomCursor from './HubCustomCursor';
 
-function HubArcadeShellInner() {
+type HubArcadeShellProps = {
+  hubRootRef?: RefObject<HTMLElement | null>;
+};
+
+function HubArcadeShellInner({ hubRootRef }: HubArcadeShellProps) {
   return (
     <>
       <HubArcadeBackdrop />
@@ -24,7 +28,7 @@ function HubArcadeShellInner() {
         aria-hidden
       />
       <HubParticleCanvas />
-      <HubCustomCursor />
+      <HubCustomCursor hubRootRef={hubRootRef} />
     </>
   );
 }

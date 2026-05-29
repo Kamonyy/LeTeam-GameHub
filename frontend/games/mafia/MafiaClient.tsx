@@ -10,8 +10,6 @@ import {
   UserPlus,
   OctagonX,
   Loader2,
-  Wifi,
-  WifiOff,
 } from "lucide-react";
 import {
   MafiaCard,
@@ -23,11 +21,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { MafiaButton } from "@/components/mafia/mafia-button";
-import { Badge } from "@/components/ui/badge";
-import { useSocket } from "@/hooks/useSocket";
+import { useGameRoom, useCoreSession } from "@/hooks/useSocket";
 import { useLeaveToHub } from "@/lib/hub/useLeaveToHub";
-import { suppressRoomAutoJoinRef } from "@/lib/hub/room-auto-join";
-import { setDisplayName, getDisplayName, hasDisplayName } from "@/lib/player";
+import { setDisplayName, getDisplayName } from "@/lib/player";
+import ConnectionStatus from "@/components/hub/ConnectionStatus";
 import { normalizeRoomCode } from "@/lib/hub/room";
 import PlayerNameControl from "@/components/hub/PlayerNameControl";
 import ErrorToast from "@/components/shared/ErrorToast";
@@ -58,29 +55,23 @@ import type {
 import GameLobbyPendingOverlay from "@/components/hub/GameLobbyPendingOverlay";
 import "@/games/mafia/mafia.css";
 
-function MafiaConnectionSeal({ connected }: { connected: boolean }) {
-  return (
-    <Badge
-      variant={connected ? "jade" : "rust"}
-      role="status"
-      className="gap-1.5 px-3 py-1 font-cinzel text-[0.7rem] uppercase tracking-widest max-[959px]:px-2 max-[959px]:py-1.5"
-    >
-      {connected ? (
-        <Wifi className="h-3.5 w-3.5" aria-hidden />
-      ) : (
-        <WifiOff className="h-3.5 w-3.5" aria-hidden />
-      )}
-      <span className="max-[400px]:sr-only max-[959px]:text-[0.65rem]">
-        {connected ? "Connected" : "Reconnecting"}
-      </span>
-    </Badge>
-  );
-}
-
 export default function MafiaClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const roomParam = searchParams.get("room");
+
+  const enabled = isGameActive("mafia");
+  const { isHydrated } = useCoreSession();
+  const [displayName, setDisplayNameState] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [ackBusy, setAckBusy] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const leaveToHub = useLeaveToHub();
+  const [isNarrowViewport, setIsNarrowViewport] = useState(false);
 
   const {
     connected,
@@ -91,7 +82,6 @@ export default function MafiaClient() {
     clearError,
     createRoom,
     joinRoom,
-    hardResetInFlight,
     updateRoomSettings,
     startGame,
     kickPlayer,
@@ -100,25 +90,18 @@ export default function MafiaClient() {
     mafiaNarratorAction,
     addDevBots,
     removeDevBots,
-  } = useSocket();
-
-  const [displayName, setDisplayNameState] = useState("");
-  const [joinCode, setJoinCode] = useState(roomParam || "");
-  const [loading, setLoading] = useState(false);
-  const [starting, setStarting] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
-  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
-  const [autoJoined, setAutoJoined] = useState(false);
-  const [inviteJoin, setInviteJoin] = useState(false);
-  const [actionBusy, setActionBusy] = useState(false);
-  const [ackBusy, setAckBusy] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const leaveToHub = useLeaveToHub();
-  const [isNarrowViewport, setIsNarrowViewport] = useState(false);
-
-  useEffect(() => {
-    setInviteJoin(!!roomParam && !hasDisplayName());
-  }, [roomParam]);
+    autoJoined,
+    inviteJoin,
+    joinCode,
+    setJoinCode,
+    setAutoJoined,
+  } = useGameRoom({
+    gameType: "mafia",
+    gameEnabled: enabled,
+    basePath: "/mafia",
+    roomParam,
+    onAutoJoinLoading: setLoading,
+  });
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -136,7 +119,6 @@ export default function MafiaClient() {
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  const enabled = isGameActive("mafia");
   const tcLobby = lobby?.gameType === "mafia" ? lobby : null;
   const tcState: MafiaGameState | null = useMemo(() => {
     if (
@@ -159,48 +141,6 @@ export default function MafiaClient() {
       setCancelConfirmOpen(false);
     }
   }, [tcState?.phase]);
-
-  useEffect(() => {
-    if (
-      suppressRoomAutoJoinRef.current ||
-      !enabled ||
-      !connected ||
-      hardResetInFlight ||
-      !roomParam ||
-      lobby?.gameType === "mafia" ||
-      autoJoined ||
-      inviteJoin
-    )
-      return;
-    if (lobby && lobby.gameType !== "mafia") return;
-    const code = normalizeRoomCode(roomParam);
-    if (!code) return;
-
-    let cancelled = false;
-    const attemptJoin = async () => {
-      setLoading(true);
-      const ok = await joinRoom(code, getDisplayName());
-      if (!cancelled) {
-        if (ok) router.replace(`/mafia?room=${code}`, { scroll: false });
-        setAutoJoined(true);
-        setLoading(false);
-      }
-    };
-    attemptJoin();
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    enabled,
-    connected,
-    hardResetInFlight,
-    roomParam,
-    lobby,
-    autoJoined,
-    inviteJoin,
-    joinRoom,
-    router,
-  ]);
 
   const handleCreate = async () => {
     if (!displayName.trim()) return;
@@ -282,6 +222,14 @@ export default function MafiaClient() {
       ) ?? `v-${tcState.stateVersion}`
     );
   }, [tcState]);
+
+  if (!isHydrated) {
+    return (
+      <main className="min-h-dvh relative">
+        <GameLobbyPendingOverlay message="Loading session…" />
+      </main>
+    );
+  }
 
   const gameBody = (
     <>
@@ -375,7 +323,7 @@ export default function MafiaClient() {
                 {cancelling ? "Ending…" : "End Game"}
               </MafiaButton>
             )}
-            <MafiaConnectionSeal connected={connected} />
+            <ConnectionStatus connected={connected} variant="mafia" />
             <PlayerNameControl disabled={!!inGame} theme="mafia" />
           </div>
         </div>

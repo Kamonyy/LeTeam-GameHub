@@ -27,6 +27,7 @@ export default function WordGamePlayerProfile({
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const current = getDisplayName();
@@ -47,6 +48,12 @@ export default function WordGamePlayerProfile({
     return () => document.removeEventListener('mousedown', onPointerDown);
   }, [open]);
 
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
+
   const saveName = useCallback(() => {
     const trimmed = name.trim();
     if (!trimmed) return;
@@ -54,7 +61,9 @@ export default function WordGamePlayerProfile({
     refreshDisplayName(trimmed);
     setSavedName(trimmed);
     setSaved(true);
-    setTimeout(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
       setSaved(false);
       setOpen(false);
     }, 600);

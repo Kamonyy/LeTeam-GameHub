@@ -4,16 +4,16 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Plus, LogIn, Loader2 } from 'lucide-react';
-import { useSocket } from '@/hooks/useSocket';
+import { useGameRoom, useCoreSession } from '@/hooks/useSocket';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
-import { suppressRoomAutoJoinRef } from '@/lib/hub/room-auto-join';
-import { setDisplayName, getDisplayName, hasDisplayName } from '@/lib/player';
+import { setDisplayName, getDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
 import ErrorToast from '@/components/shared/ErrorToast';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import InactiveGameScreen from '@/components/hub/InactiveGameScreen';
 import { isGameActive } from '@/lib/hub/games-registry';
 import GameLobbyPendingOverlay from '@/components/hub/GameLobbyPendingOverlay';
+import GameClientFrame from '@/components/ui/GameClientFrame';
 import SketchDrawLobby from '@/games/sketch-draw/components/SketchDrawLobby';
 import SketchDrawGameBoard from '@/games/sketch-draw/components/SketchDrawGameBoard';
 import type { SketchDrawGameState } from '@/games/sketch-draw/types';
@@ -24,13 +24,21 @@ export default function SketchDrawClient() {
   const router = useRouter();
   const roomParam = searchParams.get('room');
 
+  const gameEnabled = isGameActive('sketch-draw');
+  const { isHydrated } = useCoreSession();
+  const [displayName, setDisplayNameState] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const leaveToHub = useLeaveToHub();
+
   const {
     connected,
     playerId,
     lobby,
     gameState,
     error,
-    hardResetInFlight,
     clearError,
     createRoom,
     joinRoom,
@@ -41,23 +49,17 @@ export default function SketchDrawClient() {
     sketchDrawDisbandRoom,
     sketchDrawDisbandAt,
     requestRematch,
-  } = useSocket();
-
-  const [displayName, setDisplayNameState] = useState('');
-  const [joinCode, setJoinCode] = useState(roomParam || '');
-  const [loading, setLoading] = useState(false);
-  const [starting, setStarting] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
-  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
-  const [autoJoined, setAutoJoined] = useState(false);
-  const [inviteJoin, setInviteJoin] = useState(false);
-  const leaveToHub = useLeaveToHub();
-
-  useEffect(() => {
-    setInviteJoin(!!roomParam && !hasDisplayName());
-  }, [roomParam]);
-
-  const gameEnabled = isGameActive('sketch-draw');
+    autoJoined,
+    inviteJoin,
+    joinCode,
+    setJoinCode,
+  } = useGameRoom({
+    gameType: 'sketch-draw',
+    gameEnabled,
+    basePath: '/sketch-draw',
+    roomParam,
+    onAutoJoinLoading: setLoading,
+  });
   const sketchLobby = lobby?.gameType === 'sketch-draw' ? lobby : null;
   const sketchState: SketchDrawGameState | null =
     sketchLobby &&
@@ -77,47 +79,13 @@ export default function SketchDrawClient() {
     }
   }, [sketchDrawDisbandAt, router]);
 
-  useEffect(() => {
-    if (
-      suppressRoomAutoJoinRef.current ||
-      !gameEnabled ||
-      !connected ||
-      hardResetInFlight ||
-      !roomParam ||
-      lobby?.gameType === 'sketch-draw' ||
-      autoJoined ||
-      inviteJoin
-    )
-      return;
-    if (lobby && lobby.gameType !== 'sketch-draw') return;
-    const code = normalizeRoomCode(roomParam);
-    if (!code) return;
-
-    let cancelled = false;
-    const attemptJoin = async () => {
-      setLoading(true);
-      const ok = await joinRoom(code, getDisplayName());
-      if (!cancelled) {
-        if (ok) router.replace(`/sketch-draw?room=${code}`, { scroll: false });
-        setAutoJoined(true);
-        setLoading(false);
-      }
-    };
-    attemptJoin();
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    gameEnabled,
-    connected,
-    hardResetInFlight,
-    roomParam,
-    lobby,
-    autoJoined,
-    inviteJoin,
-    joinRoom,
-    router,
-  ]);
+  if (!isHydrated) {
+    return (
+      <main className="min-h-dvh relative sketch-arcade z-10">
+        <GameLobbyPendingOverlay message="Loading session…" />
+      </main>
+    );
+  }
 
   const handleCreate = async () => {
     const name = displayName.trim() || getDisplayName();
@@ -161,9 +129,42 @@ export default function SketchDrawClient() {
   const inLobby = sketchLobby && sketchLobby.status === 'lobby';
   const inGame = sketchLobby && sketchState && sketchLobby.status === 'playing';
   const matchOver = sketchState?.phase === 'match_over';
+  const isHost = sketchLobby?.hostId === playerId;
+
+  const roomBody = (
+    <>
+      {inLobby && (
+        <SketchDrawLobby
+          lobby={sketchLobby}
+          playerId={playerId}
+          onStartGame={handleStart}
+          onLeave={() => void leaveToHub()}
+          onSettingsChange={(s) => updateRoomSettings(s)}
+          onKickPlayer={(id) => kickPlayer(id)}
+          starting={starting}
+        />
+      )}
+
+      {inGame && sketchState && (
+        <SketchDrawGameBoard
+          lobby={sketchLobby}
+          state={sketchState}
+          playerId={playerId}
+          onLeave={() => void leaveToHub()}
+          onCancel={() => setCancelConfirmOpen(true)}
+          onReturnToLobby={() => void cancelMatch()}
+          onDisbandRoom={async () => {
+            const ok = await sketchDrawDisbandRoom();
+            if (ok) router.push('/');
+          }}
+        />
+      )}
+    </>
+  );
 
   return (
     <>
+      {!sketchLobby && (
       <main className="min-h-dvh relative sketch-arcade z-10">
         <ErrorToast message={error} onDismiss={clearError} />
 
@@ -220,39 +221,34 @@ export default function SketchDrawClient() {
           </div>
         )}
 
-        {inLobby && (
-          <SketchDrawLobby
-            lobby={sketchLobby}
-            playerId={playerId}
-            onStartGame={handleStart}
-            onLeave={() => void leaveToHub()}
-            onSettingsChange={(s) => updateRoomSettings(s)}
-            onKickPlayer={(id) => kickPlayer(id)}
-            starting={starting}
-          />
-        )}
-
-        {inGame && sketchState && (
-          <SketchDrawGameBoard
-            lobby={sketchLobby}
-            state={sketchState}
-            playerId={playerId}
-            onLeave={() => void leaveToHub()}
-            onCancel={() => setCancelConfirmOpen(true)}
-            onReturnToLobby={() => void cancelMatch()}
-            onDisbandRoom={async () => {
-              const ok = await sketchDrawDisbandRoom();
-              if (ok) router.push('/');
-            }}
-          />
-        )}
-
         {loading && !sketchLobby && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
             <GameLobbyPendingOverlay message="Connecting to room…" />
           </div>
         )}
       </main>
+      )}
+
+      {sketchLobby && (
+        <GameClientFrame
+          title="What is that"
+          subtitle="Draw and guess with friends"
+          connected={connected}
+          className="min-h-dvh relative sketch-arcade z-10"
+          headerClassName="border-hub-border/60 bg-hub-surface/30"
+          contentClassName="p-0"
+          onCancelMatch={
+            isHost && inGame && !matchOver ?
+              () => setCancelConfirmOpen(true)
+            : undefined
+          }
+          cancelMatchDisabled={cancelling}
+          cancelMatchLabel={cancelling ? 'Ending…' : 'End match'}
+        >
+          <ErrorToast message={error} onDismiss={clearError} />
+          {roomBody}
+        </GameClientFrame>
+      )}
 
       <ConfirmDialog
         open={cancelConfirmOpen}

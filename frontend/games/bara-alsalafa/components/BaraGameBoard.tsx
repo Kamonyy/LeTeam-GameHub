@@ -1,331 +1,452 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import clsx from 'clsx';
-import { Target, SkipForward } from 'lucide-react';
-import {
-  BARA_DEFEND_MS,
-  BARA_INTERROGATION_MS,
-} from '@shared/games/bara-alsalafa/timing.js';
-import type { BaraGameState } from '@/games/bara-alsalafa/types';
-import type { LobbyState } from '@/lib/hub/types';
-import PlayerGrid from './PlayerGrid';
-import RevealCard from './RevealCard';
-import CountdownRing from './CountdownRing';
+import { useRef, useState } from "react";
+import clsx from "clsx";
+import { SkipForward, CheckCircle2, Vote } from "lucide-react";
+import { BARA_INTERROGATION_MS } from "@shared/games/bara-alsalafa/timing.js";
+import type { BaraGameState } from "@/games/bara-alsalafa/types";
+import type { LobbyState } from "@/lib/hub/types";
+import PlayerGrid from "./PlayerGrid";
+import RevealCard from "./RevealCard";
+import BaraRoleBanner from "./BaraRoleBanner";
+import CountdownRing from "./CountdownRing";
+import InterrogationDuelHero from "./InterrogationDuelHero";
+import BaraVotingPanel from "./BaraVotingPanel";
+import OutcastGuessPanel from "./OutcastGuessPanel";
 
 interface BaraGameBoardProps {
-  gameState: BaraGameState;
-  lobby: LobbyState;
-  playerId: string;
-  isHost: boolean;
-  onReveal: () => Promise<boolean>;
-  onAdvanceInterrogation: () => Promise<boolean>;
-  onVote: (targetId: string) => Promise<boolean>;
-  onGuess: (guess: string) => Promise<boolean>;
+	gameState: BaraGameState;
+	lobby: LobbyState;
+	playerId: string;
+	isHost: boolean;
+	onReveal: () => Promise<boolean>;
+	onReady: () => Promise<boolean>;
+	onAdvanceInterrogation: () => Promise<boolean>;
+	onRequestVoteEnd: () => Promise<boolean>;
+	onVote: (targetId: string) => Promise<boolean>;
+	onGuess: (guess: string) => Promise<boolean>;
 }
 
 function displayName(lobby: LobbyState, id: string) {
-  return lobby.players.find((p) => p.id === id)?.displayName ?? 'لاعب';
+	return lobby.players.find((p) => p.id === id)?.displayName ?? "لاعب";
 }
 
 const PHASE_LABELS: Record<string, string> = {
-  reveal: 'كشف الأدوار',
-  interrogation: 'استجواب',
-  defend: 'دفاع سريع',
-  voting: 'تصويت',
-  revote: 'إعادة تصويت',
-  outcast_guess: 'تخمين برا السالفة',
-  round_end: 'نهاية الجولة',
-  match_over: 'نهاية المباراة',
+	reveal: "كشف الأدوار",
+	ready: "استعداد",
+	interrogation: "استجواب",
+	defend: "كسر التعادل",
+	voting: "تصويت",
+	revote: "إعادة تصويت",
+	outcast_guess: "تخمين برا السالفة",
+	round_end: "نهاية الجولة",
+	match_over: "نهاية المباراة",
 };
 
+const ROLE_PLAY_PHASES = new Set([
+	"ready",
+	"interrogation",
+	"voting",
+	"defend",
+	"revote",
+]);
+
 export default function BaraGameBoard({
-  gameState,
-  lobby,
-  playerId,
-  onReveal,
-  onAdvanceInterrogation,
-  onVote,
-  onGuess,
+	gameState,
+	lobby,
+	playerId,
+	onReveal,
+	onReady,
+	onAdvanceInterrogation,
+	onRequestVoteEnd,
+	onVote,
+	onGuess,
 }: BaraGameBoardProps) {
-  const [revealing, setRevealing] = useState(false);
-  const [guessInput, setGuessInput] = useState('');
-  const [submittingGuess, setSubmittingGuess] = useState(false);
+	const [revealing, setRevealing] = useState(false);
+	const [readying, setReadying] = useState(false);
+	const [requestingVote, setRequestingVote] = useState(false);
+	const boardRef = useRef<HTMLDivElement>(null);
 
-  const phase = gameState.phase;
-  const isCalm =
-    phase === 'reveal' || phase === 'interrogation' || phase === 'defend';
-  const isIntense =
-    phase === 'voting' ||
-    phase === 'revote' ||
-    phase === 'outcast_guess' ||
-    (phase === 'round_end' && gameState.roundOutcome?.type === 'wrong_accusation');
+	const phase = gameState.phase;
+	const isTiebreak = phase === "interrogation" && gameState.isTiebreak;
+	const isCalm =
+		phase === "reveal" ||
+		phase === "ready" ||
+		(phase === "interrogation" && !isTiebreak);
+	const isIntense =
+		phase === "voting" ||
+		phase === "revote" ||
+		phase === "outcast_guess" ||
+		(phase === "round_end" &&
+			gameState.roundOutcome?.type === "wrong_accusation");
 
-  const votingActive = phase === 'voting' || phase === 'revote';
-  const spotlightId =
-    phase === 'outcast_guess' || phase === 'round_end' ?
-      (gameState.eliminatedThisRound ?? gameState.outcastId)
-    : null;
+	const votingActive = phase === "voting" || phase === "revote";
+	const spotlightId =
+		phase === "outcast_guess" || phase === "round_end" ?
+			(gameState.eliminatedThisRound ?? gameState.outcastId)
+		:	null;
 
-  const handleReveal = async () => {
-    setRevealing(true);
-    await onReveal();
-    setRevealing(false);
-  };
+	const showCategory =
+		phase === "reveal" || phase === "round_end" || phase === "match_over";
+	const showRoleBanner = ROLE_PLAY_PHASES.has(phase) && !!gameState.roleView;
 
-  const handleGuess = async () => {
-    if (!guessInput.trim()) return;
-    setSubmittingGuess(true);
-    await onGuess(guessInput.trim());
-    setSubmittingGuess(false);
-  };
+	const handleReveal = async () => {
+		setRevealing(true);
+		await onReveal();
+		setRevealing(false);
+	};
 
-  const interviewerName =
-    gameState.currentInterviewerId ?
-      displayName(lobby, gameState.currentInterviewerId)
-    : null;
-  const targetName =
-    gameState.currentTargetId ?
-      displayName(lobby, gameState.currentTargetId)
-    : null;
+	const handleReady = async () => {
+		setReadying(true);
+		await onReady();
+		setReadying(false);
+	};
 
-  const isReveal = phase === 'reveal';
+	const handleRequestVoteEnd = async () => {
+		setRequestingVote(true);
+		await onRequestVoteEnd();
+		setRequestingVote(false);
+	};
 
-  return (
-    <div
-      className={clsx(
-        'bara-board',
-        isReveal && 'bara-board--reveal',
-        isCalm && 'bara-board--calm',
-        isIntense && 'bara-board--intense',
-        phase === 'round_end' &&
-          gameState.roundOutcome?.type === 'outcast_stole_win' &&
-          'animate-bara-shake'
-      )}
-      dir="rtl"
-    >
-      <header className="bara-board__head">
-        <div className="bara-board__meta">
-          <span className="bara-board__round">الجولة {gameState.roundNumber}</span>
-          <span className="bara-board__dot" aria-hidden />
-          <span className="bara-board__phase">{PHASE_LABELS[phase] ?? phase}</span>
-        </div>
-        <p className="bara-board__category">
-          فئة الجولة: <strong>{gameState.categoryName}</strong>
-        </p>
-        {gameState.selectedCategoryCount > 1 && (
-          <p className="bara-board__categories-extra">
-            الفئات المفعّلة ({gameState.selectedCategoryCount}):{' '}
-            {gameState.categoryNamesSummary}
-          </p>
-        )}
-      </header>
+	const isReveal = phase === "reveal";
+	const isInterrogation = phase === "interrogation";
+	const phaseLabel =
+		isTiebreak ? "كسر التعادل" : (PHASE_LABELS[phase] ?? "مرحلة غير معروفة");
+	const tiedNames = gameState.tiedPlayerIds
+		.map((id) => displayName(lobby, id))
+		.join(" · ");
+	const duelParticipantIds =
+		(
+			isInterrogation &&
+			gameState.currentInterviewerId &&
+			gameState.currentTargetId
+		) ?
+			[gameState.currentInterviewerId, gameState.currentTargetId]
+		:	[];
+	const isReady = phase === "ready";
 
-      {phase === 'interrogation' && interviewerName && targetName && (
-        <div className="bara-interrogation-hero" role="status">
-          <span className="bara-interrogation-hero__who">{interviewerName}</span>
-          <span className="bara-interrogation-hero__arrow" aria-hidden>
-            ←
-          </span>
-          <span className="bara-interrogation-hero__who bara-interrogation-hero__who--target">
-            {targetName}
-          </span>
-          {gameState.currentInterviewerId === playerId && (
-            <span className="bara-interrogation-hero__you">دورك للسؤال</span>
-          )}
-        </div>
-      )}
+	return (
+		<div
+			ref={boardRef}
+			className={clsx(
+				"bara-board",
+				isReveal && "bara-board--reveal",
+				isCalm && "bara-board--calm",
+				isIntense && "bara-board--intense",
+				votingActive && "bara-board--voting",
+				isInterrogation && "bara-board--interrogation",
+				isTiebreak && "bara-board--tiebreak",
+				phase === "round_end" &&
+					gameState.roundOutcome?.type === "outcast_stole_win" &&
+					"animate-bara-shake",
+			)}
+			dir="rtl"
+		>
+			<header className="bara-board__head">
+				<div className="bara-board__meta">
+					<span className="bara-board__round">
+						الجولة {gameState.roundNumber}
+					</span>
+					<span className="bara-board__dot" aria-hidden />
+					<span className="bara-board__phase">{phaseLabel}</span>
+				</div>
+				{showCategory && gameState.categoryName && (
+					<p className="bara-board__category">
+						فئة الجولة: <strong>{gameState.categoryName}</strong>
+					</p>
+				)}
+				{showCategory && gameState.selectedCategoryCount > 1 && (
+					<p className="bara-board__categories-extra">
+						الفئات المفعّلة ({gameState.selectedCategoryCount}):{" "}
+						{gameState.categoryNamesSummary}
+					</p>
+				)}
+			</header>
 
-      {phase === 'defend' && (
-        <p className="bara-phase-callout bara-phase-callout--warn">
-          دفاع سريع بين المتعادلين:{' '}
-          {gameState.tiedPlayerIds.map((id) => displayName(lobby, id)).join(' · ')}
-        </p>
-      )}
+			{showRoleBanner && (
+				<BaraRoleBanner gameState={gameState} compact={phase !== "ready"} />
+			)}
 
-      {votingActive && (
-        <div className="bara-phase-callout bara-phase-callout--vote">
-          <Target className="w-5 h-5 shrink-0" aria-hidden />
-          <div>
-            <p className="font-semibold">صوّت سراً — اختر من تشتبه به</p>
-            <p className="text-xs opacity-80 tabular-nums">
-              {gameState.votesCast} / {gameState.votesExpected} أصوات
-            </p>
-          </div>
-        </div>
-      )}
+			{isInterrogation &&
+				gameState.currentInterviewerId &&
+				gameState.currentTargetId && (
+					<InterrogationDuelHero
+						gameState={gameState}
+						lobby={lobby}
+						playerId={playerId}
+						boardRef={boardRef}
+					/>
+				)}
 
-      <div
-        className={clsx(
-          'bara-board__main',
-          isReveal && 'bara-board__main--reveal'
-        )}
-      >
-        <section className="bara-board__stage" aria-label="منطقة اللعب">
-          {isReveal && (
-            <RevealCard
-              gameState={gameState}
-              onReveal={() => void handleReveal()}
-              revealing={revealing}
-            />
-          )}
+			{isTiebreak && (
+				<p className="bara-phase-callout bara-phase-callout--warn">
+					تعادل في التصويت — سؤال واحد لكل متعادل ({gameState.tiebreakStep}/
+					{gameState.tiebreakTotal}): <strong>{tiedNames}</strong>
+				</p>
+			)}
 
-          {phase === 'interrogation' && (
-            <div className="bara-stage-panel">
-              <CountdownRing
-                phaseEndsAt={gameState.phaseEndsAt}
-                totalMs={BARA_INTERROGATION_MS}
-                label="وقت السؤال (١:٣٠)"
-              />
-              {gameState.canAdvanceInterrogation && (
-                <button
-                  type="button"
-                  onClick={() => void onAdvanceInterrogation()}
-                  className="bara-btn-secondary bara-skip-btn"
-                >
-                  <SkipForward className="w-4 h-4" aria-hidden />
-                  تخطي السؤال
-                </button>
-              )}
-            </div>
-          )}
+			<div
+				className={clsx(
+					"bara-board__main",
+					(isReveal || isReady) && "bara-board__main--reveal",
+					votingActive && "bara-board__main--voting",
+				)}
+			>
+				<section className="bara-board__stage" aria-label="منطقة اللعب">
+					{votingActive && (
+						<BaraVotingPanel
+							gameState={gameState}
+							playerId={playerId}
+							canVote={gameState.canVote}
+							tiedDisplayNames={tiedNames}
+						/>
+					)}
+					{isReveal && (
+						<RevealCard
+							gameState={gameState}
+							onReveal={() => void handleReveal()}
+							revealing={revealing}
+						/>
+					)}
 
-          {phase === 'defend' && (
-            <div className="bara-stage-panel">
-              <CountdownRing
-                phaseEndsAt={gameState.phaseEndsAt}
-                totalMs={BARA_DEFEND_MS}
-                label="وقت الدفاع"
-              />
-            </div>
-          )}
+					{isReady && (
+						<div className="bara-ready-panel">
+							<p className="bara-ready-panel__hint">
+								راجع بطاقتك — عندما يجهز الجميع تبدأ الأسئلة
+							</p>
+							{gameState.canReady && (
+								<button
+									type="button"
+									onClick={() => void handleReady()}
+									disabled={readying}
+									className="bara-btn-primary bara-ready-panel__btn"
+								>
+									<CheckCircle2 className="w-5 h-5" aria-hidden />
+									{readying ? "جاري التأكيد…" : "جاهز"}
+								</button>
+							)}
+							{!gameState.canReady && (
+								<p className="bara-ready-panel__wait tabular-nums">
+									{gameState.readyCount} / {gameState.readyExpected} جاهزين
+								</p>
+							)}
+						</div>
+					)}
 
-          {phase === 'outcast_guess' && gameState.canGuess && (
-            <div className="bara-guess-panel">
-              <h3 className="bara-guess-panel__title">
-                كُشفت! خمّن الكلمة السرية لتسرق الفوز
-              </h3>
-              <input
-                type="text"
-                value={guessInput}
-                onChange={(e) => setGuessInput(e.target.value)}
-                className="bara-input bara-guess-panel__input"
-                placeholder="اكتب تخمينك"
-                dir="rtl"
-                autoFocus
-              />
-              <button
-                type="button"
-                onClick={() => void handleGuess()}
-                disabled={submittingGuess || !guessInput.trim()}
-                className="bara-btn-primary w-full"
-              >
-                {submittingGuess ? 'جاري الإرسال…' : 'أرسل التخمين'}
-              </button>
-            </div>
-          )}
+					{phase === "interrogation" && (
+						<div className="bara-stage-panel">
+							<CountdownRing
+								phaseEndsAt={gameState.phaseEndsAt}
+								totalMs={BARA_INTERROGATION_MS}
+								label={
+									isTiebreak ?
+										`سؤال كسر التعادل (${gameState.tiebreakStep}/${gameState.tiebreakTotal})`
+									:	"وقت السؤال (١:٣٠)"
+								}
+							/>
+							{gameState.canAdvanceInterrogation && (
+								<button
+									type="button"
+									onClick={() => void onAdvanceInterrogation()}
+									className="bara-btn-secondary bara-skip-btn"
+								>
+									<SkipForward className="w-4 h-4" aria-hidden />
+									تخطي السؤال
+								</button>
+							)}
+						</div>
+					)}
 
-          {phase === 'round_end' && gameState.roundOutcome && (
-            <RoundOutcomePanel gameState={gameState} lobby={lobby} />
-          )}
+					{phase === "outcast_guess" && gameState.canGuess && (
+						<OutcastGuessPanel gameState={gameState} onGuess={onGuess} />
+					)}
 
-          {phase === 'match_over' && (
-            <div className="bara-outcome-card bara-outcome-card--win">
-              <p className="bara-outcome-card__title">انتهت المباراة!</p>
-              {gameState.winnerId && (
-                <p className="bara-outcome-card__body">
-                  الفائز:{' '}
-                  <strong>{displayName(lobby, gameState.winnerId)}</strong>
-                </p>
-              )}
-              <p className="bara-outcome-card__hint">
-                الكلمة كانت: {gameState.revealedSecretWord}
-              </p>
-            </div>
-          )}
-        </section>
+					{phase === "outcast_guess" && !gameState.canGuess && (
+						<div className="bara-outcast-wait">
+							<p className="bara-outcast-wait__title">
+								برا السالفة يخمّن الآن…
+							</p>
+							<p className="bara-outcast-wait__hint">
+								انتظر حتى يختار من بين الخيارات
+							</p>
+						</div>
+					)}
 
-        <section className="bara-board__seats" aria-label="اللاعبون">
-          {isReveal && (
-            <h2 className="bara-board__seats-label">حالة الكشف</h2>
-          )}
-          <PlayerGrid
-            gameState={gameState}
-            players={lobby.players}
-            playerId={playerId}
-            votingActive={votingActive}
-            spotlightId={spotlightId}
-            compact={isReveal}
-            onVote={(id) => void onVote(id)}
-          />
-        </section>
-      </div>
+					{phase === "round_end" && gameState.roundOutcome && (
+						<RoundOutcomePanel gameState={gameState} lobby={lobby} />
+					)}
+				</section>
 
-      <footer className="bara-board__scores">
-        {Object.entries(gameState.scores).map(([id, score]) => (
-          <span
-            key={id}
-            className={clsx(
-              'bara-score-chip',
-              id === playerId && 'bara-score-chip--me'
-            )}
-          >
-            <span className="bara-score-chip__name">{displayName(lobby, id)}</span>
-            <span className="bara-score-chip__pts">{score}</span>
-          </span>
-        ))}
-      </footer>
-    </div>
-  );
+				<section
+					className={clsx(
+						"bara-board__seats",
+						votingActive && "bara-board__seats--voting",
+					)}
+					aria-label="اللاعبون"
+				>
+					{votingActive && (
+						<h2 className="bara-board__seats-label bara-board__seats-label--vote">
+							اختر لاعباً
+						</h2>
+					)}
+					{(isReveal || isReady) && !votingActive && (
+						<h2 className="bara-board__seats-label">
+							{isReady ? "حالة الاستعداد" : "حالة الكشف"}
+						</h2>
+					)}
+					<PlayerGrid
+						gameState={gameState}
+						players={lobby.players}
+						playerId={playerId}
+						votingActive={votingActive}
+						spotlightId={spotlightId}
+						compact={isReveal || isReady}
+						duelParticipantIds={duelParticipantIds}
+						onVote={(id) => void onVote(id)}
+					/>
+				</section>
+			</div>
+
+			<div
+				className={clsx(
+					"bara-board__footer",
+					phase === "interrogation" && "bara-board__footer--vote-dock",
+				)}
+			>
+				{phase === "interrogation" && !gameState.isTiebreak && (
+					<div className="bara-vote-end-bar">
+						<button
+							type="button"
+							onClick={() => void handleRequestVoteEnd()}
+							disabled={!gameState.canRequestVoteEnd || requestingVote}
+							className="bara-btn-vote-end"
+						>
+							<Vote className="w-4 h-4 shrink-0" aria-hidden />
+							{requestingVote ? "جاري الطلب…" : "صوّت على لاعب"}
+						</button>
+						<p className="bara-vote-end-bar__meta tabular-nums">
+							{gameState.voteEndCount} / {gameState.voteEndExpected} طلبوا
+							التصويت
+						</p>
+					</div>
+				)}
+
+				<footer className="bara-board__scores">
+					<div className="bara-team-score" aria-label="فوز الجولات">
+						<span className="bara-team-score__side bara-team-score__side--in">
+							الداخلون{" "}
+							<strong className="tabular-nums">
+								{gameState.insiderRoundWins}/{gameState.roundsToWin}
+							</strong>
+						</span>
+						<span className="bara-team-score__vs" aria-hidden>
+							·
+						</span>
+						<span className="bara-team-score__side bara-team-score__side--out">
+							برا السالفة{" "}
+							<strong className="tabular-nums">
+								{gameState.outcastRoundWins}/{gameState.roundsToWin}
+							</strong>
+						</span>
+					</div>
+					<div className="bara-board__scores-row">
+						{Object.entries(gameState.scores).map(([id, score]) => (
+							<span
+								key={id}
+								className={clsx(
+									"bara-score-chip",
+									id === playerId && "bara-score-chip--me",
+									id === gameState.outcastId && "bara-score-chip--outcast-role",
+								)}
+							>
+								<span className="bara-score-chip__name">
+									{displayName(lobby, id)}
+								</span>
+								<span className="bara-score-chip__pts tabular-nums">
+									{score} نقطة
+								</span>
+							</span>
+						))}
+					</div>
+				</footer>
+			</div>
+		</div>
+	);
 }
 
 function RoundOutcomePanel({
-  gameState,
-  lobby,
+	gameState,
+	lobby,
 }: {
-  gameState: BaraGameState;
-  lobby: LobbyState;
+	gameState: BaraGameState;
+	lobby: LobbyState;
 }) {
-  const outcome = gameState.roundOutcome!;
-  const name = (id: string) =>
-    lobby.players.find((p) => p.id === id)?.displayName ?? 'لاعب';
+	const outcome = gameState.roundOutcome!;
+	const name = (id: string) =>
+		lobby.players.find((p) => p.id === id)?.displayName ?? "لاعب";
 
-  if (outcome.type === 'wrong_accusation') {
-    return (
-      <div className="bara-outcome-card bara-outcome-card--danger animate-bara-shake">
-        <p className="bara-outcome-card__title">وقع الاختيار على شخص خطأ!</p>
-        <p className="bara-outcome-card__body">
-          {outcome.eliminatedId && name(outcome.eliminatedId)} كان من الداخلين
-        </p>
-        <p className="bara-outcome-card__hint">
-          نقاط لـ {gameState.outcastId && name(gameState.outcastId)} (برا السالفة)
-        </p>
-        {gameState.revealedSecretWord && (
-          <p className="bara-outcome-card__word">الكلمة: {gameState.revealedSecretWord}</p>
-        )}
-      </div>
-    );
-  }
+	if (outcome.type === "wrong_accusation") {
+		return (
+			<div className="bara-outcome-card bara-outcome-card--danger animate-bara-shake">
+				<p className="bara-outcome-card__title">وقع الاختيار على شخص خطأ!</p>
+				<p className="bara-outcome-card__body">
+					{outcome.eliminatedId && name(outcome.eliminatedId)} كان من الداخلين
+				</p>
+				<p className="bara-outcome-card__hint">
+					+٢ نقاط لـ {gameState.outcastId && name(gameState.outcastId)} · فوز
+					جولة لبرا السالفة ({gameState.outcastRoundWins}/
+					{gameState.roundsToWin})
+				</p>
+				{gameState.revealedSecretWord && (
+					<p className="bara-outcome-card__word">
+						الكلمة: {gameState.revealedSecretWord}
+					</p>
+				)}
+			</div>
+		);
+	}
 
-  if (outcome.type === 'outcast_stole_win') {
-    return (
-      <div className="bara-outcome-card bara-outcome-card--gold animate-bara-explosion">
-        <p className="bara-outcome-card__title">سرق برا السالفة الفوز!</p>
-        <p className="bara-outcome-card__hint">التخمين: {outcome.guess}</p>
-      </div>
-    );
-  }
+	if (outcome.type === "outcast_stole_win") {
+		const matchContinues =
+			gameState.insiderRoundWins < gameState.roundsToWin &&
+			gameState.outcastRoundWins < gameState.roundsToWin;
+		return (
+			<div className="bara-outcome-card bara-outcome-card--gold animate-bara-explosion">
+				<p className="bara-outcome-card__title">سرق برا السالفة الفوز!</p>
+				<p className="bara-outcome-card__hint">التخمين: {outcome.guess}</p>
+				<p className="bara-outcome-card__body">
+					+٢ نقاط لبرا السالفة · فوز جولة ({gameState.outcastRoundWins}/
+					{gameState.roundsToWin} لصالح برا السالفة)
+				</p>
+				<p className="bara-outcome-card__hint">
+					{matchContinues ?
+						"المباراة تستمر — أول فريق يصل للحد يفوز"
+					:	"انتهت المباراة!"}
+				</p>
+			</div>
+		);
+	}
 
-  if (outcome.type === 'insiders_win') {
-    return (
-      <div className="bara-outcome-card bara-outcome-card--success">
-        <p className="bara-outcome-card__title">فوز الداخلين!</p>
-        <p className="bara-outcome-card__hint">
-          الكلمة: {outcome.secretWord ?? gameState.revealedSecretWord}
-        </p>
-      </div>
-    );
-  }
+	if (outcome.type === "insiders_win") {
+		const matchContinues =
+			gameState.insiderRoundWins < gameState.roundsToWin &&
+			gameState.outcastRoundWins < gameState.roundsToWin;
+		return (
+			<div className="bara-outcome-card bara-outcome-card--success">
+				<p className="bara-outcome-card__title">فوز الداخلين!</p>
+				<p className="bara-outcome-card__hint">
+					الكلمة: {outcome.secretWord ?? gameState.revealedSecretWord}
+				</p>
+				<p className="bara-outcome-card__body">
+					+١ نقطة لكل داخلين · فوز جولة ({gameState.insiderRoundWins}/
+					{gameState.roundsToWin} للداخلين)
+				</p>
+				<p className="bara-outcome-card__hint">
+					{matchContinues ? "المباراة تستمر" : "انتهت المباراة!"}
+				</p>
+			</div>
+		);
+	}
 
-  return null;
+	return null;
 }

@@ -267,11 +267,21 @@ export default function WordGameBoard({
               wordCategory={wordCategory}
               myChosenWord={gameState.myChosenWord}
               myChosenChampionId={gameState.myChosenChampionId}
+              opponentChosenWord={gameState.opponentChosenWord}
+              opponentChosenChampionId={gameState.opponentChosenChampionId}
               revealedWord={gameState.revealedWord}
               revealedChampionId={gameState.revealedChampionId}
               phase={gameState.phase}
               opponentName={opponentName}
               guesserName={guesserName}
+              playerId={playerId}
+              playerIds={gameState.playerIds}
+              guesserPlayerId={gameState.lastGuesserId}
+              assignerPlayerId={
+                gameState.lastAction?.type === 'word_guessed' ?
+                  gameState.lastAction.creatorId ?? null
+                : null
+              }
               canConfirmGuessed={gameState.canConfirmGuessed}
               onConfirmGuessed={onConfirmGuessed}
             />
@@ -303,6 +313,21 @@ export default function WordGameBoard({
           wordCategory={wordCategory}
           revealedWord={gameState.revealedWord}
           revealedChampionId={gameState.revealedChampionId}
+          myChosenWord={gameState.myChosenWord}
+          myChosenChampionId={gameState.myChosenChampionId}
+          opponentChosenWord={gameState.opponentChosenWord}
+          opponentChosenChampionId={gameState.opponentChosenChampionId}
+          opponentName={opponentName}
+          guesserPlayerId={gameState.lastGuesserId}
+          assignerPlayerId={
+            gameState.lastAction?.type === 'word_guessed' ?
+              gameState.lastAction.creatorId ?? null
+            : gameState.lastAction?.type === 'match_won' ?
+              gameState.playerIds.find(
+                (id) => id !== gameState.lastAction?.guesserId
+              ) ?? null
+            : null
+          }
           winnerName={winnerName!}
           winnerId={gameState.winnerId}
           myPlayerId={playerId}

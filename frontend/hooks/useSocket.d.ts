@@ -61,7 +61,8 @@ export interface UseSocketReturn {
   gameState: HubGameState | null;
   isSpectator: boolean;
   error: string | null;
-  /** True while كموني ساعندي is clearing lobby/game state (suppresses join errors). */
+  /** Short-lived rate-limit / protocol warnings (auto-cleared). */
+  transientWarning: string | null;
   hardResetInFlight: boolean;
   hubPresence: HubPresenceState;
   chatMessages: ChatMessage[];
@@ -94,6 +95,7 @@ export interface UseSocketReturn {
   startGame: () => Promise<boolean>;
   kickPlayer: (targetPlayerId: string) => Promise<boolean>;
   cancelMatch: () => Promise<boolean>;
+  disbandRoom: () => Promise<boolean>;
   playMove: (tile: Tile, end: 'left' | 'right') => void;
   drawTile: () => void;
   passTurn: () => void;
@@ -104,9 +106,12 @@ export interface UseSocketReturn {
   confirmWordGuessed: () => Promise<boolean>;
   reportWordTabFocus: (focused: boolean) => void;
   baraReveal: () => Promise<boolean>;
+  baraReady: () => Promise<boolean>;
   baraAdvanceInterrogation: () => Promise<boolean>;
+  baraRequestVoteEnd: () => Promise<boolean>;
   baraVote: (targetPlayerId: string) => Promise<boolean>;
   baraGuess: (guess: string) => Promise<boolean>;
+  baraOutcastFreeGuess: () => Promise<boolean>;
   sketchDrawSelectWord: (index: number) => Promise<boolean>;
   sketchDrawStrokeBatch: (batch: SketchStrokeBatch & { strokeComplete?: boolean }) => void;
   sketchDrawCanvasUndo: () => Promise<boolean>;
@@ -240,3 +245,8 @@ export interface UseHubLiveReturn {
 }
 
 export function useHubLive(): UseHubLiveReturn;
+
+export { useGameRoom } from '@/hooks/useGameRoom';
+export type { UseGameRoomOptions, UseGameRoomReturn } from '@/hooks/useGameRoom';
+export { useBrowserStorage } from '@/hooks/useBrowserStorage';
+export { useCoreSession } from '@/hooks/useCoreSession';

@@ -168,6 +168,7 @@ export function SocketProvider({ children }) {
   const [lobby, setLobby] = useState(null);
   const [gameState, setGameState] = useState(null);
   const [error, setErrorRaw] = useState(null);
+  const [transientWarning, setTransientWarning] = useState(null);
   const [hubPresence, setHubPresence] = useState({ total: 0, players: [] });
   const [chatMessages, setChatMessages] = useState([]);
   const [isSpectator, setIsSpectator] = useState(false);
@@ -360,6 +361,14 @@ export function SocketProvider({ children }) {
         setGameState(null);
         setWordGuessedCelebration(null);
       });
+      socket.on('room:disband', (payload) => {
+        setLobby(null);
+        setGameState(null);
+        setWordGuessedCelebration(null);
+        socketDispatchRegistry.setGameTimerTick?.(null);
+        socketDispatchRegistry.clearSketchStreams?.();
+        if (payload?.message) setError(payload.message);
+      });
       socket.on('word:guessed:celebration', (payload) => {
         if (!payload || typeof payload !== 'object') return;
         setWordGuessedCelebration({
@@ -396,6 +405,25 @@ export function SocketProvider({ children }) {
         setWordGuessedCelebration(null);
         setIsSpectator(false);
         setError(payload?.message || 'You were removed from the room');
+      });
+      socket.on('protocol:error', (payload) => {
+        if (!payload || typeof payload !== 'object') return;
+        if (payload.code === 'SESSION_INVALID') {
+          registerPlayer(socket, playerIdRef.current).then((ok) => {
+            if (!ok) setError(payload.message || 'Session expired');
+          });
+          return;
+        }
+        if (payload.code === 'RATE_LIMIT') {
+          const msg = payload.message || 'Too many requests, slow down';
+          setTransientWarning(msg);
+          window.setTimeout(() => {
+            setTransientWarning((prev) => (prev === msg ? null : prev));
+          }, 4000);
+          return;
+        }
+        if (payload.code === 'VALIDATION') return;
+        if (payload.message) setError(payload.message);
       });
       socket.on('game:error', (err) => {
         const message =
@@ -861,6 +889,21 @@ export function SocketProvider({ children }) {
     });
   }, []);
 
+  const disbandRoom = useCallback(() => {
+    return new Promise((resolve) => {
+      socketRef.current?.emit('room:disband', {}, (res) => {
+        if (res?.error) {
+          setError(res.error);
+          resolve(false);
+        } else {
+          setLobby(null);
+          setGameState(null);
+          resolve(true);
+        }
+      });
+    });
+  }, []);
+
   const playMove = useCallback((tile, end) => {
     socketRef.current?.emit('game:move:request', { tile, end });
   }, []);
@@ -1102,6 +1145,28 @@ export function SocketProvider({ children }) {
     });
   }, [ensureRegistered]);
 
+  const baraReady = useCallback(() => {
+    return new Promise((resolve) => {
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve(false);
+          return;
+        }
+        socket.emit('bara:ready', {}, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve(false);
+          } else {
+            if (res?.state) setGameState(res.state);
+            resolve(true);
+          }
+        });
+      })();
+    });
+  }, [ensureRegistered]);
+
   const baraAdvanceInterrogation = useCallback(() => {
     return new Promise((resolve) => {
       (async () => {
@@ -1116,6 +1181,28 @@ export function SocketProvider({ children }) {
             setError(res.error);
             resolve(false);
           } else {
+            resolve(true);
+          }
+        });
+      })();
+    });
+  }, [ensureRegistered]);
+
+  const baraRequestVoteEnd = useCallback(() => {
+    return new Promise((resolve) => {
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve(false);
+          return;
+        }
+        socket.emit('bara:vote:end', {}, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve(false);
+          } else {
+            if (res?.state) setGameState(res.state);
             resolve(true);
           }
         });
@@ -1325,6 +1412,28 @@ export function SocketProvider({ children }) {
     });
   }, [ensureRegistered]);
 
+  const baraOutcastFreeGuess = useCallback(() => {
+    return new Promise((resolve) => {
+      (async () => {
+        await ensureRegistered();
+        const socket = socketRef.current;
+        if (!socket?.connected) {
+          resolve(false);
+          return;
+        }
+        socket.emit('bara:outcast:free-guess', {}, (res) => {
+          if (res?.error) {
+            setError(res.error);
+            resolve(false);
+          } else {
+            if (res?.state) setGameState(res.state);
+            resolve(true);
+          }
+        });
+      })();
+    });
+  }, [ensureRegistered]);
+
   const registerSocketListener = useCallback((event, handler) => {
     const socket = socketRef.current;
     if (!socket) return () => {};
@@ -1377,6 +1486,7 @@ export function SocketProvider({ children }) {
     startGame,
     kickPlayer,
     cancelMatch,
+    disbandRoom,
     playMove,
     drawTile,
     passTurn,
@@ -1387,9 +1497,12 @@ export function SocketProvider({ children }) {
     confirmWordGuessed,
     reportWordTabFocus,
     baraReveal,
+    baraReady,
     baraAdvanceInterrogation,
+    baraRequestVoteEnd,
     baraVote,
     baraGuess,
+    baraOutcastFreeGuess,
     sketchDrawSelectWord,
     sketchDrawSubmitGuess,
     sketchDrawDisbandRoom,
@@ -1410,9 +1523,10 @@ export function SocketProvider({ children }) {
       connected,
       playerId,
       error,
+      transientWarning,
       hardResetInFlight,
     }),
-    [connected, playerId, error, hardResetInFlight]
+    [connected, playerId, error, transientWarning, hardResetInFlight]
   );
 
   const gameStateValue = useMemo(
@@ -1492,6 +1606,7 @@ export function useSocket() {
       connected: connection.connected,
       playerId: connection.playerId,
       error: connection.error,
+      transientWarning: connection.transientWarning,
       hardResetInFlight: connection.hardResetInFlight,
       ...game,
       sketchDrawTimeTick,

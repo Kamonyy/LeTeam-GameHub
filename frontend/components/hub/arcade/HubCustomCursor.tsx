@@ -1,15 +1,21 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 
 type CursorMode = 'default' | 'grab' | 'crosshair' | 'letter' | 'mask';
 
-export default function HubCustomCursor() {
+type HubCustomCursorProps = {
+  hubRootRef?: RefObject<HTMLElement | null>;
+};
+
+export default function HubCustomCursor({ hubRootRef }: HubCustomCursorProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const modeRef = useRef<CursorMode>('default');
   const visibleRef = useRef(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const coarse = window.matchMedia('(pointer: coarse)').matches;
     const fineHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -18,7 +24,7 @@ export default function HubCustomCursor() {
     const root = rootRef.current;
     if (!root) return;
 
-    const hubRoot = document.querySelector('.hub-arcade');
+    const hubRoot = hubRootRef?.current;
     hubRoot?.classList.add('hub-arcade--custom-cursor');
 
     const applyModeClass = (mode: CursorMode) => {
@@ -64,7 +70,7 @@ export default function HubCustomCursor() {
       document.documentElement.removeEventListener('mouseleave', onLeave);
       document.documentElement.removeEventListener('mouseenter', onEnter);
     };
-  }, []);
+  }, [hubRootRef]);
 
   return (
     <div ref={rootRef} className="hub-cursor" style={{ opacity: 0 }} aria-hidden />

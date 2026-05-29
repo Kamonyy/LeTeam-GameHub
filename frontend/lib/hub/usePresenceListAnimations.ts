@@ -50,6 +50,16 @@ export function usePresenceListAnimations(
   const [listBump, setListBump] = useState(false);
 
   useEffect(() => {
+    const animationTimers = new Set<number>();
+    const scheduleTimeout = (fn: () => void, ms: number) => {
+      const id = window.setTimeout(() => {
+        animationTimers.delete(id);
+        fn();
+      }, ms);
+      animationTimers.add(id);
+      return id;
+    };
+
     const prevMap = prevPlayersRef.current;
     const nextMap = new Map(players.map((p) => [p.id, snapshotPlayer(p)]));
 
@@ -75,7 +85,7 @@ export function usePresenceListAnimations(
         joined.forEach((id) => n.add(id));
         return n;
       });
-      window.setTimeout(() => {
+      scheduleTimeout(() => {
         setEnteringKeys((s) => {
           const n = new Set(s);
           joined.forEach((id) => n.delete(id));
@@ -90,7 +100,7 @@ export function usePresenceListAnimations(
         statusChanged.forEach((id) => n.add(id));
         return n;
       });
-      window.setTimeout(() => {
+      scheduleTimeout(() => {
         setStatusFlashKeys((s) => {
           const n = new Set(s);
           statusChanged.forEach((id) => n.delete(id));
@@ -159,7 +169,7 @@ export function usePresenceListAnimations(
         newGroups.forEach((k) => n.add(k));
         return n;
       });
-      window.setTimeout(() => {
+      scheduleTimeout(() => {
         setGroupEnterKeys((s) => {
           const n = new Set(s);
           newGroups.forEach((k) => n.delete(k));
@@ -174,7 +184,7 @@ export function usePresenceListAnimations(
         updatedGroups.forEach((k) => n.add(k));
         return n;
       });
-      window.setTimeout(() => {
+      scheduleTimeout(() => {
         setGroupFlashKeys((s) => {
           const n = new Set(s);
           updatedGroups.forEach((k) => n.delete(k));
@@ -186,20 +196,23 @@ export function usePresenceListAnimations(
     if (prevTotalRef.current !== players.length && prevMap.size > 0) {
       setCountPulse(true);
       setListBump(true);
-      const t = window.setTimeout(() => {
+      scheduleTimeout(() => {
         setCountPulse(false);
         setListBump(false);
       }, 480);
-      prevPlayersRef.current = nextMap;
-      prevGroupsRef.current = nextGroupSigs;
-      prevTotalRef.current = players.length;
-      return () => window.clearTimeout(t);
     }
 
     prevPlayersListRef.current = players;
     prevPlayersRef.current = nextMap;
     prevGroupsRef.current = nextGroupSigs;
     prevTotalRef.current = players.length;
+
+    return () => {
+      for (const id of animationTimers) {
+        window.clearTimeout(id);
+      }
+      animationTimers.clear();
+    };
   }, [players, groups]);
 
   useEffect(() => {

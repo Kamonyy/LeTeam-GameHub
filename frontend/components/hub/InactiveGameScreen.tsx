@@ -1,5 +1,6 @@
 'use client';
 
+import clsx from 'clsx';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import GameAboutPanel from '@/components/hub/GameAboutPanel';
@@ -14,19 +15,44 @@ export default function InactiveGameScreen({ gameId }: InactiveGameScreenProps) 
   const game = getGameEntry(gameId);
   if (!game) return null;
 
+  const isBara = gameId === 'bara-alsalafa';
+
   return (
-    <div className="max-w-md mx-auto animate-fade-in space-y-6">
-      <div className="card text-center">
-        <h2 className="text-lg font-semibold mb-2">{game.name} is offline</h2>
-        <p className="text-sm text-hub-muted mb-6">
-          {game.disabledReason ?? 'This game is temporarily unavailable.'}
+    <div
+      className="max-w-md mx-auto animate-fade-in space-y-6"
+      dir={isBara ? 'rtl' : undefined}
+      lang={isBara ? 'ar' : undefined}
+    >
+      <div className={isBara ? 'bara-card text-center' : 'card text-center'}>
+        <h2 className="text-lg font-semibold mb-2">
+          {isBara ? `${game.name} غير متاحة حالياً` : `${game.name} is offline`}
+        </h2>
+        <p className={clsx('text-sm mb-6', isBara ? 'bara-muted' : 'text-hub-muted')}>
+          {game.disabledReason ??
+            (isBara ?
+              'اللعبة غير متاحة مؤقتاً.'
+            :	'This game is temporarily unavailable.')}
         </p>
-        <Link href="/" className="btn-primary inline-flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" />
-          Back to games
+        <Link
+          href="/"
+          className={
+            isBara ?
+              'bara-btn-primary inline-flex items-center gap-2'
+            :	'btn-primary inline-flex items-center gap-2'
+          }
+        >
+          {isBara ?
+            <>
+              <ArrowLeft className="w-4 h-4 rotate-180" aria-hidden />
+              العودة للألعاب
+            </>
+          :	<>
+              <ArrowLeft className="w-4 h-4" />
+              Back to games
+            </>}
         </Link>
       </div>
-      <GameAboutPanel gameId={gameId} />
+      <GameAboutPanel gameId={gameId} variant={isBara ? 'bara' : 'hub'} />
     </div>
   );
 }

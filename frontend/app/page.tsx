@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { Gamepad2 } from 'lucide-react';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
 import PlayerNameControl from '@/components/hub/PlayerNameControl';
@@ -13,13 +14,17 @@ import { GAMES } from '@/lib/hub/games-registry';
 import './hub-arcade.css';
 
 export default function HomePage() {
+  const hubRootRef = useRef<HTMLElement>(null);
   const { connected, hubPresence, error, clearError } = useHubLive();
   const liveGames = GAMES.filter((game) => game.active);
   const soonGames = GAMES.filter((game) => !game.active);
 
   return (
-    <main className="hub-arcade min-h-dvh relative overflow-x-hidden">
-      <HubArcadeShell />
+    <main
+      ref={hubRootRef}
+      className="hub-arcade min-h-dvh relative overflow-x-hidden"
+    >
+      <HubArcadeShell hubRootRef={hubRootRef} />
 
       <header className="relative z-40 border-b border-hub-border/80 bg-hub-surface/40 glass-blur-md sticky top-0 pt-safe-top">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">

@@ -2,7 +2,7 @@
 
 import clsx from 'clsx';
 import { BookOpen } from 'lucide-react';
-import GameAboutPanel from '@/components/hub/GameAboutPanel';
+import BaraHowToPlay from './BaraHowToPlay';
 
 interface BaraAboutSidebarProps {
   className?: string;
@@ -18,14 +18,14 @@ export default function BaraAboutSidebar({ className }: BaraAboutSidebarProps) {
             <BookOpen className="w-4 h-4" />
           </span>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--bara-rose-bright)]">
+            <p className="bara-label text-[var(--bara-rose-bright)]">
               كيف تلعب
             </p>
             <p className="text-[10px] bara-muted mt-0.5">برا السالفة · 3–12 لاعبين</p>
           </div>
         </div>
         <div className="bara-divider-rose my-4" />
-        <GameAboutPanel gameId="bara-alsalafa" variant="bara" />
+        <BaraHowToPlay />
       </div>
     </aside>
   );

@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
+import { bannerVariantForPlayer } from '../lib/playerBannerTheme';
+
+const POINT_GLOW_MS = 2000;
 
 interface ScoreCardProps {
   playerNames: Record<string, string>;
@@ -19,6 +22,7 @@ export default function ScoreCard({
   pointsToWin,
 }: ScoreCardProps) {
   const [bumpIds, setBumpIds] = useState<Record<string, boolean>>({});
+  const [glowIds, setGlowIds] = useState<Record<string, boolean>>({});
   const prevScores = useRef(scores);
   const mounted = useRef(false);
 
@@ -40,15 +44,22 @@ export default function ScoreCard({
     if (Object.keys(nextBump).length === 0) return;
 
     setBumpIds(nextBump);
-    const timer = window.setTimeout(() => setBumpIds({}), 700);
-    return () => window.clearTimeout(timer);
+    setGlowIds(nextBump);
+    const bumpTimer = window.setTimeout(() => setBumpIds({}), 700);
+    const glowTimer = window.setTimeout(() => setGlowIds({}), POINT_GLOW_MS);
+    return () => {
+      window.clearTimeout(bumpTimer);
+      window.clearTimeout(glowTimer);
+    };
   }, [scores, playerIds]);
 
   return (
-    <div className="flex gap-4 sm:gap-6 justify-center sw-animate-ascend px-2 sw-stagger">
-      {playerIds.map((id, index) => {
+    <div className="sw-score-banners flex gap-4 sm:gap-6 justify-center sw-animate-ascend px-2 sw-stagger">
+      {playerIds.map((id) => {
         const isMe = id === myPlayerId;
-        const variant = index === 0 ? 'ember' : 'frost';
+        const variant = bannerVariantForPlayer(id, playerIds);
+        const glowing = Boolean(glowIds[id]);
+
         return (
           <div
             key={id}
@@ -59,6 +70,7 @@ export default function ScoreCard({
             )}
           >
             <span className="sw-banner__pulse" aria-hidden />
+            {glowing && <span className="sw-banner__point-glow" aria-hidden />}
             <p className="sw-banner__label">
               {variant === 'ember' ? 'Challenger I' : 'Challenger II'}
               {isMe && ' · You'}

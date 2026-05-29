@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { Eye, Lock } from 'lucide-react';
 import type { BaraGameState } from '@/games/bara-alsalafa/types';
@@ -14,6 +14,7 @@ interface RevealCardProps {
 export default function RevealCard({ gameState, onReveal, revealing = false }: RevealCardProps) {
   const [flipped, setFlipped] = useState(!!gameState.roleView);
   const [lockLifted, setLockLifted] = useState(!!gameState.roleView);
+  const flipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const role = gameState.roleView;
 
   useEffect(() => {
@@ -23,10 +24,18 @@ export default function RevealCard({ gameState, onReveal, revealing = false }: R
     }
   }, [gameState.roleView]);
 
+  useEffect(() => {
+    return () => {
+      if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
+    };
+  }, []);
+
   const handleReveal = () => {
     if (!gameState.canReveal || revealing) return;
     setLockLifted(true);
-    setTimeout(() => {
+    if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
+    flipTimerRef.current = setTimeout(() => {
+      flipTimerRef.current = null;
       setFlipped(true);
       onReveal();
     }, 280);
@@ -61,7 +70,7 @@ export default function RevealCard({ gameState, onReveal, revealing = false }: R
               <span className="bara-reveal-panel__icon" aria-hidden>
                 🂠
               </span>
-              <p className="text-base font-semibold text-hub-muted">بطاقة سرية</p>
+              <p className="text-base font-semibold bara-muted">بطاقة سرية</p>
               {gameState.canReveal && lockLifted && (
                 <button
                   type="button"
@@ -81,7 +90,6 @@ export default function RevealCard({ gameState, onReveal, revealing = false }: R
             <div className="bara-flip-card__face bara-flip-card__front flex flex-col items-center justify-center gap-3 p-6 text-center">
               {role && (
                 <>
-                  <span className="bara-category-badge">{role.categoryName}</span>
                   {role.isOutcast ? (
                     <div className="bara-outcast-block animate-bara-vibrate">
                       {role.outcastMessage}

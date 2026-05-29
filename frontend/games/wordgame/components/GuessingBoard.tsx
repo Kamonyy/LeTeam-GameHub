@@ -7,58 +7,42 @@ import ChampionPortrait from './ChampionPortrait';
 import clsx from 'clsx';
 import type { WordCategory } from '../types';
 import { useWordGameAudioOptional } from '../hooks/useWordGameAudio';
+import RoundRevealBoard from './RoundRevealBoard';
 
 interface GuessingBoardProps {
   wordCategory: WordCategory;
   myChosenWord: string | null;
   myChosenChampionId: string | null;
+  opponentChosenWord: string | null;
+  opponentChosenChampionId: string | null;
   revealedWord: string | null;
   revealedChampionId: string | null;
   phase: 'playing' | 'round_end' | 'match_over';
   opponentName: string;
   guesserName: string;
+  playerId: string;
+  playerIds: string[];
+  guesserPlayerId: string | null;
+  assignerPlayerId?: string | null;
   canConfirmGuessed: boolean;
   onConfirmGuessed: () => Promise<boolean>;
-}
-
-function RevealContent({
-  wordCategory,
-  revealedWord,
-  revealedChampionId,
-  label,
-}: {
-  wordCategory: WordCategory;
-  revealedWord: string;
-  revealedChampionId: string | null;
-  label: string;
-}) {
-  const isLol = wordCategory === 'lol-champions' && revealedChampionId;
-
-  return (
-    <div className="sw-reveal-box">
-      <p className="text-[10px] sw-muted uppercase tracking-[0.25em] mb-3">{label}</p>
-      {isLol ?
-        <div className="flex justify-center">
-          <ChampionPortrait
-            championId={revealedChampionId!}
-            size="xl"
-            reveal
-          />
-        </div>
-      :	<p className="sw-word-reveal">{revealedWord}</p>}
-    </div>
-  );
 }
 
 export default function GuessingBoard({
   wordCategory,
   myChosenWord,
   myChosenChampionId,
+  opponentChosenWord,
+  opponentChosenChampionId,
   revealedWord,
   revealedChampionId,
   phase,
   opponentName,
   guesserName,
+  playerId,
+  playerIds,
+  guesserPlayerId,
+  assignerPlayerId,
   canConfirmGuessed,
   onConfirmGuessed,
 }: GuessingBoardProps) {
@@ -84,23 +68,34 @@ export default function GuessingBoard({
 
   if (phase === 'round_end' && revealedWord) {
     return (
-      <WordPanelFrame className="p-8 sm:p-12 text-center sw-animate-reveal">
-        <div className="sw-victory-icon mx-auto mb-5">
+      <WordPanelFrame className="p-6 sm:p-8 text-center sw-animate-reveal sw-panel--round-reveal">
+        <div className="sw-victory-icon mx-auto mb-4">
           <Trophy className="w-8 h-8" strokeWidth={1.5} />
         </div>
-        <h3 className="sw-heading-lg mb-3">
+        <h3 className="sw-heading-lg mb-2">
           {isLol ? 'Champion Revealed' : 'Word Revealed'}
         </h3>
-        <p className="sw-muted text-sm mb-8">
+        <p className="sw-muted text-sm mb-6">
           <span className="sw-text-accent font-semibold">{guesserName}</span> earns the point
         </p>
-        <RevealContent
+
+        <RoundRevealBoard
           wordCategory={wordCategory}
           revealedWord={revealedWord}
           revealedChampionId={revealedChampionId}
-          label={isLol ? 'The champion was' : 'The word was'}
+          myChosenWord={myChosenWord}
+          myChosenChampionId={myChosenChampionId}
+          opponentChosenWord={opponentChosenWord}
+          opponentChosenChampionId={opponentChosenChampionId}
+          opponentName={opponentName}
+          guesserName={guesserName}
+          playerId={playerId}
+          playerIds={playerIds}
+          guesserPlayerId={guesserPlayerId}
+          assignerPlayerId={assignerPlayerId}
         />
-        <p className="text-xs sw-muted mt-8 flex items-center justify-center gap-2 animate-pulse-soft">
+
+        <p className="text-xs sw-muted mt-6 flex items-center justify-center gap-2 animate-pulse-soft">
           <Sparkles className="w-3.5 h-3.5 text-[#c9a227]" />
           Next round approaches…
         </p>

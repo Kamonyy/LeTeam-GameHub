@@ -27,6 +27,9 @@ export interface WordGameState {
   opponentHasSubmitted: boolean;
   myChosenWord: string | null;
   myChosenChampionId: string | null;
+  /** Shown at round end — what your opponent chose for you to guess */
+  opponentChosenWord: string | null;
+  opponentChosenChampionId: string | null;
   revealedWord: string | null;
   revealedChampionId: string | null;
   winnerId: string | null;

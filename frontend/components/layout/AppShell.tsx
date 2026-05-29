@@ -8,6 +8,8 @@ export interface AppShellProps {
 	safeHeader?: boolean;
 	/** Apply safe-area bottom padding (bottom rails / CTAs). */
 	safeFooter?: boolean;
+	dir?: 'ltr' | 'rtl';
+	lang?: string;
 }
 
 /**
@@ -19,9 +21,13 @@ export function AppShell({
 	className,
 	safeHeader = false,
 	safeFooter = false,
+	dir,
+	lang,
 }: AppShellProps) {
 	return (
 		<div
+			dir={dir}
+			lang={lang}
 			className={cn(
 				"flex min-h-dvh w-full flex-col overflow-x-hidden",
 				safeHeader && "pt-safe-top",
@@ -55,23 +61,5 @@ export function AppShellHeader({
 		>
 			{children}
 		</header>
-	);
-}
-
-export interface AppShellFooterProps {
-	children: ReactNode;
-	className?: string;
-}
-
-export function AppShellFooter({ children, className }: AppShellFooterProps) {
-	return (
-		<footer
-			className={cn(
-				"pb-[max(1rem,var(--safe-bottom))]",
-				className,
-			)}
-		>
-			{children}
-		</footer>
 	);
 }
