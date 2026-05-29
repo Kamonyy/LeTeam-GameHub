@@ -1,5 +1,9 @@
 /**
  * BaseGameEngine — shared state, timers, and serialization contract for all game engines.
+ *
+ * Spectator baseline: docs/architecture/platform-spectator-contract.md
+ * — serializeBase: symmetric public shell only
+ * — serializeForPlayer / serializeForSpectator: override any asymmetric base fields
  */
 
 export class BaseGameEngine {
@@ -60,7 +64,12 @@ export class BaseGameEngine {
 		);
 	}
 
-	/** @param {string} [_viewerId] */
+	/**
+	 * Symmetric public shell only — see docs/architecture/platform-spectator-contract.md.
+	 * Asymmetric or secret fields must be overridden in serializeForPlayer and
+	 * serializeForSpectator (or non-player branch), never leaked via spread alone.
+	 * @param {string} [_viewerId]
+	 */
 	serializeBase(_viewerId) {
 		return {
 			stateVersion: this.stateVersion,

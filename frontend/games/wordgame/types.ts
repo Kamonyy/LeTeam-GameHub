@@ -12,9 +12,30 @@ export interface WordGameLastAction {
   roundNumber?: number;
 }
 
+export type ScratchpadNote = {
+  id: string;
+  text: string;
+  createdAt: number;
+};
+
+/** Secret assignment a player must guess (spectator DTO). */
+export interface WordGameGuesserAssignment {
+  word: string;
+  championId: string | null;
+  assignedByPlayerId: string | null;
+}
+
 export interface WordGameState {
   roomId?: string;
   gameType: 'wordgame';
+  /** Present on neutral spectator payloads from the server */
+  isSpectator?: boolean;
+  /** Per-player setup submission flags (spectator DTO) */
+  submissionStatus?: Record<string, boolean>;
+  /** Live clue notes per player (spectator DTO) */
+  scratchpadsByPlayer?: Record<string, ScratchpadNote[]>;
+  /** Word/champion each player must guess (spectator DTO, active round+) */
+  assignmentsForGuesser?: Record<string, WordGameGuesserAssignment>;
   /** Server revision — ignore older broadcasts after a successful action */
   stateVersion?: number;
   phase: WordGamePhase;

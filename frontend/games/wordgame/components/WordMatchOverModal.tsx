@@ -83,20 +83,18 @@ export default function WordMatchOverModal({
         aria-labelledby="sw-match-over-title"
       >
         <header className="sw-match-over-header">
-          <div className="sw-victory-icon mx-auto mb-3" aria-hidden>
-            <Crown className="w-9 h-9" strokeWidth={1.5} />
+          <div className="sw-victory-icon sw-victory-icon--compact mx-auto" aria-hidden>
+            <Crown className="w-5 h-5" strokeWidth={1.5} />
           </div>
-          <p className="text-[10px] sw-muted uppercase tracking-[0.25em] mb-1">
-            Match finished
-          </p>
-          <h2 id="sw-match-over-title" className="sw-heading-lg mb-2">
+          <p className="sw-match-over-header__eyebrow">Match finished</p>
+          <h2 id="sw-match-over-title" className="sw-match-over-header__title">
             {iWon ? 'Victory is yours' : 'Match complete'}
           </h2>
-          <p className="sw-muted text-sm leading-relaxed">
+          <p className="sw-match-over-header__sub">
             <span className="sw-text-accent font-semibold">{winnerName}</span>
             {iWon ?
               <> reached {pointsToWin} points first</>
-            : <> won the match ({pointsToWin} points to win)</>}
+            : <> won the match ({pointsToWin} to win)</>}
           </p>
         </header>
 
@@ -124,6 +122,8 @@ export default function WordMatchOverModal({
 
         {revealedWord && (
           <RoundRevealBoard
+            compact
+            horizontal
             className="sw-match-over-reveals"
             wordCategory={wordCategory}
             revealedWord={revealedWord}
@@ -144,7 +144,7 @@ export default function WordMatchOverModal({
         <footer className="sw-match-over-footer">
           {isHost ?
             <>
-              <p className="text-xs sw-muted mb-3">
+              <p className="sw-match-over-footer__hint">
                 Choose what happens next for the room.
               </p>
               <div className="sw-match-over-actions__buttons">
@@ -170,15 +170,12 @@ export default function WordMatchOverModal({
                 </button>
               </div>
             </>
-          : <p className="text-sm sw-muted sw-match-over-waiting">
+          : <p className="sw-match-over-waiting">
               <Sparkles
-                className="w-4 h-4 shrink-0 text-[#c9a227]"
+                className="w-3.5 h-3.5 shrink-0 text-[#c9a227]"
                 aria-hidden
               />
-              <span>
-                Waiting for the lobby host to start a rematch or return to the
-                lobby…
-              </span>
+              <span>Waiting for the host to choose rematch or lobby…</span>
             </p>
           }
         </footer>

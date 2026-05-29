@@ -14,6 +14,16 @@ export interface SocketConnectionMeta {
   playerId: string;
   error: string | null;
   hardResetInFlight: boolean;
+  /** Core session id/token read from storage (client mount). */
+  isIdentityHydrated: boolean;
+  /** First `player:register` ack finished for this socket session. */
+  sessionReady: boolean;
+  /** `player:register` reconnect fields applied (avoids auto-join race). */
+  reconnectAssessed: boolean;
+  /** Room restored by server reconnect (refresh), if any. */
+  reconnectedRoomId: string | null;
+  /** Whether the server restored this session as a spectator. */
+  reconnectedAsSpectator: boolean;
 }
 
 export interface SocketConnectionValue extends SocketConnectionMeta {

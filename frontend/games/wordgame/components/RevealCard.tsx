@@ -16,6 +16,7 @@ export interface RevealCardProps {
   playerIds: string[];
   caption: string;
   layout?: RevealCardLayout;
+  compact?: boolean;
   className?: string;
 }
 
@@ -28,10 +29,13 @@ export default function RevealCard({
   playerIds,
   caption,
   layout = 'side',
+  compact = false,
   className,
 }: RevealCardProps) {
   const isLol = wordCategory === 'lol-champions' && championId;
   const isHero = layout === 'hero';
+  const portraitSize = compact ? 'md' : isHero ? 'xl' : 'md';
+  const showPortraitName = !compact || isHero;
 
   return (
     <article
@@ -41,6 +45,7 @@ export default function RevealCard({
         playerIds,
         clsx(
           isHero ? 'sw-reveal-box--hero' : 'sw-reveal-box--side',
+          compact && 'sw-reveal-box--compact',
           className
         )
       )}
@@ -50,11 +55,18 @@ export default function RevealCard({
         <div className="sw-reveal-box__media">
           <ChampionPortrait
             championId={championId!}
-            size={isHero ? 'xl' : 'md'}
-            reveal={isHero}
+            size={portraitSize}
+            reveal={isHero && !compact}
+            showName={showPortraitName}
           />
         </div>
-      :	<p className={clsx('sw-word-reveal', isHero ? undefined : 'text-lg')}>
+      :	<p
+          className={clsx(
+            'sw-word-reveal',
+            !isHero && 'text-lg',
+            compact && isHero && 'sw-word-reveal--compact-hero',
+          )}
+        >
           {word}
         </p>
       }

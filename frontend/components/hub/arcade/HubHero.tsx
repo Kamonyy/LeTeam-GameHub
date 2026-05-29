@@ -54,6 +54,7 @@ export default function HubHero({ connected, hubPresence }: HubHeroProps) {
 			for (const p of hubPresence.players.slice(0, 2)) {
 				const where =
 					p.status === "playing" ? "in a match"
+					: p.status === "spectating" ? "spectating a match"
 					: p.status === "lobby" ? "in a lobby"
 					: "in the lounge";
 				const gameLabel =

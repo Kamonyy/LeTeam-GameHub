@@ -21,6 +21,10 @@ export interface RoundRevealBoardProps {
   guesserPlayerId: string | null;
   assignerPlayerId?: string | null;
   className?: string;
+  /** Tighter layout for in-game round-end panel */
+  compact?: boolean;
+  /** Answer and other picks in a row (with compact) */
+  horizontal?: boolean;
 }
 
 export default function RoundRevealBoard({
@@ -38,6 +42,8 @@ export default function RoundRevealBoard({
   guesserPlayerId,
   assignerPlayerId,
   className,
+  compact = false,
+  horizontal = false,
 }: RoundRevealBoardProps) {
   const isLol = wordCategory === 'lol-champions';
   const opponentId = playerIds.find((id) => id !== playerId) ?? playerIds[0];
@@ -120,61 +126,83 @@ export default function RoundRevealBoard({
     });
   }
 
-  return (
-    <div className={clsx('sw-round-reveal', className)}>
-      <section className="sw-round-reveal__answer" aria-label="Correct answer">
-        <p className="sw-round-reveal__eyebrow">Correct answer</p>
-        <RevealCard
-          wordCategory={wordCategory}
-          word={revealedWord}
-          championId={revealedChampionId}
-          ownerPlayerId={revealedOwnerId}
-          viewerPlayerId={playerId}
-          playerIds={playerIds}
-          layout="hero"
-          caption={getRevealCaption('guessed', {
-            ...labelOpts,
-            ownerPlayerId: revealedOwnerId,
-          })}
-        />
-      </section>
+  const answerSection = (
+    <section className="sw-round-reveal__answer" aria-label="Correct answer">
+      <p className="sw-round-reveal__eyebrow">Correct answer</p>
+      <RevealCard
+        wordCategory={wordCategory}
+        word={revealedWord}
+        championId={revealedChampionId}
+        ownerPlayerId={revealedOwnerId}
+        viewerPlayerId={playerId}
+        playerIds={playerIds}
+        layout="hero"
+        compact={compact}
+        caption={getRevealCaption('guessed', {
+          ...labelOpts,
+          ownerPlayerId: revealedOwnerId,
+        })}
+      />
+    </section>
+  );
 
-      {sideCards.length > 0 && (
-        <section className="sw-round-reveal__others" aria-label="Other picks this round">
-          <p className="sw-round-reveal__eyebrow">Other picks this round</p>
-          <div
-            className={clsx(
-              'sw-round-reveal__grid',
-              sideCards.length === 2 && 'sw-round-reveal__grid--duo'
-            )}
-          >
-            {sideCards.map((card) => (
-              <div key={card.key} className="sw-round-reveal__slot">
-                <h4
-                  className={clsx(
-                    'sw-round-reveal__slot-heading',
-                    card.key === 'mine' ?
-                      'sw-round-reveal__slot-heading--you'
-                    : 'sw-round-reveal__slot-heading--them'
-                  )}
-                >
-                  {card.heading}
-                </h4>
-                <RevealCard
-                  wordCategory={wordCategory}
-                  word={card.word}
-                  championId={card.championId}
-                  ownerPlayerId={card.ownerPlayerId}
-                  viewerPlayerId={playerId}
-                  playerIds={playerIds}
-                  layout="side"
-                  caption={card.caption}
-                />
-              </div>
-            ))}
-          </div>
-        </section>
+  const othersSection =
+    sideCards.length > 0 ?
+      <section className="sw-round-reveal__others" aria-label="Other picks this round">
+        <p className="sw-round-reveal__eyebrow">Other picks this round</p>
+        <div
+          className={clsx(
+            'sw-round-reveal__grid',
+            sideCards.length === 2 && 'sw-round-reveal__grid--duo',
+          )}
+        >
+          {sideCards.map((card) => (
+            <div key={card.key} className="sw-round-reveal__slot">
+              <h4
+                className={clsx(
+                  'sw-round-reveal__slot-heading',
+                  card.key === 'mine' ?
+                    'sw-round-reveal__slot-heading--you'
+                  : 'sw-round-reveal__slot-heading--them',
+                )}
+              >
+                {card.heading}
+              </h4>
+              <RevealCard
+                wordCategory={wordCategory}
+                word={card.word}
+                championId={card.championId}
+                ownerPlayerId={card.ownerPlayerId}
+                viewerPlayerId={playerId}
+                playerIds={playerIds}
+                layout="side"
+                compact={compact}
+                caption={card.caption}
+              />
+            </div>
+          ))}
+        </div>
+      </section>
+    : null;
+
+  return (
+    <div
+      className={clsx(
+        'sw-round-reveal',
+        compact && 'sw-round-reveal--compact',
+        compact && horizontal && 'sw-round-reveal--horizontal',
+        className,
       )}
+    >
+      {horizontal ?
+        <>
+          {othersSection}
+          {answerSection}
+        </>
+      : <>
+          {answerSection}
+          {othersSection}
+        </>}
     </div>
   );
 }

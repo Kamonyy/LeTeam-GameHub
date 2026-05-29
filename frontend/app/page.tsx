@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import { Gamepad2 } from 'lucide-react';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
+import HubLobbyStatusBar from '@/components/hub/HubLobbyStatusBar';
 import PlayerNameControl from '@/components/hub/PlayerNameControl';
 import OnlinePlayersPanel from '@/components/hub/OnlinePlayersPanel';
 import HubArcadeShell from '@/components/hub/arcade/HubArcadeShell';
@@ -27,14 +28,20 @@ export default function HomePage() {
       <HubArcadeShell hubRootRef={hubRootRef} />
 
       <header className="relative z-40 border-b border-hub-border/80 bg-hub-surface/40 glass-blur-md sticky top-0 pt-safe-top">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0 hub-enter-hero" style={{ animationDelay: '0ms' }}>
-            <Gamepad2 className="w-7 h-7 text-hub-accent shrink-0" />
-            <h1 className="text-xl font-bold tracking-tight truncate bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+        <div className="hub-header-inner max-w-7xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3">
+          <div
+            className="hub-header-brand flex items-center gap-2 sm:gap-3 min-w-0 hub-enter-hero"
+            style={{ animationDelay: '0ms' }}
+          >
+            <Gamepad2 className="w-6 h-6 sm:w-7 sm:h-7 text-hub-accent shrink-0" />
+            <h1 className="text-base sm:text-xl font-bold tracking-tight truncate bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
               LeTeam Game Hub
             </h1>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="hub-header-lobby">
+            <HubLobbyStatusBar />
+          </div>
+          <div className="hub-header-actions flex items-center gap-2 sm:gap-3 shrink-0">
             <ConnectionStatus connected={connected} />
             <PlayerNameControl />
           </div>

@@ -34,13 +34,16 @@ export function useGameRoom(options: UseGameRoomOptions): UseGameRoomReturn {
   const socket = useSocket();
   const {
     connected,
+    sessionReady,
+    reconnectAssessed,
+    reconnectedRoomId,
+    reconnectedAsSpectator,
     hardResetInFlight,
     lobby,
     gameState,
     playerId,
     isSpectator,
     joinRoom,
-    joinRoomOrSpectate,
     spectateRoom,
     requestSketchCanvasRecovery,
   } = socket;
@@ -48,11 +51,14 @@ export function useGameRoom(options: UseGameRoomOptions): UseGameRoomReturn {
   const roomJoin = useRoomAutoJoin({
     ...options,
     connected,
+    sessionReady,
+    reconnectAssessed,
+    reconnectedRoomId,
+    reconnectedAsSpectator,
     hardResetInFlight,
     lobby,
     playerId,
     joinRoom,
-    joinRoomOrSpectate,
     spectateRoom,
   });
 

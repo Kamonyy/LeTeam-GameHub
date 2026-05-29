@@ -9,6 +9,8 @@ import { useGameRoom, useCoreSession } from '@/hooks/useSocket';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
 import { setDisplayName, getDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
+import { isLobbyPlayer } from '@/lib/hub/resolveClientIsSpectator';
+import { useSpectatorAutoLeave } from '@/lib/hub/useSpectatorAutoLeave';
 import PlayerNameControl from '@/components/hub/PlayerNameControl';
 import ChatPanel from '@/components/hub/ChatPanel';
 import GameClientFrame from '@/components/ui/GameClientFrame';
@@ -146,14 +148,22 @@ export default function DominoesClient() {
   };
 
   const dominoLobby = lobby?.gameType === 'dominoes' ? lobby : null;
+  const isRoomPlayer = isLobbyPlayer(dominoLobby, playerId);
+  const viewingAsSpectator = isSpectator && !isRoomPlayer;
   const isHost = dominoLobby?.hostId === playerId;
+
+  useSpectatorAutoLeave({ lobby: dominoLobby, isSpectator: viewingAsSpectator });
   const dominoesState =
     dominoLobby && gameState && 'board' in gameState ? (gameState as GameState) : null;
-  const inLobby = dominoLobby?.status === 'lobby' && !isSpectator;
+  const inLobby = dominoLobby?.status === 'lobby' && !viewingAsSpectator;
   const spectatorWaiting =
-    isSpectator && dominoLobby && dominoLobby.status === 'lobby';
+    viewingAsSpectator && dominoLobby && dominoLobby.status === 'lobby';
   const showGameBoard =
-    !!dominoesState && !!dominoLobby && dominoLobby.status !== 'lobby';
+    !!dominoesState &&
+    !!dominoLobby &&
+    (viewingAsSpectator ?
+      dominoLobby.status === 'playing'
+    : dominoLobby.status !== 'lobby');
   const waitingForGame =
     dominoLobby?.status === 'playing' && !dominoesState;
   const inActiveMatch =
@@ -330,7 +340,7 @@ export default function DominoesClient() {
 
         {showGameBoard && dominoLobby && (
           <>
-            {isSpectator && (
+            {viewingAsSpectator && (
               <SpectatorBanner
                 roomId={dominoLobby.roomId}
                 onLeave={() => void leaveToHub()}
@@ -341,7 +351,7 @@ export default function DominoesClient() {
               lobby={dominoLobby}
               playerId={playerId}
               isHost={isHost}
-              isSpectator={isSpectator}
+              isSpectator={viewingAsSpectator}
               onPlayMove={playMove}
               onDraw={drawTile}
               onPass={passTurn}

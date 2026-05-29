@@ -7,6 +7,7 @@ import { useGameRoom, useCoreSession } from '@/hooks/useSocket';
 import { useLeaveToHub } from '@/lib/hub/useLeaveToHub';
 import { setDisplayName, getDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
+import { useSpectatorAutoLeave } from '@/lib/hub/useSpectatorAutoLeave';
 import WordGamePlayerProfile from '@/games/wordgame/components/WordGamePlayerProfile';
 import ErrorToast from '@/components/shared/ErrorToast';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
@@ -14,6 +15,8 @@ import WordLobby from '@/games/wordgame/components/WordLobby';
 import InactiveGameScreen from '@/components/hub/InactiveGameScreen';
 import { getGameEntry, isGameActive } from '@/lib/hub/games-registry';
 import WordGameBoard from '@/games/wordgame/components/WordGameBoard';
+import WordGameSpectatorBoard from '@/games/wordgame/components/WordGameSpectatorBoard';
+import WordSpectatorBanner from '@/games/wordgame/components/WordSpectatorBanner';
 import WordGameAtmosphere from '@/games/wordgame/components/WordGameAtmosphere';
 import ConnectionStatus from '@/components/hub/ConnectionStatus';
 import { useWordGameTabFocus } from '@/games/wordgame/hooks/useWordGameTabFocus';
@@ -27,6 +30,8 @@ export default function WordGameClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const roomParam = searchParams.get('room');
+  const spectateParam =
+    searchParams.get('spectate') === '1' || searchParams.get('spectate') === 'true';
 
   const wordgameEnabled = isGameActive('wordgame');
   const { isHydrated } = useCoreSession();
@@ -46,6 +51,7 @@ export default function WordGameClient() {
     playerId,
     lobby,
     gameState,
+    isSpectator,
     error,
     clearError,
     createRoom,
@@ -69,6 +75,7 @@ export default function WordGameClient() {
     gameEnabled: wordgameEnabled,
     basePath: '/wordgame',
     roomParam,
+    spectateParam,
     onAutoJoinLoading: setLoading,
   });
   const wordState =
@@ -139,16 +146,37 @@ export default function WordGameClient() {
   };
 
   const wordLobby = lobby?.gameType === 'wordgame' ? lobby : null;
+  const isRoomPlayer =
+    wordLobby?.players?.some((p) => p.id === playerId) ?? false;
+  // Active roster in lobby.players overrides isSpectator during hydration flicker.
+  const viewingAsSpectator = isSpectator && !isRoomPlayer;
   const isHost = wordLobby?.hostId === playerId;
+
+  useEffect(() => {
+    if (!spectateParam || !roomParam || !isRoomPlayer) return;
+    router.replace(`/wordgame?room=${normalizeRoomCode(roomParam)}`, {
+      scroll: false,
+    });
+  }, [spectateParam, roomParam, isRoomPlayer, router]);
+
+  useSpectatorAutoLeave({ lobby: wordLobby, isSpectator: viewingAsSpectator });
+
   const wordGameMeta = getGameEntry('wordgame');
-  const inLobby = wordLobby?.status === 'lobby';
+  const inLobby = wordLobby?.status === 'lobby' && !viewingAsSpectator;
+  const spectatorWaiting =
+    viewingAsSpectator && wordLobby && wordLobby.status === 'lobby';
   const matchFinished = wordState?.phase === 'match_over';
   const inGame =
+    isRoomPlayer &&
     wordLobby &&
     wordState &&
     (wordLobby.status === 'playing' ||
       wordLobby.status === 'finished' ||
       matchFinished);
+  const showSpectatorMatch =
+    viewingAsSpectator &&
+    wordLobby?.status === 'playing' &&
+    wordState;
 
   const handlePlayAgain = async () => {
     setPostMatchBusy(true);
@@ -176,7 +204,10 @@ export default function WordGameClient() {
     wordState?.wordCategory === 'lol-champions';
 
   const matchInProgress = !!(inGame && !matchFinished);
-  const selfTabFocused = useWordGameTabFocus(matchInProgress, reportWordTabFocus);
+  const selfTabFocused = useWordGameTabFocus(
+    matchInProgress && isRoomPlayer,
+    reportWordTabFocus
+  );
 
   if (!isHydrated) {
     return (
@@ -192,7 +223,11 @@ export default function WordGameClient() {
       <GameClientFrame
         className="sw-shell min-h-dvh relative overflow-x-hidden"
         headerClassName="sw-header border-0 bg-transparent"
-        contentClassName="relative z-10 py-8 sm:py-12 px-4 sm:px-6"
+        contentClassName={
+          viewingAsSpectator && (showSpectatorMatch || spectatorWaiting) ?
+            'relative z-10 py-4 sm:py-6 px-4 sm:px-6'
+          :	'relative z-10 py-8 sm:py-12 px-4 sm:px-6'
+        }
         title="Secret Word"
         subtitle={wordGameMeta?.tagline}
         connected={connected}
@@ -208,7 +243,7 @@ export default function WordGameClient() {
           <>
             <ConnectionStatus connected={connected} variant="word" />
             <WordGamePlayerProfile
-              nameLocked={!!inGame}
+              nameLocked={!!inGame || viewingAsSpectator}
               audioEnabled={isLolAudioEnabled}
             />
           </>
@@ -358,6 +393,18 @@ export default function WordGameClient() {
           </div>
         )}
 
+        {spectatorWaiting && wordLobby && (
+          <div key="word-spectator-wait" className="max-w-md mx-auto sw-view-mount">
+            <WordSpectatorBanner
+              roomId={wordLobby.roomId}
+              onLeave={() => void leaveToHub()}
+            />
+            <p className="text-center text-sm sw-muted mt-4">
+              Waiting for the host to start the match.
+            </p>
+          </div>
+        )}
+
         {inLobby && wordLobby && (
           <div key="word-lobby" className="sw-view-mount">
             <WordLobby
@@ -372,6 +419,19 @@ export default function WordGameClient() {
               }}
               onLeave={() => void leaveToHub()}
               starting={starting}
+            />
+          </div>
+        )}
+
+        {showSpectatorMatch && wordState && wordLobby && (
+          <div key="word-spectator" className="sw-view-mount space-y-3">
+            <WordSpectatorBanner
+              roomId={wordLobby.roomId}
+              onLeave={() => void leaveToHub()}
+            />
+            <WordGameSpectatorBoard
+              gameState={wordState}
+              lobby={wordLobby}
             />
           </div>
         )}

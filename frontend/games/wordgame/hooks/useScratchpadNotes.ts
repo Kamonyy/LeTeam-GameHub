@@ -32,11 +32,18 @@ function storageKey(roomId: string, playerId: string, roundNumber: number) {
   return `wordgame_notes_${roomId}_${playerId}_r${roundNumber}`;
 }
 
+export interface UseScratchpadNotesOptions {
+  /** Push notes to the server so spectators can follow clues in real time. */
+  onSync?: (roundNumber: number, notes: ScratchpadNote[]) => void;
+}
+
 export function useScratchpadNotes(
   roomId: string,
   playerId: string,
-  roundNumber: number
+  roundNumber: number,
+  options: UseScratchpadNotesOptions = {}
 ) {
+  const { onSync } = options;
   const [notes, setNotes] = useState<ScratchpadNote[]>([]);
   const [loaded, setLoaded] = useState(false);
   const round = Math.max(1, roundNumber || 1);
@@ -64,9 +71,10 @@ export function useScratchpadNotes(
       } catch {
         /* ignore quota / private mode */
       }
+      onSync?.(round, notes);
     }, 300);
     return () => window.clearTimeout(timer);
-  }, [notes, loaded, roomId, playerId, round]);
+  }, [notes, loaded, roomId, playerId, round, onSync]);
 
   const addNote = useCallback((text: string) => {
     const trimmed = text.trim();

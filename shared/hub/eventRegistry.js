@@ -164,6 +164,15 @@ function wordFocusReport(socket, payload, roomManager) {
   return roomManager.handleWordTabFocusReport(socket, focused);
 }
 
+function wordScratchpadSync(socket, payload, roomManager) {
+  return roomManager.handleWordScratchpadSync(socket, payload);
+}
+
+function validateWordScratchpadSync(payload) {
+  if (!isPlainObject(payload)) return 'Invalid payload';
+  return null;
+}
+
 function gameStateRequest(socket, _payload, roomManager) {
   return roomManager.syncGameStateForPlayer(socket);
 }
@@ -282,6 +291,15 @@ function inviteRespond(socket, payload, roomManager) {
   return result;
 }
 
+function roomJoinByTargetPlayer(socket, payload, roomManager) {
+  const { targetPlayerId, playerId, sessionToken } = payload ?? {};
+  return roomManager.joinRoomByTargetPlayer(socket, {
+    targetPlayerId,
+    playerId,
+    sessionToken,
+  });
+}
+
 // --- Validators (return error string or null) ---
 
 function validatePlayerRegister(payload) {
@@ -388,6 +406,15 @@ function validateInviteRespond(payload) {
   const { inviteId, accept, sessionToken } = payload;
   if (typeof inviteId !== 'string' || inviteId.length > 64) return 'Invalid invite id';
   if (typeof accept !== 'boolean') return 'Invalid accept flag';
+  if (!validateSessionToken(sessionToken)) return 'Invalid session token';
+  return null;
+}
+
+function validateJoinByTargetPlayer(payload) {
+  if (!isPlainObject(payload)) return 'Invalid payload';
+  const { targetPlayerId, playerId, sessionToken } = payload;
+  if (!validateTargetPlayerId(targetPlayerId)) return 'Invalid target player';
+  if (playerId != null && !validatePlayerId(playerId)) return 'Invalid playerId';
   if (!validateSessionToken(sessionToken)) return 'Invalid session token';
   return null;
 }
@@ -550,6 +577,13 @@ export const ALL_EVENTS = [
     handler: wordFocusReport,
   },
   {
+    event: 'word:scratchpad:sync',
+    actionKey: 'wordScratchpadSync',
+    rateLimit: RATE_LIMITS.wordScratchpadSync,
+    validate: validateWordScratchpadSync,
+    handler: wordScratchpadSync,
+  },
+  {
     event: 'game:state:request',
     actionKey: 'gameStateRequest',
     rateLimit: RATE_LIMITS.gameStateRequest,
@@ -708,5 +742,14 @@ export const ALL_EVENTS = [
     requiresAuth: true,
     validate: validateInviteRespond,
     handler: inviteRespond,
+  },
+  {
+    event: 'room:join_by_target_player',
+    actionKey: 'joinByTargetPlayer',
+    rateLimit: RATE_LIMITS.joinByTargetPlayer,
+    requiresAuth: true,
+    requiresRegistered: true,
+    validate: validateJoinByTargetPlayer,
+    handler: roomJoinByTargetPlayer,
   },
 ];

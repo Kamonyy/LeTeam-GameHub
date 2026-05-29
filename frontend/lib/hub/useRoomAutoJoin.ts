@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { suppressRoomAutoJoinRef } from '@/lib/hub/room-auto-join';
 import { getDisplayName, hasDisplayName } from '@/lib/player';
 import { normalizeRoomCode } from '@/lib/hub/room';
+import { isLobbyPlayer } from '@/lib/hub/resolveClientIsSpectator';
 import type { LobbyState } from '@/lib/hub/types';
 
 export interface UseRoomAutoJoinOptions {
@@ -14,14 +15,14 @@ export interface UseRoomAutoJoinOptions {
   roomParam: string | null;
   spectateParam?: boolean;
   connected: boolean;
+  sessionReady: boolean;
+  reconnectAssessed: boolean;
+  reconnectedRoomId?: string | null;
+  reconnectedAsSpectator?: boolean;
   hardResetInFlight: boolean;
   lobby: LobbyState | null;
   playerId: string;
   joinRoom: (roomId: string, displayName: string) => Promise<boolean>;
-  joinRoomOrSpectate?: (
-    roomId: string,
-    displayName: string
-  ) => Promise<{ ok: boolean; spectating: boolean }>;
   spectateRoom?: (roomId: string, displayName: string) => Promise<boolean>;
   onAutoJoinLoading?: (loading: boolean) => void;
 }
@@ -33,11 +34,14 @@ export function useRoomAutoJoin({
   roomParam,
   spectateParam = false,
   connected,
+  sessionReady,
+  reconnectAssessed,
+  reconnectedRoomId = null,
+  reconnectedAsSpectator = false,
   hardResetInFlight,
   lobby,
-  playerId: _playerId,
+  playerId,
   joinRoom,
-  joinRoomOrSpectate,
   spectateRoom,
   onAutoJoinLoading,
 }: UseRoomAutoJoinOptions) {
@@ -67,37 +71,63 @@ export function useRoomAutoJoin({
   }, [lobby?.gameType, lobby?.roomId, gameType]);
 
   useEffect(() => {
+    if (!connected || !sessionReady || !reconnectAssessed || !roomParam) {
+      return;
+    }
+
+    const code = normalizeRoomCode(roomParam);
+    if (!code) return;
+
+    const reconnectedCode =
+      reconnectedRoomId ? normalizeRoomCode(reconnectedRoomId) : null;
+
+    // Server re-mapped this socket to the target room — never emit room:join.
+    if (reconnectedCode === code) {
+      if (spectateParam && !reconnectedAsSpectator && isLobbyPlayer(lobby, playerId)) {
+        router.replace(`${basePath}?room=${code}`, { scroll: false });
+      }
+      setAutoJoined(true);
+      return;
+    }
+
+    if (reconnectedCode && reconnectedCode !== code) {
+      console.warn(
+        'Player belongs to an alternate active session:',
+        reconnectedCode,
+        '(URL room:',
+        code,
+        ')'
+      );
+      return;
+    }
+
+    // Only attempt room entry when the server confirmed no active attachment.
+    if (reconnectedRoomId !== null) {
+      return;
+    }
+
     if (
       suppressRoomAutoJoinRef.current ||
       !gameEnabled ||
-      !connected ||
       hardResetInFlight ||
-      !roomParam ||
+      inviteJoin ||
       lobby?.gameType === gameType ||
-      autoJoined ||
-      inviteJoin
+      autoJoined
     ) {
       return;
     }
     if (lobby && lobby.gameType !== gameType) return;
-    const code = normalizeRoomCode(roomParam);
-    if (!code) return;
 
     let cancelled = false;
 
     const attemptJoin = async () => {
       onAutoJoinLoading?.(true);
       const name = getDisplayName();
+
       if (spectateParam && spectateRoom) {
         const ok = await spectateRoom(code, name);
         if (!cancelled && ok) {
           router.replace(`${basePath}?room=${code}&spectate=1`, { scroll: false });
-        }
-      } else if (joinRoomOrSpectate) {
-        const result = await joinRoomOrSpectate(code, name);
-        if (!cancelled && result.ok) {
-          const query = result.spectating ? `?room=${code}&spectate=1` : `?room=${code}`;
-          router.replace(`${basePath}${query}`, { scroll: false });
         }
       } else {
         const ok = await joinRoom(code, name);
@@ -120,6 +150,10 @@ export function useRoomAutoJoin({
     gameEnabled,
     basePath,
     connected,
+    sessionReady,
+    reconnectAssessed,
+    reconnectedRoomId,
+    reconnectedAsSpectator,
     hardResetInFlight,
     roomParam,
     lobby,
@@ -127,8 +161,8 @@ export function useRoomAutoJoin({
     inviteJoin,
     spectateParam,
     joinRoom,
-    joinRoomOrSpectate,
     spectateRoom,
+    playerId,
     router,
     onAutoJoinLoading,
   ]);

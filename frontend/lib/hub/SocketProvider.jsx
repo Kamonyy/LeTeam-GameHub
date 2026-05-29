@@ -23,6 +23,7 @@ import { isSameOriginServer, resolveServerUrl } from '@/lib/socket-url';
 import { HubLiveProvider } from '@/lib/hub/HubLiveContext';
 import { HardResetProvider } from '@/lib/hub/HardResetContext';
 import { hubPresenceEqual, lobbyStateEqual } from '@/lib/hub/hub-live';
+import { resolveClientIsSpectator } from '@/lib/hub/resolveClientIsSpectator';
 import { isGameActive } from '@/lib/hub/games-registry';
 import { stripNarratorSecrets } from '@/games/mafia/lib/redactMafiaState';
 import { InvitationProvider } from '@/context/InvitationContext';
@@ -178,6 +179,11 @@ export function SocketProvider({ children }) {
   const [sketchDrawGuessFeed, setSketchDrawGuessFeed] = useState([]);
   const [sketchDrawDisbandAt, setSketchDrawDisbandAt] = useState(0);
   const [hardResetInFlight, setHardResetInFlight] = useState(false);
+  const [isIdentityHydrated, setIsIdentityHydrated] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
+  const [reconnectAssessed, setReconnectAssessed] = useState(false);
+  const [reconnectedRoomId, setReconnectedRoomId] = useState(null);
+  const [reconnectedAsSpectator, setReconnectedAsSpectator] = useState(false);
   const actionsRef = useRef({});
   const chatChannelRef = useRef(null);
   const wordActionInFlightRef = useRef(false);
@@ -192,47 +198,63 @@ export function SocketProvider({ children }) {
 
   const registerPlayer = useCallback((socket, id, isRetry = false) => {
     return (async () => {
-      const res = await emitWithAck(
-        socket,
-        'player:register',
-        {
-          playerId: id,
-          displayName: getDisplayName() || 'Player',
-          sessionToken: getSessionToken() || undefined,
-        },
-        REGISTER_ACK_MS
-      );
-
-      if (!res) {
+      if (!id) {
         return false;
       }
 
-      if (
-        !isRetry &&
-        res.error &&
-        (res.error === 'Invalid session token' ||
-          res.error === 'Session token required')
-      ) {
-        clearSessionToken();
-        return registerPlayer(socket, id, true);
-      }
+      try {
+        const res = await emitWithAck(
+          socket,
+          'player:register',
+          {
+            playerId: id,
+            displayName: getDisplayName() || 'Player',
+            sessionToken: getSessionToken() || undefined,
+          },
+          REGISTER_ACK_MS
+        );
 
-      if (res.error) {
-        setError(res.error);
-        return false;
-      }
+        if (!res) {
+          return false;
+        }
 
-      if (res.sessionToken) {
-        setSessionToken(res.sessionToken);
+        if (
+          !isRetry &&
+          res.error &&
+          (res.error === 'Invalid session token' ||
+            res.error === 'Session token required')
+        ) {
+          clearSessionToken();
+          return registerPlayer(socket, id, true);
+        }
+
+        if (res.error) {
+          setError(res.error);
+          setReconnectedRoomId(null);
+          setReconnectedAsSpectator(false);
+          return false;
+        }
+
+        if (res.sessionToken) {
+          setSessionToken(res.sessionToken);
+        }
+        if (res.reconnected && res.roomId) {
+          setReconnectedRoomId(res.roomId);
+          setReconnectedAsSpectator(!!res.isSpectator);
+          setIsSpectator(!!res.isSpectator);
+        } else {
+          setReconnectedRoomId(null);
+          setReconnectedAsSpectator(false);
+          if (!res.reconnected) {
+            setLobby(null);
+            setGameState(null);
+            setIsSpectator(false);
+          }
+        }
+        return true;
+      } finally {
+        setReconnectAssessed(true);
       }
-      if (res.reconnected && res.roomId) {
-        if (res.isSpectator) setIsSpectator(true);
-      } else if (!res.reconnected) {
-        setLobby(null);
-        setGameState(null);
-        setIsSpectator(false);
-      }
-      return true;
     })();
   }, [setError]);
 
@@ -255,11 +277,19 @@ export function SocketProvider({ children }) {
   }, [registerPlayer]);
 
   useEffect(() => {
-    let cancelled = false;
-    let socket = null;
+    if (typeof window === 'undefined') return;
     const id = getOrCreatePlayerId();
+    if (!id) return;
     playerIdRef.current = id;
     setPlayerId(id);
+    setIsIdentityHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isIdentityHydrated || !playerId) return;
+
+    let cancelled = false;
+    let socket = null;
 
     (async () => {
       const serverUrl = await resolveServerUrl();
@@ -285,16 +315,24 @@ export function SocketProvider({ children }) {
           skipNextConnectRegisterRef.current = false;
           return;
         }
-        registerReadyRef.current = registerPlayer(socket, playerIdRef.current).then(
-          (ok) => {
-            if (ok) socket.emit('hub:presence:request', {});
-            return ok;
-          }
-        );
+        const id = playerIdRef.current;
+        if (!id) return;
+
+        setSessionReady(false);
+        setReconnectAssessed(false);
+        registerReadyRef.current = registerPlayer(socket, id).then((ok) => {
+          setSessionReady(true);
+          if (ok) socket.emit('hub:presence:request', {});
+          return ok;
+        });
       });
 
       socket.on('disconnect', () => {
         setConnected(false);
+        setSessionReady(false);
+        setReconnectAssessed(false);
+        setReconnectedRoomId(null);
+        setReconnectedAsSpectator(false);
         registerReadyRef.current = createUnsettledRegistration();
         wordActionInFlightRef.current = false;
       });
@@ -313,14 +351,10 @@ export function SocketProvider({ children }) {
             setGameState(null);
             setWordGuessedCelebration(null);
           }
-          const nextSpectator =
-            state?.isSpectator !== undefined ?
-              !!state.isSpectator
-            :	!!(
-                state?.spectators &&
-                playerIdRef.current &&
-                state.spectators.some((s) => s.id === playerIdRef.current)
-              );
+          const nextSpectator = resolveClientIsSpectator(
+            state,
+            playerIdRef.current
+          );
           setIsSpectator((was) => (was === nextSpectator ? was : nextSpectator));
           return state;
         });
@@ -350,7 +384,9 @@ export function SocketProvider({ children }) {
       socket.on('reconnect:sync', (payload) => {
         if (leavingRoomRef.current) return;
         setLobby((prev) => (lobbyStateEqual(prev, payload) ? prev : payload));
-        setIsSpectator(!!payload?.isSpectator);
+        setIsSpectator(
+          resolveClientIsSpectator(payload, playerIdRef.current)
+        );
         if (payload?.status === 'lobby') {
           setGameState(null);
           setWordGuessedCelebration(null);
@@ -397,6 +433,44 @@ export function SocketProvider({ children }) {
           if (!changed) return prev;
           const next = { ...prev, players };
           return lobbyStateEqual(prev, next) ? prev : next;
+        });
+      });
+      socket.on('word:scratchpad:update', (payload) => {
+        if (!payload?.roomId || !payload?.playerId) return;
+        const notes = Array.isArray(payload.notes) ? payload.notes : [];
+        setGameState((prev) => {
+          if (!prev || prev.gameType !== 'wordgame' || !prev.isSpectator) return prev;
+          if (prev.roomId && prev.roomId !== payload.roomId) return prev;
+          if (
+            typeof payload.roundNumber === 'number' &&
+            payload.roundNumber !== prev.roundNumber
+          ) {
+            return prev;
+          }
+          return {
+            ...prev,
+            scratchpadsByPlayer: {
+              ...(prev.scratchpadsByPlayer ?? {}),
+              [payload.playerId]: notes,
+            },
+          };
+        });
+      });
+      socket.on('word:scratchpad:reset', (payload) => {
+        if (!payload?.roomId) return;
+        setGameState((prev) => {
+          if (!prev || prev.gameType !== 'wordgame' || !prev.isSpectator) return prev;
+          if (prev.roomId && prev.roomId !== payload.roomId) return prev;
+          if (
+            typeof payload.roundNumber === 'number' &&
+            payload.roundNumber !== prev.roundNumber
+          ) {
+            return prev;
+          }
+          const empty = Object.fromEntries(
+            (prev.playerIds ?? []).map((id) => [id, []])
+          );
+          return { ...prev, scratchpadsByPlayer: empty };
         });
       });
       socket.on('room:kicked', (payload) => {
@@ -525,7 +599,7 @@ export function SocketProvider({ children }) {
       socketInstRef.current = null;
       socketRef.current = null;
     };
-  }, [registerPlayer]);
+  }, [isIdentityHydrated, playerId, registerPlayer]);
 
   const requestHubPresenceRefresh = useCallback(() => {
     const socket = socketRef.current;
@@ -656,7 +730,7 @@ export function SocketProvider({ children }) {
         return false;
       }
 
-      setIsSpectator(!!res.isSpectator || spectate);
+      setIsSpectator(spectate ? true : !!res.isSpectator);
       return true;
     },
     [ensureRegistered, setError]
@@ -666,46 +740,61 @@ export function SocketProvider({ children }) {
     return joinRoom(roomId, displayName, { spectate: true });
   }, [joinRoom]);
 
-  /** Join as player, or spectate if the match already started. */
-  const joinRoomOrSpectate = useCallback((roomId, displayName) => {
-    return new Promise((resolve) => {
-      const socket = socketRef.current;
-      if (!socket?.connected) {
-        resolve({ ok: false, spectating: false });
-        return;
-      }
-      const code = roomId.toUpperCase();
-      socket.emit('room:join', { roomId: code, displayName }, (res) => {
-        if (hardResetInFlightRef.current) {
+  /**
+   * Join as player, or spectate only when explicitly requested (options / ?spectate=1).
+   * Never auto-demotes a failed join to spectator (prevents refresh races).
+   */
+  const joinRoomOrSpectate = useCallback(
+    (roomId, displayName, options = {}) => {
+      const { spectate: explicitSpectate = false } = options;
+      const wantsSpectate =
+        explicitSpectate ||
+        (typeof window !== 'undefined' &&
+          (window.location.search.includes('spectate=1') ||
+            window.location.search.includes('spectate=true')));
+
+      return new Promise((resolve) => {
+        const socket = socketRef.current;
+        if (!socket?.connected) {
           resolve({ ok: false, spectating: false });
           return;
         }
-        if (!res?.error) {
-          setIsSpectator(false);
-          resolve({ ok: true, spectating: false });
+        const code = roomId.toUpperCase();
+
+        if (wantsSpectate) {
+          socket.emit('room:spectate', { roomId: code, displayName }, (specRes) => {
+            if (hardResetInFlightRef.current) {
+              resolve({ ok: false, spectating: false });
+              return;
+            }
+            if (specRes?.error) {
+              setError(specRes.error);
+              resolve({ ok: false, spectating: false });
+              return;
+            }
+            setIsSpectator(true);
+            resolve({ ok: true, spectating: true });
+          });
           return;
         }
-        if (res.error !== 'Game already in progress') {
-          setError(res.error);
-          resolve({ ok: false, spectating: false });
-          return;
-        }
-        socket.emit('room:spectate', { roomId: code, displayName }, (specRes) => {
+
+        socket.emit('room:join', { roomId: code, displayName }, (res) => {
           if (hardResetInFlightRef.current) {
             resolve({ ok: false, spectating: false });
             return;
           }
-          if (specRes?.error) {
-            setError(specRes.error);
-            resolve({ ok: false, spectating: false });
-          } else {
-            setIsSpectator(true);
-            resolve({ ok: true, spectating: true });
+          if (!res?.error) {
+            setIsSpectator(false);
+            resolve({ ok: true, spectating: false });
+            return;
           }
+          setError(res.error);
+          resolve({ ok: false, spectating: false });
         });
       });
-    });
-  }, []);
+    },
+    [setError]
+  );
 
   const clearSketchDrawSession = useCallback(() => {
     setSketchDrawLocalHints([]);
@@ -1123,6 +1212,18 @@ export function SocketProvider({ children }) {
     socket.emit('word:focus:report', { focused }, () => {});
   }, []);
 
+  const syncWordScratchpad = useCallback((roundNumber, notes) => {
+    const socket = socketRef.current;
+    if (!socket?.connected) return;
+    if (!Number.isInteger(roundNumber) || roundNumber < 1) return;
+    if (!Array.isArray(notes)) return;
+    socket.emit(
+      'word:scratchpad:sync',
+      { roundNumber, notes },
+      () => {}
+    );
+  }, []);
+
   const baraReveal = useCallback(() => {
     return new Promise((resolve) => {
       (async () => {
@@ -1473,6 +1574,58 @@ export function SocketProvider({ children }) {
     []
   );
 
+  const joinLobbyByTargetPlayer = useCallback(
+    async (targetPlayerId) => {
+      const registered = await ensureRegistered();
+      if (!registered) {
+        setError('Could not register with server. Check your connection.');
+        return { error: 'Not registered' };
+      }
+
+      const socket = socketRef.current;
+      if (!socket?.connected) {
+        setError('Not connected to server');
+        return { error: 'Not connected' };
+      }
+
+      const sessionToken = getSessionToken();
+      if (!sessionToken) {
+        setError('Session required');
+        return { error: 'Session required' };
+      }
+
+      const res = await emitWithAck(
+        socket,
+        'room:join_by_target_player',
+        {
+          targetPlayerId,
+          playerId: playerIdRef.current,
+          sessionToken,
+        },
+        ROOM_ACTION_ACK_MS
+      );
+
+      if (hardResetInFlightRef.current) {
+        return { error: 'Unavailable' };
+      }
+      if (!res) {
+        setError('Server did not respond. Try again.');
+        return { error: 'Server did not respond' };
+      }
+      if (res.error) {
+        setError(res.error);
+        return { error: res.error };
+      }
+
+      setIsSpectator(false);
+      return {
+        roomId: res.roomId,
+        gameType: res.gameType,
+      };
+    },
+    [ensureRegistered, setError]
+  );
+
   actionsRef.current = {
     clearError,
     refreshDisplayName,
@@ -1496,6 +1649,7 @@ export function SocketProvider({ children }) {
     submitSecretChampion,
     confirmWordGuessed,
     reportWordTabFocus,
+    syncWordScratchpad,
     baraReveal,
     baraReady,
     baraAdvanceInterrogation,
@@ -1513,6 +1667,7 @@ export function SocketProvider({ children }) {
     registerSocketListener,
     emitInviteSend,
     emitInviteRespond,
+    joinLobbyByTargetPlayer,
     sendChat,
   };
 
@@ -1525,8 +1680,24 @@ export function SocketProvider({ children }) {
       error,
       transientWarning,
       hardResetInFlight,
+      isIdentityHydrated,
+      sessionReady,
+      reconnectAssessed,
+      reconnectedRoomId,
+      reconnectedAsSpectator,
     }),
-    [connected, playerId, error, transientWarning, hardResetInFlight]
+    [
+      connected,
+      playerId,
+      error,
+      transientWarning,
+      hardResetInFlight,
+      isIdentityHydrated,
+      sessionReady,
+      reconnectAssessed,
+      reconnectedRoomId,
+      reconnectedAsSpectator,
+    ]
   );
 
   const gameStateValue = useMemo(
@@ -1608,6 +1779,11 @@ export function useSocket() {
       error: connection.error,
       transientWarning: connection.transientWarning,
       hardResetInFlight: connection.hardResetInFlight,
+      isIdentityHydrated: connection.isIdentityHydrated,
+      sessionReady: connection.sessionReady,
+      reconnectAssessed: connection.reconnectAssessed,
+      reconnectedRoomId: connection.reconnectedRoomId,
+      reconnectedAsSpectator: connection.reconnectedAsSpectator,
       ...game,
       sketchDrawTimeTick,
       sketchDrawRemoteBatch: canvas.sketchDrawRemoteBatch,

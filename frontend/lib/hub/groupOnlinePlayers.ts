@@ -23,6 +23,8 @@ export function presenceDotClass(status: OnlinePlayerStatus): string {
       return 'hub-presence-dot--playing';
     case 'lobby':
       return 'hub-presence-dot--lobby';
+    case 'spectating':
+      return 'hub-presence-dot--spectating';
     default:
       return 'hub-presence-dot--hub';
   }
@@ -31,6 +33,40 @@ export function presenceDotClass(status: OnlinePlayerStatus): string {
 export function gameLabelForPresence(gameType: string | null | undefined): string {
   if (!gameType) return 'Game';
   return getGameEntry(gameType)?.name ?? gameType;
+}
+
+/** First player in a lobby group the client can use to join via direct-join. */
+export function getLobbyJoinTarget(
+  players: OnlinePlayer[],
+  selfPlayerId?: string
+): OnlinePlayer | null {
+  return (
+    players.find(
+      (p) =>
+        !!p.targetRoomId &&
+        p.isRoomFull !== true &&
+        p.id !== selfPlayerId
+    ) ?? null
+  );
+}
+
+/** Occupied / max capacity for a lobby row in the presence list. */
+export function getLobbyCapacityFromPlayers(
+  players: OnlinePlayer[]
+): { occupied: number; max: number } | null {
+  const source = players.find(
+    (p) =>
+      p.lobbyMaxPlayers != null &&
+      p.lobbyPlayerCount != null &&
+      p.lobbyMaxPlayers > 0
+  );
+  if (!source || source.lobbyMaxPlayers == null || source.lobbyPlayerCount == null) {
+    return null;
+  }
+  return {
+    occupied: source.lobbyPlayerCount,
+    max: source.lobbyMaxPlayers,
+  };
 }
 
 export function groupOnlinePlayers(players: OnlinePlayer[]): OnlinePlayerGroup[] {
@@ -53,8 +89,11 @@ export function groupOnlinePlayers(players: OnlinePlayer[]): OnlinePlayerGroup[]
     ([roomId, roomPlayers]) => {
       const first = roomPlayers[0]!;
       const hostId = first.hostId ?? '';
-      const status: 'lobby' | 'playing' =
-        first.status === 'playing' ? 'playing' : 'lobby';
+      const status: 'lobby' | 'playing' = roomPlayers.some(
+        (p) => p.status === 'playing'
+      ) ?
+        'playing'
+      : 'lobby';
       const sorted = [...roomPlayers].sort((a, b) => {
         if (a.id === hostId) return -1;
         if (b.id === hostId) return 1;

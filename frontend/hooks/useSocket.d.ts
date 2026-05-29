@@ -64,6 +64,11 @@ export interface UseSocketReturn {
   /** Short-lived rate-limit / protocol warnings (auto-cleared). */
   transientWarning: string | null;
   hardResetInFlight: boolean;
+  isIdentityHydrated: boolean;
+  sessionReady: boolean;
+  reconnectAssessed: boolean;
+  reconnectedRoomId: string | null;
+  reconnectedAsSpectator: boolean;
   hubPresence: HubPresenceState;
   chatMessages: ChatMessage[];
   sendChat: (message: string) => void;
@@ -78,7 +83,8 @@ export interface UseSocketReturn {
   spectateRoom: (roomId: string, displayName: string) => Promise<boolean>;
   joinRoomOrSpectate: (
     roomId: string,
-    displayName: string
+    displayName: string,
+    options?: { spectate?: boolean }
   ) => Promise<{ ok: boolean; spectating: boolean }>;
   leaveRoom: () => Promise<void>;
   /** Leave room/game, clear client session; keeps player id and display name. */
@@ -166,6 +172,11 @@ export interface UseSocketReturn {
     error?: string;
     success?: boolean;
     accepted?: boolean;
+    roomId?: string;
+    gameType?: string;
+  }>;
+  joinLobbyByTargetPlayer: (targetPlayerId: string) => Promise<{
+    error?: string;
     roomId?: string;
     gameType?: string;
   }>;

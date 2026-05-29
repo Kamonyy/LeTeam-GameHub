@@ -83,6 +83,7 @@ export const RATE_LIMITS = {
 	wordSubmit: 20,
 	wordGuessed: 30,
 	wordChampionSubmit: 20,
+	wordScratchpadSync: 90,
 	baraReveal: 10,
 	baraReady: 20,
 	baraVoteEnd: 20,
@@ -98,4 +99,5 @@ export const RATE_LIMITS = {
 	sketchDrawGuessSubmit: 40,
 	inviteSend: 15,
 	inviteRespond: 30,
+	joinByTargetPlayer: 15,
 };

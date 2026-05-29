@@ -8,11 +8,15 @@ import ScratchpadLolScrollbar from './ScratchpadLolScrollbar';
 
 interface ScratchpadProps {
   notes: ScratchpadNote[];
-  onAdd: (text: string) => void;
-  onUpdate: (id: string, text: string) => void;
-  onDelete: (id: string) => void;
+  onAdd?: (text: string) => void;
+  onUpdate?: (id: string, text: string) => void;
+  onDelete?: (id: string) => void;
   /** League of Legends mode — hextech scrollbar + panel accents */
   isLol?: boolean;
+  /** Spectator / replay — list only, no edits */
+  readOnly?: boolean;
+  title?: string;
+  emptyHint?: string;
 }
 
 type NoteRowProps = {
@@ -35,7 +39,8 @@ const NoteRow = memo(function NoteRow({
   onSaveEdit,
   onCancelEdit,
   onDelete,
-}: NoteRowProps) {
+  readOnly = false,
+}: NoteRowProps & { readOnly?: boolean }) {
   const handleStartEdit = useCallback(() => onStartEdit(note), [note, onStartEdit]);
   const handleDelete = useCallback(() => onDelete(note.id), [note.id, onDelete]);
 
@@ -75,24 +80,26 @@ const NoteRow = memo(function NoteRow({
           <p className="flex-1 text-sm sw-text-accent leading-relaxed break-words">
             {note.text}
           </p>
-          <div className="flex gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity shrink-0">
-            <button
-              type="button"
-              onClick={handleStartEdit}
-              className="p-1.5 rounded sw-muted hover:text-[#f0d78c] hover:bg-[rgba(201,162,39,0.1)]"
-              aria-label="Edit note"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              className="p-1.5 rounded sw-muted hover:text-[#fca5a5] hover:bg-[rgba(239,68,68,0.1)]"
-              aria-label="Delete note"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          {!readOnly && (
+            <div className="flex gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity shrink-0">
+              <button
+                type="button"
+                onClick={handleStartEdit}
+                className="p-1.5 rounded sw-muted hover:text-[#f0d78c] hover:bg-[rgba(201,162,39,0.1)]"
+                aria-label="Edit note"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="p-1.5 rounded sw-muted hover:text-[#fca5a5] hover:bg-[rgba(239,68,68,0.1)]"
+                aria-label="Delete note"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       }
     </li>
@@ -105,6 +112,9 @@ export default function Scratchpad({
   onUpdate,
   onDelete,
   isLol = false,
+  readOnly = false,
+  title = 'Clue Scratchpad',
+  emptyHint = 'Record clues here — saved locally on this device.',
 }: ScratchpadProps) {
   const [draft, setDraft] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -113,7 +123,7 @@ export default function Scratchpad({
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!draft.trim()) return;
+    if (!draft.trim() || !onAdd) return;
     onAdd(draft);
     setDraft('');
   };
@@ -124,7 +134,7 @@ export default function Scratchpad({
   }, []);
 
   const saveEdit = useCallback(() => {
-    if (editingId && editText.trim()) {
+    if (editingId && editText.trim() && onUpdate) {
       onUpdate(editingId, editText);
     }
     setEditingId(null);
@@ -143,32 +153,37 @@ export default function Scratchpad({
         isLol && 'sw-scratchpad--lol'
       )}
     >
-      <div className="flex shrink-0 items-center gap-2 px-4 py-3 border-b border-[rgba(201,162,39,0.15)]">
-        <StickyNote className="w-4 h-4 text-[#f0d78c]" />
-        <h3 className="sw-heading text-[11px]">Clue Scratchpad</h3>
-        <span className="ml-auto text-xs sw-muted tabular-nums">{notes.length}</span>
+      <div className="sw-scratchpad__head flex shrink-0 items-center gap-1.5 px-3 py-2 border-b border-[rgba(201,162,39,0.15)]">
+        <StickyNote className="w-3.5 h-3.5 text-[#f0d78c]" aria-hidden />
+        <h3 className="sw-scratchpad__title">{title}</h3>
+        <span className="ml-auto text-[10px] sw-muted tabular-nums">{notes.length}</span>
       </div>
 
-      <form onSubmit={handleAdd} className="shrink-0 p-3 border-b border-[rgba(201,162,39,0.1)]">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Starts with T — No"
-            className="sw-input flex-1 py-2 text-sm normal-case tracking-normal"
-            maxLength={200}
-          />
-          <button
-            type="submit"
-            disabled={!draft.trim()}
-            className="p-2 rounded-lg border border-[rgba(201,162,39,0.3)] bg-[rgba(201,162,39,0.12)] text-[#f0d78c] hover:bg-[rgba(201,162,39,0.2)] disabled:opacity-40 transition-colors"
-            aria-label="Add note"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
-      </form>
+      {!readOnly && (
+        <form
+          onSubmit={handleAdd}
+          className="sw-scratchpad__form shrink-0 px-3 py-2 border-b border-[rgba(201,162,39,0.1)]"
+        >
+          <div className="flex gap-1.5">
+            <input
+              type="text"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Starts with T — No"
+              className="sw-input flex-1 py-1.5 text-xs normal-case tracking-normal"
+              maxLength={200}
+            />
+            <button
+              type="submit"
+              disabled={!draft.trim()}
+              className="p-1.5 rounded-md border border-[rgba(201,162,39,0.3)] bg-[rgba(201,162,39,0.12)] text-[#f0d78c] hover:bg-[rgba(201,162,39,0.2)] disabled:opacity-40 transition-colors"
+              aria-label="Add note"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        </form>
+      )}
 
       <div
         className={clsx(
@@ -185,26 +200,27 @@ export default function Scratchpad({
           <ul
             ref={listRef}
             className={clsx(
-              'sw-scratchpad__scroll flex-1 min-w-0 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-2',
+              'sw-scratchpad__scroll flex-1 min-w-0 min-h-0 overflow-y-auto overscroll-contain p-2 space-y-1.5',
               isLol && 'sw-scratchpad__scroll--lol'
             )}
           >
         {notes.length === 0 && (
-          <li className="text-center text-xs sw-muted py-8 px-4 leading-relaxed">
-            Record clues and deductions. Notes persist locally if you refresh.
+          <li className="text-center text-[10px] sw-muted py-4 px-2 leading-snug">
+            {emptyHint}
           </li>
         )}
         {notes.map((note) => (
           <NoteRow
             key={note.id}
             note={note}
-            isEditing={editingId === note.id}
+            isEditing={!readOnly && editingId === note.id}
             editText={editText}
             onEditTextChange={setEditText}
             onStartEdit={startEdit}
             onSaveEdit={saveEdit}
             onCancelEdit={cancelEdit}
-            onDelete={onDelete}
+            onDelete={onDelete ?? (() => {})}
+            readOnly={readOnly}
           />
         ))}
           </ul>

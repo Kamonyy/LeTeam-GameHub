@@ -12,6 +12,10 @@ interface ScoreCardProps {
   scores: Record<string, number>;
   myPlayerId: string;
   pointsToWin?: number;
+  /** Spectator setup tracker — show lock state on banners */
+  submissionStatus?: Record<string, boolean>;
+  /** Center banners during setup / champion pick; left-align during play. */
+  align?: 'start' | 'center';
 }
 
 export default function ScoreCard({
@@ -20,6 +24,8 @@ export default function ScoreCard({
   scores,
   myPlayerId,
   pointsToWin,
+  submissionStatus,
+  align = 'start',
 }: ScoreCardProps) {
   const [bumpIds, setBumpIds] = useState<Record<string, boolean>>({});
   const [glowIds, setGlowIds] = useState<Record<string, boolean>>({});
@@ -54,7 +60,14 @@ export default function ScoreCard({
   }, [scores, playerIds]);
 
   return (
-    <div className="sw-score-banners flex gap-4 sm:gap-6 justify-center sw-animate-ascend px-2 sw-stagger">
+    <div
+      className={clsx(
+        'sw-score-banners flex gap-3 sm:gap-5 sw-animate-ascend sw-stagger',
+        align === 'center' ?
+          'sw-score-banners--center justify-center'
+        : 'sw-score-banners--start justify-start'
+      )}
+    >
       {playerIds.map((id) => {
         const isMe = id === myPlayerId;
         const variant = bannerVariantForPlayer(id, playerIds);
@@ -85,7 +98,13 @@ export default function ScoreCard({
               {scores[id] ?? 0}
             </p>
             <p className="sw-banner__meta">
-              {pointsToWin != null ? `First to ${pointsToWin}` : 'Session score'}
+              {submissionStatus != null ?
+                submissionStatus[id] ?
+                  'Locked in'
+                :	'Still choosing'
+              : pointsToWin != null ?
+                `First to ${pointsToWin}`
+              :	'Session score'}
             </p>
           </div>
         );

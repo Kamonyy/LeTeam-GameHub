@@ -8,6 +8,7 @@ import { WORD_POINTS_OPTIONS } from '@/lib/hub/types';
 import WordPanelFrame from './WordPanelFrame';
 import WordGameAboutSidebar from './WordGameAboutSidebar';
 import GameLobbyCore from '@/components/ui/GameLobbyCore';
+import RoomSpectatorsNotice from '@/components/hub/RoomSpectatorsNotice';
 
 interface WordLobbyProps {
   lobby: LobbyState;
@@ -75,6 +76,8 @@ export default function WordLobby({
           <h2 className="sw-heading text-lg">Secret Word Lobby</h2>
         </div>
         <div className="sw-divider-gold mb-5" />
+
+        <RoomSpectatorsNotice spectators={lobby.spectators ?? []} />
 
         <GameLobbyCore
           lobby={lobby}
@@ -181,7 +184,7 @@ export default function WordLobby({
                         type="button"
                         onClick={applyCustomPoints}
                         disabled={!customPoints.trim()}
-                        className="sw-btn-secondary sw-match-settings__custom-btn"
+                        className="sw-match-settings__custom-btn"
                       >
                         Set
                       </button>

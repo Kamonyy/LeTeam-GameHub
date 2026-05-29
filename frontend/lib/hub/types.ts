@@ -11,7 +11,7 @@ export interface ChatMessage {
   timestamp: number;
 }
 
-export type OnlinePlayerStatus = 'hub' | 'lobby' | 'playing';
+export type OnlinePlayerStatus = 'hub' | 'lobby' | 'playing' | 'spectating';
 
 export interface OnlinePlayer {
   id: string;
@@ -21,6 +21,12 @@ export interface OnlinePlayer {
   roomId?: string | null;
   hostId?: string | null;
   gameType?: string | null;
+  /** Joinable lobby code when the player is in an active lobby (presence direct-join). */
+  targetRoomId?: string | null;
+  isRoomFull?: boolean;
+  /** Players currently in a joinable lobby (presence direct-join). */
+  lobbyPlayerCount?: number;
+  lobbyMaxPlayers?: number;
 }
 
 export interface MatchSettings {

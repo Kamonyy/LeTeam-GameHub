@@ -48,6 +48,10 @@ import {
 	shouldPreserveWordGameRoom,
 } from "./wordgame-session.js";
 import {
+	parseScratchpadRoundNumber,
+	sanitizeWordScratchpadNotes,
+} from "./word-scratchpad.js";
+import {
 	suggestBalancedSetup,
 	validateLobbySetup,
 	normalizeRoleCounts,
@@ -175,6 +179,14 @@ export class RoomManager {
 			if (found) {
 				roomId = found.roomId;
 				room = found.room;
+			}
+		}
+
+		if (!room) {
+			const spectating = this._findRoomForSpectator(playerId);
+			if (spectating) {
+				roomId = spectating.roomId;
+				room = spectating.room;
 			}
 		}
 
@@ -316,6 +328,20 @@ export class RoomManager {
 	}
 
 	_getPlayerPresenceMeta(playerId) {
+		const spectatorRoomId = this.spectatorToRoom.get(playerId);
+		if (spectatorRoomId) {
+			const room = this.rooms.get(spectatorRoomId);
+			if (room) {
+				return {
+					status: "spectating",
+					inviteable: false,
+					roomId: spectatorRoomId,
+					hostId: room.hostId ?? null,
+					gameType: room.gameType ?? null,
+				};
+			}
+		}
+
 		const roomId = this.playerToRoom.get(playerId);
 		if (!roomId) {
 			return {
@@ -355,11 +381,30 @@ export class RoomManager {
 		return this._getPlayerPresenceMeta(playerId).inviteable;
 	}
 
+	/** Lobby join hints for presence list direct-join (strict `lobby` status only). */
+	_getLobbyJoinPresenceFields(playerId) {
+		const roomId = this.playerToRoom.get(playerId);
+		if (!roomId) return {};
+		const room = this.rooms.get(roomId);
+		if (!room || room.status !== "lobby") return {};
+		const gameDef = getGame(room.gameType);
+		const maxCap = gameDef?.maxPlayers ?? 4;
+		const playerCount = room.players.length;
+		return {
+			targetRoomId: roomId,
+			gameType: room.gameType ?? null,
+			isRoomFull: playerCount >= maxCap,
+			lobbyPlayerCount: playerCount,
+			lobbyMaxPlayers: maxCap,
+		};
+	}
+
 	_buildHubPresencePayload(forPlayerId) {
 		const players = [...this.hubPresence.entries()]
 			.filter(([id]) => id !== forPlayerId)
 			.map(([id, entry]) => {
 				const meta = this._getPlayerPresenceMeta(id);
+				const joinFields = this._getLobbyJoinPresenceFields(id);
 				return {
 					id,
 					displayName: entry.displayName,
@@ -368,6 +413,7 @@ export class RoomManager {
 					roomId: meta.roomId,
 					hostId: meta.hostId,
 					gameType: meta.gameType,
+					...joinFields,
 				};
 			})
 			.sort((a, b) => a.displayName.localeCompare(b.displayName));
@@ -570,6 +616,70 @@ export class RoomManager {
 		};
 	}
 
+	joinRoomByTargetPlayer(socket, { targetPlayerId, playerId, sessionToken }) {
+		const joiningId = this.socketToPlayer.get(socket.id);
+		if (!joiningId) return { error: "Not registered" };
+		if (playerId && playerId !== joiningId) {
+			return { error: "Player id mismatch" };
+		}
+
+		const session = this._resolvePlayerSession(joiningId, sessionToken);
+		if (session.error) return { error: session.error };
+
+		if (joiningId === targetPlayerId) {
+			return { error: "Cannot join your own lobby" };
+		}
+
+		const roomId = this.playerToRoom.get(targetPlayerId);
+		if (!roomId) {
+			return { error: "Target player is not in a room" };
+		}
+
+		const room = this.rooms.get(roomId);
+		if (!room) {
+			return { error: "Target player is not in a room" };
+		}
+
+		if (room.status !== "lobby") {
+			return { error: "Target room match has already started" };
+		}
+
+		const gameDef = getGame(room.gameType);
+		if (!gameDef) return { error: "Invalid room game type" };
+		if (!isGameEnabled(room.gameType)) {
+			return { error: "This game is temporarily unavailable" };
+		}
+		if (room.players.length >= gameDef.maxPlayers) {
+			return { error: "Target lobby is full" };
+		}
+
+		const spectatorRoomId = this.spectatorToRoom.get(joiningId);
+		if (spectatorRoomId) {
+			if (this.useSocketRooms) socket.leave(spectatorRoomId);
+			this._removeSpectatorFromRoom(joiningId, spectatorRoomId);
+		}
+
+		const currentRoomId = this.playerToRoom.get(joiningId);
+		if (currentRoomId && currentRoomId !== roomId) {
+			if (this.useSocketRooms) socket.leave(currentRoomId);
+			this._removePlayerFromRoom(joiningId, currentRoomId);
+		}
+
+		const displayName =
+			this.hubPresence.get(joiningId)?.displayName ?? "Player";
+		const joinResult = this.joinRoom(socket, roomId, displayName);
+		if (joinResult.error) {
+			return { error: joinResult.error };
+		}
+
+		this._scheduleBroadcastHubPresence();
+
+		return {
+			roomId: joinResult.roomId ?? roomId,
+			gameType: room.gameType,
+		};
+	}
+
 	sendHubPresenceToSocket(socket) {
 		const playerId = this.socketToPlayer.get(socket.id);
 		if (!playerId) return;
@@ -652,6 +762,13 @@ export class RoomManager {
 			const { roomId, room } = found;
 			const player = this._getRoomPlayer(room, playerId);
 			if (player) {
+				// Authoritative player reconnect — never retain spectator mappings.
+				this.playerToRoom.set(playerId, roomId);
+				this.spectatorToRoom.delete(playerId);
+				if (room.spectators?.length) {
+					room.spectators = room.spectators.filter((s) => s.id !== playerId);
+				}
+
 				if (player.disconnectTimer) {
 					clearTimeout(player.disconnectTimer);
 					player.disconnectTimer = null;
@@ -662,20 +779,24 @@ export class RoomManager {
 				this._ensureRoomLink(playerId, roomId);
 				if (this.useSocketRooms) socket.join(roomId);
 
-				if (room.game && room.status === "playing") {
-					if (typeof room.game.resumeTurnTimer === "function") {
+				if (room.game) {
+					if (
+						room.status === "playing" &&
+						typeof room.game.resumeTurnTimer === "function"
+					) {
 						room.game.resumeTurnTimer();
 					}
 				}
 
 				this._touchRoomActivity(room);
-				this._emitReconnectSync(socket, room, playerId);
+				this._emitReconnectSync(socket, room, playerId, { isSpectator: false });
 				this.broadcastLobbyState(roomId);
 				this._upsertHubPresence(playerId, safeName, socket.id);
 				this._scheduleBroadcastHubPresence();
 				return {
 					reconnected: true,
 					roomId,
+					isSpectator: false,
 					sessionToken: session.sessionToken,
 				};
 			}
@@ -831,10 +952,13 @@ export class RoomManager {
 		if (spectatingElsewhere && spectatingElsewhere !== roomId) {
 			return { error: "Leave current room first" };
 		}
-		if (spectatingElsewhere === roomId && room.status === "lobby") {
+		if (spectatingElsewhere === roomId) {
 			this._removeSpectatorFromRoom(playerId, roomId);
 		} else if (this.spectatorToRoom.has(playerId)) {
 			return { error: "Already spectating this room" };
+		}
+		if (room.spectators?.some((s) => s.id === playerId)) {
+			this._removeSpectatorFromRoom(playerId, roomId);
 		}
 
 		if (this.playerToRoom.has(playerId) && this.playerToRoom.get(playerId) !== roomId) {
@@ -889,8 +1013,8 @@ export class RoomManager {
 
 		const room = this.rooms.get(roomId);
 		if (!room) return { error: "Room not found" };
-		if (room.gameType !== "dominoes") {
-			return { error: "Spectating is only available for dominoes" };
+		if (room.gameType !== "dominoes" && room.gameType !== "wordgame") {
+			return { error: "Spectating is not available for this game type" };
 		}
 
 		const alreadySpectating = room.spectators?.find((s) => s.id === playerId);
@@ -934,7 +1058,10 @@ export class RoomManager {
 		this.broadcastLobbyState(roomId);
 
 		if (room.game && room.status === "playing") {
-			const state = room.game.serializeForPlayer(playerId);
+			const state = this._augmentWordSpectatorState(
+				room,
+				room.game.serializeForPlayer(playerId),
+			);
 			socket.emit("game:state:update", { roomId, ...state });
 		}
 
@@ -1103,6 +1230,10 @@ export class RoomManager {
 		if (room.gameType === "sketch-draw") this._sketchPhaseRoomIds.add(roomId);
 		this._touchRoomActivity(room);
 		if (room.gameType === "wordgame") {
+			room.wordScratchpads = {
+				roundNumber: room.game.roundNumber,
+				byPlayer: {},
+			};
 			for (const p of room.players) {
 				p.tabFocused = true;
 			}
@@ -2069,10 +2200,10 @@ export class RoomManager {
 		const { playerId, room } = ctx;
 		if (!room.game) return { error: "No active game" };
 
-		const state = {
+		const state = this._augmentWordSpectatorState(room, {
 			roomId: room.id,
 			...room.game.serializeForPlayer(playerId),
-		};
+		});
 		socket.emit("game:state:update", state);
 		return { success: true, state };
 	}
@@ -2345,6 +2476,20 @@ export class RoomManager {
 			return;
 		}
 
+		// Pre-game lobby: drop immediately so hub presence does not show a ghost lobby.
+		if (room.status === "lobby") {
+			if (player.disconnectTimer) {
+				clearTimeout(player.disconnectTimer);
+				player.disconnectTimer = null;
+			}
+			if (this.useSocketRooms) socket.leave(roomId);
+			this._removePlayerFromRoom(playerId, roomId);
+			if (this.playerToSocket.get(playerId) === socket.id) {
+				this.playerToSocket.delete(playerId);
+			}
+			return;
+		}
+
 		if (player.disconnectTimer) {
 			clearTimeout(player.disconnectTimer);
 			player.disconnectTimer = null;
@@ -2513,13 +2658,87 @@ export class RoomManager {
 			const socketId = this.playerToSocket.get(spectator.id);
 			if (!socketId) continue;
 
-			const state = room.game.serializeForPlayer(spectator.id);
+			const state = this._augmentWordSpectatorState(
+				room,
+				room.game.serializeForPlayer(spectator.id),
+			);
 			this.io.to(socketId).emit("game:state:update", { roomId, ...state });
 		}
 
 		if (room.game.phase === "match_over") {
 			this.broadcastLobbyState(roomId);
 		}
+	}
+
+	_initWordScratchpads(room) {
+		if (!room.game) return;
+		room.wordScratchpads = {
+			roundNumber: room.game.roundNumber,
+			byPlayer: {},
+		};
+	}
+
+	_getWordScratchpadsPayload(room) {
+		const pads = room.wordScratchpads;
+		if (!pads || !room.game) return {};
+		if (pads.roundNumber !== room.game.roundNumber) return {};
+		return { ...pads.byPlayer };
+	}
+
+	_augmentWordSpectatorState(room, state) {
+		if (!state || room.gameType !== "wordgame" || !state.isSpectator) {
+			return state;
+		}
+		return {
+			...state,
+			scratchpadsByPlayer: this._getWordScratchpadsPayload(room),
+		};
+	}
+
+	_resetWordScratchpads(room) {
+		if (room.gameType !== "wordgame" || !room.game) return;
+		this._initWordScratchpads(room);
+		this._emitToRoom(room, "word:scratchpad:reset", {
+			roomId: room.id,
+			roundNumber: room.game.roundNumber,
+		});
+	}
+
+	handleWordScratchpadSync(socket, payload) {
+		const ctx = this._getPlayerContext(socket);
+		if (ctx.error) return { error: ctx.error };
+
+		const { playerId, room } = ctx;
+		const connected = this._requireConnectedPlayer(room, playerId);
+		if (connected.error) return { error: connected.error };
+
+		if (!room.game || room.gameType !== "wordgame") {
+			return { error: "No active word game" };
+		}
+		if (!isActiveWordGameSession(room)) {
+			return { success: true, ignored: true };
+		}
+
+		const roundNumber = parseScratchpadRoundNumber(payload?.roundNumber);
+		if (roundNumber == null) return { error: "Invalid round number" };
+
+		if (roundNumber !== room.game.roundNumber) {
+			return { success: true, ignored: true };
+		}
+
+		const notes = sanitizeWordScratchpadNotes(payload?.notes);
+		if (!room.wordScratchpads) this._initWordScratchpads(room);
+		room.wordScratchpads.roundNumber = roundNumber;
+		room.wordScratchpads.byPlayer[playerId] = notes;
+
+		this._emitToRoom(room, "word:scratchpad:update", {
+			roomId: room.id,
+			roundNumber,
+			playerId,
+			notes,
+		});
+
+		return { success: true };
 	}
 
 	_scheduleNextRound(roomId, room) {
@@ -2539,6 +2758,9 @@ export class RoomManager {
 			const phase = room.game?.phase;
 			if (phase === "round_over" || phase === "round_end") {
 				room.game.startNextRound();
+				if (room.gameType === "wordgame") {
+					this._resetWordScratchpads(room);
+				}
 				this._broadcastGameStateNow(roomId);
 			}
 		}, delay);
@@ -2585,7 +2807,10 @@ export class RoomManager {
 		});
 
 		if (room.game) {
-			const state = room.game.serializeForPlayer(viewerId);
+			const state = this._augmentWordSpectatorState(
+				room,
+				room.game.serializeForPlayer(viewerId),
+			);
 			socket.emit("game:state:update", { roomId: room.id, ...state });
 		}
 	}

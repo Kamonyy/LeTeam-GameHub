@@ -20,7 +20,11 @@ export function hubPresenceEqual(
       p.inviteable !== q.inviteable ||
       (p.roomId ?? null) !== (q.roomId ?? null) ||
       (p.hostId ?? null) !== (q.hostId ?? null) ||
-      (p.gameType ?? null) !== (q.gameType ?? null)
+      (p.gameType ?? null) !== (q.gameType ?? null) ||
+      (p.targetRoomId ?? null) !== (q.targetRoomId ?? null) ||
+      !!p.isRoomFull !== !!q.isRoomFull ||
+      (p.lobbyPlayerCount ?? null) !== (q.lobbyPlayerCount ?? null) ||
+      (p.lobbyMaxPlayers ?? null) !== (q.lobbyMaxPlayers ?? null)
     ) {
       return false;
     }

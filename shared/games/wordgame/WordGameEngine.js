@@ -305,10 +305,86 @@ export class WordGameEngine extends BaseGameEngine {
 		return safe;
 	}
 
+	/** @returns {Record<string, boolean>} */
+	_submissionStatusMap() {
+		return Object.fromEntries(
+			this.playerIds.map((id) => [id, !!this.submitted[id]]),
+		);
+	}
+
+	/**
+	 * Per-guesser assignments for spectators once the round is active.
+	 * @returns {Record<string, { word: string, championId: string | null, assignedByPlayerId: string }>}
+	 */
+	_assignmentsForGuessersSpectator() {
+		if (this.phase === "setup") return {};
+
+		/** @type {Record<string, { word: string, championId: string | null, assignedByPlayerId: string }>} */
+		const out = {};
+		for (const guesserId of this.playerIds) {
+			const word = this.wordsForGuesser[guesserId];
+			if (!word) continue;
+			const assignerId = this._opponentId(guesserId);
+			if (!assignerId) continue;
+			out[guesserId] = {
+				word,
+				championId: this.championIdsForGuesser[guesserId] ?? null,
+				assignedByPlayerId: assignerId,
+			};
+		}
+		return out;
+	}
+
+	/**
+	 * Neutral read-only payload for spectators.
+	 * @param {string} _viewerId
+	 */
+	serializeForSpectator(_viewerId) {
+		const isRevealPhase =
+			this.phase === "round_end" || this.phase === "match_over";
+		const { word: revealedWord, championId: revealedChampionId } =
+			isRevealPhase ? this._revealedFromLastAction() : (
+				{ word: null, championId: null }
+			);
+
+		return {
+			...this.serializeBase(_viewerId),
+			gameType: "wordgame",
+			isSpectator: true,
+			scores: { ...this.scores },
+			pointsToWin: this.pointsToWin,
+			wordCategory: this.wordCategory,
+			submissionStatus: this._submissionStatusMap(),
+			assignmentsForGuesser: this._assignmentsForGuessersSpectator(),
+			iHaveSubmitted: false,
+			opponentHasSubmitted: false,
+			myChosenWord: null,
+			myChosenChampionId: null,
+			opponentChosenWord: null,
+			opponentChosenChampionId: null,
+			revealedWord,
+			revealedChampionId,
+			winnerId: this.winnerId,
+			lastGuesserId:
+				(
+					this.lastAction?.type === "word_guessed" ||
+					this.lastAction?.type === "match_won"
+				) ?
+					(this.lastAction.guesserId ?? this.lastAction.winnerId)
+				:	null,
+			canConfirmGuessed: false,
+			lastAction: this._sanitizeLastActionForClient(),
+		};
+	}
+
 	/**
 	 * @param {string} viewerId
 	 */
 	serializeForPlayer(viewerId) {
+		if (!this.playerIds.includes(viewerId)) {
+			return this.serializeForSpectator(viewerId);
+		}
+
 		const opponentId = this._opponentId(viewerId);
 		const { word: revealedWord, championId: revealedChampionId } =
 			this._revealedFromLastAction();
